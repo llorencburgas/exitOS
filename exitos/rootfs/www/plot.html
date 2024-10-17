@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="description" content="Dashboard per gestionar la comunitat energètica.">
+  <meta name="keywords" content="comunitat energètica, dashboard, gestió">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboards</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="icon" type="image/x-icon" href="./static/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./static/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Poppins', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background-color: #f0f5f5;
+      color: #2c6e49;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #2c6e49;
+      padding: 10px;
+    }
+    .header img {
+      width: 15%;
+      margin-right: auto;
+      transition: transform 0.3s ease; /* Transició suau */
+    }
+    .header img:hover {
+      transform: scale(1.1);
+    }
+    .nav-link {
+      cursor: pointer;
+      color: #a7d129;
+      margin: 0 5px;
+    }
+    .nav-link:hover {
+      color: #ffffff;
+    }
+    main {
+      flex: 1;
+      display: flex; /* Flexbox per al contingut */
+      flex-direction: column; 
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      background-color: #f0f5f5;
+      text-align: justify;
+      margin: 0 10%; /* Utilitza marges a l'esquerra i dreta */
+    }
+    footer {
+      background-color: #2c6e49;
+      text-align: center;
+      padding: 10px;
+      position: relative; /* Posició relativa per mantenir-ho fixe */
+      bottom: 0;
+      width: 100%;
+    }
+    footer p {
+      color: white;
+      font-size: 12px;
+    }
+    .community {
+      position: fixed;
+      width: 200px;
+      height: auto;
+      opacity: 0.9;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <a href="https://exit.udg.edu/ca/" target="_blank">
+      <img src="./static/exitlogo.png" alt="Logo de la comunitat d'eXIT"/>
+    </a>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="./main">Inici</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="./management">Management</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="./">Plot</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="./map">Map</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  </div>
+
+  <main>
+    <h1>Dashboard</h1>
+    <p>Es mostraran els plots dels diferents usuaris de manera ordenada perquè se'n pugui extreure la flexibilitat.</p>
+    <canvas id="myChart" width="400" height="100"></canvas>
+  </main>
+
+  <footer>
+    <p>Created by: Grup Exit &nbsp; | &nbsp; Copyright © 2024</p>
+    <p><a href="mailto:ccomunitatenergeticaexit@gmail.com" class="text-white">comunitatenergeticaexit@gmail.com</a></p>
+  </footer> 
+
+  <script>
+    var ctx = document.getElementById('myChart').getContext('2d');
+    var myChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+          labels: ['Usuari 1', 'Usuari 2', 'Usuari 3'],
+          datasets: [{
+              label: 'Consum d\'energia (kWh)',
+              data: [12, 19, 3],
+              backgroundColor: [
+                  'rgba(75, 192, 192, 0.2)',
+                  'rgba(255, 99, 132, 0.2)',
+                  'rgba(54, 162, 235, 0.2)'
+              ],
+              borderColor: [
+                  'rgba(75, 192, 192, 1)',
+                  'rgba(255, 99, 132, 1)',
+                  'rgba(54, 162, 235, 1)'
+              ],
+              borderWidth: 1
+          }]
+      },
+      options: {
+          scales: {
+              y: {
+                  beginAtZero: true
+              }
+          }
+      }
+    });
+  </script>
+  </body>
+</html>
+
+
