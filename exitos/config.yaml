@@ -2,7 +2,7 @@
 
 #nom de l'add-on name es user freandly name i slug ha de ser un id unic.
 name: "exitOS"
-slug: "exitOS"
+slug: exitos
 
 #descripcions i altres coses sobre el nostre addon
 description: "Scheduler & optimizer add-on for smart grids for energy management and cost savings."
