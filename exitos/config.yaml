@@ -6,7 +6,7 @@ slug: "exitOS"
 
 #descripcions i altres coses sobre el nostre addon
 description: "Scheduler & optimizer add-on for smart grids for energy management and cost savings."
-version: "0.1.2"
+version: "0.1.1"
 
 url: "https://github.com/llorencburgas/exitOS"
 #si colem que s'auto inicii per defecte (l'usuari ho podra canviar)

@@ -14,6 +14,8 @@ ADD ./rootfs/sqlDB.py .
 COPY ./rootfs/www /www/
 COPY ./rootfs/images/ /images/
 
+COPY config.yaml config.yaml
+
 # posem l'script d'inici i li donem permisos de execucio
 COPY ./rootfs/run.sh /
 RUN chmod a+x /run.sh
