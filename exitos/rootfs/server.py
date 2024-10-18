@@ -14,7 +14,7 @@ app = Bottle()
 database = db.sqlDB()
 
 #Actualitzem les dades
-database.update()
+#database.update()
 
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')
@@ -25,7 +25,6 @@ def serve_static(filepath):
 @app.get('/')
 def get_init():
     return template('./www/main.html')
-
 
 @app.route('/submit', method='POST')
 def submit():
@@ -42,7 +41,7 @@ def submit():
         'Country': country
     }
     
-    with open('./shared/user_info.conf', 'w') as configfile:
+    with open('./share/exitos/user_info.conf', 'w') as configfile:
         config.write(configfile)
     
     return "Information saved successfully!"
