@@ -2,8 +2,9 @@
 
 import os # Importa el mòdul os
 import sqlDB as db  # Importa la base de dades
-from bottle import Bottle, template, run, static_file, HTTPError, redirect # Bottle és el que ens fa de servidor web
+from bottle import Bottle, template, run, static_file, HTTPError, redirect, request # Bottle és el que ens fa de servidor web
 import sqlite3 # Importa el mòdul sqlite3
+
 
 # Paràmetres de l'execució
 HOSTNAME = '0.0.0.0'
