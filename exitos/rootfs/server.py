@@ -26,6 +26,28 @@ def serve_static(filepath):
 def get_init():
     return template('./www/main.html')
 
+
+@app.route('/submit', method='POST')
+def submit():
+    name = request.forms.get('name')
+    email = request.forms.get('email')
+    age = request.forms.get('age')
+    country = request.forms.get('country')
+    
+    config = configparser.ConfigParser()
+    config['UserInfo'] = {
+        'Name': name,
+        'Email': email,
+        'Age': age,
+        'Country': country
+    }
+    
+    with open('./shared/user_info.conf', 'w') as configfile:
+        config.write(configfile)
+    
+    return "Information saved successfully!"
+
+
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')
 def get_page(page):
