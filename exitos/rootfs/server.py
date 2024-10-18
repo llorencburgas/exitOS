@@ -45,7 +45,7 @@ def submit():
     with open('./share/exitos/user_info.conf', 'w') as configfile:
         config.write(configfile)
     
-    return "Information saved successfully!"
+    return template('./www/main.html')
 
 
 # Ruta dinàmica per a les pàgines HTML
