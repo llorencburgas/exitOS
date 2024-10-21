@@ -29,22 +29,29 @@ def get_init():
 
 @app.route('/submit', method='POST')
 def submit():
-    name = request.forms.get('name')
-    email = request.forms.get('email')
-    age = request.forms.get('age')
-    country = request.forms.get('country')
+    asset_id = request.forms.get('assetId')
+    generator_id = request.forms.get('generatorId')
+    source_id = request.forms.get('sourceId')
+    building_consumption_id = request.forms.get('buildingConsumptionId')
+    building_generation_id = request.forms.get('buildingGenerationId')
     
+    # Crea una instància de ConfigParser
     config = configparser.ConfigParser()
+    
+    # Afegeix les dades al fitxer de configuració
     config['UserInfo'] = {
-        'Name': name,
-        'Email': email,
-        'Age': age,
-        'Country': country
+        'AssetID': asset_id,
+        'GeneratorID': generator_id,
+        'SourceID': source_id,
+        'BuildingConsumptionID': building_consumption_id,
+        'BuildingGenerationID': building_generation_id
     }
     
+    # Escriu les dades al fitxer de configuració
     with open('./share/exitos/user_info.conf', 'w') as configfile:
         config.write(configfile)
     
+    # Redirigeix a la plantilla principal
     return template('./www/main.html')
 
 

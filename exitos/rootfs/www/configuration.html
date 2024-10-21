@@ -79,46 +79,86 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ml-auto">
-          <li class="nav-item">
-            <a class="nav-link" onclick="document.location = './main'">Inici</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" onclick="document.location = './management'">Management</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" onclick="document.location = './plot'">Plot</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" onclick="document.location = './map'">Map</a>
-          </li>          
-		  <li class="nav-item">
-            <a class="nav-link" onclick="document.location = './'">Configuration</a>
-          </li>
+          <li class="nav-item"><a class="nav-link" onclick="document.location = './main'">Inici</a></li>
+          <li class="nav-item"><a class="nav-link" onclick="document.location = './management'">Management</a></li>
+          <li class="nav-item"><a class="nav-link" onclick="document.location = './plot'">Plot</a></li>
+          <li class="nav-item"><a class="nav-link" onclick="document.location = './map'">Map</a></li>          
+		      <li class="nav-item"><a class="nav-link" onclick="document.location = './'">Configuration</a></li>
         </ul>
       </div>
     </nav>
   </div>
 
+  <!--Form-->
+  <main class="container my-5">
+    <div class="form-container">
+      <h2 class="text-center">Enter your information</h2>
+      <form action="./submit" method="post" class="needs-validation" novalidate>
+        <div class="form-group">
+          <label for="assetId">Controllable Asset ID</label>
+          <small class="form-text text-muted">Controllable assets that consume energy.</small>
+          <input type="text" class="form-control" id="assetId" name="assetId" required>
+          <div class="invalid-feedback">Si us plau, introdueix el Controllable Asset ID.</div>
+        </div>
+        <div class="form-group">
+          <label for="generatorId">Controllable Generator ID</label>
+          <small class="form-text text-muted">Controllable generators that produce energy.</small>
+          <input type="text" class="form-control" id="generatorId" name="generatorId" required>
+          <div class="invalid-feedback">Si us plau, introdueix el Controllable Generator ID.</div>
+        </div>
+        <div class="form-group">
+          <label for="sourceId">Controllable Energy Source ID</label>
+          <small class="form-text text-muted">Controllable batteries, solar panels, etc.</small>
+          <input type="text" class="form-control" id="sourceId" name="sourceId" required>
+          <div class="invalid-feedback">Si us plau, introdueix el Controllable Energy Source ID.</div>
+        </div>
+        <div class="form-group">
+          <label for="buildingConsumptionId">Base Building Consumption ID</label>
+          <small class="form-text text-muted">Fixed consumption of the building.</small>
+          <input type="text" class="form-control" id="buildingConsumptionId" name="buildingConsumptionId" required>
+          <div class="invalid-feedback">Si us plau, introdueix el Base Building Consumption ID.</div>
+        </div>
+        <div class="form-group">
+          <label for="buildingGenerationId">Base Building Generation ID</label>
+          <small class="form-text text-muted">Fixed generation of the building.</small>
+          <input type="text" class="form-control" id="buildingGenerationId" name="buildingGenerationId" required>
+          <div class="invalid-feedback">Si us plau, introdueix el Base Building Generation ID.</div>
+        </div>
+        <button type="submit" class="btn btn-success btn-block">Forecast</button>
+      </form>
+    </div>
 
+    <!-- Pàgina de càrrega -->
+    <div id="loading" style="display: none;" class="text-center my-5">
+      <h1>The forecasters are on the way!</h1>
+      <p>Si us plau, espera un moment...</p>
+      <div class="spinner-border" role="status">
+          <span class="sr-only">Loading...</span>
+      </div>
+    </div>
+  </main>
 
-    <h1>Enter Your Information</h1>
-    <form action="./submit" method="post">
-        <label for="name">Name:</label>
-        <input type="text" id="name" name="name" required><br><br>
-        
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required><br><br>
-        
-        <label for="age">Age:</label>
-        <input type="number" id="age" name="age" required><br><br>
-        
-        <label for="country">Country:</label>
-        <input type="text" id="country" name="country" required><br><br>
-        
-        <input type="submit" value="Submit">
-    </form>
+  <script>
+    function login(event) {
+      event.preventDefault(); // Evita el comportament per defecte del formulari
+  
+      // Mostra la pàgina de càrrega
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('loading').style.display = 'block';
+  
+      // Simula un retard per enviar el formulari (substitueix amb la teva lògica d'enviament)
+      setTimeout(function() {
+          // Aquí pots fer l'enviament del formulari, per exemple, amb fetch o AJAX
+          // fetch('/submit', { method: 'POST', body: new FormData(event.target) });
+          
+          // Simula la redirecció a la llista d'usuaris després del retard
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('userList').style.display = 'block'; // Mostra la llista d'usuaris
+      }, 3000); // 3 segons
+  }
+  </script>
 	
-	  <footer class="text-center py-3" style="background-color: #2c6e49; color: white;">
+  <footer class="text-center py-3" style="background-color: #2c6e49; color: white;">
     <p>Created by: Grup Exit &nbsp; | &nbsp; Copyright © 2024</p>
     <p><a href="mailto:ccomunitatenergeticaexit@gmail.com" class="text-white">comunitatenergeticaexit@gmail.com</a></p>
   </footer> 
