@@ -14,6 +14,8 @@ class sqlDB():
         
         #per conectar a la api de home assistant
         self.supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
+        print(self.supervisor_token)
+        
         self.base_url = "http://supervisor/core/api"
         self.headers = {
                     "Authorization": "Bearer "+ self.supervisor_token,
@@ -53,6 +55,9 @@ class sqlDB():
     def getsensor_names(self):
         print("demanant llista de noms de sensors!")
         #la llista de sensors que te el client
+        
+        print(get(self.base_url+'states', headers=self.headers))
+        
         sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json())
         llista = []
         for j in sensors_list.index:                
