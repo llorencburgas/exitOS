@@ -14,8 +14,6 @@ class sqlDB():
         
         #per conectar a la api de home assistant
         self.supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
-        print(self.supervisor_token)
-        
         self.base_url = "http://supervisor/core/api/"
         self.headers = {
                     "Authorization": "Bearer "+ self.supervisor_token,
