@@ -59,11 +59,15 @@ class sqlDB():
         print(get(self.base_url+'states', headers=self.headers))
         
         sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json())
-        llista = []
-        for j in sensors_list.index:                
-            #Mirem si el tenim a la bdd de sensors
-            llista.append(sensors_list.iloc[j]['entity_id'])
             
+        if 'entity_id' in sensors_list.columns:
+            llista = sensors_list['entity_id'].tolist()
+        else:
+            print("'entity_id' column not found in response data")
+            print(f"Available columns: {sensors_list.columns.tolist()}")
+            llista = []
+            
+        print("Tenim: " + len(llista) + " sensors!")
         print(llista)
         return llista
     
@@ -125,7 +129,6 @@ class sqlDB():
                 
                     t_fi="2099-01-01T00:00:00"
                     
-                    #url = "http://"+ i[3]+":8123/api/history/period/"+t_ini+"?end_time="+t_fi+"&filter_entity_id=" + id_sensor
                     url = self.base_url + "history/period/"+t_ini+"?end_time="+t_fi+"&filter_entity_id=" + id_sensor
                     
                     aux=pd.json_normalize(get(url, headers=self.headers).json())
