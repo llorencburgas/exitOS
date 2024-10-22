@@ -15,8 +15,8 @@ database = db.sqlDB()
 
 #Actualitzem les dades
 #database.update()
-print(database.getsensor_names())
-print("Ja hem acavat de llegir els noms dels sensors!")
+#print(database.getsensor_names())
+
 
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')
@@ -26,8 +26,8 @@ def serve_static(filepath):
 # Ruta inicial
 @app.get('/')
 def get_init():
-    #return template('./www/main.html')
-    return database.getsensor_names()
+    return template('./www/main.html')
+    #return database.getsensor_names()
 
 @app.route('/submit', method='POST')
 def submit():
