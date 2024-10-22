@@ -89,11 +89,11 @@
     </nav>
   </div>
 
-  <!--Form-->
+  <!-- Form -->
   <main class="container my-5">
     <div class="form-container">
       <h2 class="text-center">Enter your information</h2>
-      <form action="./submit" method="post" class="needs-validation" novalidate>
+      <form action="./submit" method="post" class="needs-validation" novalidate onsubmit="showLoading()">
         <div class="form-group">
           <label for="assetId">Controllable Asset ID</label>
           <small class="form-text text-muted">Controllable assets that consume energy.</small>
@@ -133,34 +133,23 @@
       <h1>The forecasters are on the way!</h1>
       <p>Si us plau, espera un moment...</p>
       <div class="spinner-border" role="status">
-          <span class="sr-only">Loading...</span>
+        <span class="sr-only">Loading...</span>
       </div>
     </div>
   </main>
 
   <script>
-    function login(event) {
-      event.preventDefault(); // Evita el comportament per defecte del formulari
-  
+    function showLoading() {
+      // Amaga el formulari
+      document.querySelector('.form-container').style.display = 'none';
       // Mostra la pàgina de càrrega
-      document.getElementById('loginForm').style.display = 'none';
       document.getElementById('loading').style.display = 'block';
-  
-      // Simula un retard per enviar el formulari (substitueix amb la teva lògica d'enviament)
-      setTimeout(function() {
-          // Aquí pots fer l'enviament del formulari, per exemple, amb fetch o AJAX
-          // fetch('/submit', { method: 'POST', body: new FormData(event.target) });
-          
-          // Simula la redirecció a la llista d'usuaris després del retard
-          document.getElementById('loading').style.display = 'none';
-          document.getElementById('userList').style.display = 'block'; // Mostra la llista d'usuaris
-      }, 3000); // 3 segons
-  }
+    }
   </script>
-	
+  
   <footer class="text-center py-3" style="background-color: #2c6e49; color: white;">
     <p>Created by: Grup Exit &nbsp; | &nbsp; Copyright © 2024</p>
     <p><a href="mailto:ccomunitatenergeticaexit@gmail.com" class="text-white">comunitatenergeticaexit@gmail.com</a></p>
-  </footer> 
+  </footer>
 </body>
 </html>
