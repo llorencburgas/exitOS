@@ -65,7 +65,7 @@ class sqlDB():
             print(f"Available columns: {sensors_list.columns.tolist()}")
             llista = []
             
-        print("Tenim: " + len(llista) + " sensors!")
+        print(f'Tenim: { len(llista) }sensors!')
         print(llista)
         return llista
     
