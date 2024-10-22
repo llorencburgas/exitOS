@@ -12,6 +12,10 @@ class sqlDB():
         "Crea la connexió a la base de dades"
         # Nom de la base de dades
         self.filename = "/share/exitos/dades.db"
+        
+        self.supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
+        self.base_url = "http://supervisor/core/api"
+        
                 
         # Comprova si la base de dades existeix
         if not os.path.isfile(self.filename):
@@ -62,15 +66,16 @@ class sqlDB():
             for i in llista:
                 id_client = i[0]
                 #comunitat = i[1]
-                token = i[2]
-                url = "http://"+ i[3]+":8123/api/"
+                #token = i[2]
+                #url = "http://"+ i[3]+":8123/api/"
+                
                 headers = {
-                    "Authorization": "Bearer "+token,
+                    "Authorization": "Bearer "+ self.supervisor_token,
                     "content-type": "application/json",
                     }
                 
             #la llista de sensors que te el client
-            sensors_list = pd.json_normalize(get(url+'states', headers=headers).json())
+            sensors_list = pd.json_normalize(get(self.base_url+'states', headers=headers).json())
             
             for j in sensors_list.index:                
                 #Mirem si el tenim a la bdd de sensors
@@ -123,7 +128,8 @@ class sqlDB():
                 
                     t_fi="2099-01-01T00:00:00"
                     
-                    url = "http://"+ i[3]+":8123/api/history/period/"+t_ini+"?end_time="+t_fi+"&filter_entity_id=" + id_sensor
+                    #url = "http://"+ i[3]+":8123/api/history/period/"+t_ini+"?end_time="+t_fi+"&filter_entity_id=" + id_sensor
+                    url = self.base_url + "history/period/"+t_ini+"?end_time="+t_fi+"&filter_entity_id=" + id_sensor
                     
                     aux=pd.json_normalize(get(url, headers=headers).json())
                     

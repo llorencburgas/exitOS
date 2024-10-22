@@ -15,7 +15,7 @@ app = Bottle()
 database = db.sqlDB()
 
 #Actualitzem les dades
-#database.update()
+database.update()
 
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')
