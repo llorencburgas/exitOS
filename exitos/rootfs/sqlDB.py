@@ -60,7 +60,6 @@ class sqlDB():
             
         if 'entity_id' in sensors_list.columns:
             llista = sensors_list['entity_id'].tolist()
-            print(llista)
         else:
             print("'entity_id' column not found in response data")
             print(f"Available columns: {sensors_list.columns.tolist()}")
