@@ -65,7 +65,6 @@ class sqlDB():
             print(f"Available columns: {sensors_list.columns.tolist()}")
             llista = []
             
-        print(f'Tenim: { len(llista) }sensors!')
         return llista
     
     def update(self):
