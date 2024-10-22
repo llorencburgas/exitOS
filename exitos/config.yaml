@@ -16,7 +16,6 @@ init: false
 hassio_api: true
 homeassistant_api: true
 
-
 #arquitectures que es compatible el nostre modul. Cal lligar amb imatges de docker....
 arch:
   - aarch64
