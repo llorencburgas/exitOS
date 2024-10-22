@@ -55,9 +55,7 @@ class sqlDB():
     def getsensor_names(self):
         print("demanant llista de noms de sensors!")
         #la llista de sensors que te el client
-        
-        print(get(self.base_url+'states', headers=self.headers))
-        
+
         sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json())
             
         if 'entity_id' in sensors_list.columns:
