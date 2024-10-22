@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import sqlite3
 import time
-import os.path
 import pandas as pd
 from requests import get
 import traceback
@@ -51,6 +50,18 @@ class sqlDB():
         con.commit()
         con.close()
         
+    def getsensor_names(self):
+        print("demanant llista de noms de sensors!")
+        #la llista de sensors que te el client
+        sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json())
+        llista = []
+        for j in sensors_list.index:                
+            #Mirem si el tenim a la bdd de sensors
+            llista.append(sensors_list.iloc[j]['entity_id'])
+            
+        print(llista)
+        return llista
+    
     def update(self):
         try:
             print("Iniciant Update de la BDD")

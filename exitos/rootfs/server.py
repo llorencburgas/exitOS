@@ -16,6 +16,7 @@ database = db.sqlDB()
 
 #Actualitzem les dades
 database.update()
+llista  = database.getsensor_names()
 
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')
