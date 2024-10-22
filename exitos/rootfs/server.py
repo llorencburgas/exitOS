@@ -3,7 +3,6 @@
 import os # Importa el mòdul os
 import sqlDB as db  # Importa la base de dades
 from bottle import Bottle, template, run, static_file, HTTPError, redirect, request # Bottle és el que ens fa de servidor web
-import sqlite3 # Importa el mòdul sqlite3
 import configparser
 
 # Paràmetres de l'execució
@@ -17,6 +16,7 @@ database = db.sqlDB()
 #Actualitzem les dades
 #database.update()
 print(database.getsensor_names())
+print("Ja hem acavat de llegir els noms dels sensors!")
 
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')
@@ -26,7 +26,8 @@ def serve_static(filepath):
 # Ruta inicial
 @app.get('/')
 def get_init():
-    return template('./www/main.html')
+    #return template('./www/main.html')
+    return database.getsensor_names()
 
 @app.route('/submit', method='POST')
 def submit():
@@ -54,7 +55,6 @@ def submit():
     
     # Redirigeix a la plantilla principal
     return template('./www/main.html')
-
 
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')
