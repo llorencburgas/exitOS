@@ -95,10 +95,13 @@
       <h2 class="text-center">Enter your information</h2>
       <form action="./submit" method="post" class="needs-validation" novalidate onsubmit="showLoading()">
         <div class="form-group">
-          <label for="assetId">Controllable Asset IDs</label>
+          <label for="sensorList">Controllable Asset IDs</label>
           <small class="form-text text-muted">Controllable assets that consume energy.</small>
-          <input type="text" class="form-control" id="assetId" name="assetId" required>
-          <div class="invalid-feedback">Si us plau, introdueix el Controllable Asset ID.</div>
+          <select class="form-control" id="sensorList" name="sensorList" multiple required>
+            % for sensor in sensors:
+                <option value="{{sensor}}">{{sensor}}</option>
+            % end
+        </select>
         </div>
         <div class="form-group">
           <label for="generatorId">Controllable Generator IDs</label>

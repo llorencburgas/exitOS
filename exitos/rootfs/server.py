@@ -13,17 +13,6 @@ PORT = 8000
 app = Bottle() 
 database = db.sqlDB()
 
-# Get sensors filter only in KW
-@app.route('/getsensors', methods=['GET'])
-def get_sensors():
-    try:
-        sensor_names = database.getsensor_names()
-        # Only the sensors in KW
-        kw_sensors = [sensor for sensor in sensor_names if 'KW' in sensor.lower()]
-        return jsonify(kw_sensors), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')
 def serve_static(filepath):
@@ -34,12 +23,11 @@ def serve_static(filepath):
 def get_init():
     return template('./www/main.html')
 
-# Ruta inicial
+# Get sensors
 @app.get('/configuration')
 def get_configuration():
-    dictionary = database.getsensor_names_kW()
-    
-    return template('./www/configuration.html', noms  = dictionary['entity_id'], units = dictionary['attributes.unit_of_measurement'] )
+    sensors = database.getsensor_names_kW()
+    return template('./www/configuration.html', sensors = sensors['entity_id'], units = sensors['attributes.unit_of_measurement'] )
 
 @app.route('/submit', method='POST')
 def submit():
