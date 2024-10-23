@@ -26,7 +26,8 @@ def get_init():
 # Get sensors
 @app.get('/configuration')
 def get_configuration():
-    sensors = database.getsensor_names_kW()
+    sensors = database.getsensor_names_Wh()
+    print("Sensors:", sensors)  # Per verificar què es retorna
     return template('./www/configuration.html', sensors = sensors['entity_id'], units = sensors['attributes.unit_of_measurement'] )
 
 @app.route('/submit', method='POST')

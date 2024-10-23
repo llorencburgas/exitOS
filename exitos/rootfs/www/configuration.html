@@ -97,7 +97,7 @@
         <div class="form-group">
           <label for="assetID">Controllable Asset IDs</label>
           <small class="form-text text-muted">Controllable assets that consume energy.</small>
-          <select class="form-control" id="assetID" name="assetID" multiple required>
+          <select class="form-control" id="assetID" name="assetID" multiple size="1" required>
               % for sensor in sensors:
                   <option value="{{sensor}}">{{sensor}}</option>
               % end
@@ -106,7 +106,7 @@
         <div class="form-group">
           <label for="generatorId">Controllable Generator IDs</label>
           <small class="form-text text-muted">Controllable generators that produce energy.</small>
-          <select class="form-control" id="generatorId" name="generatorId" multiple required>
+          <select class="form-control" id="generatorId" name="generatorId" multiple size="1" required>
               % for sensor in sensors:
                   <option value="{{sensor}}">{{sensor}}</option>
               % end
@@ -116,7 +116,7 @@
         <div class="form-group">
           <label for="sourceId">Controllable Energy Source IDs</label>
           <small class="form-text text-muted">Controllable batteries, solar panels, etc.</small>
-          <select class="form-control" id="sourceId" name="sourceId" multiple required>
+          <select class="form-control" id="sourceId" name="sourceId" multiple size="1" required>
               % for sensor in sensors:
                   <option value="{{sensor}}">{{sensor}}</option>
               % end
@@ -126,7 +126,7 @@
         <div class="form-group">
           <label for="buildingConsumptionId">Base Building Consumption IDs</label>
           <small class="form-text text-muted">Fixed consumption of the building.</small>
-          <select class="form-control" id="buildingConsumptionId" name="buildingConsumptionId" multiple required>
+          <select class="form-control" id="buildingConsumptionId" name="buildingConsumptionId" multiple size="1" required>
               % for sensor in sensors:
                   <option value="{{sensor}}">{{sensor}}</option>
               % end
@@ -136,7 +136,7 @@
         <div class="form-group">
           <label for="buildingGenerationId">Base Building Generation IDs</label>
           <small class="form-text text-muted">Fixed generation of the building.</small>
-          <select class="form-control" id="buildingGenerationId" name="buildingGenerationId" multiple required>
+          <select class="form-control" id="buildingGenerationId" name="buildingGenerationId" multiple size="1" required>
               % for sensor in sensors:
                   <option value="{{sensor}}">{{sensor}}</option>
               % end
