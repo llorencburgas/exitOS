@@ -50,14 +50,16 @@ class sqlDB():
         con.commit()
         con.close()
         
-    def getsensor_names(self):
+    def getsensor_names_Wh(self):
         print("demanant llista de noms de sensors!")
         #la llista de sensors que te el client
 
         sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json())
             
         if 'entity_id' in sensors_list.columns:
-            llista = sensors_list['entity_id'].tolist()
+            aux = sensors_list[['entity_id', 'attributes.unit_of_measurement']]
+            llista = aux[aux['attributes.unit_of_measurement'] == 'Wh']
+            llista = llista.append(aux[aux['attributes.unit_of_measurement'] == 'kWh'])
         else:
             print("'entity_id' column not found in response data")
             print(f"Available columns: {sensors_list.columns.tolist()}")
