@@ -1,4 +1,7 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
+## 0.2
+- Multiple selection for forecasting methods
+
 ## 0.1.4
 - Asset Selection
 

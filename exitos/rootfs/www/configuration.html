@@ -95,36 +95,52 @@
       <h2 class="text-center">Enter your information</h2>
       <form action="./submit" method="post" class="needs-validation" novalidate onsubmit="showLoading()">
         <div class="form-group">
-          <label for="sensorList">Controllable Asset IDs</label>
+          <label for="assetID">Controllable Asset IDs</label>
           <small class="form-text text-muted">Controllable assets that consume energy.</small>
-          <select class="form-control" id="sensorList" name="sensorList" multiple required>
-            % for sensor in sensors:
-                <option value="{{sensor}}">{{sensor}}</option>
-            % end
-        </select>
+          <select class="form-control" id="assetID" name="assetID" multiple required>
+              % for sensor in sensors:
+                  <option value="{{sensor}}">{{sensor}}</option>
+              % end
+          </select>
         </div>
         <div class="form-group">
           <label for="generatorId">Controllable Generator IDs</label>
           <small class="form-text text-muted">Controllable generators that produce energy.</small>
-          <input type="text" class="form-control" id="generatorId" name="generatorId" required>
+          <select class="form-control" id="generatorId" name="generatorId" multiple required>
+              % for sensor in sensors:
+                  <option value="{{sensor}}">{{sensor}}</option>
+              % end
+          </select>
           <div class="invalid-feedback">Si us plau, introdueix el Controllable Generator ID.</div>
         </div>
         <div class="form-group">
           <label for="sourceId">Controllable Energy Source IDs</label>
           <small class="form-text text-muted">Controllable batteries, solar panels, etc.</small>
-          <input type="text" class="form-control" id="sourceId" name="sourceId" required>
+          <select class="form-control" id="sourceId" name="sourceId" multiple required>
+              % for sensor in sensors:
+                  <option value="{{sensor}}">{{sensor}}</option>
+              % end
+          </select>
           <div class="invalid-feedback">Si us plau, introdueix el Controllable Energy Source ID.</div>
         </div>
         <div class="form-group">
           <label for="buildingConsumptionId">Base Building Consumption IDs</label>
           <small class="form-text text-muted">Fixed consumption of the building.</small>
-          <input type="text" class="form-control" id="buildingConsumptionId" name="buildingConsumptionId" required>
+          <select class="form-control" id="buildingConsumptionId" name="buildingConsumptionId" multiple required>
+              % for sensor in sensors:
+                  <option value="{{sensor}}">{{sensor}}</option>
+              % end
+          </select>
           <div class="invalid-feedback">Si us plau, introdueix el Base Building Consumption ID.</div>
         </div>
         <div class="form-group">
           <label for="buildingGenerationId">Base Building Generation IDs</label>
           <small class="form-text text-muted">Fixed generation of the building.</small>
-          <input type="text" class="form-control" id="buildingGenerationId" name="buildingGenerationId" required>
+          <select class="form-control" id="buildingGenerationId" name="buildingGenerationId" multiple required>
+              % for sensor in sensors:
+                  <option value="{{sensor}}">{{sensor}}</option>
+              % end
+          </select>
           <div class="invalid-feedback">Si us plau, introdueix el Base Building Generation ID.</div>
         </div>
         <button type="submit" class="btn btn-success btn-block">Forecast</button>
