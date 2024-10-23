@@ -52,26 +52,23 @@ class sqlDB():
         
     def getsensor_names_Wh(self):
         print("Demanda llista de noms de sensors!")
-        try:
-            response = get(self.base_url + 'states', headers=self.headers)
-            response.raise_for_status()  # Llença una excepció per codis d'estat 4xx/5xx
-            print("Resposta del servidor:", response.text)  # Imprimeix la resposta bruta
-            sensors_list = pd.json_normalize(response.json())
 
-            # Comprova que la columna 'entity_id' existeix
-            if 'entity_id' in sensors_list.columns:
-                aux = sensors_list[['entity_id', 'attributes.unit_of_measurement']]
-                llista = aux[aux['attributes.unit_of_measurement'] == 'Wh']
-                llista = pd.concat([llista, aux[aux['attributes.unit_of_measurement'] == 'kWh']])
-                return llista
-            else:
-                print("'entity_id' column not found in response data")
-                print(f"Available columns: {sensors_list.columns.tolist()}")
-                return pd.DataFrame()  # Torna un DataFrame buit si no es troba
+        response = get(self.base_url + 'states', headers=self.headers)
+        sensors_list = pd.json_normalize(response.json())
 
-        except Exception as e:
-            print(f"Error al demanar la llista de sensors: {e}")
-            return pd.DataFrame()  # Torna un DataFrame buit si no es troba
+        # Comprova que la columna 'entity_id' existeix
+        if 'entity_id' in sensors_list.columns:
+            aux = sensors_list[['entity_id', 'attributes.unit_of_measurement']]
+            llista = aux[aux['attributes.unit_of_measurement'] == 'Wh']
+            print(llista)
+            llista = pd.concat([llista, aux[aux['attributes.unit_of_measurement'] == 'kWh']])
+            print(llista)
+            return llista
+        else:
+            print("'entity_id' column not found in response data")
+            print(f"Available columns: {sensors_list.columns.tolist()}")
+            return 'No funciona'  # Torna un DataFrame buit si no es troba
+
         
         
     
