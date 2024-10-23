@@ -69,7 +69,19 @@ class sqlDB():
             print(f"Available columns: {sensors_list.columns.tolist()}")
             return 'No funciona'  # Torna un DataFrame buit si no es troba
 
-        
+        def getsensor_names(self):
+            print("Demanda llista de noms de sensors!")
+
+            llista = pd.json_normalize(get(self.base_url + 'states', headers=self.headers).json())
+
+            # Comprova que la columna 'entity_id' existeix
+            if 'entity_id' in sensors_list.columns:
+                print(llista['entity_id'].tolist())
+                return llista['entity_id'].tolist()
+            else:
+                print("'entity_id' column not found in response data")
+                print(f"Available columns: {sensors_list.columns.tolist()}")
+                return 'No funciona'  # Torna un DataFrame buit si no es troba
         
     
     def update(self):
