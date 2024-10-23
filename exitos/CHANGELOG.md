@@ -1,6 +1,7 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
-## 0.2
+## 0.1.5
 - Multiple selection for forecasting methods
+- Problem solution that was blocking the selection
 
 ## 0.1.4
 - Asset Selection
