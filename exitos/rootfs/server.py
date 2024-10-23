@@ -33,7 +33,13 @@ def serve_static(filepath):
 @app.get('/')
 def get_init():
     return template('./www/main.html')
-    #return database.getsensor_names()
+
+# Ruta inicial
+@app.get('/configuration')
+def get_configuration():
+    dictionary = database.getsensor_names_kW()
+    
+    return template('./www/configuration.html', noms  = dictionary['entity_id'], units = dictionary['attributes.unit_of_measurement'] )
 
 @app.route('/submit', method='POST')
 def submit():
