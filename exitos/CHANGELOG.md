@@ -1,4 +1,7 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
+## 0.1.6
+- Append to concat
+
 ## 0.1.5
 - Multiple selection for forecasting methods
 - Problem solution that was blocking the selection
