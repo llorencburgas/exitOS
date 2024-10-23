@@ -1,6 +1,7 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
-## 0.1.6
+## 0.1.6.1
 - Append to concat
+- Get sensor names is not working well
 
 ## 0.1.5
 - Multiple selection for forecasting methods
