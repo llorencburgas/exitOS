@@ -16,7 +16,7 @@ class sqlDB():
         self.supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
         self.base_url = "http://supervisor/core/api/"
         self.headers = {
-                    "Authorization": "Bearer "+ self.supervisor_token,
+                    "Authorization": "Bearer" + self.supervisor_token,
                     "content-type": "application/json",
                     }
 
@@ -59,7 +59,7 @@ class sqlDB():
         if 'entity_id' in sensors_list.columns:
             aux = sensors_list[['entity_id', 'attributes.unit_of_measurement']]
             llista = aux[aux['attributes.unit_of_measurement'] == 'Wh']
-            llista = llista.append(aux[aux['attributes.unit_of_measurement'] == 'kWh'])
+            llista = pd.concat([llista, aux[aux['attributes.unit_of_measurement'] == 'kWh']])
         else:
             print("'entity_id' column not found in response data")
             print(f"Available columns: {sensors_list.columns.tolist()}")
