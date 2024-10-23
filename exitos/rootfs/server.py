@@ -13,10 +13,16 @@ PORT = 8000
 app = Bottle() 
 database = db.sqlDB()
 
-#Actualitzem les dades
-#database.update()
-#print(database.getsensor_names())
-
+# Get sensors filter only in KW
+@app.route('/getsensors', methods=['GET'])
+def get_sensors():
+    try:
+        sensor_names = database.getsensor_names()
+        # Only the sensors in KW
+        kw_sensors = [sensor for sensor in sensor_names if 'KW' in sensor.lower()]
+        return jsonify(kw_sensors), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')
