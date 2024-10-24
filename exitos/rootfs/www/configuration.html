@@ -90,64 +90,68 @@
     </nav>
   </div>
 
-  <!-- Form -->
   <main class="container my-5">
     <div class="form-container text-center">
         <h2 class="mb-4">Energy consumers and generators</h2>
         <form action="./submit" method="post" class="needs-validation" novalidate>
             <!-- Dropdown per Actius Controlables -->
             <div class="mb-4">
-                <select class="form-select" id="assetID" name="assetID[]" required>
-                    <option value="" disabled selected>Controllable Asset IDs (select multiple)</option>
+                <select class="form-select" id="assetID" name="assetID[]" required onchange="updateSelection('assetID', 'selectedAssets')">
+                    <option value="" disabled selected>Controllable Asset IDs</option>
                     % for sensor in sensors:
                         <option value="{{sensor}}">{{sensor}}{{units}}</option>
                     % end
                 </select>
                 <div class="invalid-feedback">Si us plau, selecciona un actiu controlable.</div>
+                <div id="selectedAssets" class="mt-2 text-success"></div>
             </div>
 
             <!-- Dropdown per Generadors Controlables -->
             <div class="mb-4">
-                <select class="form-select" aria-label="Default select example" id="generatorId" name="generatorId[]" required>
-                    <option value="" disabled selected>Controllable Generator IDs (select multiple)</option>
+                <select class="form-select" id="generatorId" name="generatorId[]" required onchange="updateSelection('generatorId', 'selectedGenerators')">
+                    <option value="" disabled selected>Controllable Generator IDs</option>
                     % for sensor in sensors:
                         <option value="{{sensor}}">{{sensor}}{{units}}</option>
                     % end
                 </select>
                 <div class="invalid-feedback">Si us plau, selecciona un generador controlable.</div>
+                <div id="selectedGenerators" class="mt-2 text-success"></div>
             </div>
 
             <!-- Dropdown per Fonts d'Energia Controlables -->
             <div class="mb-4">
-                <select class="form-select" aria-label="Default select example" id="sourceId" name="sourceId[]" required >
-                    <option value="" disabled selected>Controllable Energy Source IDs (select multiple)</option>
+                <select class="form-select" id="sourceId" name="sourceId[]" required onchange="updateSelection('sourceId', 'selectedSources')">
+                    <option value="" disabled selected>Controllable Energy Source IDs</option>
                     % for sensor in sensors:
                         <option value="{{sensor}}">{{sensor}}{{units}}</option>
                     % end
                 </select>
                 <div class="invalid-feedback">Si us plau, selecciona una font d'energia controlable.</div>
+                <div id="selectedSources" class="mt-2 text-success"></div>
             </div>
 
             <!-- Dropdown per Consums d'Edifici -->
             <div class="mb-4">
-                <select class="form-select" id="buildingConsumptionId" name="buildingConsumptionId[]" required >
-                    <option value="" disabled selected>Base Building Consumption IDs (select multiple)</option>
+                <select class="form-select" id="buildingConsumptionId" name="buildingConsumptionId[]" required onchange="updateSelection('buildingConsumptionId', 'selectedConsumptionBuild')">
+                    <option value="" disabled selected>Base Building Consumption IDs</option>
                     % for sensor in sensors:
                         <option value="{{sensor}}">{{sensor}}{{units}}</option>
                     % end
                 </select>
                 <div class="invalid-feedback">Si us plau, selecciona un consum d'edifici.</div>
+                <div id="selectedConsumptionBuild" class="mt-2 text-success"></div>
             </div>
 
             <!-- Dropdown per Generació d'Edifici -->
             <div class="mb-4">
-                <select class="form-select" id="buildingGenerationId" name="buildingGenerationId[]" required >
-                    <option value="" disabled selected>Base Building Generation IDs (select multiple)</option>
+                <select class="form-select" id="buildingGenerationId" name="buildingGenerationId[]" required onchange="updateSelection('buildingGenerationId', 'selectedGenerationId')">
+                    <option value="" disabled selected>Base Building Generation IDs</option>
                     % for sensor in sensors:
                         <option value="{{sensor}}">{{sensor}}{{units}}</option>
                     % end
                 </select>
                 <div class="invalid-feedback">Si us plau, selecciona una generació d'edifici.</div>
+                <div id="selectedGenerationId" class="mt-2 text-success"></div>
             </div>
 
             <button type="submit" class="btn btn-success" style="background-color: #2c6e49;">Forecast</button>
@@ -156,27 +160,10 @@
   </main>
 
   <script>
-    function toggleSelection(event, inputId, value) {
-      event.preventDefault(); // Evitar que l'enllaç es segueixi
-      const input = document.getElementById(inputId);
-      const selectedValues = input.value ? input.value.split(',') : [];
-  
-      // Comprovar si el valor ja està seleccionat
-      if (selectedValues.includes(value)) {
-        // Si està seleccionat, el traiem
-        const index = selectedValues.indexOf(value);
-        selectedValues.splice(index, 1);
-      } else {
-        // Si no està seleccionat, l'afegim
-        selectedValues.push(value);
-      }
-  
-      // Actualitzar el valor de l'input ocult
-      input.value = selectedValues.join(',');
-  
-      // Actualitzar la visualització dels valors seleccionats
-      document.getElementById('selectedAssets').innerText = selectedValues.join(', ') || 'No assets selected.';
-      document.getElementById('selectedGenerators').innerText = selectedValues.join(', ') || 'No generators selected.';
+    function updateSelection(selectId, displayId) {
+        const selectElement = document.getElementById(selectId);
+        const selectedOptions = Array.from(selectElement.selectedOptions).map(option => option.value);
+        document.getElementById(displayId).innerText = selectedOptions.length ? selectedOptions.join(', ') : 'No selections made.';
     }
   </script>
   
