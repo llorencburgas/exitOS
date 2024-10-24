@@ -1,5 +1,4 @@
 # server.py és el fitxer principal de l'aplicació web. Aquest fitxer conté la lògica de l'aplicació web i les rutes per a les diferents pàgines HTML.
-
 import os # Importa el mòdul os
 import sqlDB as db  # Importa la base de dades
 from bottle import Bottle, template, run, static_file, HTTPError, redirect, request # Bottle és el que ens fa de servidor web
@@ -23,12 +22,13 @@ def serve_static(filepath):
 def get_init():
     return template('./www/main.html')
 
-# Get sensors
+# Ruta per la configuració de sensors
 @app.get('/configuration')
 def get_configuration():
     sensors = database.get_sensor_names_Wh()
     return template('./www/configuration.html', sensors = sensors['entity_id'].tolist(), units = sensors['attributes.unit_of_measurement'].tolist())    
 
+# Ruta per enviar el formulari de configuració
 @app.route('/submit', method='POST')
 def submit():
     asset_id = request.forms.get('assetId')
@@ -68,9 +68,8 @@ def get_page(page):
     else:
         return HTTPError(404, "Page not found")
     
-
 #################################################################################
-#   Hem acabat de definir totes les url i que cal fer per cada una d'elles.     #
+#   Hem acabat de definir totes les url i què cal fer per cada una d'elles.     #
 #   Executem el servidor                                                        #
 #################################################################################
 
