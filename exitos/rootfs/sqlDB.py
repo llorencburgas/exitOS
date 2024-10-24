@@ -50,38 +50,29 @@ class sqlDB():
         con.commit()
         con.close()
         
-    def getsensor_names_Wh(self):
-        print("Demanda llista de noms de sensors!")
-
+    def get_sensor_names_Wh(self):
+        print("Searching for sensors list")
         response = get(self.base_url + 'states', headers=self.headers)
         sensors_list = pd.json_normalize(response.json())
-
-        # Comprova que la columna 'entity_id' existeix
         if 'entity_id' in sensors_list.columns:
             aux = sensors_list[['entity_id', 'attributes.unit_of_measurement']]
             llista = aux[aux['attributes.unit_of_measurement'] == 'Wh']
-            print(llista)
             llista = pd.concat([llista, aux[aux['attributes.unit_of_measurement'] == 'kWh']])
-            print(llista)
             return llista
         else:
             print("'entity_id' column not found in response data")
             print(f"Available columns: {sensors_list.columns.tolist()}")
-            return 'No funciona'  # Torna un DataFrame buit si no es troba
+            return "Doesn't work"
 
-    def getsensor_names(self):
-        print("Demanda llista de noms de sensors!")
-
-        llista = pd.json_normalize(get(self.base_url + 'states', headers=self.headers).json())
-
-        # Comprova que la columna 'entity_id' existeix
-        if 'entity_id' in llista.columns:
-            print(llista['entity_id'].tolist())
-            return llista['entity_id'].tolist()
+    def get_sensor_names(self):
+        print("Searching for sensors list")
+        sensors = pd.json_normalize(get(self.base_url + 'states', headers=self.headers).json())
+        if 'entity_id' in sensors.columns:
+            return sensors['entity_id'].tolist()
         else:
             print("'entity_id' column not found in response data")
-            print(f"Available columns: {llista.columns.tolist()}")
-            return 'No funciona'  # Torna un DataFrame buit si no es troba
+            print(f"Available columns: {sensors.columns.tolist()}")
+            return "Doesn't work"
     
     
     def update(self):
