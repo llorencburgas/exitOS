@@ -1,5 +1,5 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
-## 0.1.8.1
+## 0.1.8
 - New forms
 
 ## 0.1.7
