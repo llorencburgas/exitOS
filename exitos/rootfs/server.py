@@ -42,11 +42,11 @@ def submit():
     
     # Afegeix les dades al fitxer de configuració
     config['UserInfo'] = {
-        'AssetID': ','.join(asset_id),  # Converteix la llista en un string separat per comes
-        'GeneratorID': ','.join(generator_id),
-        'SourceID': ','.join(source_id),
-        'BuildingConsumptionID': ','.join(building_consumption_id),
-        'BuildingGenerationID': ','.join(building_generation_id)
+        'AssetID': str(asset_id),
+        'GeneratorID': str(generator_id),
+        'SourceID': str(source_id),
+        'BuildingConsumptionID': str(building_consumption_id),
+        'BuildingGenerationID': str(building_generation_id)
     }
     
     # Escriu les dades al fitxer de configuració
