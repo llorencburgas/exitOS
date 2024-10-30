@@ -1,14 +1,17 @@
 from sklearn.linear_model import LinearRegression 
 import numpy as np
 import sqlDB as db
+import sqlite3
 
 class forecastingModel():
-
     def __init__(self):
         '''Constructor de la classe'''
 
         self.db = db.sqlDB()
         self.model = LinearRegression()
+
+        # Connexió a la base de dades
+        self.__con__ = sqlite3.connect(self.filename, timeout=10)
 
     def train_model(self, sensor_id):
         '''
