@@ -7,11 +7,8 @@ class forecastingModel():
     def __init__(self):
         '''Constructor de la classe'''
 
-        self.db = db.sqlDB()
-        self.model = LinearRegression()
-
-        # Connexió a la base de dades
-        self.__con__ = sqlite3.connect(self.filename, timeout=10)
+        self.db = db.sqlDB() # Creem una instància de la base de dades
+        self.model = LinearRegression() # Creem una instància del model de regressió lineal
 
     def train_model(self, sensor_id):
         '''
