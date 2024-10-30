@@ -175,9 +175,9 @@
       fetch('/forecast', {
           method: 'POST',
           headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json' /* Indica que el cos de la petició és JSON */
           },
-          body: JSON.stringify({
+          body: JSON.stringify({ /* Converteix l'objecte JavaScript a JSON */
               assetID: Array.from(document.getElementById('assetID').selectedOptions).map(option => option.value),
               generatorId: Array.from(document.getElementById('generatorId').selectedOptions).map(option => option.value),
               sourceId: Array.from(document.getElementById('sourceId').selectedOptions).map(option => option.value),
@@ -185,11 +185,11 @@
               buildingGenerationId: Array.from(document.getElementById('buildingGenerationId').selectedOptions).map(option => option.value)
           })
       })
-      .then(response => response.json())  
+      .then(response => response.json())  /* Converteix la resposta a JSON */
       .then(data => {
         alert(data.message || "L'entrenament s'ha completat amb èxit!");
       })
-      .catch((error) => {
+      .catch((error) => { /* Captura els errors */
         console.error('Error durant l’entrenament:', error);
         alert("Hi ha hagut un error durant l'entrenament. Si us plau, torna-ho a intentar.");
       });
