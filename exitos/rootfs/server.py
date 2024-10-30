@@ -3,6 +3,7 @@ import os # Importa el mòdul os
 import sqlDB as db  # Importa la base de dades
 from bottle import Bottle, template, run, static_file, HTTPError, redirect, request # Bottle és el que ens fa de servidor web
 import configparser
+from forecastingModel import forecastingModel
 
 # Paràmetres de l'execució
 HOSTNAME = '0.0.0.0'
@@ -11,6 +12,7 @@ PORT = 8000
 # Inicialització de l'aplicació i la base de dades
 app = Bottle() 
 database = db.sqlDB()
+model = forecastingModel()
 
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')
@@ -55,6 +57,11 @@ def submit():
     
     # Redirigeix a la plantilla principal
     return template('./www/main.html')
+
+@app.route('/forecast', method='POST')
+def forecast():
+    forecast_result = model.forecast(request.forms.get('timestamp'))
+    return template('./www/forecast.html', forecast = forecast_result)
 
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')

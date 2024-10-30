@@ -8,7 +8,9 @@ import os
 
 class sqlDB():
     def __init__(self):
-        "Crea la connexió a la base de dades"
+        '''
+        Constructor de la classe. Crea la connexió a la base de dades
+        '''
         # Nom de la base de dades
         self.filename = "/share/exitos/dades.db"
         
@@ -30,15 +32,18 @@ class sqlDB():
         self.__con__ = sqlite3.connect(self.filename, timeout=10)
     
     def __del__(self):
-        "Destructor de l'objecte. Tanca la connexió de manera segura"
+        '''
+        Destructor de l'objecte. Tanca la connexió de manera segura
+        '''
         try:
             self.__con__.close()  # Tanca la connexió, si existeix
         except AttributeError:
             pass  # Si la connexió no existeix, no fem res
     
     def __install__(self):
-        "Crea les taules inicials de la BDD de nou"
-           
+        '''
+        Crea les taules inicials de la BDD
+        '''
         print("Creem una BDD nova")
         con = sqlite3.connect(self.filename)        
         cur = con.cursor()
@@ -51,6 +56,9 @@ class sqlDB():
         con.close()
         
     def get_sensor_names_Wh(self):
+        '''
+        Returns a list of sensors that measure energy in Wh or kWh
+        '''
         print("Searching for sensors list")
         response = get(self.base_url + 'states', headers=self.headers)
         sensors_list = pd.json_normalize(response.json())
@@ -65,6 +73,9 @@ class sqlDB():
             return "Doesn't work"
 
     def get_sensor_names(self):
+        '''
+        Returns a list of sensors that measure energy
+        '''
         print("Searching for sensors list")
         sensors = pd.json_normalize(get(self.base_url + 'states', headers=self.headers).json())
         if 'entity_id' in sensors.columns:
@@ -73,9 +84,11 @@ class sqlDB():
             print("'entity_id' column not found in response data")
             print(f"Available columns: {sensors.columns.tolist()}")
             return "Doesn't work"
-    
-    
+        
     def update(self):
+        '''
+        Actualitza la base de dades amb les dades de la API de Home Assistant
+        '''
         try:
             print("Iniciant Update de la BDD")
                 
@@ -155,9 +168,10 @@ class sqlDB():
             print('['+time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())+']'+"-- No s'ha pogut inserir o descarregar dades!")
             traceback.print_exc() 
 
-
     def query(self, sql):
-        "Executa una query a la bdd"
+        '''
+        Executa una query a la base de dades
+        '''
         cur = self.__con__.cursor()
         cur.execute(sql)
         result = cur.fetchall()
