@@ -172,28 +172,43 @@
     }
 
     function forecast() {
+      const assetID = Array.from(document.getElementById('assetID').selectedOptions).map(option => option.value);
+      const generatorId = Array.from(document.getElementById('generatorId').selectedOptions).map(option => option.value);
+      const sourceId = Array.from(document.getElementById('sourceId').selectedOptions).map(option => option.value);
+      const buildingConsumptionId = Array.from(document.getElementById('buildingConsumptionId').selectedOptions).map(option => option.value);
+      const buildingGenerationId = Array.from(document.getElementById('buildingGenerationId').selectedOptions).map(option => option.value);
+
+      // Debugging: Print each array to ensure values are being captured
+      console.log("assetID:", assetID);
+      console.log("generatorId:", generatorId);
+      console.log("sourceId:", sourceId);
+      console.log("buildingConsumptionId:", buildingConsumptionId);
+      console.log("buildingGenerationId:", buildingGenerationId);
+
+      const body = {
+          assetID,
+          generatorId,
+          sourceId,
+          buildingConsumptionId,
+          buildingGenerationId
+      };
+
       fetch('/forecast', {
           method: 'POST',
           headers: {
-              'Content-Type': 'application/json' /* Indica que el cos de la petició és JSON */
+              'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ /* Converteix l'objecte JavaScript a JSON */
-              assetID: Array.from(document.getElementById('assetID').selectedOptions).map(option => option.value),
-              generatorId: Array.from(document.getElementById('generatorId').selectedOptions).map(option => option.value),
-              sourceId: Array.from(document.getElementById('sourceId').selectedOptions).map(option => option.value),
-              buildingConsumptionId: Array.from(document.getElementById('buildingConsumptionId').selectedOptions).map(option => option.value),
-              buildingGenerationId: Array.from(document.getElementById('buildingGenerationId').selectedOptions).map(option => option.value)
-          })
+          body: JSON.stringify(body)
       })
-      .then(response => response.json())  /* Converteix la resposta a JSON */
+      .then(response => response.json())
       .then(data => {
-        alert(data.message || "L'entrenament s'ha completat amb èxit!");
+          alert(data.message || "L'entrenament s'ha completat amb èxit!");
       })
-      .catch((error) => { /* Captura els errors */
-        console.error('Error durant l’entrenament:', error);
-        alert("Hi ha hagut un error durant l'entrenament. Si us plau, torna-ho a intentar.", Array.from(document.getElementById('assetID').selectedOptions).map(option => option.value));
+      .catch((error) => {
+          console.error('Error durant l’entrenament:', error);
+          alert("Hi ha hagut un error durant l'entrenament. Si us plau, torna-ho a intentar.");
       });
-    }
+  }
   </script>
   
   <footer class="text-center py-3" style="background-color: #2c6e49; color: white;">
