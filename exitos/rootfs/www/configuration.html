@@ -103,7 +103,7 @@
                 <select class="form-select" id="assetID" name="assetID[]" required onchange="updateSelection('assetID', 'selectedAssets')">
                     <option value="" disabled selected>Controllable Asset IDs</option>
                     % for sensor in sensors:
-                        <option value="{{sensor}}">{{sensor}}{{units}}</option>
+                        <option value="{{sensor}}">{{sensor}}{{units[0]}}</option>
                     % end
                 </select>
                 <div class="invalid-feedback">Si us plau, selecciona un actiu controlable.</div>
@@ -115,7 +115,7 @@
                 <select class="form-select" id="generatorId" name="generatorId[]" required onchange="updateSelection('generatorId', 'selectedGenerators')">
                     <option value="" disabled selected>Controllable Generator IDs</option>
                     % for sensor in sensors:
-                        <option value="{{sensor}}">{{sensor}}{{units}}</option>
+                        <option value="{{sensor}}">{{sensor}}{{units[0]}}</option>
                     % end
                 </select>
                 <div class="invalid-feedback">Si us plau, selecciona un generador controlable.</div>
@@ -127,7 +127,7 @@
                 <select class="form-select" id="sourceId" name="sourceId[]" required onchange="updateSelection('sourceId', 'selectedSources')">
                     <option value="" disabled selected>Controllable Energy Source IDs</option>
                     % for sensor in sensors:
-                        <option value="{{sensor}}">{{sensor}}{{units}}</option>
+                        <option value="{{sensor}}">{{sensor}}{{units[0]}}</option>
                     % end
                 </select>
                 <div class="invalid-feedback">Si us plau, selecciona una font d'energia controlable.</div>
@@ -139,7 +139,7 @@
                 <select class="form-select" id="buildingConsumptionId" name="buildingConsumptionId[]" required onchange="updateSelection('buildingConsumptionId', 'selectedConsumptionBuild')">
                     <option value="" disabled selected>Base Building Consumption IDs</option>
                     % for sensor in sensors:
-                        <option value="{{sensor}}">{{sensor}}{{units}}</option>
+                        <option value="{{sensor}}">{{sensor}}{{units[0]}}</option>
                     % end
                 </select>
                 <div class="invalid-feedback">Si us plau, selecciona un consum d'edifici.</div>
@@ -151,7 +151,7 @@
                 <select class="form-select" id="buildingGenerationId" name="buildingGenerationId[]" required onchange="updateSelection('buildingGenerationId', 'selectedGenerationId')">
                     <option value="" disabled selected>Base Building Generation IDs</option>
                     % for sensor in sensors:
-                        <option value="{{sensor}}">{{sensor}}{{units}}</option>
+                        <option value="{{sensor}}">{{sensor}}{{units[0]}}</option>
                     % end
                 </select>
                 <div class="invalid-feedback">Si us plau, selecciona una generació d'edifici.</div>
@@ -172,43 +172,21 @@
     }
 
     function forecast() {
-      const assetID = Array.from(document.getElementById('assetID').selectedOptions).map(option => option.value);
-      const generatorId = Array.from(document.getElementById('generatorId').selectedOptions).map(option => option.value);
-      const sourceId = Array.from(document.getElementById('sourceId').selectedOptions).map(option => option.value);
-      const buildingConsumptionId = Array.from(document.getElementById('buildingConsumptionId').selectedOptions).map(option => option.value);
-      const buildingGenerationId = Array.from(document.getElementById('buildingGenerationId').selectedOptions).map(option => option.value);
-
-      // Debugging: Print each array to ensure values are being captured
-      console.log("assetID:", assetID);
-      console.log("generatorId:", generatorId);
-      console.log("sourceId:", sourceId);
-      console.log("buildingConsumptionId:", buildingConsumptionId);
-      console.log("buildingGenerationId:", buildingGenerationId);
-
-      const body = {
-          assetID,
-          generatorId,
-          sourceId,
-          buildingConsumptionId,
-          buildingGenerationId
-      };
-
+      // Sending a petition to the server
       fetch('/forecast', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(body)
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
       })
       .then(response => response.json())
       .then(data => {
-          alert(data.message || "L'entrenament s'ha completat amb èxit!");
+        alert(data.message);
       })
       .catch((error) => {
-          console.error('Error durant l’entrenament:', error);
-          alert("Hi ha hagut un error durant l'entrenament. Si us plau, torna-ho a intentar.");
+        console.error('Error:', error);
       });
-  }
+    }
   </script>
   
   <footer class="text-center py-3" style="background-color: #2c6e49; color: white;">

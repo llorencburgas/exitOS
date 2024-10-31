@@ -60,7 +60,16 @@ def submit():
 
 @app.route('/forecast', method='POST')
 def forecast():
-    forecast_result = model.forecast(request.forms.get('timestamp')) # Obtenim el valor predit del formulari
+    # Recollim els valors del cos de la petició
+    assetID = request.forms.get('assetId')
+    generatorID = request.forms.get('generatorId')
+    sourceID = request.forms.get('sourceId')
+    buildingConsumptionID = request.forms.get('buildingConsumptionId')
+    buildingGenerationID = request.forms.get('buildingGenerationId')
+    print(assetID, generatorID, sourceID, buildingConsumptionID, buildingGenerationID)
+
+    # Obtenim les dades de la base de dades
+    forecast_result = model.forecast(database, assetID, generatorID, sourceID, buildingConsumptionID, buildingGenerationID)
     return template('./www/forecast.html', forecast = forecast_result) # Retornem la plantilla amb el valor predit
 
 # Ruta dinàmica per a les pàgines HTML
