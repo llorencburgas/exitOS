@@ -190,9 +190,8 @@
         alert(data.message || "L'entrenament s'ha completat amb èxit!");
       })
       .catch((error) => { /* Captura els errors */
-        console.log('assetID', Array.from(document.getElementById('assetID').selectedOptions).map(option => option.value));
         console.error('Error durant l’entrenament:', error);
-        alert("Hi ha hagut un error durant l'entrenament. Si us plau, torna-ho a intentar.");
+        alert("Hi ha hagut un error durant l'entrenament. Si us plau, torna-ho a intentar.", Array.from(document.getElementById('assetID').selectedOptions).map(option => option.value));
       });
     }
   </script>
