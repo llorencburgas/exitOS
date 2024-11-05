@@ -56,7 +56,7 @@ def submit():
         config.write(configfile)
     
     # Redirigeix a la plantilla principal
-    return template('./www/main.html')
+    return template('./www/forecast.html')
 
 @app.route('/forecast', method='POST')
 def forecast():
