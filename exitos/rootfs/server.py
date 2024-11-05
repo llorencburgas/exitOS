@@ -52,8 +52,9 @@ def submit():
     }
     
     # Escriu les dades al fitxer de configuració
-    with open('./share/exitos/user_info.conf', 'w') as configfile:
+    with open('./user_info.conf', 'w') as configfile:
         config.write(configfile)
+        print("Config file created successfully!")
     
     # Redirigeix a la plantilla principal
     return template('./www/forecast.html')
