@@ -32,7 +32,7 @@ class forecastingModel():
 
         # Extreu les dades de la secció 'UserInfo'
         return {
-            'asset_id': config.get('UserInfo', 'AssetID', fallback=None),
+            'asset_id': config.get('UserInfo', 'AssetID'),
             'generator_id': config.get('UserInfo', 'GeneratorID', fallback=None),
             'source_id': config.get('UserInfo', 'SourceID', fallback=None),
             'building_consumption_id': config.get('UserInfo', 'BuildingConsumptionID', fallback=None),

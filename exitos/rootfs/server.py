@@ -33,6 +33,9 @@ def get_configuration():
 # Ruta per enviar el formulari de configuració
 @app.route('/submit', method='POST')
 def submit():
+    # Mostra el formulari per verificar què arriba
+    print(request.forms)
+    
     asset_id = request.forms.get('assetId')
     generator_id = request.forms.get('generatorId')
     source_id = request.forms.get('sourceId')
