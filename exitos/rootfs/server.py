@@ -57,7 +57,7 @@ def submit():
         print("Config file created successfully!")
     
     # Redirigeix a la plantilla principal
-    return template('./www/forecast.html')
+    return template('./share/exitos/user_info.conf')
 
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')
