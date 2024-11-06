@@ -5,7 +5,7 @@ import configparser
 import os
 
 class forecastingModel():
-    def __init__(self, config_path='./user_info.conf'):
+    def __init__(self, config_path='./share/exitos/user_info.conf'):
         '''
         Constructor de la classe
         '''
