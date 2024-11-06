@@ -1,7 +1,6 @@
 from sklearn.linear_model import LinearRegression 
 import numpy as np
 import sqlDB as db
-import sqlite3
 import configparser
 import os
 
@@ -58,3 +57,11 @@ class forecastingModel():
         Prediu el valor del sensor en el timestamp donat
         '''
         return self.model.predict(np.array([timestamp]).reshape(-1, 1))
+    
+    def print_config(self):
+        '''
+        Mostra els valors carregats des del fitxer de configuració (per verificar)
+        '''
+        print("Configuració carregada:")
+        for key, value in self.config.items():
+            print(f"{key}: {value}")

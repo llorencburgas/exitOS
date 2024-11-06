@@ -158,8 +158,8 @@
                 <div id="selectedGenerationId" class="mt-2 text-success"></div>
             </div>
 
-            <button type="submit" class="btn btn-success" style="background-color: #2c6e49;" onclick="trainModel()">Train</button>
-            <button type="button" class="btn btn-success" style="background-color: #2c6e49;" onclick="forecast()">Forecast</button>
+            <button type="submit" class="btn btn-success" style="background-color: #2c6e49;">Train</button>
+            <button type="submit" class="btn btn-success" style="background-color: #2c6e49;">Forecast</button>
         </form>
     </div>
   </main>
@@ -169,23 +169,6 @@
         const selectElement = document.getElementById(selectId);
         const selectedOptions = Array.from(selectElement.selectedOptions).map(option => option.value);
         document.getElementById(displayId).innerText = selectedOptions.length ? selectedOptions.join(', ') : 'No selections made.';
-    }
-
-    function forecast() {
-      // Sending a petition to the server
-      fetch('/forecast', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-      })
-      .then(response => response.json())
-      .then(data => {
-        alert(data.message);
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-      });
     }
   </script>
   
