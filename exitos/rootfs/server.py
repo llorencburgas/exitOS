@@ -54,6 +54,10 @@ def submit():
         'BuildingGenerationID': str(building_generation_id),
         'Hello': "World"
     }
+
+    # Esborra el fitxer abans de reescriure
+    if os.path.exists('./user_info.conf'):
+        os.remove('./user_info.conf')
     
     # Escriu les dades al fitxer de configuració
     with open('./user_info.conf', 'w') as configfile:
