@@ -55,17 +55,19 @@ def submit():
         'Hello': "World"
     }
 
+    config_path = './share/exitos/user_info.conf'
+
     # Esborra el fitxer abans de reescriure
-    if os.path.exists('.share/exitos/user_info.conf'):
-        os.remove('.share/exitos/user_info.conf')
+    if os.path.exists(config_path):
+        os.remove(config_path)
     
     # Escriu les dades al fitxer de configuració
-    with open('.share/exitos/user_info.conf', 'w') as configfile:
+    with open(config_path, 'w') as configfile:
         config.write(configfile)
         print("Config file created successfully!")
     
     # Redirigeix a la plantilla principal
-    return template('./share/exitos/user_info.conf')
+    return template('./www/forecast.html')
 
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')
