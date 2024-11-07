@@ -33,19 +33,19 @@ def get_configuration():
 # Ruta per enviar el formulari de configuració
 @app.route('/submit', method='POST')
 def submit():
-    # Mostra el formulari per verificar què arriba
-    print(request.forms)
+    # Obté totes les dades del formulari com a diccionari
+    data = request.POST.getall()
+    print("Totes les dades del formulari:", data)
     
-    asset_id = request.forms.get('assetId')
-    generator_id = request.forms.get('generatorId')
-    source_id = request.forms.get('sourceId')
-    building_consumption_id = request.forms.get('buildingConsumptionId')
-    building_generation_id = request.forms.get('buildingGenerationId')
+    # Assigna els valors als teus camps
+    asset_id = data.get('assetID')
+    generator_id = data.get('generatorId')
+    source_id = data.get('sourceId')
+    building_consumption_id = data.get('buildingConsumptionId')
+    building_generation_id = data.get('buildingGenerationId')
     
-    # Crea una instància de ConfigParser
+    # La resta del codi segueix igual
     config = configparser.ConfigParser()
-    
-    # Afegeix les dades al fitxer de configuració
     config['UserInfo'] = {
         'AssetID': str(asset_id),
         'GeneratorID': str(generator_id),
