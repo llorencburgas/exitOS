@@ -51,7 +51,8 @@ def submit():
         'GeneratorID': str(generator_id),
         'SourceID': str(source_id),
         'BuildingConsumptionID': str(building_consumption_id),
-        'BuildingGenerationID': str(building_generation_id)
+        'BuildingGenerationID': str(building_generation_id),
+        'Hello': "World"
     }
     
     # Escriu les dades al fitxer de configuració
