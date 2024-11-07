@@ -33,16 +33,16 @@ def get_configuration():
 # Ruta per enviar el formulari de configuració
 @app.route('/submit', method='POST')
 def submit():
-    # Obté totes les dades del formulari com a diccionari
-    data = request.POST.getall()
-    print("Totes les dades del formulari:", data)
+     # Captura totes les dades com a diccionari
+    form_data = request.forms.dict
+    print("Form Data:", form_data)  # Mostra les dades per depurar
     
-    # Assigna els valors als teus camps
-    asset_id = data.get('assetID')
-    generator_id = data.get('generatorId')
-    source_id = data.get('sourceId')
-    building_consumption_id = data.get('buildingConsumptionId')
-    building_generation_id = data.get('buildingGenerationId')
+    # Assigna les dades directament o amb `get` si cal
+    asset_id = form_data.get('assetID')
+    generator_id = form_data.get('generatorId')
+    source_id = form_data.get('sourceId')
+    building_consumption_id = form_data.get('buildingConsumptionId')
+    building_generation_id = form_data.get('buildingGenerationId')
     
     # La resta del codi segueix igual
     config = configparser.ConfigParser()
