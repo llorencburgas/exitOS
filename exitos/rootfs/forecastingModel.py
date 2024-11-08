@@ -20,13 +20,9 @@ class forecastingModel():
     def load_user_info_config(self):
         '''
         Carrega les dades de configuració de l'usuari
-        
+        '''
         config = configparser.ConfigParser()
         
-        # Verifica si el fitxer existeix
-        if not os.path.exists(self.config_path):
-            raise FileNotFoundError(f"El fitxer de configuració {self.config_path} no existeix.")
-
         # Carrega el fitxer de configuració
         config.read(self.config_path)
 
@@ -37,7 +33,7 @@ class forecastingModel():
             'source_id': config.get('UserInfo', 'SourceID', fallback=None),
             'building_consumption_id': config.get('UserInfo', 'BuildingConsumptionID', fallback=None),
             'building_generation_id': config.get('UserInfo', 'BuildingGenerationID', fallback=None)
-        }'''
+        }
 
     def train_model(self, sensor_id):
         '''
