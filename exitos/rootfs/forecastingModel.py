@@ -3,6 +3,7 @@ import numpy as np
 import sqlDB as db
 import configparser
 import os
+import pandas as pd
 
 class forecastingModel():
     def __init__(self, config_path='./share/exitos/user_info.conf'):
@@ -12,7 +13,7 @@ class forecastingModel():
 
         self.db = db.sqlDB() # Creem una instància de la base de dades
         self.model = LinearRegression() # Creem una instància del model de regressió lineal
-        self.config_path = config_path # Ruta al ficher de configuració
+        self.config_path = config_path # Ruta al fitxer de configuració
 
         # Carreguem les dades de configuració
         self.config = self.load_user_info_config()
@@ -20,24 +21,33 @@ class forecastingModel():
     def load_user_info_config(self):
         '''
         Carrega les dades de configuració de l'usuari
-        
+        '''
+
         config = configparser.ConfigParser()
         
-        # Verifica si el fitxer existeix
-        if not os.path.exists(self.config_path):
-            raise FileNotFoundError(f"El fitxer de configuració {self.config_path} no existeix.")
-
         # Carrega el fitxer de configuració
         config.read(self.config_path)
 
-        # Extreu les dades de la secció 'UserInfo'
-        return {
-            'asset_id': config.get('UserInfo', 'AssetID'),
-            'generator_id': config.get('UserInfo', 'GeneratorID', fallback=None),
-            'source_id': config.get('UserInfo', 'SourceID', fallback=None),
-            'building_consumption_id': config.get('UserInfo', 'BuildingConsumptionID', fallback=None),
-            'building_generation_id': config.get('UserInfo', 'BuildingGenerationID', fallback=None)
-        }'''
+        # Extreu els sensor_id de cada secció
+        assetid = config.get('UserInfo', 'assetid').strip("[]").replace("'", "").split(',')
+        generatorid = config.get('UserInfo', 'generatorid').strip("[]").replace("'", "").split(',')
+        sourceid = config.get('UserInfo', 'sourceid').strip("[]").replace("'", "").split(',')
+        buildingconsumptionid = config.get('UserInfo', 'buildingconsumptionid').strip("[]").replace("'", "").split(',')
+        buildinggenerationid = config.get('UserInfo', 'buildinggenerationid').strip("[]").replace("'", "").split(',')
+
+        # Retorna un diccionari amb els valors carregats
+        sensor_ids = assetid + generatorid + sourceid + buildingconsumptionid + buildinggenerationid
+
+        data = {}
+        for sensor_id in sensor_ids:
+            query = """
+                SELECT timestamp, value
+                FROM dades
+                WHERE sensor_id = ?
+                """
+            data[sensor_id] = pd.read_sql_query(query, self.db.con, params=(sensor_id,))
+
+        return data
 
     def train_model(self, sensor_id):
         '''
