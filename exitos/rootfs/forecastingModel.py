@@ -22,32 +22,17 @@ class forecastingModel():
         '''
         Carrega les dades de configuració de l'usuari
         '''
-
-        config = configparser.ConfigParser()
         
-        # Carrega el fitxer de configuració
-        config.read(self.config_path)
-
-        # Extreu els sensor_id de cada secció
-        assetid = config.get('UserInfo', 'assetid').strip("[]").replace("'", "").split(',')
-        generatorid = config.get('UserInfo', 'generatorid').strip("[]").replace("'", "").split(',')
-        sourceid = config.get('UserInfo', 'sourceid').strip("[]").replace("'", "").split(',')
-        buildingconsumptionid = config.get('UserInfo', 'buildingconsumptionid').strip("[]").replace("'", "").split(',')
-        buildinggenerationid = config.get('UserInfo', 'buildinggenerationid').strip("[]").replace("'", "").split(',')
-
-        # Retorna un diccionari amb els valors carregats
-        sensor_ids = assetid + generatorid + sourceid + buildingconsumptionid + buildinggenerationid
-
-        data = {}
-        for sensor_id in sensor_ids:
-            query = """
-                SELECT timestamp, value
-                FROM dades
-                WHERE sensor_id = ?
-                """
-            data[sensor_id] = pd.read_sql_query(query, self.db.con, params=(sensor_id,))
-
-        return data
+=======
+        # Extreu les dades de la secció 'UserInfo'
+        return {
+            'asset_id': config.get('UserInfo', 'AssetID'),
+            'generator_id': config.get('UserInfo', 'GeneratorID', fallback=None),
+            'source_id': config.get('UserInfo', 'SourceID', fallback=None),
+            'building_consumption_id': config.get('UserInfo', 'BuildingConsumptionID', fallback=None),
+            'building_generation_id': config.get('UserInfo', 'BuildingGenerationID', fallback=None)
+        }
+>>>>>>> 2aecb8d1059219e789779147a0245ef8c90e03ba
 
     def train_model(self, sensor_id):
         '''
