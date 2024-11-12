@@ -44,7 +44,7 @@ class forecastingModel():
                 FROM dades
                 WHERE sensor_id = ?
                 """
-            data[sensor_id] = pd.read_sql_query(query, self.db.con, params=(sensor_id,))
+            data[sensor_id] = pd.read_sql_query(query, self.db.__con__, params=(sensor_id,))
 
         return data
 
