@@ -59,6 +59,9 @@ def submit():
     # Escriu les dades al fitxer de configuració
     with open(config_path, 'w') as configfile:
         config.write(configfile)
+
+    # Actualitza la configuració carregada
+    database.config = database.load_user_info_config()
     
     # Redirigeix a la plantilla principal
     return template('./www/forecast.html')

@@ -5,6 +5,8 @@ import pandas as pd
 from requests import get
 import traceback
 import os
+import configparser
+
 
 class sqlDB():
     def __init__(self):
@@ -13,6 +15,7 @@ class sqlDB():
         '''
         # Nom de la base de dades
         self.filename = "/share/exitos/dades.db"
+        self.config_path = '/share/exitos/user_info.conf'
         
         #per conectar a la api de home assistant
         self.supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
@@ -189,4 +192,28 @@ class sqlDB():
         cur.execute(sql)
         result = cur.fetchall()
         cur.close()
+        
         return result
+    
+    def load_user_info_config(self):
+        '''
+        Select values from dades taken from the user_info.conf file 
+        '''
+        config = configparser.ConfigParser()
+        config.read(self.config_path)
+
+        # Get the values from the config file
+        user_info = {}
+        user_info['assetid'] = config.get('UserInfo', 'assetid')
+        user_info['generatorid'] = config.get('UserInfo', 'generatorid')
+        user_info['sourceid'] = config.get('UserInfo', 'sourceid')
+        user_info['buildingconsumptionid'] = config.get('UserInfo', 'buildingconsumptionid')
+        user_info['buildinggenerationid'] = config.get('UserInfo', 'buildinggenerationid')
+
+        # Select the values from the dades table
+        cur = self.__con__.cursor()
+        cur.execute("SELECT * FROM dades")
+        result = cur.fetchall()
+        cur.close()
+
+        return user_info, result

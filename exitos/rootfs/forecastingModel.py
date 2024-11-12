@@ -15,38 +15,6 @@ class forecastingModel():
         self.model = LinearRegression() # Creem una instància del model de regressió lineal
         self.config_path = config_path # Ruta al fitxer de configuració
 
-        # Carreguem les dades de configuració
-        self.config = self.load_user_info_config()
-
-    def load_user_info_config(self):
-        '''
-        Carrega les dades de configuració de l'usuari
-        '''
-        config = configparser.ConfigParser()
-        
-        # Carrega el fitxer de configuració
-        config.read(self.config_path)
-
-        # Extreu els sensor_id de cada secció
-        assetid = config.get('UserInfo', 'assetid').strip("[]").replace("'", "").split(',')
-        generatorid = config.get('UserInfo', 'generatorid').strip("[]").replace("'", "").split(',')
-        sourceid = config.get('UserInfo', 'sourceid').strip("[]").replace("'", "").split(',')
-        buildingconsumptionid = config.get('UserInfo', 'buildingconsumptionid').strip("[]").replace("'", "").split(',')
-        buildinggenerationid = config.get('UserInfo', 'buildinggenerationid').strip("[]").replace("'", "").split(',')
-
-        # Retorna un diccionari amb els valors carregats
-        sensor_ids = assetid + generatorid + sourceid + buildingconsumptionid + buildinggenerationid
-
-        data = {}
-        for sensor_id in sensor_ids:
-            query = """
-                SELECT timestamp, value
-                FROM dades
-                WHERE sensor_id = ?
-                """
-            data[sensor_id] = pd.read_sql_query(query, self.db.__con__, params=(sensor_id,))
-
-        return data
 
     def train_model(self, sensor_id):
         '''
