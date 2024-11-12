@@ -192,7 +192,7 @@ class sqlDB():
         cur.execute(sql)
         result = cur.fetchall()
         cur.close()
-        
+
         return result
     
     def load_user_info_config(self):
@@ -203,17 +203,22 @@ class sqlDB():
         config.read(self.config_path)
 
         # Get the values from the config file
-        user_info = {}
-        user_info['assetid'] = config.get('UserInfo', 'assetid')
-        user_info['generatorid'] = config.get('UserInfo', 'generatorid')
-        user_info['sourceid'] = config.get('UserInfo', 'sourceid')
-        user_info['buildingconsumptionid'] = config.get('UserInfo', 'buildingconsumptionid')
-        user_info['buildinggenerationid'] = config.get('UserInfo', 'buildinggenerationid')
-
+        user_info = {
+            'assetid': config.get('UserInfo', 'assetid'),
+            'generatorid': config.get('UserInfo', 'generatorid'),
+            'sourceid': config.get('UserInfo', 'sourceid'),
+            'buildingconsumptionid': config.get('UserInfo', 'buildingconsumptionid'),
+            'buildinggenerationid': config.get('UserInfo', 'buildinggenerationid')
+        }
+        
         # Select the values from the dades table
-        cur = self.__con__.cursor()
-        cur.execute("SELECT * FROM dades")
-        result = cur.fetchall()
-        cur.close()
+        data = {}
+        for sensor_id in user_info:
+            query = """
+            SELECT timestamp, value
+            FROM dades
+            WHERE sensor_id = ?
+        """
+        data[sensor_id] = pd.read_sql_query(query, self.__con__, params=(user_info[sensor_id],))
 
-        return user_info, result
+        return data
