@@ -104,7 +104,10 @@
   <main class="container my-5">
     <h1 class="text-center">Comunitat Energètica eXIT</h1>
     <div id="ha-data" class="list-group mb-4">
-      <h3>Sensors de l'usuari</h3>
+      <h2>Informació de l'usuari</h2>
+      <p>IP: {{ip}}</p>
+      <p>Token: {{token}}</p>
+      <h3>Sensors controlables de l'usuari</h3>
       <ul>
         % for sensor in sensors:
             <li>{{sensor}}</li>
