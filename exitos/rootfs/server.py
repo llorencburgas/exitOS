@@ -22,13 +22,17 @@ def serve_static(filepath):
 # Ruta inicial
 @app.get('/')
 def get_init():
-    return template('./www/main.html')
+    sensors = database.get_sensor_names_Wh()
+    ip = request.environ.get('REMOTE_ADDR')
+    return template('./www/main.html', sensors = sensors['entity_id'].tolist(), ip = ip)
 
 # Ruta per la configuració de sensors
 @app.get('/configuration')
 def get_configuration():
     sensors = database.get_sensor_names_Wh()
-    return template('./www/configuration.html', sensors = sensors['entity_id'].tolist(), units = sensors['attributes.unit_of_measurement'].tolist())    
+    return template('./www/configuration.html', 
+                    sensors = sensors['entity_id'].tolist(), 
+                    units = sensors['attributes.unit_of_measurement'].tolist())    
 
 # Ruta per enviar el formulari de configuració
 @app.route('/submit', method='POST')

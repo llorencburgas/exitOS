@@ -87,7 +87,14 @@ class sqlDB():
             print("'entity_id' column not found in response data")
             print(f"Available columns: {sensors.columns.tolist()}")
             return "Doesn't work"
-        
+    
+    def get_config_values(self):
+        '''
+        Returns the values of the API configuration and the sensor list
+        '''
+        return self.headers, self.base_url, self.get_sensor_names()
+
+
     def update(self):
         '''
         Actualitza la base de dades amb les dades de la API de Home Assistant
@@ -218,7 +225,7 @@ class sqlDB():
             SELECT timestamp, value
             FROM dades
             WHERE sensor_id = ?
-        """
+            """
         data[sensor_id] = pd.read_sql_query(query, self.__con__, params=(user_info[sensor_id],))
 
         return data
