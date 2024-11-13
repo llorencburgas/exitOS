@@ -103,6 +103,14 @@
 
   <main class="container my-5">
     <h1 class="text-center">Comunitat Energètica eXIT</h1>
+    <div id="ha-data" class="list-group mb-4">
+      <h3>Sensors de l'usuari</h3>
+      <ul>
+        % for sensor in sensors:
+            <li>{{sensor}}</li>
+        % end
+      </ul>  
+    </div>
     <p class="lead text-justify">
       La comunitat energètica eXIT és un projecte dedicat a gestionar l'energia d'una 
       comunitat de manera responsable i eficient, promovent el consum sostenible. 
@@ -121,14 +129,7 @@
     </ul>
     <p class="text-center">Gràcies per formar part de la nostra comunitat!</p>
     <img src="./static/community.webp" alt="Comunitat Energetica" class="community img-fluid mx-auto d-block" style="max-width: 80%;">
-    <div id="ha-data" class="list-group mb-4">
-      <h3>Sensors de l'usuari</h3>
-      <ul>
-        % for sensor in sensors:
-            <li>{{sensor}}</li>
-        % end
-      </ul>  
-    </div>
+    
   </main>
 
   <footer class="text-center py-3" style="background-color: #2c6e49; color: white;">

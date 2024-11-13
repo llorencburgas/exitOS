@@ -22,9 +22,9 @@ def serve_static(filepath):
 # Ruta inicial
 @app.get('/')
 def get_init():
-    sensors = ['sensor1', 'sensor2', 'sensor3']
+    sensors = database.get_sensor_names_Wh()
     #ip = request.environ.get('REMOTE_ADDR')
-    return template('./www/main.html', sensors = sensors) #, ip = ip
+    return template('./www/main.html', sensors = sensors['entity_id'].tolist()) #, ip = ip
 
 # Ruta per la configuració de sensors
 @app.get('/configuration')
