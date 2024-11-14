@@ -70,13 +70,12 @@ def submit():
 
     # Actualitza la configuració carregada
     data = database.load_user_info_config()  # Crida a la funció per obtenir les dades
-    sensor_data = data[0]  # Obté les dades dels sensors
 
     # Formata les dades per passar-les al template
-    formatted_data = {sensor_id: df.to_dict(orient='records') for sensor_id, df in sensor_data.items()}
+    formatted_data = {sensor_id: df.to_dict(orient='records') for sensor_id, df in data.items()}
 
     # Redirigeix a la plantilla forecast.html passant les dades
-    return template('./www/forecast.html', sensor_data=formatted_data)
+    return template('./www/forecast.html', data=formatted_data)
 
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')

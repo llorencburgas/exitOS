@@ -222,10 +222,10 @@ class sqlDB():
         data = {}
         for sensor_id in user_info:
             query = """
-            SELECT timestamp, value
-            FROM dades
-            WHERE sensor_id = ?
+                SELECT timestamp, value
+                FROM dades
+                WHERE sensor_id = ?
             """
-        data[sensor_id] = pd.read_sql_query(query, self.__con__, params=(user_info[sensor_id],))
+            data[sensor_id] = pd.read_sql_query(query, self.__con__, params=(user_info[sensor_id],))
 
         return data
