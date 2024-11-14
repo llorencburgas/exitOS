@@ -44,7 +44,7 @@ def get_configuration():
 @app.route('/submit', method='POST')
 def submit():
     # Captura totes les dades del formulari com a diccionari
-    form_data = request.forms.dict()
+    form_data = request.forms.dict
     print("Form Data:", form_data)  # Mostra les dades per depurar
     
     # Assigna les dades del formulari a variables individuals
