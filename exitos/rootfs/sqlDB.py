@@ -62,17 +62,30 @@ class sqlDB():
         '''
         Returns a list of sensors that measure energy in Wh or kWh
         '''
+        # Print a message indicating the start of the sensors search
         print("Searching for sensors list")
+        
+        # Send a GET request to the Home Assistant API to fetch the sensor data
         response = get(self.base_url + 'states', headers=self.headers)
+        
+        # Flatten the nested JSON response into a DataFrame
         sensors_list = pd.json_normalize(response.json())
+        
+        # Check if the 'entity_id' column exists in the response data
         if 'entity_id' in sensors_list.columns:
+            # Create a temporary DataFrame 'aux' cotaining 'entity_id' and 'unist_of_measurement'
             aux = sensors_list[['entity_id', 'attributes.unit_of_measurement']]
+            # Filter the sensors that measure energy in Wh or kWh
             llista = aux[aux['attributes.unit_of_measurement'] == 'Wh']
+            # Add sensors that measure energy in kWh
             llista = pd.concat([llista, aux[aux['attributes.unit_of_measurement'] == 'kWh']])
+            # Return the list of sensors
             return llista
         else:
+            # If 'entity_id' is not found, print and error message and list available columns
             print("'entity_id' column not found in response data")
             print(f"Available columns: {sensors_list.columns.tolist()}")
+            # Return a failure message
             return "Doesn't work"
 
     def get_sensor_names(self):

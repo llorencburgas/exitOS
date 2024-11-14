@@ -4,6 +4,8 @@ import sqlDB as db  # Importa la base de dades
 from bottle import Bottle, template, run, static_file, HTTPError, redirect, request # Bottle és el que ens fa de servidor web
 import configparser
 from forecastingModel import forecastingModel  # Importa la classe correcta
+import sqlite3
+import pandas as pd
 
 # Paràmetres de l'execució
 HOSTNAME = '0.0.0.0'
@@ -41,53 +43,42 @@ def get_configuration():
 # Ruta per enviar el formulari de configuració
 @app.route('/submit', method='POST')
 def submit():
-     # Captura totes les dades com a diccionari
-    form_data = request.forms.dict
+    # Captura totes les dades del formulari com a diccionari
+    form_data = request.forms.dict()
     print("Form Data:", form_data)  # Mostra les dades per depurar
     
-    # Assigna les dades dels sensors
-    sensor_ids = {
-        'assetID': form_data.get('assetID'),
-        'generatorId': form_data.get('generatorId'),
-        'sourceId': form_data.get('sourceId'),
-        'buildingConsumptionId': form_data.get('buildingConsumptionId'),
-        'buildingGenerationId': form_data.get('buildingGenerationId')
-    }
+    # Assigna les dades del formulari a variables individuals
+    asset_id = form_data.get('assetID')
+    generator_id = form_data.get('generatorId')
+    source_id = form_data.get('sourceId')
+    building_consumption_id = form_data.get('buildingConsumptionId')
+    building_generation_id = form_data.get('buildingGenerationId')
     
-    """ 
-    config = configparser.ConfigParser()
-    config['UserInfo'] = {
-        'AssetID': str(asset_id),
-        'GeneratorID': str(generator_id),
-        'SourceID': str(source_id),
-        'BuildingConsumptionID': str(building_consumption_id),
-        'BuildingGenerationID': str(building_generation_id),
-    config_path = './share/exitos/user_info.conf'
-    with open(config_path, 'w') as configfile:
-        config.write(configfile)
-    } """
-
-    try:
-        # Consulta directament a la base de dades
-        data = {}
-        for sensor_name, sensor_id in sensor_ids.items():
-            query = '''
-                SELECT timestamp, value
-                FROM dades
-                WHERE entity_id = ? '''
-            data[sensor_name] = database.query(query, (sensor_id,))
+    # Connexió a la base de dades SQLite
+    con = sqlite3.connect('dades.db')
+    cur = con.cursor()
     
-        formatted_data = {
-            sensor_name: df.to_dict(orient='records')
-            for sensor_name, df in data.items()
-        }
+    # Defineix la consulta SQL per obtenir dades dels sensors utilitzant els valors del formulari
+    query = """
+        SELECT timestamp, value
+        FROM dades
+        WHERE sensor_id IN (?, ?, ?, ?, ?)
+    """
+    
+    # Executa la consulta amb els ids obtinguts del formulari
+    cur.execute(query, (asset_id, generator_id, source_id, building_consumption_id, building_generation_id))
+    
+    # Recupera els resultats de la consulta i els emmagatzema en una variable
+    rows = cur.fetchall()
+    
+    # Passa les dades a un DataFrame per facilitar la manipulació
+    data = pd.DataFrame(rows, columns=['timestamp', 'value'])
+    
+    # Tanca la connexió a la base de dades
+    con.close()
 
-        # Redirigeix a la plantilla forecast.html passant les dades
-        return template('./www/forecast.html', data=formatted_data)
-
-    except Exception as e:
-        print("Error:", e)
-        return HTTPError(500, "Internal Server Error")
+    # Redirigeix a la plantilla 'forecast.html' i passa les dades obtingudes
+    return template('./www/forecast.html', data=data.to_dict(orient='list'))
 
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')
