@@ -229,3 +229,4 @@ class sqlDB():
             data[sensor_id] = pd.read_sql_query(query, self.__con__, params=(user_info[sensor_id],))
 
         return data
+    

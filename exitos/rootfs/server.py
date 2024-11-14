@@ -45,14 +45,16 @@ def submit():
     form_data = request.forms.dict
     print("Form Data:", form_data)  # Mostra les dades per depurar
     
-    # Assigna les dades directament o amb `get` si cal
-    asset_id = form_data.get('assetID')
-    generator_id = form_data.get('generatorId')
-    source_id = form_data.get('sourceId')
-    building_consumption_id = form_data.get('buildingConsumptionId')
-    building_generation_id = form_data.get('buildingGenerationId')
+    # Assigna les dades dels sensors
+    sensor_ids = {
+        'assetID': form_data.get('assetID'),
+        'generatorId': form_data.get('generatorId'),
+        'sourceId': form_data.get('sourceId'),
+        'buildingConsumptionId': form_data.get('buildingConsumptionId'),
+        'buildingGenerationId': form_data.get('buildingGenerationId')
+    }
     
-    # La resta del codi segueix igual
+    """ 
     config = configparser.ConfigParser()
     config['UserInfo'] = {
         'AssetID': str(asset_id),
@@ -60,22 +62,32 @@ def submit():
         'SourceID': str(source_id),
         'BuildingConsumptionID': str(building_consumption_id),
         'BuildingGenerationID': str(building_generation_id),
-    }
-
     config_path = './share/exitos/user_info.conf'
-
-    # Escriu les dades al fitxer de configuració
     with open(config_path, 'w') as configfile:
         config.write(configfile)
+    } """
 
-    # Actualitza la configuració carregada
-    data = database.load_user_info_config()  # Crida a la funció per obtenir les dades
+    try:
+        # Consulta directament a la base de dades
+        data = {}
+        for sensor_name, sensor_id in sensor_ids.items():
+            query = '''
+                SELECT timestamp, value
+                FROM dades
+                WHERE entity_id = ? '''
+            data[sensor_name] = database.query(query, (sensor_id,))
+    
+        formatted_data = {
+            sensor_name: df.to_dict(orient='records')
+            for sensor_name, df in data.items()
+        }
 
-    # Formata les dades per passar-les al template
-    formatted_data = {sensor_id: df.to_dict(orient='records') for sensor_id, df in data.items()}
+        # Redirigeix a la plantilla forecast.html passant les dades
+        return template('./www/forecast.html', data=formatted_data)
 
-    # Redirigeix a la plantilla forecast.html passant les dades
-    return template('./www/forecast.html', data=formatted_data)
+    except Exception as e:
+        print("Error:", e)
+        return HTTPError(500, "Internal Server Error")
 
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')
