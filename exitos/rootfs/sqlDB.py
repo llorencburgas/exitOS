@@ -108,20 +108,27 @@ class sqlDB():
         '''
 
         sensors_id = [asset_id, generator_id, source_id, building_consumption_id, building_generation_id]
+
+        # Filtra només els sensor_ids vàlids (no buits ni None)
+        valid_sensor_ids = [sensor_id for sensor_id in sensor_ids if sensor_id and isinstance(sensor_id, str)]
         
         # Select the values from the dades table
         data = {}
 
         # Connect to the database
         with sqlite3.connect(self.filename) as con:
-            for sensor_id in sensors_id:
+            for sensor_id in valid_sensor_ids:
                 if sensor_id:
                     query = """
                         SELECT timestamp, value
                         FROM dades
                         WHERE sensor_id = ?
                     """
-                    data[sensor_id] = pd.read_sql_query(query, con, params=(sensor_id,))
+                    try:
+                        data[sensor_id] = pd.read_sql_query(query, con, params=(sensor_id,))
+                    except Exception as e:
+                        print(f"Error querying sensor_id '{sensor_id}': {e}")
+                        data[sensor_id] = pd.DataFrame()
 
         return data
     
