@@ -107,7 +107,7 @@ class sqlDB():
         
         '''
 
-        sensors_id = [asset_id, generator_id, source_id, building_consumption_id, building_generation_id]
+        sensor_ids = [asset_id, generator_id, source_id, building_consumption_id, building_generation_id]
 
         # Filtra només els sensor_ids vàlids (no buits ni None)
         valid_sensor_ids = [sensor_id for sensor_id in sensor_ids if sensor_id and isinstance(sensor_id, str)]
