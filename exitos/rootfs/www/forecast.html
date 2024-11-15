@@ -97,14 +97,26 @@
     <main class="container my-5">
       <div id="sensor-data" class="container">
         <h2>Dades dels Sensors</h2>
-        % for sensor_name, records in data.items():
-            <h3>Sensor: {{sensor_name}}</h3>
-            <ul>
-              % for record in records:
-                  <li>Timestamp: {{record.timestamp}}, Value: {{record.value}}</li>
+        <table>
+          <thead>
+              <tr>
+                  <th>Sensor ID</th>
+                  <th>Timestamp</th>
+                  <th>Value</th>
+              </tr>
+          </thead>
+          <tbody>
+              % for sensor_id, df in data.items():
+                  % for index, row in df.iterrows():
+                      <tr>
+                          <td>{{sensor_id}}</td>
+                          <td>{{row['timestamp']}}</td>
+                          <td>{{row['value']}}</td>
+                      </tr>
+                  % end
               % end
-          </ul>
-        % end
+          </tbody>
+      </table>
       </div>
     </main>
 

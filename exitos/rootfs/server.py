@@ -53,32 +53,11 @@ def submit():
     source_id = form_data.get('sourceId')
     building_consumption_id = form_data.get('buildingConsumptionId')
     building_generation_id = form_data.get('buildingGenerationId')
-    
-    # Connexió a la base de dades SQLite
-    con = sqlite3.connect('dades.db')
-    cur = con.cursor()
-    
-    # Defineix la consulta SQL per obtenir dades dels sensors utilitzant els valors del formulari
-    query = """
-        SELECT timestamp, value
-        FROM dades
-        WHERE sensor_id IN (?, ?, ?, ?, ?)
-    """
-    
-    # Executa la consulta amb els ids obtinguts del formulari
-    cur.execute(query, (asset_id, generator_id, source_id, building_consumption_id, building_generation_id))
-    
-    # Recupera els resultats de la consulta i els emmagatzema en una variable
-    rows = cur.fetchall()
-    
-    # Passa les dades a un DataFrame per facilitar la manipulació
-    data = pd.DataFrame(rows, columns=['timestamp', 'value'])
-    
-    # Tanca la connexió a la base de dades
-    con.close()
 
+    data = database.get_filtered_data(asset_id, generator_id, source_id, building_consumption_id, building_generation_id)
+    
     # Redirigeix a la plantilla 'forecast.html' i passa les dades obtingudes
-    return template('./www/forecast.html', data=data.to_dict(orient='list'))
+    return template('./www/forecast.html', data = data)
 
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')

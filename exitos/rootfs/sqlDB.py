@@ -101,6 +101,30 @@ class sqlDB():
             print(f"Available columns: {sensors.columns.tolist()}")
             return "Doesn't work"
     
+    def get_filtered_data(self, asset_id, generator_id, source_id, building_consumption_id, building_generation_id):
+        '''
+        Select values from dades taken from the user_info.conf file 
+        
+        '''
+
+        sensors_id = [asset_id, generator_id, source_id, building_consumption_id, building_generation_id]
+        
+        # Select the values from the dades table
+        data = {}
+
+        # Connect to the database
+        with sqlite3.connect(self.filename) as con:
+            for sensor_id in sensors_id:
+                if sensor_id:
+                    query = """
+                        SELECT timestamp, value
+                        FROM dades
+                        WHERE sensor_id = ?
+                    """
+                    data[sensor_id] = pd.read_sql_query(query, con, params=(sensor_id,))
+
+        return data
+    
     def get_config_values(self):
         '''
         Returns the values of the API configuration and the sensor list
@@ -215,31 +239,5 @@ class sqlDB():
 
         return result
     
-    def load_user_info_config(self):
-        '''
-        Select values from dades taken from the user_info.conf file 
-        '''
-        config = configparser.ConfigParser()
-        config.read(self.config_path)
-
-        # Get the values from the config file
-        user_info = {
-            'assetid': config.get('UserInfo', 'assetid'),
-            'generatorid': config.get('UserInfo', 'generatorid'),
-            'sourceid': config.get('UserInfo', 'sourceid'),
-            'buildingconsumptionid': config.get('UserInfo', 'buildingconsumptionid'),
-            'buildinggenerationid': config.get('UserInfo', 'buildinggenerationid')
-        }
-        
-        # Select the values from the dades table
-        data = {}
-        for sensor_id in user_info:
-            query = """
-                SELECT timestamp, value
-                FROM dades
-                WHERE sensor_id = ?
-            """
-            data[sensor_id] = pd.read_sql_query(query, self.__con__, params=(user_info[sensor_id],))
-
-        return data
+    
     
