@@ -106,17 +106,23 @@
               </tr>
           </thead>
           <tbody>
-              % for sensor_id, df in data.items():
-                  % for index, row in df.iterrows():
-                      <tr>
-                          <td>{{sensor_id}}</td>
-                          <td>{{row['timestamp']}}</td>
-                          <td>{{row['value']}}</td>
-                      </tr>
-                  % end
-              % end
+            % for sensor_id, df in data.items():
+                % if df.empty:
+                    <tr>
+                        <td colspan="3">No data available for sensor {{sensor_id}}</td>
+                    </tr>
+                % else:
+                    % for index, row in df.iterrows():
+                        <tr>
+                            <td>{{sensor_id}}</td>
+                            <td>{{row['timestamp']}}</td>
+                            <td>{{row['value']}}</td>
+                        </tr>
+                    % end
+                % end
+            % end
           </tbody>
-      </table>
+        </table>
       </div>
     </main>
 
