@@ -14,6 +14,7 @@ PORT = 8000
 # Inicialització de l'aplicació i la base de dades
 app = Bottle() 
 database = db.sqlDB()
+db.update()
 model = forecastingModel()
 
 # Ruta per servir fitxers estàtics i imatges des de 'www'

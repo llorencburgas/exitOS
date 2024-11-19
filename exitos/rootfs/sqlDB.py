@@ -103,33 +103,42 @@ class sqlDB():
     
     def get_filtered_data(self, asset_id, generator_id, source_id, building_consumption_id, building_generation_id):
         '''
-        Select values from dades taken from the user_info.conf file 
-        
-        '''
+        Select values from "dades" taken from the user_info.conf file 
 
+        Args:
+            asset_id (str): The ID of the asset sensor
+            generator_id (str): The ID of the generator sensor
+            source_id (str): The ID of the source sensor
+            building_consumption_id (str): The ID of the building consumption sensor
+            building_generation_id (str): The ID of the building generation sensor
+        
+        Returns:
+            data (dict): A dictionary containing the values of the sensors
+
+        '''
         sensor_ids = [asset_id, generator_id, source_id, building_consumption_id, building_generation_id]
 
         # Filtra només els sensor_ids vàlids (no buits ni None)
         valid_sensor_ids = [sensor_id for sensor_id in sensor_ids if sensor_id and isinstance(sensor_id, str)]
-        
+        print(valid_sensor_ids)
+
         # Select the values from the dades table
         data = {}
 
         # Connect to the database
         with sqlite3.connect(self.filename) as con:
             for sensor_id in valid_sensor_ids:
-                if sensor_id:
-                    query = """
-                        SELECT timestamp, value
-                        FROM dades
-                        WHERE sensor_id = ?
-                    """
-                    try:
+                try:
+                    if sensor_id:
+                        query = """
+                            SELECT timestamp, value
+                            FROM dades
+                            WHERE sensor_id = ? 
+                        """ #Utilitzem placeholders (?) dins de la consulta SQL per evitar problemes d'injecció SQL.
                         data[sensor_id] = pd.read_sql_query(query, con, params=(sensor_id,))
-                    except Exception as e:
+                except Exception as e:
                         print(f"Error querying sensor_id '{sensor_id}': {e}")
                         data[sensor_id] = pd.DataFrame()
-
         return data
     
     def get_config_values(self):
