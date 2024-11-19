@@ -55,6 +55,7 @@ def submit():
     building_generation_id = form_data.get('buildingGenerationId')
 
     data = database.get_filtered_data(asset_id, generator_id, source_id, building_consumption_id, building_generation_id)
+    print(data)
     
     # Redirigeix a la plantilla 'forecast.html' i passa les dades obtingudes
     return template('./www/forecast.html', data = data)
