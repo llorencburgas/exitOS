@@ -156,7 +156,8 @@ class sqlDB():
             print("Iniciant Update de la BDD")
                 
             # Obtenció de la llista de sensors disponibles a Home Assistant en format DataFrame
-            sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json())
+            #sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json())
+            sensors_list = self.get_sensor_names_Wh()
             
             # Itera sobre cada sensor obtingut
             for j in sensors_list.index:                
