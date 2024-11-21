@@ -157,11 +157,11 @@ class sqlDB():
             sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json()) # obtenció llista sensors de la API convertits en DataFrame
             print("Llista de sensors de l'API:", sensors_list)  # Depuració per veure la resposta de l'API
 
-            sensors_to_update = self.get_sensor_names_Wh() # obtenció llista de sensors de la BDD
-            print("Llista de sensors de la BDD:", sensors_to_update)  # Depuració per veure la resposta de la BDD
+            #sensors_to_update = self.get_sensor_names_Wh() # obtenció llista de sensors de la BDD
+            #print("Llista de sensors de la BDD:", sensors_to_update)  # Depuració per veure la resposta de la BDD
 
-            sensors_list = sensors_list[sensors_list['entity_id'].isin(sensors_to_update)] # filtra la llista de sensors de la API amb els de la BDD
-            print("Sensors a actualitzar:", sensors_list)  # Depuració per veure la resposta de la BDD
+            #sensors_list = sensors_list[sensors_list['entity_id'].isin(sensors_to_update)] # filtra la llista de sensors de la API amb els de la BDD
+            #print("Sensors a actualitzar:", sensors_list)  # Depuració per veure la resposta de la BDD
             
             for j in sensors_list.index: #per cada sensor de la llista         
                 id_sensor = sensors_list.iloc[j]['entity_id'] # es guarda el id del sensor
