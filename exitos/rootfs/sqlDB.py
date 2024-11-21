@@ -153,40 +153,31 @@ class sqlDB():
         Actualitza la base de dades amb les dades de la API de Home Assistant
         '''
         try:
-            print("Iniciant Update de la BDD")
-                
-            # Obtenció de la llista de sensors disponibles a Home Assistant en format DataFrame
-            #sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json())
-            sensors_list = self.get_sensor_names_Wh()
+            print("Iniciant l'actualització de la base de dades...")
+            sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json()) # obtenció llista sensors de la API convertits en DataFrame
+            sensors_to_update = self.get_sensor_names() # obtenció llista de sensors de la BDD
+            sensors_list = sensors_list[sensors_list['entity_id'].isin(sensors_to_update)] # filtra la llista de sensors de la API amb els de la BDD
             
-            # Itera sobre cada sensor obtingut
-            for j in sensors_list.index:                
-                # Obté l'ID del sensor actual
-                id_sensor = sensors_list.iloc[j]['entity_id']
+            for j in sensors_list.index: #per cada sensor de la llista         
+                id_sensor = sensors_list.iloc[j]['entity_id'] # es guarda el id del sensor
                 
-                # Crea un cursor per consultar la base de dades i comprova si el sensor ja existeix
+                # comprova si el sensor ja existeix a la base de dades
                 cur = self.__con__.cursor()
                 var = (id_sensor,)
                 llista = cur.execute('SELECT * FROM sensors WHERE sensor_id = ?', var).fetchall()
                 cur.close()
                 
+                # si el sensor no existeix, el crea
                 if len(llista) == 0:
-                    # Si el sensor no existeix a la base de dades, el crea
                     cur = self.__con__.cursor()
                     values = (id_sensor, sensors_list.iloc[j]['attributes.unit_of_measurement'], '', True)  # sensor_id, unitats, descripció, update_sensor
                     cur.execute("INSERT INTO sensors(sensor_id, units, description, update_sensor) VALUES(?, ?, ?, ?)", values)
                     cur.close()
                     self.__con__.commit()
-                    
-                    # Missatge de registre d'afegiment de sensor
-                    print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + '-- Afegit sensor: ' + id_sensor)
-                    
-                    # El sensor és nou, no té dades prèvies a la taula de dades
-                    llista = None
+                    print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + '-- Sensor afegit: ' + id_sensor)
+                    llista = None # inicialitza la llista per a la següent iteració
+                # si el sensor ja existeix, comprova si cal actualitzar les dades
                 else:
-                    # Si el sensor ja existeix, comprova si cal actualitzar les dades
-                    
-                    # Obté el timestamp i l'últim valor desat per aquest sensor
                     cur = self.__con__.cursor()
                     var = (id_sensor,)
                     aux = cur.execute('SELECT timestamp, value FROM dades WHERE sensor_id = ? ORDER BY timestamp DESC LIMIT 1', var).fetchone()
@@ -212,10 +203,8 @@ class sqlDB():
                 cur.close()
                 
                 if llista[0][0]:  # Si `update_sensor` és True
-                    print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + '-- Actualitzant sensor: ' + id_sensor)
-                    
-                    # Defineix el final de l'interval de temps per a la crida
-                    t_fi = "2099-01-01T00:00:00"
+                    print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + '-- Actualitzant sensor: ' + id_sensor)                   
+                    t_fi = "2099-01-01T00:00:00" # Defineix el final de l'interval de temps per a la crida
                     
                     # Fa una crida a l'API per obtenir l'històric de dades del sensor des de t_ini fins a t_fi
                     url = self.base_url + "history/period/" + t_ini + "?end_time=" + t_fi + "&filter_entity_id=" + id_sensor
