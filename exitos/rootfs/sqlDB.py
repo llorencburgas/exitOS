@@ -155,7 +155,7 @@ class sqlDB():
         try:
             print("Iniciant l'actualització de la base de dades...")
             sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json()) # obtenció llista sensors de la API convertits en DataFrame
-            sensors_to_update = self.get_sensor_names() # obtenció llista de sensors de la BDD
+            sensors_to_update = self.get_sensor_names_Wh() # obtenció llista de sensors de la BDD
             sensors_list = sensors_list[sensors_list['entity_id'].isin(sensors_to_update)] # filtra la llista de sensors de la API amb els de la BDD
             
             for j in sensors_list.index: #per cada sensor de la llista         
