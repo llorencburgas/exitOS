@@ -155,8 +155,13 @@ class sqlDB():
         try:
             print("Iniciant l'actualització de la base de dades...")
             sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json()) # obtenció llista sensors de la API convertits en DataFrame
+            print("Llista de sensors de l'API:", sensors_list)  # Depuració per veure la resposta de l'API
+
             sensors_to_update = self.get_sensor_names_Wh() # obtenció llista de sensors de la BDD
+            print("Llista de sensors de la BDD:", sensors_to_update)  # Depuració per veure la resposta de la BDD
+
             sensors_list = sensors_list[sensors_list['entity_id'].isin(sensors_to_update)] # filtra la llista de sensors de la API amb els de la BDD
+            print("Sensors a actualitzar:", sensors_list)  # Depuració per veure la resposta de la BDD
             
             for j in sensors_list.index: #per cada sensor de la llista         
                 id_sensor = sensors_list.iloc[j]['entity_id'] # es guarda el id del sensor
@@ -174,7 +179,7 @@ class sqlDB():
                     cur.execute("INSERT INTO sensors(sensor_id, units, description, update_sensor) VALUES(?, ?, ?, ?)", values)
                     cur.close()
                     self.__con__.commit()
-                    print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + '-- Sensor afegit: ' + id_sensor)
+                    print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + ' Afegint sensor: ' + id_sensor)
                     llista = None # inicialitza la llista per a la següent iteració
                 # si el sensor ja existeix, comprova si cal actualitzar les dades
                 else:
@@ -203,7 +208,7 @@ class sqlDB():
                 cur.close()
                 
                 if llista[0][0]:  # Si `update_sensor` és True
-                    print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + '-- Actualitzant sensor: ' + id_sensor)                   
+                    print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + ' Actualitzant sensor: ' + id_sensor)                   
                     t_fi = "2099-01-01T00:00:00" # Defineix el final de l'interval de temps per a la crida
                     
                     # Fa una crida a l'API per obtenir l'històric de dades del sensor des de t_ini fins a t_fi
@@ -231,7 +236,7 @@ class sqlDB():
                     self.__con__.commit()
         except:
             # Gestiona errors, mostrant un missatge d'error i la traça d'errors
-            print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + "-- No s'ha pogut inserir o descarregar dades!")
+            print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + " No s'han pogut inserir o descarregar dades...:(")
             traceback.print_exc()
 
     def query(self, sql):
