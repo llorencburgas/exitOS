@@ -87,7 +87,8 @@
             <li class="nav-item"><a class="nav-link" onclick="document.location = './main'">Inici</a></li>
             <li class="nav-item"><a class="nav-link" onclick="document.location = './management'">Management</a></li>
             <li class="nav-item"><a class="nav-link" onclick="document.location = './plot'">Plot</a></li>
-            <li class="nav-item"><a class="nav-link" onclick="document.location = './map'">Map</a></li>          
+            <li class="nav-item"><a class="nav-link" onclick="document.location = './map'">Map</a></li>    
+            <li class="nav-item"><a class="nav-link" onclick="document.location = './optimize'">Optimize</a></li>       
             <li class="nav-item"><a class="nav-link" onclick="document.location = './'">Forecast</a></li>
             </ul>
         </div>
@@ -95,40 +96,55 @@
     </div>
 
     <main class="container my-5">
-      <div id="sensor-data" class="container">
-        <h2>Dades dels Sensors</h2>
-        <table>
-          <thead>
-              <tr>
-                  <th>Sensor ID</th>
-                  <th>Timestamp</th>
-                  <th>Value</th>
-              </tr>
-          </thead>
-          <tbody>
-            % for sensor_id, df in data.items():
-                % if df.empty:
-                    <tr>
-                        <td colspan="3">No data available for sensor {{sensor_id}}</td>
-                    </tr>
-                % else:
-                    % for index, row in df.iterrows():
-                        <tr>
-                            <td>{{sensor_id}}</td>
-                            <td>{{row['timestamp']}}</td>
-                            <td>{{row['value']}}</td>
-                        </tr>
-                    % end
-                % end
-            % end
-          </tbody>
-        </table>
+      <div class="form-container text-center">
+          <h2 class="mb-4">Energy consumers and generators</h2>
+          <form action="./submit-forecast" method="post" class="needs-validation" novalidate>
+  
+              <!-- Dropdown per Consums d'Edifici -->
+              <div class="mb-4">
+                  <select class="form-select" id="buildingConsumptionId" name="buildingConsumptionId" required onchange="updateSelection('buildingConsumptionId', 'selectedConsumptionBuild')">
+                      <option value="" disabled selected>Base Building Consumption IDs</option>
+                      % for sensor in sensors:
+                          <option value="{{sensor}}">{{sensor}}{{units[0]}}</option>
+                      % end
+                  </select>
+                  <div class="invalid-feedback">Si us plau, selecciona un consum d'edifici.</div>
+                  <div id="selectedConsumptionBuild" class="mt-2 text-success"></div>
+              </div>
+  
+              <!-- Dropdown per Generació d'Edifici -->
+              <div class="mb-4">
+                  <select class="form-select" id="buildingGenerationId" name="buildingGenerationId" required onchange="updateSelection('buildingGenerationId', 'selectedGenerationId')">
+                      <option value="" disabled selected>Base Building Generation IDs</option>
+                      % for sensor in sensors:
+                          <option value="{{sensor}}">{{sensor}}{{units[0]}}</option>
+                      % end
+                  </select>
+                  <div class="invalid-feedback">Si us plau, selecciona una generació d'edifici.</div>
+                  <div id="selectedGenerationId" class="mt-2 text-success"></div>
+              </div>
+              
+              <button type="submit" name="action" value="train" class="btn btn-success" style="background-color: #2c6e49;">Train</button>
+              <button type="submit" name="action" value="forecast" class="btn btn-success" style="background-color: #a7d129;">Forecast</button>
+          </form>
       </div>
     </main>
-
+  
+    <script>
+      function updateSelection(selectId, displayId) {
+          const selectElement = document.getElementById(selectId);
+          const selectedOptions = Array.from(selectElement.selectedOptions).map(option => option.value);
+          document.getElementById(displayId).innerText = selectedOptions.length ? selectedOptions.join(', ') : 'No selections made.';
+      }
+    </script>
+    
     <footer class="text-center py-3" style="background-color: #2c6e49; color: white;">
-        <p>Created by: Grup Exit &nbsp; | &nbsp; Copyright © 2024</p>
-        <p><a href="mailto:ccomunitatenergeticaexit@gmail.com" class="text-white">comunitatenergeticaexit@gmail.com</a></p>
-    </footer> 
-</body>
-</html>
+      <p>Created by: Grup Exit &nbsp; | &nbsp; Copyright © 2024</p>
+      <p><a href="mailto:ccomunitatenergeticaexit@gmail.com" class="text-white">comunitatenergeticaexit@gmail.com</a></p>
+    </footer>
+  </body>
+  
+  
+  
+  </html>
+  

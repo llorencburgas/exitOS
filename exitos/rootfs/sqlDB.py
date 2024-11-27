@@ -101,9 +101,9 @@ class sqlDB():
             print(f"Available columns: {sensors.columns.tolist()}")
             return "Doesn't work"
     
-    def get_filtered_data(self, asset_id, generator_id, source_id, building_consumption_id, building_generation_id):
+    def get_filtered_data(self, sensors_id):
         '''
-        Select values from "dades" taken from the user_info.conf file 
+        Select values from "dades" taken from the DB 
 
         Args:
             asset_id (str): The ID of the asset sensor
@@ -116,10 +116,9 @@ class sqlDB():
             data (dict): A dictionary containing the values of the sensors
 
         '''
-        sensor_ids = [asset_id, generator_id, source_id, building_consumption_id, building_generation_id]
 
-        # Filtra només els sensor_ids vàlids (no buits ni None)
-        valid_sensor_ids = [sensor_id for sensor_id in sensor_ids if sensor_id and isinstance(sensor_id, str)]
+        # Filtra només els sensor_ids vàlids (no buits ni None) - narcís buscaria els que no
+        valid_sensor_ids = [sensor_id for sensor_id in sensors_id if sensor_id and isinstance(sensor_id, str)]
         print(valid_sensor_ids)
 
         # Select the values from the dades table
@@ -134,7 +133,7 @@ class sqlDB():
                             SELECT timestamp, value
                             FROM dades
                             WHERE sensor_id = ? 
-                        """ #Utilitzem placeholders (?) dins de la consulta SQL per evitar problemes d'injecció SQL.
+                        """ #que fagi un for a tots els valors que li passem
                         data[sensor_id] = pd.read_sql_query(query, con, params=(sensor_id,))
                 except Exception as e:
                         print(f"Error querying sensor_id '{sensor_id}': {e}")
