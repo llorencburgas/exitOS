@@ -2,10 +2,7 @@
 import os # Importa el mòdul os
 import sqlDB as db  # Importa la base de dades
 from bottle import Bottle, template, run, static_file, HTTPError, redirect, request # Bottle és el que ens fa de servidor web
-import configparser
 from forecastingModel import forecastingModel  # Importa la classe correcta
-import sqlite3
-import pandas as pd
 
 # Paràmetres de l'execució
 HOSTNAME = '0.0.0.0'
@@ -43,7 +40,7 @@ def get_forecast():
 
 # Ruta per la configuració de sensors
 @app.get('/optimize')
-def get_configuration():
+def get_optimize():
     sensors = database.get_sensor_names_Wh()
     return template('./www/optimize.html', 
                     sensors = sensors['entity_id'].tolist(), 
@@ -59,9 +56,6 @@ def submit_forecast():
     print("Form Data:", form_data)  # Mostra les dades per depurar
     
     # Assigna les dades del formulari a variables individuals
-    #asset_id = form_data.get('assetID')
-    #generator_id = form_data.get('generatorId')
-    #source_id = form_data.get('sourceId')
     building_consumption_id = form_data.get('buildingConsumptionId')
     building_generation_id = form_data.get('buildingGenerationId')
     sensors_id = [building_consumption_id, building_generation_id]
@@ -70,7 +64,7 @@ def submit_forecast():
     if action == 'train':
         print('Training model', data)
     elif action == 'forecast':
-        print('Forecasting' data) #, data
+        print('Forecasting', data) #, data
     
     # Redirigeix a la plantilla 'forecast.html' i passa les dades obtingudes
     return template('./www/forecast.html', data = data) #data = data
@@ -82,7 +76,6 @@ def submit_optimize():
     
     # Captura totes les dades del formulari com a diccionari
     form_data = request.forms.dict
-    action = form_data.get('action')
     print("Form Data:", form_data)  # Mostra les dades per depurar
     
     # Assigna les dades del formulari a variables individuals
