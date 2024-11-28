@@ -101,7 +101,7 @@
         <form action="./submit-optimize" method="post" class="needs-validation" novalidate>
             <!-- Dropdown per Actius Controlables -->
             <div class="mb-4">
-                <select class="form-select" id="assetID" name="assetID" required onchange="updateSelection('assetID', 'selectedAssets')">
+                <select class="form-select" id="assetID" name="assetID" required multiple onchange="updateSelection('assetID', 'selectedAssets')">
                     <option value="" disabled selected>Controllable Asset IDs</option>
                     % for sensor in sensors:
                         <option value="{{sensor}}">{{sensor}}{{units[0]}}</option>
@@ -113,7 +113,7 @@
 
             <!-- Dropdown per Generadors Controlables -->
             <div class="mb-4">
-                <select class="form-select" id="generatorId" name="generatorId" required onchange="updateSelection('generatorId', 'selectedGenerators')">
+                <select class="form-select" id="generatorId" name="generatorId" required multiple onchange="updateSelection('generatorId', 'selectedGenerators')">
                     <option value="" disabled selected>Controllable Generator IDs</option>
                     % for sensor in sensors:
                         <option value="{{sensor}}">{{sensor}}{{units[0]}}</option>
@@ -125,7 +125,7 @@
 
             <!-- Dropdown per Fonts d'Energia Controlables -->
             <div class="mb-4">
-                <select class="form-select" id="sourceId" name="sourceId" required onchange="updateSelection('sourceId', 'selectedSources')">
+                <select class="form-select" id="sourceId" name="sourceId" required multiple onchange="updateSelection('sourceId', 'selectedSources')">
                     <option value="" disabled selected>Controllable Energy Source IDs</option>
                     % for sensor in sensors:
                         <option value="{{sensor}}">{{sensor}}{{units[0]}}</option>
@@ -137,7 +137,7 @@
 
             <!-- Dropdown per Consums d'Edifici -->
             <div class="mb-4">
-                <select class="form-select" id="buildingConsumptionId" name="buildingConsumptionId" required onchange="updateSelection('buildingConsumptionId', 'selectedConsumptionBuild')">
+                <select class="form-select" id="buildingConsumptionId" name="buildingConsumptionId" required multiple onchange="updateSelection('buildingConsumptionId', 'selectedConsumptionBuild')">
                     <option value="" disabled selected>Base Building Consumption IDs</option>
                     % for sensor in sensors:
                         <option value="{{sensor}}">{{sensor}}{{units[0]}}</option>
@@ -149,7 +149,7 @@
 
             <!-- Dropdown per Generació d'Edifici -->
             <div class="mb-4">
-                <select class="form-select" id="buildingGenerationId" name="buildingGenerationId" required onchange="updateSelection('buildingGenerationId', 'selectedGenerationId')">
+                <select class="form-select" id="buildingGenerationId" name="buildingGenerationId" required multiple onchange="updateSelection('buildingGenerationId', 'selectedGenerationId')">
                     <option value="" disabled selected>Base Building Generation IDs</option>
                     % for sensor in sensors:
                         <option value="{{sensor}}">{{sensor}}{{units[0]}}</option>
