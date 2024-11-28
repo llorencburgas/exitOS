@@ -3,6 +3,8 @@ import os # Importa el mòdul os
 import sqlDB as db  # Importa la base de dades
 from bottle import Bottle, template, run, static_file, HTTPError, redirect, request # Bottle és el que ens fa de servidor web
 from forecastingModel import forecastingModel  # Importa la classe correcta
+from optimalScheduler import ForecastersManager
+from optimalScheduler import OptimalScheduler
 
 # Paràmetres de l'execució
 HOSTNAME = '0.0.0.0'
@@ -64,6 +66,10 @@ def submit_forecast():
     if action == 'train':
         print('Training model', data)
     elif action == 'forecast':
+        #cons_data = self.__preparePredData('Consumption')
+        #prod_data = self.__preparePredData('Generation')
+        ForecastersManager.predictConsumption(OptimalScheduler.meteo_data, building_consumption_id) #building consumption
+        ForecastersManager.predictProduction(OptimalScheduler.meteo_data, building_generation_id) #building prodiction
         print('Forecasting', data) #, data
     
     # Redirigeix a la plantilla 'forecast.html' i passa les dades obtingudes
