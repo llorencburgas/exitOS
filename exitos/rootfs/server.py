@@ -64,12 +64,12 @@ def submit_forecast():
     data = database.get_filtered_data(sensors_id)
     
     if action == 'train':
+        '''ara mateix el train es fa directament amb el forecast'''
         print('Training model', data)
     elif action == 'forecast':
-        #cons_data = self.__preparePredData('Consumption')
-        #prod_data = self.__preparePredData('Generation')
         ForecastersManager.predictConsumption(OptimalScheduler.meteo_data, building_consumption_id) #building consumption
         ForecastersManager.predictProduction(OptimalScheduler.meteo_data, building_generation_id) #building prodiction
+        '''mostrar les dades en un gràfic'''
         print('Forecasting', data) #, data
     
     # Redirigeix a la plantilla 'forecast.html' i passa les dades obtingudes
@@ -92,6 +92,10 @@ def submit_optimize():
     building_generation_id = form_data.get('buildingGenerationId')
     sensors_id = [asset_id, generator_id, source_id, building_consumption_id, building_generation_id]
     data = database.get_filtered_data(sensors_id)
+
+    # Cridem la funció de optimalScheduler
+    OptimalScheduler.startOptimizationNoPipe()
+    '''la idea és mostrar les dades en un gràfic'''
     
     # Redirigeix a la plantilla 'forecast.html' i passa les dades obtingudes
     return template('./www/forecast.html', data = data) #data = data

@@ -966,9 +966,15 @@ class OptimalScheduler:
         self.mostrarResultat(temps_fi - temps_inici)
 
     def startOptimizationNoPipe(self):
+        '''
+        Optimizes the configuration of the assets without using pipes to communicate with the main process
+        '''
 
+        # Solution instances to store the results
         self.solucio_run = Solution(self.assets['Buildings'], self.assets['Consumers'], self.assets['EnergySources'], self.assets['Generators'])
         self.solucio_final = Solution(self.assets['Buildings'], self.assets['Consumers'], self.assets['EnergySources'], self.assets['Generators'])
+        
+        # Configure the bounds for the optimization
         self.varbound = self.__configureBounds()
 
         # Uncomment for debug
@@ -976,24 +982,30 @@ class OptimalScheduler:
         #    prof = cProfile.Profile()
         #    prof.enable()
 
+        # Measure the time of the optimization
         temps_inici = time.time()
+
+        # Run the optimization
         result = self.__optimize()
+
+        # Measure the time of the optimization
         temps_fi = time.time()
 
         #if self.console_debug:
         #    prof.disable()
         #    prof.print_stats(sort='cumtime')
 
+        # Store the results in the final solution Home Assistant
         self.__postResultsToHA(result)
 
-        print("Result: ")
-        print(result)
+        # Show the results and save them in the final solution
+        print("Result: ", result)
         self.solucio_final.model_variables = result #result.x for the DE algorithm
         self.solucio_final.temps_tardat = temps_fi - temps_inici
 
+        # Show the results
         x_values = range(1, len(self.progress)+1)
-        print(x_values)
-
+        print("Values: ", x_values)
         self.mostrarResultat(temps_fi - temps_inici)
 
     def __postResultsToHA(self, results):
