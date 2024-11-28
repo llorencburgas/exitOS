@@ -28,9 +28,11 @@ from Configurator import Configurator
 #from scipy.optimize import differential_evolution, dual_annealing, direct, brute, Bounds
 from geneticalAlgorithm.geneticalgorithm import geneticalgorithm
 from datetime import datetime, timedelta
+import sqlDB as db
 
-ha_url = "http://192.168.0.117:8123"
-bearer_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJmZThlNTgyNDBhYTA0M2UwOTYyMmRmZWJlMTc5MDc0YyIsImlhdCI6MTcxOTMwNDY4NiwiZXhwIjoyMDM0NjY0Njg2fQ.j8euYQxDWMkJJqHNpTXUBE1rrhpOm1Vr-WcY3fdt8q0"
+database = db.sqlDB()
+ha_url = database.base_url #"http://192.168.0.117:8123"
+bearer_token = database.supervisor_token #"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkYjcxOTI3NmM2ZTA0YzU5YTZmM2YxZmFlOTUxZWM5OSIsImlhdCI6MTcxMDg2Nzc4NywiZXhwIjoyMDI2MjI3Nzg3fQ.72uuDLPBzDVVX7enOXmDlvI-eDcQxU_wPgAeHqw6eGs"
 # If for some reason, we are getting a code 401 (Unauthorized) and previously we didn0t, try creating a new bearer token
 
 headers = {
@@ -94,8 +96,10 @@ class OptimalScheduler:
         self.electricity_sell_prices = [0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054,
                                         0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054]
         
-        self.latitude = "41.963138"
-        self.longitude = "2.831640"
+
+        latitude, longitude = database.get_latitude_longitude()
+        self.latitude = latitude #"41.963138"
+        self.longitude = longitude #"2.831640"
         self.meteo_data = ForecastersManager.obtainMeteoData(self.latitude, self.longitude)
         self.electrcity_production_forecast = []
         self.electricity_consumption_forecast = []

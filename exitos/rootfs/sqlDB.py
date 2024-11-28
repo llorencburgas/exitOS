@@ -88,18 +88,30 @@ class sqlDB():
             # Return a failure message
             return "Doesn't work"
 
-    def get_sensor_names(self):
-        '''
-        Returns a list of sensors that measure energy
-        '''
-        print("Searching for sensors list")
-        sensors = pd.json_normalize(get(self.base_url + 'states', headers=self.headers).json())
-        if 'entity_id' in sensors.columns:
-            return sensors['entity_id'].tolist()
-        else:
-            print("'entity_id' column not found in response data")
-            print(f"Available columns: {sensors.columns.tolist()}")
-            return "Doesn't work"
+    def get_latitude_longitude(self):
+            '''
+            Returns the latitude and longitude of the Home Assistant instance
+            '''
+
+            # Send a GET request to the Home Assistant API to fetch the sensor data
+            response = get(self.base_url + 'config', headers=self.headers)
+
+            # Flatten the nested JSON response into a DataFrame
+            config = pd.json_normalize(response.json())
+
+            # Check if the 'latitude' and 'longitude' columns exist in the response data
+            if 'latitude' in config.columns and 'longitude' in config.columns:
+                # Return the latitude and longitude
+                latitude = config['latitude'][0]
+                longitude = config['longitude'][0]
+
+                return latitude, longitude
+            else:
+                # If 'latitude' or 'longitude' is not found, print and error message and list available columns
+                print("'latitude' or 'longitude' column not found in response data")
+                print(f"Available columns: {config.columns.tolist()}")
+                # Return a failure message
+                return "Doesn't work"
     
     def get_filtered_data(self, sensors_id):
         '''
