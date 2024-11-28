@@ -102,8 +102,7 @@
   
               <!-- Dropdown per Consums d'Edifici -->
               <div class="mb-4">
-                  <select class="form-select" id="buildingConsumptionId" name="buildingConsumptionId" required multiple onchange="updateSelection('buildingConsumptionId', 'selectedConsumptionBuild')">
-                      <option value="" disabled selected>Base Building Consumption IDs</option>
+                  <select class="form-select" id="buildingConsumptionId" name="buildingConsumptionId" required multiple placeholder="Base Building Consumption IDs" onchange="updateSelection('buildingConsumptionId', 'selectedConsumptionBuild')">
                       % for sensor in sensors:
                           <option value="{{sensor}}">{{sensor}}{{units[0]}}</option>
                       % end
@@ -114,8 +113,7 @@
   
               <!-- Dropdown per Generació d'Edifici -->
               <div class="mb-4">
-                  <select class="form-select" id="buildingGenerationId" name="buildingGenerationId" required multiple onchange="updateSelection('buildingGenerationId', 'selectedGenerationId')">
-                      <option value="" disabled selected>Base Building Generation IDs</option>
+                  <select class="form-select" id="buildingGenerationId" name="buildingGenerationId" required multiple placeholder="Base Building Generation IDs" onchange="updateSelection('buildingGenerationId', 'selectedGenerationId')">
                       % for sensor in sensors:
                           <option value="{{sensor}}">{{sensor}}{{units[0]}}</option>
                       % end
