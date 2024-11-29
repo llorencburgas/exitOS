@@ -15,7 +15,7 @@ PORT = 8000
 app = Bottle() 
 database = db.sqlDB()
 database.update()
-model = forecastingModel()
+#model = forecastingModel()
 
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')
