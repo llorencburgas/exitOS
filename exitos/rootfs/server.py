@@ -2,9 +2,10 @@
 import os # Importa el mòdul os
 import sqlDB as db  # Importa la base de dades
 from bottle import Bottle, template, run, static_file, HTTPError, redirect, request # Bottle és el que ens fa de servidor web
-from forecastingModel import forecastingModel  # Importa la classe correcta
+import exitos.rootfs.optimalScheduler.ForecastersManager as ForecastersManager 
+import exitos.rootfs.optimalScheduler.Solution as OptimalScheduler
 from optimalScheduler import ForecastersManager
-from optimalScheduler.OptimalScheduler import OptimalScheduler
+
 
 # Paràmetres de l'execució
 HOSTNAME = '0.0.0.0'
