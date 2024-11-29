@@ -1,9 +1,10 @@
 # server.py és el fitxer principal de l'aplicació web. Aquest fitxer conté la lògica de l'aplicació web i les rutes per a les diferents pàgines HTML.
 import os # Importa el mòdul os
+os.listdir() # Mostra els fitxers del directori actual
 import sqlDB as db  # Importa la base de dades
 from bottle import Bottle, template, run, static_file, HTTPError, redirect, request # Bottle és el que ens fa de servidor web
 #import exitos.rootfs.optimalScheduler.OptimalScheduler as OptimalScheduler
-#from optimalScheduler import ForecastersManager
+#from optimalScheduler.ForecastersManager import ForecastersManager
 
 
 # Paràmetres de l'execució
