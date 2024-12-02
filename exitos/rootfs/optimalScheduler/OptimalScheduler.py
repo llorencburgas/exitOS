@@ -10,7 +10,6 @@ import joblib
 import logging
 import sys
 import optimalScheduler.ForecastersManager as ForecastersManager
-
 import numpy as np
 import pandas as pd
 

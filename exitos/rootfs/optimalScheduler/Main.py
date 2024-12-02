@@ -23,7 +23,6 @@ bearer_token = database.supervisor_token #"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.
 def checkConsumers(entity_ids):
 
     if str(sys.argv[2]): # the string is not empty
-
         consumers = str(sys.argv[2]).split("\n") # Convert the inputed consumers string into an array. They must be separated by enlines (\n)
         for consumer in consumers:
             if consumer not in entity_ids:
@@ -33,7 +32,6 @@ def checkConsumers(entity_ids):
 def checkGenerators(entity_ids):
 
     if str(sys.argv[3]): # the string is not empty
-
         generators = str(sys.argv[3]).split("\n") # Convert the inputed consumers string into an array of strings. They must be separated by enlines (\n)
         for generator in generators:
             if generator not in entity_ids:
@@ -43,7 +41,6 @@ def checkGenerators(entity_ids):
 def checkEnergySources(entity_ids):
 
     if str(sys.argv[4]): # the string is not empty
-
         esources = str(sys.argv[4]).split("\n") # Convert the inputed consumers string into an array. They must be separated by enlines (\n)
         for esource in esources:
             if esource not in entity_ids:
@@ -53,7 +50,6 @@ def checkEnergySources(entity_ids):
 def checkBuildingsConsumption(entity_ids): 
 
     if str(sys.argv[5]): # the string is not empty
-        
         buildings_cons = str(sys.argv[5]).split("\n") # Convert the inputed consumers string into an array. They must be separated by enlines (\n)
         for building_cons in buildings_cons:
             if building_cons not in entity_ids:
@@ -63,7 +59,6 @@ def checkBuildingsConsumption(entity_ids):
 def checkBuildingsGeneration(entity_ids):
 
     if str(sys.argv[6]): # the string is not empty
-
         buildings_gen = str(sys.argv[6]).split("\n") # Convert the inputed consumers string into an array. They must be separated by enlines (\n)
         for building_gen in buildings_gen:
             if building_gen not in entity_ids:

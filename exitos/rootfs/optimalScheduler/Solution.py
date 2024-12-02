@@ -1,7 +1,7 @@
 # Class to represent a possible solution configuration
 
-from AbsConsumer import AbsConsumer
-from AbsEnergySource import AbsEnergySource
+from optimalScheduler.AbsConsumer import AbsConsumer
+from optimalScheduler.AbsEnergySource import AbsEnergySource
 
 
 class Solution:

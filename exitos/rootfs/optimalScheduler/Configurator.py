@@ -7,14 +7,12 @@ import tomli
 current_dir = os.path.dirname(os.path.abspath("Configurator.py"))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
-
 subfolder_dir = os.path.join(parent_dir, 'utils')
 sys.path.append(subfolder_dir)
-
 subfolder_dir = os.path.join(parent_dir, 'Asset_types')
 sys.path.append(subfolder_dir)
 
-from utils import utils
+from optimalScheduler.utils import utils
 
 class Configurator:
 
