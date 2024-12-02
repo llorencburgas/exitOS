@@ -8,11 +8,11 @@ from datetime import datetime, timedelta
 # Create the prediction and the consumption forecasters from the given models
 current_dir = os.getcwd()
 prod_model = joblib.load(current_dir + "/optimalScheduler/forecasterModels/generationModel.joblib")
-prod_forecaster = forecast.Forcaster(debug=True)
+prod_forecaster = forecast.Forecaster(debug=True)
 prod_forecaster.db = prod_model
 
 cons_model = joblib.load(current_dir + "/optimalScheduler/forecasterModels/consumptionModel.joblib")
-cons_forecaster = forecast.Forcaster(debug=True)
+cons_forecaster = forecast.Forecaster(debug=True)
 cons_forecaster.db = cons_model
 
 def obtainMeteoData(latitude, longitude):
