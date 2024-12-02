@@ -3,7 +3,7 @@ import requests
 import joblib
 import os
 
-import exitos.rootfs.optimalScheduler.forecaster as forecast
+import optimalScheduler.forecaster as forecast
 from datetime import datetime, timedelta
 
 # Create the prediction and the consumption forecasters from the given models
