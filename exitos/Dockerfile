@@ -14,6 +14,7 @@ ADD ./rootfs/sqlDB.py .
 ADD ./rootfs/forecastingModel.py .
 COPY ./rootfs/www /www/
 COPY ./rootfs/images/ /images/
+COPY ./rootfs/optimalScheduler /optimalScheduler/
 
 COPY config.yaml config.yaml
 

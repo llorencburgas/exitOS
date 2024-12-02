@@ -3,9 +3,8 @@ import os # Importa el mòdul os
 os.listdir() # Mostra els fitxers del directori actual
 import sqlDB as db  # Importa la base de dades
 from bottle import Bottle, template, run, static_file, HTTPError, redirect, request # Bottle és el que ens fa de servidor web
-#import exitos.rootfs.optimalScheduler.OptimalScheduler as OptimalScheduler
-#from optimalScheduler.ForecastersManager import ForecastersManager
-
+import optimalScheduler.OptimalScheduler as OptimalScheduler
+import optimalScheduler.ForecastersManager as ForecastersManager
 
 # Paràmetres de l'execució
 HOSTNAME = '0.0.0.0'
@@ -68,8 +67,8 @@ def submit_forecast():
         '''ara mateix el train es fa directament amb el forecast'''
         print('Training model', data)
     elif action == 'forecast':
-        #ForecastersManager.predictConsumption(OptimalScheduler.meteo_data, building_consumption_id) #building consumption
-        #ForecastersManager.predictProduction(OptimalScheduler.meteo_data, building_generation_id) #building prodiction
+        ForecastersManager.predictConsumption(OptimalScheduler.meteo_data, building_consumption_id) #building consumption
+        ForecastersManager.predictProduction(OptimalScheduler.meteo_data, building_generation_id) #building prodiction
         '''mostrar les dades en un gràfic'''
         print('Forecasting', data) #, data
     
@@ -95,7 +94,7 @@ def submit_optimize():
     data = database.get_filtered_data(sensors_id)
 
     # Cridem la funció de optimalScheduler
-    #OptimalScheduler.startOptimizationNoPipe()
+    OptimalScheduler.startOptimizationNoPipe()
     '''la idea és mostrar les dades en un gràfic'''
     
     # Redirigeix a la plantilla 'forecast.html' i passa les dades obtingudes
