@@ -1,4 +1,7 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
+## 1.0
+- Connecting with optimal scheduler
+
 ## 0.1.9
 - Forecasting issues
 
