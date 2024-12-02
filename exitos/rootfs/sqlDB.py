@@ -158,97 +158,71 @@ class sqlDB():
         '''
         return self.headers, self.base_url, self.get_sensor_names()
 
-
     def update(self):
         '''
         Actualitza la base de dades amb les dades de la API de Home Assistant
         '''
         try:
             print("Iniciant l'actualització de la base de dades...")
-            sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json()) # obtenció llista sensors de la API convertits en DataFrame
-            #print("Llista de sensors de l'API:", sensors_list)  # Depuració per veure la resposta de l'API
-
-            #sensors = self.get_sensor_names_Wh() # obtenció llista de sensors de la BDD
-            #sensors = sensors['entity_id'].tolist()
-            #print("Llista de sensors de la BDD:", sensors)  # Depuració per veure la resposta de la BDD
-
-            #sensors_list = sensors_list[sensors_list['entity_id'].isin(sensors)] # filtra la llista de sensors de la API amb els de la BDD
-            #print("Sensors a actualitzar:", sensors_list)  # Depuració per veure la resposta de la BDD
             
-            for j in sensors_list.index: #per cada sensor de la llista         
-                id_sensor = sensors_list.iloc[j]['entity_id'] # es guarda el id del sensor
+            # Obté tots els sensors de la API
+            sensors_list = pd.json_normalize(get(self.base_url + 'states', headers=self.headers).json())
+            
+            # Carrega tots els sensors de la base de dades en un diccionari
+            cur = self.__con__.cursor()
+            db_sensors = {row[0]: row for row in cur.execute("SELECT sensor_id, update_sensor FROM sensors").fetchall()}
+            cur.close()
+
+            # Prepara les operacions de base de dades en bloc
+            sensors_to_insert = []
+            dades_to_insert = []
+
+            for _, sensor in sensors_list.iterrows():
+                id_sensor = sensor['entity_id']
+                unit = sensor.get('attributes.unit_of_measurement', None)
                 
-                # comprova si el sensor ja existeix a la base de dades
+                if id_sensor not in db_sensors:
+                    # Sensor nou
+                    sensors_to_insert.append((id_sensor, unit, '', True))
+                    print(f"Afegint sensor: {id_sensor}")
+                elif db_sensors[id_sensor][1]:  # Si `update_sensor` és True
+                    print(f"Actualitzant sensor: {id_sensor}")
+                    
+                    # Obté l'últim timestamp del sensor
+                    cur = self.__con__.cursor()
+                    last_data = cur.execute(
+                        "SELECT timestamp FROM dades WHERE sensor_id = ? ORDER BY timestamp DESC LIMIT 1",
+                        (id_sensor,)
+                    ).fetchone()
+                    cur.close()
+                    t_ini = last_data[0] if last_data else "2022-01-01T00:00:00"
+                    
+                    # Obté l'historial del sensor des de l'API
+                    t_fi = "2099-01-01T00:00:00"
+                    url = f"{self.base_url}history/period/{t_ini}?end_time={t_fi}&filter_entity_id={id_sensor}"
+                    history = pd.json_normalize(get(url, headers=self.headers).json())
+                    
+                    for entry in history.itertuples():
+                        valor = entry.state
+                        if valor not in ('unknown', 'unavailable', ''):
+                            dades_to_insert.append((id_sensor, entry.last_updated, valor))
+            
+            # Inserta nous sensors
+            if sensors_to_insert:
                 cur = self.__con__.cursor()
-                var = (id_sensor,)
-                llista = cur.execute('SELECT * FROM sensors WHERE sensor_id = ?', var).fetchall()
+                cur.executemany("INSERT INTO sensors(sensor_id, units, description, update_sensor) VALUES(?, ?, ?, ?)", sensors_to_insert)
                 cur.close()
-                
-                # si el sensor no existeix, el crea
-                if len(llista) == 0:
-                    cur = self.__con__.cursor()
-                    values = (id_sensor, sensors_list.iloc[j]['attributes.unit_of_measurement'], '', True)  # sensor_id, unitats, descripció, update_sensor
-                    cur.execute("INSERT INTO sensors(sensor_id, units, description, update_sensor) VALUES(?, ?, ?, ?)", values)
-                    cur.close()
-                    self.__con__.commit()
-                    print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + ' Afegint sensor: ' + id_sensor)
-                    llista = None # inicialitza la llista per a la següent iteració
-                # si el sensor ja existeix, comprova si cal actualitzar les dades
-                else:
-                    cur = self.__con__.cursor()
-                    var = (id_sensor,)
-                    aux = cur.execute('SELECT timestamp, value FROM dades WHERE sensor_id = ? ORDER BY timestamp DESC LIMIT 1', var).fetchone()
-                    if aux is None:
-                        # Si no hi ha dades prèvies, inicialitza variables
-                        llista = None
-                    else:
-                        # Assigna el timestamp i el valor anterior per verificar canvis
-                        llista, valor_ant = aux
-                    cur.close()
-                
-                # Defineix el temps inicial de l'historial
-                if llista is None:
-                    t_ini = "2022-01-01T00:00:00"  # Valor per defecte si no hi ha dades prèvies
-                    valor_ant = []
-                else:
-                    t_ini = llista  # Últim timestamp guardat per iniciar des d'allà
-                
-                # Verifica si el sensor ha de ser actualitzat consultant el camp 'update_sensor'
+            
+            # Inserta dades en bloc
+            if dades_to_insert:
                 cur = self.__con__.cursor()
-                var = (id_sensor,)
-                llista = cur.execute('SELECT update_sensor FROM sensors WHERE sensor_id = ?', var).fetchall()
+                cur.executemany("INSERT INTO dades(sensor_id, timestamp, value) VALUES(?, ?, ?)", dades_to_insert)
                 cur.close()
-                
-                if llista[0][0]:  # Si `update_sensor` és True
-                    print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + ' Actualitzant sensor: ' + id_sensor)                   
-                    t_fi = "2099-01-01T00:00:00" # Defineix el final de l'interval de temps per a la crida
-                    
-                    # Fa una crida a l'API per obtenir l'històric de dades del sensor des de t_ini fins a t_fi
-                    url = self.base_url + "history/period/" + t_ini + "?end_time=" + t_fi + "&filter_entity_id=" + id_sensor
-                    aux = pd.json_normalize(get(url, headers=self.headers).json())
-                    
-                    # Actualitza cada valor obtingut de l'historial del sensor
-                    cur = self.__con__.cursor()
-                    for column in aux.columns:
-                        valor = aux[column][0]['state']
-                        
-                        # Comprova si el valor és vàlid; ignora valors com `unknown`, `unavailable` o buits
-                        if (valor == 'unknown') or (valor == 'unavailable') or (valor == ''):
-                            valor = 'nan'
-                        
-                        # Només desa el valor si és diferent de l'anterior
-                        if valor_ant != valor:
-                            valor_ant = valor  # Actualitza el valor anterior
-                            TS = aux[column][0]['last_updated']  # Obté el timestamp de l'última actualització
-                            values = (id_sensor, TS, valor)
-                            cur.execute("INSERT INTO dades (sensor_id, timestamp, value) VALUES(?, ?, ?)", values)
-                    
-                    # Tanca el cursor i confirma els canvis
-                    cur.close()
-                    self.__con__.commit()
-        except:
-            # Gestiona errors, mostrant un missatge d'error i la traça d'errors
-            print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + " No s'han pogut inserir o descarregar dades...:(")
+            
+            # Confirma canvis
+            self.__con__.commit()
+        except Exception as e:
+            print("Error durant l'actualització:")
             traceback.print_exc()
 
     def query(self, sql):
