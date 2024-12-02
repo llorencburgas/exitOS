@@ -9,7 +9,7 @@ import requests
 import joblib
 import logging
 import sys
-import ForecastersManager
+import optimalScheduler.ForecastersManager as ForecastersManager
 
 import numpy as np
 import pandas as pd
@@ -19,12 +19,12 @@ import pandas as pd
 #import pyswarms as ps
 #import pyswarms.backend.topology as ps_tp
 
-from Solution import Solution
-from AbsConsumer import AbsConsumer
-from AbsGenerator import AbsGenerator
-from AbsEnergySource import AbsEnergySource
+from optimalScheduler.Solution import Solution
+from optimalScheduler.AbsConsumer import AbsConsumer
+from optimalScheduler.AbsGenerator import AbsGenerator
+from optimalScheduler.AbsEnergySource import AbsEnergySource
 from assetTypes.Consumers.HidrogenStation.HidrogenStation import HidrogenStation
-from Configurator import Configurator
+from optimalScheduler.Configurator import Configurator
 #from scipy.optimize import differential_evolution, dual_annealing, direct, brute, Bounds
 from geneticalAlgorithm.geneticalgorithm import geneticalgorithm
 from datetime import datetime, timedelta
@@ -33,8 +33,6 @@ import sqlDB as db
 database = db.sqlDB()
 ha_url = database.base_url #"http://192.168.0.117:8123"
 bearer_token = database.supervisor_token #"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkYjcxOTI3NmM2ZTA0YzU5YTZmM2YxZmFlOTUxZWM5OSIsImlhdCI6MTcxMDg2Nzc4NywiZXhwIjoyMDI2MjI3Nzg3fQ.72uuDLPBzDVVX7enOXmDlvI-eDcQxU_wPgAeHqw6eGs"
-# If for some reason, we are getting a code 401 (Unauthorized) and previously we didn0t, try creating a new bearer token
-
 headers = {
     "Authorization": f"Bearer {bearer_token}",
     "Content-Type": "application/json",
