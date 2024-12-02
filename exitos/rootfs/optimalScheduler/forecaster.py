@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 import joblib
-import holidays
+#import holidays
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -490,12 +490,10 @@ class Forecaster:
                     elif i == 'festius':  # si es afegir variables generades de llibreria de festius
                         festius = extra_vars[i]
                         if len(festius) == 1:
-                            import holidays
                             h = holidays.country_holidays(festius[0])
                             dad['festius'] = [x in h for x in dad.index.strftime('%Y-%m-%d').values]
 
                         if len(festius) == 2:
-                            import holidays
                             h = holidays.country_holidays(festius[0], festius[1])
                             dad['festius'] = [x in h for x in dad.index.strftime('%Y-%m-%d').values]
 
