@@ -1,6 +1,5 @@
 # Electrolyzer class
 
-
 class Electrolyzer:
 
     def __init__(self, configuration):

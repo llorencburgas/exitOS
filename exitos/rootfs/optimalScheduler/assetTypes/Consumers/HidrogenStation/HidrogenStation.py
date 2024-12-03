@@ -1,10 +1,9 @@
 # Class for the HidrogenStation consumer
 import os
-
-from AbsConsumer import AbsConsumer
-from utils import createClass
-from assetTypes.Consumers.HidrogenStation.Electrolyzer import Electrolyzer
-from assetTypes.Consumers.HidrogenStation.HidrogenTank import HidrogenTank
+from optimalScheduler.AbsConsumer import AbsConsumer
+from optimalScheduler.utils import createClass
+from optimalScheduler.assetTypes.Consumers.HidrogenStation.Electrolyzer import Electrolyzer
+from optimalScheduler.assetTypes.Consumers.HidrogenStation.HidrogenTank import HidrogenTank
 
 
 class HidrogenStation(AbsConsumer):
