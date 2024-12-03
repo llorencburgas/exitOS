@@ -22,10 +22,10 @@ from optimalScheduler.Solution import Solution
 from optimalScheduler.AbsConsumer import AbsConsumer
 from optimalScheduler.AbsGenerator import AbsGenerator
 from optimalScheduler.AbsEnergySource import AbsEnergySource
-from assetTypes.Consumers.HidrogenStation.HidrogenStation import HidrogenStation
+from optimalScheduler.assetTypes.Consumers.HidrogenStation import HidrogenStation
 from optimalScheduler.Configurator import Configurator
 #from scipy.optimize import differential_evolution, dual_annealing, direct, brute, Bounds
-from geneticalAlgorithm.geneticalgorithm import geneticalgorithm
+from optimalScheduler.geneticalAlgorithm.geneticalgorithm import geneticalgorithm
 from datetime import datetime, timedelta
 import sqlDB as db
 
