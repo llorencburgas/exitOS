@@ -12,7 +12,7 @@ sys.path.append(subfolder_dir)
 subfolder_dir = os.path.join(parent_dir, 'Asset_types')
 sys.path.append(subfolder_dir)
 
-from optimalScheduler.utils import utils
+import optimalScheduler.utils as utils
 
 class Configurator:
 
