@@ -77,7 +77,7 @@ def submit_forecast():
 
     
     # Redirigeix a la plantilla 'forecast.html' i passa les dades obtingudes
-    return template('./www/forecast.html', data = data) #data = data
+    return template('./www/forecast.html',) #data = data
 
 
 # Ruta per enviar el formulari de forecast
