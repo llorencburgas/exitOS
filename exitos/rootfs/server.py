@@ -59,17 +59,22 @@ def submit_forecast():
     # Assigna les dades del formulari a variables individuals
     building_consumption_id = form_data.get('buildingConsumptionId')
     building_generation_id = form_data.get('buildingGenerationId')
-    sensors_id = [building_consumption_id, building_generation_id]
-    data = database.get_filtered_data(sensors_id)
+    #sensors_id = [building_consumption_id, building_generation_id]
+    '''les dades han de ser seleccionades de la base de dades i s'han d'extreure d'allà els valors per fer el forecast'''
+    #data = database.get_filtered_data(sensors_id)
     
     if action == 'train':
         '''ara mateix el train es fa directament amb el forecast'''
-        print('Training model', data)
+        #print('Training model', data)
     elif action == 'forecast':
-        ForecastersManager.predictConsumption(OptimalScheduler.meteo_data, building_consumption_id) #building consumption
-        ForecastersManager.predictProduction(OptimalScheduler.meteo_data, building_generation_id) #building prodiction
-        '''mostrar les dades en un gràfic'''
-        print('Forecasting', data) #, data
+        #building_consumption_id = database.get_filtered_data([building_consumption_id])
+        #building_generation_id = database.get_filtered_data([building_generation_id])
+        consumption = ForecastersManager.predictConsumption(OptimalScheduler.meteo_data, building_consumption_id) #building consumption
+        production = ForecastersManager.predictProduction(OptimalScheduler.meteo_data, building_generation_id) #building prodiction
+        # mostrem les dades en un gràfic
+        plot_data = {'consumption': consumption, 'production': production}
+        return template('./www/plot.html', plot_data = plot_data)
+
     
     # Redirigeix a la plantilla 'forecast.html' i passa les dades obtingudes
     return template('./www/forecast.html', data = data) #data = data
