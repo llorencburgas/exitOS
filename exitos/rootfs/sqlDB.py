@@ -113,43 +113,30 @@ class sqlDB():
                 # Return a failure message
                 return "Doesn't work"
     
-    def get_filtered_data(self, sensors_id):
+    def get_data_from_db(self, sensors_id):
         '''
-        Select values from "dades" taken from the DB 
-
+        Select values from the database for the given sensors
         Args:
-            asset_id (str): The ID of the asset sensor
-            generator_id (str): The ID of the generator sensor
-            source_id (str): The ID of the source sensor
-            building_consumption_id (str): The ID of the building consumption sensor
-            building_generation_id (str): The ID of the building generation sensor
-        
+            sensors_id (list): List of sensor IDs to query
         Returns:
             data (dict): A dictionary containing the values of the sensors
-
         '''
 
-        # Filtra només els sensor_ids vàlids (no buits ni None) - narcís buscaria els que no
-        valid_sensor_ids = [sensor_id for sensor_id in sensors_id if sensor_id and isinstance(sensor_id, str)]
-        print(valid_sensor_ids)
-
-        # Select the values from the dades table
+        # Create an empty dictionary to store the data
         data = {}
-
         # Connect to the database
         with sqlite3.connect(self.filename) as con:
-            for sensor_id in valid_sensor_ids:
+            for sensor_id in sensors_id:
                 try:
-                    if sensor_id:
-                        query = """
-                            SELECT timestamp, value
-                            FROM dades
-                            WHERE sensor_id = ? 
-                        """ #que fagi un for a tots els valors que li passem
-                        data[sensor_id] = pd.read_sql_query(query, con, params=(sensor_id,))
+                    query = """
+                        SELECT timestamp, value
+                        FROM dades
+                        WHERE sensor_id = ? 
+                    """ # [?] --> Quan s’executa el codi, el valor de sensor_id s’insereix en el lloc de l’interrogant de forma segura.
+                    data[sensor_id] = pd.read_sql_query(query, con, params=(sensor_id,))
                 except Exception as e:
-                        print(f"Error querying sensor_id '{sensor_id}': {e}")
-                        data[sensor_id] = pd.DataFrame()
+                    print(f"Error querying sensor_id '{sensor_id}': {e}")
+                    data[sensor_id] = pd.DataFrame()
         return data
     
     def get_config_values(self):

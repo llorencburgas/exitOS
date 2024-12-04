@@ -108,35 +108,57 @@
   </footer> 
 
   <script>
-    // Obté les dades passades pel backend
-    const plotData = {{!plot_data|tojson}};  // Converteix plot_data a JSON
+    const plotData = JSON.parse('{{ plot_data | tojson | safe }}');
 
-    // Configura el gràfic
-    const ctx = document.getElementById('forecastChart').getContext('2d');
-    const chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['T1', 'T2', 'T3', 'T4'], // Canvia aquestes etiquetes segons sigui necessari
-            datasets: [
-                {
-                    label: 'Consumption',
-                    data: plotData.consumption,
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                },
-                {
-                    label: 'Production',
-                    data: plotData.production,
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-        }
-    });
+// Dades unificades
+const labels = plotData.timestamps;
+const consumptionData = plotData.consumption;
+const productionData = plotData.production;
+
+const ctx = document.getElementById('forecastChart').getContext('2d');
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels, // Timestamps unificats
+      datasets: [
+          {
+              label: 'Consumption',
+              data: consumptionData,
+              borderColor: 'rgba(255, 99, 132, 1)',
+              backgroundColor: 'rgba(255, 99, 132, 0.2)',
+          },
+          {
+              label: 'Production',
+              data: productionData,
+              borderColor: 'rgba(54, 162, 235, 1)',
+              backgroundColor: 'rgba(54, 162, 235, 0.2)',
+          }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+          legend: {
+              position: 'top',
+          },
+      },
+      scales: {
+          x: {
+              title: {
+                  display: true,
+                  text: 'Timestamp',
+              },
+          },
+          y: {
+              title: {
+                  display: true,
+                  text: 'Value',
+              },
+          },
+      },
+    }
+  });
   </script>
   </body>
 </html>
