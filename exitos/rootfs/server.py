@@ -61,8 +61,8 @@ def submit_forecast():
     building_generation_id = form_data.get('buildingGenerationId')
 
     # Get sensors from the database
-    building_consumption_id = database.get_data_from_db([building_consumption_id])
-    building_generation_id = database.get_data_from_db([building_generation_id])
+    building_consumption_id = database.get_data_from_db(building_consumption_id)
+    building_generation_id = database.get_data_from_db(building_generation_id)
     
     if action == 'train':
         '''ara mateix el train es fa directament amb el forecast'''
