@@ -137,6 +137,7 @@ class sqlDB():
                     print(data)
                 except Exception as e:
                     print(f"Error querying sensor_id '{sensor_id}': {e}")
+                    print(f"sensor_id: {sensor_id}, type: {type(sensor_id)}")
                     data[sensor_id] = pd.DataFrame()
         return data
     
