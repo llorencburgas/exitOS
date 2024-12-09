@@ -65,10 +65,10 @@ def submit_forecast():
     building_consumption_id = database.get_data_from_db(building_consumption_id)
     building_generation_id = database.get_data_from_db(building_generation_id)
     
-    if action == 'train':
+    if action == ['train']:
         '''ara mateix el train es fa directament amb el forecast'''
         #print('Training model', data)
-    elif action == 'forecast':
+    elif action == ['forecast']:
         consumption = ForecastersManager.predictConsumption(OptimalScheduler.meteo_data, building_consumption_id) #building consumption
         production = ForecastersManager.predictProduction(OptimalScheduler.meteo_data, building_generation_id) #building prodiction
         # mostrem les dades en un gràfic
