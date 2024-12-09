@@ -54,6 +54,7 @@ def submit_forecast():
     # Captura totes les dades del formulari com a diccionari
     form_data = request.forms.dict
     action = form_data.get('action')
+    print("Action:", action)  # Mostra les dades per depurar
     print("Form Data:", form_data)  # Mostra les dades per depurar
     
     # Assigna les dades del formulari a variables individuals
@@ -75,7 +76,7 @@ def submit_forecast():
         return template('./www/plot.html', plot_data = plot_data)
 
     # Redirigeix a la plantilla 'forecast.html' i passa les dades obtingudes
-    return template('./www/forecast.html',) #data = data
+    return template('./www/plot.html',) #data = data
 
 
 # Ruta per enviar el formulari de forecast
