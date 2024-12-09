@@ -54,8 +54,8 @@ def submit_forecast():
     # Captura totes les dades del formulari com a diccionari
     form_data = request.forms.dict
     action = form_data.get('action')
-    print("Action:", action)  # Mostra les dades per depurar
-    print("Form Data:", form_data)  # Mostra les dades per depurar
+    #print("Action:", action)  # Mostra les dades per depurar
+    #print("Form Data:", form_data)  # Mostra les dades per depurar
     
     # Assigna les dades del formulari a variables individuals
     building_consumption_id = form_data.get('buildingConsumptionId')
