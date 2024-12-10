@@ -191,7 +191,9 @@ class sqlDB():
                     history = pd.json_normalize(get(url, headers=self.headers).json())
                     
                     for entry in history.itertuples():
-                        valor = entry.state
+                        print(type(entry))  # Veure tipus
+                        print(entry) 
+                        valor = entry['state']
                         if valor not in ('unknown', 'unavailable', ''):
                             dades_to_insert.append((id_sensor, entry.last_updated, valor))
             
