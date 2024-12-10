@@ -11,7 +11,6 @@ RUN apt update \
 ADD ./rootfs/server.py .
 ADD ./rootfs/bottle.py .
 ADD ./rootfs/sqlDB.py .
-ADD ./rootfs/forecastingModel.py .
 COPY ./rootfs/www /www/
 COPY ./rootfs/images/ /images/
 COPY ./rootfs/optimalScheduler /optimalScheduler/

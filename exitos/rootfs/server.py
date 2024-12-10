@@ -13,6 +13,7 @@ PORT = 8000
 app = Bottle() 
 database = db.sqlDB()
 database.update()
+optimalScheduler = OptimalScheduler.OptimalScheduler()
 #model = forecastingModel()
 
 # Ruta per servir fitxers estàtics i imatges des de 'www'
@@ -54,7 +55,8 @@ def submit_forecast():
     # Captura totes les dades del formulari com a diccionari
     form_data = request.forms.dict
     action = form_data.get('action')
-    print("Form Data:", form_data)  # Mostra les dades per depurar
+    #print("Action:", action)  # Mostra les dades per depurar
+    #print("Form Data:", form_data)  # Mostra les dades per depurar
     
     # Assigna les dades del formulari a variables individuals
     building_consumption_id = form_data.get('buildingConsumptionId')
@@ -64,18 +66,19 @@ def submit_forecast():
     building_consumption_id = database.get_data_from_db(building_consumption_id)
     building_generation_id = database.get_data_from_db(building_generation_id)
     
-    if action == 'train':
+    if action == ['train']:
         '''ara mateix el train es fa directament amb el forecast'''
         #print('Training model', data)
-    elif action == 'forecast':
-        consumption = ForecastersManager.predictConsumption(OptimalScheduler.meteo_data, building_consumption_id) #building consumption
-        production = ForecastersManager.predictProduction(OptimalScheduler.meteo_data, building_generation_id) #building prodiction
+    elif action == ['forecast']:
+        consumption = ForecastersManager.predictConsumption(optimalScheduler.meteo_data, building_consumption_id) #building consumption
+        production = ForecastersManager.predictProduction(optimalScheduler.meteo_data, building_generation_id) #building prodiction
         # mostrem les dades en un gràfic
         plot_data = {'consumption': consumption, 'production': production}
         return template('./www/plot.html', plot_data = plot_data)
+    
 
     # Redirigeix a la plantilla 'forecast.html' i passa les dades obtingudes
-    return template('./www/forecast.html',) #data = data
+    return template('./www/error.html',) #data = data
 
 
 # Ruta per enviar el formulari de forecast
