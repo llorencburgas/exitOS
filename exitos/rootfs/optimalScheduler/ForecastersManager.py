@@ -65,7 +65,7 @@ def predictConsumption(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame):
     meteo_data['Timestamp'] = pd.to_datetime(meteo_data['Timestamp'])
     print("Scheduling Data:", scheduling_data)
     for schedule in scheduling_data:
-        scheduling_data[schedule]['timestamp'] = pd.to_datetime(scheduling_data[schedule]['timestamp'])
+        scheduling_data[schedule]['timestamp'] = pd.to_datetime(scheduling_data[schedule]['timestamp'], format='ISO8601')
     data = pd.merge(scheduling_data, meteo_data, on=['Timestamp'], how='inner')
     data = data.set_index('Timestamp')
     data.index = pd.to_datetime(data.index)
