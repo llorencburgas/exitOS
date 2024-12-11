@@ -43,7 +43,7 @@ def obtainMeteoData(latitude, longitude):
     return meteo_data
 
 
-def predictConsumption(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame) -> pd.DataFrame:
+def predictConsumption(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame | dict) -> pd.DataFrame:
     """
     Predict the consumption taking into account the active hours scheduled of the assets.
 
@@ -52,15 +52,18 @@ def predictConsumption(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame) 
     meteo_data : pd.DataFrame
         Pandas dataframe with meteorological data prediction for the next day and today's data.
         Must include a "Timestamp" column in datetime format.
-    scheduling_data : pd.DataFrame
-        Pandas dataframe with scheduling data of the assets to be optimized for consumption.
-        Must include a "Timestamp" column and other relevant attributes like "state".
+    scheduling_data : pd.DataFrame | dict
+        Scheduling data of the assets to be optimized for consumption.
+        Can be a pandas DataFrame or a dictionary convertible to DataFrame.
         
     Returns
     -------
     pd.DataFrame
         DataFrame with the consumption prediction for the next 24 hours, with size (24, n + m).
     """
+    # Convert scheduling_data to DataFrame if it's a dictionary
+    if isinstance(scheduling_data, dict):
+        scheduling_data = pd.DataFrame(scheduling_data)
 
     # Check required columns
     required_columns = ['Timestamp']
