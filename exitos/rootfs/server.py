@@ -68,8 +68,8 @@ def submit_forecast():
     building_generation_dict = database.get_data_from_db(building_generation_id)
     print(building_consumption_dict)
 
-    building_consumption_df = pd.DataFrame(building_consumption_dict, index = [0])
-    building_generation_df = pd.DataFrame(building_generation_dict, index = [0])
+    building_consumption_df = pd.DataFrame(building_consumption_dict)
+    building_generation_df = pd.DataFrame(building_generation_dict)
     print(building_consumption_df)
     print(building_generation_df)
     
