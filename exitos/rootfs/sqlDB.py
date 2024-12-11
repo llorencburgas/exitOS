@@ -134,13 +134,13 @@ class sqlDB():
                         WHERE sensor_id = ? 
                     """ # [?] --> Quan s’executa el codi, el valor de sensor_id s’insereix en el lloc de l’interrogant de forma segura.
                     data[sensor_id] = pd.read_sql_query(query, con, params=(sensor_id,))
-                    print(type(data))
+                    data_df = pd.concat(data.values(), axis=1)
                     print("Data from sensor_id '{}' queried successfully".format(sensor_id))
                 except Exception as e:
                     print(f"Error querying sensor_id '{sensor_id}': {e}")
                     print(f"sensor_id: {sensor_id}, type: {type(sensor_id)}")
                     data[sensor_id] = pd.DataFrame()
-        return data
+        return data_df
     
     def get_config_values(self):
         '''
