@@ -43,37 +43,59 @@ def obtainMeteoData(latitude, longitude):
     return meteo_data
 
 
-def predictConsumption(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame):
+def predictConsumption(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame) -> pd.DataFrame:
     """
-    Predict the consumption taking into account the active hours scheduled of the assets
+    Predict the consumption taking into account the active hours scheduled of the assets.
 
     Parameters
-    -----------
-    meteo_data : DataFrame
-        Pandas dataframe with the meteorological data prediction for the next day and the data of today. 
-        For example, if predicting the next 24 hours, this parameter must have size (48, n).
-    scheduling_data : DataFrame
-        Pandas dataframe with the scheduling data relative to the assets that will be optimized for consumption. This dataframe must contain only
-        relevant attributes. For now only supported attribute "state". On future work, more attributes could be considered as the model is being updated.
-        This parameter must have size (48, m).
-    -----------
+    ----------
+    meteo_data : pd.DataFrame
+        Pandas dataframe with meteorological data prediction for the next day and today's data.
+        Must include a "Timestamp" column in datetime format.
+    scheduling_data : pd.DataFrame
+        Pandas dataframe with scheduling data of the assets to be optimized for consumption.
+        Must include a "Timestamp" column and other relevant attributes like "state".
+        
     Returns
-    -----------
-    Returns a DataFrame with the consumption prediction with size (24, n + m).
-    """ 
+    -------
+    pd.DataFrame
+        DataFrame with the consumption prediction for the next 24 hours, with size (24, n + m).
+    """
 
-    meteo_data['Timestamp'] = pd.to_datetime(meteo_data['Timestamp'])
-    print("Scheduling Data:", scheduling_data)
-    for schedule in scheduling_data:
-        scheduling_data[schedule]['timestamp'] = pd.to_datetime(scheduling_data[schedule]['timestamp'], format='ISO8601')
-    data = pd.merge(scheduling_data, meteo_data, on=['Timestamp'], how='inner')
+    # Check required columns
+    required_columns = ['Timestamp']
+    for col in required_columns:
+        if col not in meteo_data.columns:
+            raise KeyError(f"Column '{col}' is missing in meteo_data.")
+        if col not in scheduling_data.columns:
+            raise KeyError(f"Column '{col}' is missing in scheduling_data.")
+
+    # Ensure 'Timestamp' columns are in datetime format
+    meteo_data['Timestamp'] = pd.to_datetime(meteo_data['Timestamp'], errors='coerce')
+    scheduling_data['Timestamp'] = pd.to_datetime(scheduling_data['Timestamp'], errors='coerce')
+
+    # Drop rows with invalid timestamps (optional, based on your use case)
+    meteo_data = meteo_data.dropna(subset=['Timestamp'])
+    scheduling_data = scheduling_data.dropna(subset=['Timestamp'])
+
+    # Merge on 'Timestamp'
+    try:
+        data = pd.merge(scheduling_data, meteo_data, on='Timestamp', how='inner')
+    except Exception as e:
+        raise ValueError(f"Error during merging: {e}")
+
+    # Set 'Timestamp' as index
     data = data.set_index('Timestamp')
-    data.index = pd.to_datetime(data.index)
 
-    consumption = cons_forecaster.forcast(data)
+    # Call the consumption forecaster (ensure 'cons_forecaster' is defined and properly initialized)
+    try:
+        consumption = cons_forecaster.forcast(data)
+    except Exception as e:
+        raise ValueError(f"Error during consumption forecast: {e}")
+
     print("--------------------CONSUMPTION PREDICTION DONE--------------------")
-
     return consumption
+
 
 
 def predictProduction(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame):
