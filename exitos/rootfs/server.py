@@ -4,6 +4,7 @@ import sqlDB as db  # Importa la base de dades
 from bottle import Bottle, template, run, static_file, HTTPError, redirect, request # Bottle és el que ens fa de servidor web
 import optimalScheduler.OptimalScheduler as OptimalScheduler
 import optimalScheduler.ForecastersManager as ForecastersManager
+import pandas as pd
 
 # Paràmetres de l'execució
 HOSTNAME = '0.0.0.0'
@@ -63,15 +64,21 @@ def submit_forecast():
     building_generation_id = form_data.get('buildingGenerationId')
 
     # Get sensors from the database
-    building_consumption_id = database.get_data_from_db(building_consumption_id)
-    building_generation_id = database.get_data_from_db(building_generation_id)
+    building_consumption_dict = database.get_data_from_db(building_consumption_id)
+    building_generation_dict = database.get_data_from_db(building_generation_id)
+
+    building_consumption_df = pd.DataFrame(building_consumption_dict)
+    building_generation_df = pd.DataFrame(building_generation_dict)
+    print(building_consumption_df)
+    print(building_generation_df)
     
+
     if action == ['train']:
         '''ara mateix el train es fa directament amb el forecast'''
         #print('Training model', data)
     elif action == ['forecast']:
-        consumption = ForecastersManager.predictConsumption(optimalScheduler.meteo_data, building_consumption_id) #building consumption
-        production = ForecastersManager.predictProduction(optimalScheduler.meteo_data, building_generation_id) #building prodiction
+        consumption = ForecastersManager.predictConsumption(optimalScheduler.meteo_data, building_consumption_df) #building consumption
+        production = ForecastersManager.predictProduction(optimalScheduler.meteo_data, building_generation_df) #building prodiction
         # mostrem les dades en un gràfic
         plot_data = {'consumption': consumption, 'production': production}
         return template('./www/plot.html', plot_data = plot_data)
