@@ -63,6 +63,11 @@ def predictConsumption(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame):
 
     #meteo_data['timestamp'] = pd.to_datetime(meteo_data['timestamp'])
     #scheduling_data['timestamp'] = pd.to_datetime(scheduling_data['timestamp'], format='ISO8601')
+
+    # Normalitza els timestamps per assegurar consistència
+    meteo_data['timestamp'] = pd.to_datetime(meteo_data['timestamp']).dt.tz_localize(None)
+    scheduling_data['timestamp'] = pd.to_datetime(scheduling_data['timestamp']).dt.tz_localize(None)
+
     data = pd.merge(scheduling_data, meteo_data, on=['timestamp'], how='inner')
     data = data.set_index('timestamp')
     data.index = pd.to_datetime(data.index)
