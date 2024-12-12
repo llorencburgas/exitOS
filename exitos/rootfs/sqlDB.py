@@ -133,7 +133,7 @@ class sqlDB():
                         WHERE sensor_id = ? 
                     """ # [?] --> Quan s’executa el codi, el valor de sensor_id s’insereix en el lloc de l’interrogant de forma segura.
                     sensor_data = pd.read_sql_query(query, con, params=(sensor_id,))
-                    sensor_data['timestamp'] = pd.to_datetime(sensor_data['timestamp'], format='ISO8601')
+                    sensor_data['timestamp'] = pd.to_datetime(sensor_data['timestamp'], format='%Y-%m-%dT%H:%M:%S')
 
                     sensor_data = sensor_data.rename(columns={'value': f'value_{sensor_id}'})
 
