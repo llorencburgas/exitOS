@@ -32,12 +32,13 @@ def obtainMeteoData(latitude, longitude):
     today = datetime.today().strftime('%Y-%m-%d')
     tomorrow = (datetime.today() + timedelta(days=1)).strftime('%Y-%m-%d')
     url = f"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&start_date={today}&end_date={tomorrow}&hourly=temperature_2m,relativehumidity_2m,dewpoint_2m,apparent_temperature,precipitation,rain,weathercode,pressure_msl,surface_pressure,cloudcover,cloudcover_low,cloudcover_mid,cloudcover_high,et0_fao_evapotranspiration,vapor_pressure_deficit,windspeed_10m,windspeed_100m,winddirection_10m,winddirection_100m,windgusts_10m,shortwave_radiation_instant,direct_radiation_instant,diffuse_radiation_instant,direct_normal_irradiance_instant,terrestrial_radiation_instant"
+    
     response = requests.get(url).json()
-    meteo_data = pd.DataFrame(response['hourly'])
-    meteo_data = meteo_data.rename(columns={'time': 'timestamp'})
+    response.raise_for_status()
+    data = response.json()
 
-    meteo_data['timestamp'] = pd.to_datetime(meteo_data['timestamp'])
-    meteo_data['timestamp'] = meteo_data['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+    meteo_data = pd.DataFrame(data['hourly'])
+    meteo_data = meteo_data.rename(columns={'time': 'timestamp'})
     meteo_data['timestamp'] = pd.to_datetime(meteo_data['timestamp'])
 
     return meteo_data
