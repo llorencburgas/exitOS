@@ -61,9 +61,7 @@ def predictConsumption(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame):
     Returns a DataFrame with the consumption prediction with size (24, n + m).
     """ 
 
-    meteo_data['timestamp'] = pd.to_datetime(meteo_data['timestamp'])
-    #print("Scheduling Data:", scheduling_data)
-    #print(scheduling_data['timestamp'])
+    #meteo_data['timestamp'] = pd.to_datetime(meteo_data['timestamp'])
     #scheduling_data['timestamp'] = pd.to_datetime(scheduling_data['timestamp'], format='ISO8601')
     data = pd.merge(scheduling_data, meteo_data, on=['timestamp'], how='inner')
     data = data.set_index('timestamp')
