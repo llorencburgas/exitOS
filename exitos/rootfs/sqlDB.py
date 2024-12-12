@@ -122,8 +122,7 @@ class sqlDB():
             data (dict): A dictionary containing the values of the sensors
         '''
 
-        # Create an empty dictionary to store the data
-        data = {}
+        merged_data = pd.DataFrame()
         # Connect to the database
         with sqlite3.connect(self.filename) as con:
             for sensor_id in sensors_id:
@@ -133,14 +132,24 @@ class sqlDB():
                         FROM dades
                         WHERE sensor_id = ? 
                     """ # [?] --> Quan s’executa el codi, el valor de sensor_id s’insereix en el lloc de l’interrogant de forma segura.
-                    data[sensor_id] = pd.read_sql_query(query, con, params=(sensor_id,))
-                    data_df = pd.concat(data.values(), axis=1)
+                    sensor_data = pd.read_sql_query(query, con, params=(sensor_id,))
+                    sensor_data['timestamp'] = pd.to_datetime(sensor_data['timestamp'], format='ISO8601')
+
+                    sensor_data = sensor_data.rename(columns={'value': f'value_{sensor_id}'})
+
+                    if merged_data.empty:
+                        merged_data = sensor_data
+                    else:
+                        merged_data = pd.merge(merged_data, sensor_data, on='timestamp', how='outer')
+
                     print("Data from sensor_id '{}' queried successfully".format(sensor_id))
+
                 except Exception as e:
                     print(f"Error querying sensor_id '{sensor_id}': {e}")
                     print(f"sensor_id: {sensor_id}, type: {type(sensor_id)}")
-                    data[sensor_id] = pd.DataFrame()
-        return data_df
+
+        merged_data = merged_data.sort_values(by='timestamp').reset_index(drop=True)
+        return merged_data
     
     def get_config_values(self):
         '''
