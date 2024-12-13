@@ -143,11 +143,12 @@ class sqlDB():
                         merged_data = pd.merge(merged_data, sensor_data, on='timestamp', how='outer')
 
                     print("Data from sensor_id '{}' queried successfully".format(sensor_id))
-
+                   
                 except Exception as e:
                     print(f"Error querying sensor_id '{sensor_id}': {e}")
                     print(f"sensor_id: {sensor_id}, type: {type(sensor_id)}")
 
+        print(merged_data)
         merged_data = merged_data.sort_values(by='timestamp').reset_index(drop=True)
         return merged_data
     
