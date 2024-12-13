@@ -136,6 +136,7 @@ class sqlDB():
                     sensor_data['timestamp'] = pd.to_datetime(sensor_data['timestamp'], format='%Y-%m-%dT%H:%M:%S')
 
                     sensor_data = sensor_data.rename(columns={'value': f'value_{sensor_id}'})
+                    print("Sensor Data:", sensor_data)
 
                     if merged_data.empty:
                         merged_data = sensor_data
@@ -148,7 +149,10 @@ class sqlDB():
                     print(f"Error querying sensor_id '{sensor_id}': {e}")
                     print(f"sensor_id: {sensor_id}, type: {type(sensor_id)}")
 
-        print(merged_data)
+        print("Merged Data:", merged_data)
+        print("Columns in sensor_data:", sensor_data.columns)
+        print("Columns in merged_data before merge:", merged_data.columns)
+
         merged_data = merged_data.sort_values(by='timestamp').reset_index(drop=True)
         return merged_data
     
