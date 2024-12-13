@@ -406,66 +406,63 @@ class Forecaster:
 
         def forecast(self, data):
             """
-            Funcio que fa la prediccio.
-            
-                data - dataframe amb timestamp a l'index, format de sempre. Ha de tenir tots els atributs inclosa la classe, ja que en el windowing necesitarem instancies passades de la classe i altres atributs, vigilar amb el windowing i l'historic que cal passar-li.
-                
-                les_id -id especifica del model, amb None s'utilitzaran noms de variables
-            """
-            
-            ###
-            # primer de tot - Recuperem el model
+            Funció que fa la predicció basada en un model entrenat.
 
-            model = self.db['model']
-            model_select = self.db['model_select']
-            scaler = self.db['scaler']
-            colinearity_remove_level_to_drop = self.db['colinearity_remove_level_to_drop']
-            extra_vars = self.db['extra_vars']
-            look_back = self.db['look_back'] 
-            y = self.db['objective']
-            # variables = db.get_info('vars', les_id)
-
-            """
-            Ja tenim el model ara ens dediquem a transformar les dades perque quadrin amb el que s'ha fet a el model
-            """
+            Paràmetres:
+                - data: DataFrame amb `timestamp` a l'índex. Ha de contenir tots els atributs incloent la classe.
+                        Aquest `DataFrame` ha d'estar preparat per al windowing.
             
+            Retorna:
+                - out: DataFrame amb les prediccions fetes pel model.
+            """
+            # Recuperem els paràmetres del model
+            model = self.db.get('model')
+            model_select = self.db.get('model_select', [])
+            scaler = self.db.get('scaler')
+            colinearity_remove_level_to_drop = self.db.get('colinearity_remove_level_to_drop', [])
+            extra_vars = self.db.get('extra_vars', [])
+            look_back = self.db.get('look_back', 0)
+            y = self.db.get('objective')
+
+            if model is None:
+                raise ValueError("El model no està carregat.")
+
             # Pas 1 - Fem el windowing
-            dad = self.do_windowing(data, look_back)        
+            print("Columnes inicials:", data.columns)
+            dad = self.do_windowing(data, look_back)
+            print("Columnes després de windowing:", dad.columns)
 
-            # Pas 2 - Creem variable dia_setmana, hora, mes?? -- #TODO Fer opcional!!
-            dad = self.timestamp_to_attrs(dad, extra_vars)
-            
-            # Pas 3 - treiem colinearitats!
-            if np.array(colinearity_remove_level_to_drop != None).any():
-                dad.drop(colinearity_remove_level_to_drop, axis=1, inplace=True)
-            
-            # Pas 4 - eliminem la classe, ja hem posat els instants passats que necesitavem,
-            # ens carreguem el que no necesitem
-            del dad[y]
-            
-            ###
-            # Pas 5 - treiem NaN! -- #TODO# Fer opcional i permetre emplenar buits??
-            # Pero cuidado amb emplenar la classe, ja que aqui ens carreguem obs que no podem predir
-            # perque no tenim instants passats!!!
-            ###
-            X = dad.dropna()
+            # Pas 2 - Afegim variables derivades, si escau
+            if extra_vars:
+                dad = self.timestamp_to_attrs(dad, extra_vars)
+
+            # Pas 3 - Eliminem colinearitats
+            if colinearity_remove_level_to_drop:
+                dad.drop(columns=colinearity_remove_level_to_drop, errors='ignore', inplace=True)
+
+            # Pas 4 - Eliminem la classe
+            if y in dad:
+                del dad[y]
+            else:
+                raise KeyError(f"La columna '{y}' no existeix en el DataFrame.")
+
+            # Pas 5 - Tractament de NaN
+            if dad.isna().any().any():
+                dad = dad.dropna()
 
             # Pas 6 - Escalat
             if scaler is not None:
-                x_i = pd.DataFrame(scaler.transform(X))
-                X = x_i.set_index(X.index)
-            
+                dad = pd.DataFrame(scaler.transform(dad), index=dad.index, columns=dad.columns)
+
             # Pas 7 - Seleccionem atributs
-            if model_select == []:
-                X_new = X.values
-            else:
-                X_new = model_select.transform(X)
-            # fem la prediccio i li posem l'index que toca en un dataframe
-            out = pd.DataFrame(model.predict(X_new), columns=[y])
-            out = out.set_index(X.index)
-            
-            # FI!!
+            if model_select:
+                dad = model_select.transform(dad)
+
+            # Pas 8 - Predicció
+            out = pd.DataFrame(model.predict(dad), columns=[y], index=dad.index)
+
             return out
+
 
         def timestamp_to_attrs(self, dad, extra_vars):
 
