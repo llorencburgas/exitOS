@@ -114,15 +114,11 @@ class sqlDB():
                 return "Doesn't work"
     
     def get_data_from_db(self, sensors_id):
-        '''
-        Select values from the database for the given sensors
-        Args:
-            sensors_id (list): List of sensor IDs to query
-        Returns:
-            data (dict): A dictionary containing the values of the sensors
-        '''
-
+        """
+        Select values from the database for the given sensors.
+        """
         merged_data = pd.DataFrame()
+        
         # Connect to the database
         with sqlite3.connect(self.filename) as con:
             for sensor_id in sensors_id:
@@ -131,30 +127,35 @@ class sqlDB():
                         SELECT timestamp, value
                         FROM dades
                         WHERE sensor_id = ? 
-                    """ # [?] --> Quan s’executa el codi, el valor de sensor_id s’insereix en el lloc de l’interrogant de forma segura.
+                    """
                     sensor_data = pd.read_sql_query(query, con, params=(sensor_id,))
-                    sensor_data['timestamp'] = pd.to_datetime(sensor_data['timestamp'], format='%Y-%m-%dT%H:%M:%S')
+                    
+                    # Assegura't que 'timestamp' és datetime
+                    sensor_data['timestamp'] = pd.to_datetime(sensor_data['timestamp'], format='ISO8601')
 
+                    # Renombrar la columna 'value'
                     sensor_data = sensor_data.rename(columns={'value': f'value_{sensor_id}'})
-                    print("Sensor Data:", sensor_data)
 
+                    # Comprova si merged_data està buit
                     if merged_data.empty:
                         merged_data = sensor_data
                     else:
+                        # Fusionar amb merged_data
                         merged_data = pd.merge(merged_data, sensor_data, on='timestamp', how='outer')
+                    
+                    print(f"Data from sensor_id '{sensor_id}' queried successfully")
 
-                    print("Data from sensor_id '{}' queried successfully".format(sensor_id))
-                   
                 except Exception as e:
                     print(f"Error querying sensor_id '{sensor_id}': {e}")
-                    print(f"sensor_id: {sensor_id}, type: {type(sensor_id)}")
+        
+        # Comprova si merged_data no està buit abans de fer sort_values
+        if not merged_data.empty:
+            merged_data = merged_data.sort_values(by='timestamp').reset_index(drop=True)
+        else:
+            print("merged_data is empty. Skipping sort_values.")
 
-        print("Merged Data:", merged_data)
-        print("Columns in sensor_data:", sensor_data.columns)
-        print("Columns in merged_data before merge:", merged_data.columns)
-
-        merged_data = merged_data.sort_values(by='timestamp').reset_index(drop=True)
         return merged_data
+
     
     def get_config_values(self):
         '''
