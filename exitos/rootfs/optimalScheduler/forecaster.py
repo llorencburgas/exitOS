@@ -445,7 +445,8 @@ class Forecaster:
             if y in dad:
                 del dad[y]
             else:
-                raise KeyError(f"La columna '{y}' no existeix en el DataFrame.")
+                print(f"Afegint columna objectiu '{y}' amb valors per defecte.", file=sys.stderr)
+                data[y] = 0  # Assigna un valor inicial, si cal
 
             # Pas 5 - Tractament de NaN
             if dad.isna().any().any():
