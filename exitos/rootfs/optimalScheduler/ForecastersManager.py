@@ -72,7 +72,7 @@ def predictConsumption(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame):
     data = data.set_index('timestamp')
     data.index = pd.to_datetime(data.index)
 
-    consumption = cons_forecaster.forcast(data)
+    consumption = cons_forecaster.forecast(data)
     print("--------------------CONSUMPTION PREDICTION DONE--------------------")
 
     return consumption
@@ -103,7 +103,7 @@ def predictProduction(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame):
     data = data.set_index('timestamp')
     data.index = pd.to_datetime(data.index)
 
-    production = prod_forecaster.forcast(data)
+    production = prod_forecaster.forecast(data)
     print("--------------------PRODUCTION PREDICTION DONE--------------------")
 
     return production
