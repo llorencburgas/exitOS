@@ -405,7 +405,7 @@ class Forecaster:
             if self.debug:  # m'interessa veure quan s'ha guardat un model, per saber per on va i que tot ha anat bé
                 print('Model guardat!  Score:' + str(score))
 
-        def forecast(self, data):
+        def forecast(self, data, y):
             """
             Funció que fa la predicció basada en un model entrenat.
 
@@ -423,7 +423,7 @@ class Forecaster:
             colinearity_remove_level_to_drop = self.db.get('colinearity_remove_level_to_drop', [])
             extra_vars = self.db.get('extra_vars', [])
             look_back = self.db.get('look_back', 0)
-            y = self.db.get('objective')
+            #y = self.db.get('objective')
 
             if model is None:
                 raise ValueError("El model no està carregat.")
@@ -442,12 +442,8 @@ class Forecaster:
                 dad.drop(columns=colinearity_remove_level_to_drop, errors='ignore', inplace=True)
 
             # Pas 4 - Eliminem la classe
-            if y in dad:
-                del dad[y]
-            else:
-                print(f"Afegint columna objectiu '{y}' amb valors per defecte.", file=sys.stderr)
-                data[y] = 0  # Assigna un valor inicial, si cal
-
+            del dad[y]
+            
             # Pas 5 - Tractament de NaN
             if dad.isna().any().any():
                 dad = dad.dropna()
