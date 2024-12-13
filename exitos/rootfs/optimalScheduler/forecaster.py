@@ -6,6 +6,7 @@ import joblib
 import holidays
 import warnings
 warnings.filterwarnings('ignore')
+import sys
 
 
 class Forecaster:
@@ -428,9 +429,9 @@ class Forecaster:
                 raise ValueError("El model no està carregat.")
 
             # Pas 1 - Fem el windowing
-            print("Columnes inicials:", data.columns)
+            print("Columnes inicials:", data.columns, file=sys.stderr)
             dad = self.do_windowing(data, look_back)
-            print("Columnes després de windowing:", dad.columns)
+            print("Columnes després de windowing:", dad.columns, file=sys.stderr)
 
             # Pas 2 - Afegim variables derivades, si escau
             if extra_vars:
