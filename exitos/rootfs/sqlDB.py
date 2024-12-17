@@ -117,7 +117,6 @@ class sqlDB():
         """
         Select values from the database for the given sensors.
         """
-        
         merged_data = pd.DataFrame()
         # Connect to the database
         with sqlite3.connect(self.filename) as con:
@@ -157,7 +156,7 @@ class sqlDB():
 
         print("Final merged data: \n", merged_data)
         return merged_data
-
+    
     
     def get_config_values(self):
         '''
