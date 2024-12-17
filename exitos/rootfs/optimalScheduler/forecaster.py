@@ -432,6 +432,7 @@ class Forecaster:
             #print("Columnes inicials:", data.columns, file=sys.stderr)
             print(data, file=sys.stderr)
             dad = self.do_windowing(data, look_back)
+            print(dad, file=sys.stderr)
             #print("Columnes després de windowing:", dad.columns, file=sys.stderr)
 
             # Pas 2 - Afegim variables derivades, si escau
