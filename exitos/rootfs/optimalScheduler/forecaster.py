@@ -431,9 +431,6 @@ class Forecaster:
             # Pas 1 - Fem el windowing
             dad = self.do_windowing(data, look_back)
 
-            #renombrar les columnes perque tinguin el mateix nom que el model
-            dad.columns = [col.replace('value', 'state') for col in dad.columns]
-
             # Pas 2 - Afegim variables derivades, si escau
             if extra_vars:
                 dad = self.timestamp_to_attrs(dad, extra_vars)
