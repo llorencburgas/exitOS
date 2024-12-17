@@ -133,7 +133,7 @@ class sqlDB():
                     sensor_data['timestamp'] = pd.to_datetime(sensor_data['timestamp'], format='ISO8601')
 
                     # Renombrar la columna 'value'
-                    sensor_data = sensor_data.rename(columns={'value': f'value_{sensor_id}'})
+                    #sensor_data = sensor_data.rename(columns={'value': f'value_{sensor_id}'})
                     print(f"Data for sensor_id '{sensor_id}': \n{sensor_data}")
 
                     # Comprova si merged_data està buit
@@ -157,7 +157,7 @@ class sqlDB():
         print("Final merged data: \n", merged_data)
         return merged_data
     
-    
+
     def get_config_values(self):
         '''
         Returns the values of the API configuration and the sensor list
