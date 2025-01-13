@@ -71,7 +71,6 @@ def predictConsumption(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame):
     data = pd.merge(scheduling_data, meteo_data, on=['timestamp'], how='inner')
     data = data.set_index('timestamp')
     data.index = pd.to_datetime(data.index)
-    print('value')
 
     consumption = cons_forecaster.forecast(data, data['value']) #passar la y per parametre
     print("--------------------CONSUMPTION PREDICTION DONE--------------------")
