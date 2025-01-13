@@ -72,7 +72,7 @@ def predictConsumption(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame):
     data = data.set_index('timestamp')
     data.index = pd.to_datetime(data.index)
 
-    consumption = cons_forecaster.forecast(data, data['value']) #passar la y per parametre
+    consumption = cons_forecaster.forecast(data, 'value') #passar la y per parametre
     print("--------------------CONSUMPTION PREDICTION DONE--------------------")
 
     return consumption
