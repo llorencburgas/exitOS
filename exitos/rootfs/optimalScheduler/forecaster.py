@@ -446,9 +446,14 @@ class Forecaster:
             if dad.isna().any().any():
                 dad = dad.dropna()
 
-            # Pas 6 - Escalat
+            # Pass 6 - Escalat
             if scaler is not None:
+                # Renombrar les columnes per assegurar-nos que són coherents amb el model
+                dad.columns = [col.replace('value', 'state') for col in dad.columns]
+                
+                # Ara podem aplicar l'escalat
                 dad = pd.DataFrame(scaler.transform(dad), index=dad.index, columns=dad.columns)
+
 
             # Pas 7 - Seleccionem atributs
             if model_select:
