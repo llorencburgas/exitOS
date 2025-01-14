@@ -7,6 +7,7 @@ import holidays
 import warnings
 warnings.filterwarnings('ignore')
 import sys
+import logging
 
 
 class Forecaster:
