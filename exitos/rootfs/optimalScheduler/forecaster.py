@@ -424,46 +424,42 @@ class Forecaster:
             extra_vars = self.db.get('extra_vars', [])
             look_back = self.db.get('look_back', 0)
             #y = self.db.get('objective')
-
             if model is None:
                 raise ValueError("El model no està carregat.")
 
             # Pas 1 - Fem el windowing
             dad = self.do_windowing(data, look_back)
-
             # Pas 2 - Afegim variables derivades, si escau
             if extra_vars:
                 dad = self.timestamp_to_attrs(dad, extra_vars)
-
             # Pas 3 - Eliminem colinearitats
             if colinearity_remove_level_to_drop:
                 dad.drop(columns=colinearity_remove_level_to_drop, errors='ignore', inplace=True)
-
             # Pas 4 - Eliminem la classe
             del dad[y]
-            
+            print(f"Després de la preparació: {dad.shape}")
             # Pas 5 - Tractament de NaN
             if dad.isna().any().any():
                 dad = dad.dropna()
-
+                print(f"Després de dropna: {dad.shape}")
+            if dad.empty:
+                raise ValueError("El DataFrame 'dad' està buit després de tractar els NaN.")
             # Pass 6 - Escalat
             if scaler is not None:
                 # Renombrar les columnes per assegurar-nos que són coherents amb el model
                 dad.columns = [col.replace('value', 'state') for col in dad.columns]
-                
                 # Ara podem aplicar l'escalat
                 dad = pd.DataFrame(scaler.transform(dad), index=dad.index, columns=dad.columns)
-
-
             # Pas 7 - Seleccionem atributs
             if model_select:
                 dad = model_select.transform(dad)
-
             # Pas 8 - Predicció
+            if dad.empty:
+                raise ValueError("El DataFrame 'dad' està buit abans de la predicció.")
             out = pd.DataFrame(model.predict(dad), columns=[y], index=dad.index)
+            print(f"Després de la predicció: {out.shape}")
 
             return out
-
 
         def timestamp_to_attrs(self, dad, extra_vars):
 
