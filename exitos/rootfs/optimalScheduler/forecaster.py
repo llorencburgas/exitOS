@@ -417,8 +417,6 @@ class Forecaster:
             Retorna:
                 - out: DataFrame amb les prediccions fetes pel model.
             """
-            logger = logging.getLogger(__name__)  # Configura el logger per aquest mòdul
-
             # Recuperem els paràmetres del model
             model = self.db.get('model')
             model_select = self.db.get('model_select', [])
@@ -430,52 +428,58 @@ class Forecaster:
             if model is None:
                 raise ValueError("El model no està carregat.")
 
+            # Log de les dades originals
+            logging.info(f"Dades inicials abans del windowing: {data.shape}")
+            logging.info(f"Primeres files de les dades: {data.head()}")
+
             # Pas 1 - Fem el windowing
             dad = self.do_windowing(data, look_back)
-            logger.info(f"Després del windowing: {dad.shape}")
+            logging.info(f"Després del windowing: {dad.shape}")
+            logging.info(f"Primeres files després del windowing: {dad.head()}")
 
             # Pas 2 - Afegim variables derivades, si escau
             if extra_vars:
                 dad = self.timestamp_to_attrs(dad, extra_vars)
-            logger.info(f"Després d'afegir variables derivades: {dad.shape}")
+            logging.info(f"Després d'afegir variables derivades: {dad.shape}")
 
             # Pas 3 - Eliminem colinearitats
             if colinearity_remove_level_to_drop:
                 dad.drop(columns=colinearity_remove_level_to_drop, errors='ignore', inplace=True)
-            logger.info(f"Després d'eliminar colinearitats: {dad.shape}")
+            logging.info(f"Després d'eliminar colinearitats: {dad.shape}")
 
             # Pas 4 - Eliminem la classe
             del dad[y]
-            logger.info(f"Després d'eliminar la classe: {dad.shape}")
+            logging.info(f"Després d'eliminar la classe: {dad.shape}")
 
             # Pas 5 - Tractament de NaN
-            logger.info(f"Columnes amb NaN abans del tractament: {dad.isna().sum()}")
+            logging.info(f"Columnes amb NaN abans del tractament: {dad.isna().sum()}")
             if dad.isna().any().any():
-                dad.fillna(0, inplace=True)
-                logger.info("NaNs substituïts per 0.")
-                logger.info(f"Després de substituir NaNs: {dad.shape}")
-            if dad.isna().any().any():
-                dad.dropna(inplace=True)
-                logger.info(f"Després de dropna: {dad.shape}")
+                dad = dad.dropna()
+                logging.info(f"Després de dropna: {dad.shape}")
+            
             if dad.empty:
                 raise ValueError("El DataFrame 'dad' està buit després de tractar els NaN.")
 
             # Pass 6 - Escalat
             if scaler is not None:
+                # Renombrar les columnes per assegurar-nos que són coherents amb el model
                 dad.columns = [col.replace('value', 'state') for col in dad.columns]
+                
+                # Ara podem aplicar l'escalat
                 dad = pd.DataFrame(scaler.transform(dad), index=dad.index, columns=dad.columns)
-            logger.info(f"Després de l'escalat: {dad.shape}")
+            logging.info(f"Després d'aplicar l'escalat: {dad.shape}")
 
             # Pas 7 - Seleccionem atributs
             if model_select:
                 dad = model_select.transform(dad)
-            logger.info(f"Després de seleccionar atributs: {dad.shape}")
+            logging.info(f"Després de seleccionar atributs: {dad.shape}")
 
             # Pas 8 - Predicció
             if dad.empty:
                 raise ValueError("El DataFrame 'dad' està buit abans de la predicció.")
+            
             out = pd.DataFrame(model.predict(dad), columns=[y], index=dad.index)
-            logger.info(f"Després de la predicció: {out.shape}")
+            logging.info(f"Després de la predicció: {out.shape}")
 
             return out
 
