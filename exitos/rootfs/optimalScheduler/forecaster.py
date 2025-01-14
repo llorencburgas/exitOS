@@ -423,36 +423,51 @@ class Forecaster:
             colinearity_remove_level_to_drop = self.db.get('colinearity_remove_level_to_drop', [])
             extra_vars = self.db.get('extra_vars', [])
             look_back = self.db.get('look_back', 0)
-            #y = self.db.get('objective')
+
             if model is None:
                 raise ValueError("El model no està carregat.")
 
             # Pas 1 - Fem el windowing
             dad = self.do_windowing(data, look_back)
+            print(f"Després del windowing: {dad.shape}")
+
             # Pas 2 - Afegim variables derivades, si escau
             if extra_vars:
                 dad = self.timestamp_to_attrs(dad, extra_vars)
+            print(f"Després d'afegir variables derivades: {dad.shape}")
+
             # Pas 3 - Eliminem colinearitats
             if colinearity_remove_level_to_drop:
                 dad.drop(columns=colinearity_remove_level_to_drop, errors='ignore', inplace=True)
+            print(f"Després d'eliminar colinearitats: {dad.shape}")
+
             # Pas 4 - Eliminem la classe
             del dad[y]
-            print(f"Després de la preparació: {dad.shape}")
+            print(f"Després d'eliminar la classe: {dad.shape}")
+
             # Pas 5 - Tractament de NaN
+            print(f"Columnes amb NaN abans del tractament: {dad.isna().sum()}")
             if dad.isna().any().any():
-                dad = dad.dropna()
+                dad.fillna(0, inplace=True)  # Substituir NaN amb 0 (o ajusta segons convingui)
+                print("NaNs substituïts per 0.")
+                print(f"Després de substituir NaNs: {dad.shape}")
+            if dad.isna().any().any():
+                dad.dropna(inplace=True)
                 print(f"Després de dropna: {dad.shape}")
             if dad.empty:
                 raise ValueError("El DataFrame 'dad' està buit després de tractar els NaN.")
+
             # Pass 6 - Escalat
             if scaler is not None:
-                # Renombrar les columnes per assegurar-nos que són coherents amb el model
                 dad.columns = [col.replace('value', 'state') for col in dad.columns]
-                # Ara podem aplicar l'escalat
                 dad = pd.DataFrame(scaler.transform(dad), index=dad.index, columns=dad.columns)
+            print(f"Després de l'escalat: {dad.shape}")
+
             # Pas 7 - Seleccionem atributs
             if model_select:
                 dad = model_select.transform(dad)
+            print(f"Després de seleccionar atributs: {dad.shape}")
+
             # Pas 8 - Predicció
             if dad.empty:
                 raise ValueError("El DataFrame 'dad' està buit abans de la predicció.")
@@ -460,6 +475,7 @@ class Forecaster:
             print(f"Després de la predicció: {out.shape}")
 
             return out
+
 
         def timestamp_to_attrs(self, dad, extra_vars):
 
