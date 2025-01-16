@@ -4,6 +4,7 @@ import joblib
 import os
 import optimalScheduler.forecaster as forecast
 from datetime import datetime, timedelta
+import logging
 
 # Create the prediction and the consumption forecasters from the given models
 current_dir = os.getcwd()
@@ -66,6 +67,7 @@ def predictConsumption(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame):
 
     # Normalitza els timestamps per assegurar consistència
     meteo_data['timestamp'] = pd.to_datetime(meteo_data['timestamp']).dt.tz_localize(None)
+    logging.info(scheduling_data.head())
     scheduling_data['timestamp'] = pd.to_datetime(scheduling_data['timestamp']).dt.tz_localize(None)
 
     data = pd.merge(scheduling_data, meteo_data, on=['timestamp'], how='inner')
