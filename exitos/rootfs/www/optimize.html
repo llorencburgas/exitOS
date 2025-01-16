@@ -103,7 +103,7 @@
             <div class="mb-4">
                 <select class="form-select" id="assetID" name="assetID" required multiple placeholder="Controllable Asset IDs" onchange="updateSelection('assetID', 'selectedAssets')">
                     % for sensor in sensors:
-                        <option value="{{sensor}}">{{sensor}}{{units[0]}}</option>
+                        <option value="{{sensor}}">{{sensor}} [{{units[0]}}]</option>
                     % end
                 </select>
                 <div class="invalid-feedback">Si us plau, selecciona un actiu controlable.</div>
@@ -114,7 +114,7 @@
             <div class="mb-4">
                 <select class="form-select" id="generatorId" name="generatorId" required multiple placeholder="Controllable Generator IDs" onchange="updateSelection('generatorId', 'selectedGenerators')">
                     % for sensor in sensors:
-                        <option value="{{sensor}}">{{sensor}}{{units[0]}}</option>
+                        <option value="{{sensor}}">{{sensor}} [{{units[0]}}]</option>
                     % end
                 </select>
                 <div class="invalid-feedback">Si us plau, selecciona un generador controlable.</div>
@@ -125,7 +125,7 @@
             <div class="mb-4">
                 <select class="form-select" id="sourceId" name="sourceId" required multiple placeholder="Controllable Energy Source IDs" onchange="updateSelection('sourceId', 'selectedSources')">
                     % for sensor in sensors:
-                        <option value="{{sensor}}">{{sensor}}{{units[0]}}</option>
+                        <option value="{{sensor}}">{{sensor}} [{{units[0]}}]</option>
                     % end
                 </select>
                 <div class="invalid-feedback">Si us plau, selecciona una font d'energia controlable.</div>
@@ -136,7 +136,7 @@
             <div class="mb-4">
                 <select class="form-select" id="buildingConsumptionId" name="buildingConsumptionId" required multiple placeholder="Base Building Consumption IDs" onchange="updateSelection('buildingConsumptionId', 'selectedConsumptionBuild')">
                     % for sensor in sensors:
-                        <option value="{{sensor}}">{{sensor}}{{units[0]}}</option>
+                        <option value="{{sensor}}">{{sensor}} [{{units[0]}}]</option>
                     % end
                 </select>
                 <div class="invalid-feedback">Si us plau, selecciona un consum d'edifici.</div>
@@ -147,7 +147,7 @@
             <div class="mb-4">
                 <select class="form-select" id="buildingGenerationId" name="buildingGenerationId" required multiple placeholder="Base Building Generation IDs" onchange="updateSelection('buildingGenerationId', 'selectedGenerationId')">
                     % for sensor in sensors:
-                        <option value="{{sensor}}">{{sensor}}{{units[0]}}</option>
+                        <option value="{{sensor}}">{{sensor}} [{{units[0]}}]</option>
                     % end
                 </select>
                 <div class="invalid-feedback">Si us plau, selecciona una generació d'edifici.</div>
