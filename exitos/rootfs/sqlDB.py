@@ -60,7 +60,7 @@ class sqlDB():
         
     def get_sensor_names_Wh(self):
         '''
-        Returns a list of sensors that measure energy in Wh or kWh
+        Returns a list of sensors that measure energy in W or kW
         '''
         # Print a message indicating the start of the sensors search
         print("Searching for sensors list")
@@ -76,9 +76,9 @@ class sqlDB():
             # Create a temporary DataFrame 'aux' cotaining 'entity_id' and 'unist_of_measurement'
             aux = sensors_list[['entity_id', 'attributes.unit_of_measurement']]
             # Filter the sensors that measure energy in Wh or kWh
-            llista = aux[aux['attributes.unit_of_measurement'] == 'Wh']
+            llista = aux[aux['attributes.unit_of_measurement'] == 'W']
             # Add sensors that measure energy in kWh
-            llista = pd.concat([llista, aux[aux['attributes.unit_of_measurement'] == 'kWh']])
+            llista = pd.concat([llista, aux[aux['attributes.unit_of_measurement'] == 'kW']])
             # Return the list of sensors
             return llista
         else:
