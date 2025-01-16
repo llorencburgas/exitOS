@@ -58,7 +58,7 @@ class sqlDB():
         con.commit()
         con.close()
         
-    def get_sensor_names_Wh(self):
+    def get_sensor_names_W(self):
         '''
         Returns a list of sensors that measure energy in W or kW
         '''

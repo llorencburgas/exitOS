@@ -25,7 +25,7 @@ def serve_static(filepath):
 # Ruta inicial
 @app.get('/')
 def get_init():
-    sensors = database.get_sensor_names_Wh()
+    sensors = database.get_sensor_names_W()
     ip = request.environ.get('REMOTE_ADDR')
     token = database.supervisor_token
     return template('./www/main.html', 
@@ -36,7 +36,7 @@ def get_init():
 # Ruta per la configuració de sensors
 @app.get('/forecast')
 def get_forecast():
-    sensors = database.get_sensor_names_Wh()
+    sensors = database.get_sensor_names_W()
     return template('./www/forecast.html', 
                     sensors = sensors['entity_id'].tolist(), 
                     units = sensors['attributes.unit_of_measurement'].tolist())
@@ -44,7 +44,7 @@ def get_forecast():
 # Ruta per la configuració de sensors
 @app.get('/optimize')
 def get_optimize():
-    sensors = database.get_sensor_names_Wh()
+    sensors = database.get_sensor_names_W()
     return template('./www/optimize.html', 
                     sensors = sensors['entity_id'].tolist(), 
                     units = sensors['attributes.unit_of_measurement'].tolist())    
