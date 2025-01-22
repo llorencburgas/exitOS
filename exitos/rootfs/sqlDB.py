@@ -6,6 +6,7 @@ from requests import get
 import traceback
 import os
 import configparser
+import numpy as np
 
 
 class sqlDB():
@@ -73,14 +74,10 @@ class sqlDB():
         
         # Check if the 'entity_id' column exists in the response data
         if 'entity_id' in sensors_list.columns:
-            # Create a temporary DataFrame 'aux' cotaining 'entity_id' and 'unist_of_measurement'
-            aux = sensors_list[['entity_id', 'attributes.unit_of_measurement']]
-            # Filter the sensors that measure energy in Wh or kWh
-            llista = aux[aux['attributes.unit_of_measurement'] == 'W']
-            # Add sensors that measure energy in kWh
-            llista = pd.concat([llista, aux[aux['attributes.unit_of_measurement'] == 'kW']])
-            # Return the list of sensors
-            return llista
+            aux = sensors_list[['entity_id', 'attributes.unit_of_measurement']] # Create a temporary DataFrame 'aux' cotaining 'entity_id' and 'unist_of_measurement'
+            llista = aux[aux['attributes.unit_of_measurement'] == 'W'] # Filter the sensors that measure energy in Wh or kWh
+            llista = pd.concat([llista, aux[aux['attributes.unit_of_measurement'] == 'kW']]) # Add sensors that measure energy in kWh
+            return llista # Return the list of sensors
         else:
             # If 'entity_id' is not found, print and error message and list available columns
             print("'entity_id' column not found in response data")
@@ -163,6 +160,17 @@ class sqlDB():
         Returns the values of the API configuration and the sensor list
         '''
         return self.headers, self.base_url, self.get_sensor_names()
+    
+    def query(self, sql):
+        '''
+        Executa una query a la base de dades
+        '''
+        cur = self.__con__.cursor()
+        cur.execute(sql)
+        result = cur.fetchall()
+        cur.close()
+
+        return result
 
     def update(self):
         '''
@@ -225,6 +233,19 @@ class sqlDB():
                     # Fa una crida a l'API per obtenir l'històric de dades del sensor des de t_ini fins a t_fi
                     url = self.base_url + "history/period/" + t_ini + "?end_time=" + t_fi + "&filter_entity_id=" + id_sensor
                     aux = pd.json_normalize(get(url, headers=self.headers).json())
+
+                    # Convertir els valors en un Df per facilitar operacions
+                    sensor_data = pd.Dataframe([
+                        {'state': float(entry['state']) if entry['state'].replace('.', '', 1).isdigit() else None, 
+                         'last_updated': entry['last_updated']} 
+                         for entry in aux['attributes']
+                    ])
+
+                    # Calcular la mitjana, ignorant els valors no vàlids
+                    column_mean = sensor_data['state'].mean()
+
+                    # Substituir valors no vàlids (None) per la mitjana
+                    sensor_data['state'].fillna(column_mean, inplace=True)
                     
                     # Actualitza cada valor obtingut de l'historial del sensor
                     cur = self.__con__.cursor()
@@ -232,8 +253,8 @@ class sqlDB():
                         valor = aux[column][0]['state']
                         
                         # Comprova si el valor és vàlid; ignora valors com `unknown`, `unavailable` o buits
-                        if (valor == 'unknown') or (valor == 'unavailable') or (valor == ''):
-                            valor = 'nan'
+                        #if (valor == 'unknown') or (valor == 'unavailable') or (valor == ''):
+                         #   valor = np.nan
                         
                         # Només desa el valor si és diferent de l'anterior
                         if valor_ant != valor:
@@ -250,16 +271,9 @@ class sqlDB():
             print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + " No s'han pogut inserir o descarregar dades...:(")
             traceback.print_exc()
 
-    def query(self, sql):
-        '''
-        Executa una query a la base de dades
-        '''
-        cur = self.__con__.cursor()
-        cur.execute(sql)
-        result = cur.fetchall()
-        cur.close()
-
-        return result
+    
+    
+    
     
     
     
