@@ -424,7 +424,12 @@ class Forecaster:
             colinearity_remove_level_to_drop = self.db.get('colinearity_remove_level_to_drop', [])
             extra_vars = self.db.get('extra_vars', [])
             look_back = self.db.get('look_back', 0)
-            
+
+            data = data.dropna(subset=['value'])
+            if data.empty:
+                logging.error("Dades buides: no es pot continuar amb el processament.")
+                return
+                        
 
             if model is None:
                 raise ValueError("El model no està carregat.")
