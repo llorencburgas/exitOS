@@ -73,11 +73,10 @@ def submit_forecast():
         consumption = ForecastersManager.predictConsumption(optimalScheduler.meteo_data, building_consumption_df) #building consumption
         production = ForecastersManager.predictProduction(optimalScheduler.meteo_data, building_generation_df) #building prodiction
         
-        # Serialitzem les dades en format JSON
-        plot_data_json = json.dumps({'consumption': consumption, 'production': production})
-
-        # Retornem la plantilla amb les dades JSON
-        return template('./www/plot.html', plot_data_json=plot_data_json)
+        # Serialitzem les dades a JSON
+        plot_data = json.dumps({'consumption': consumption, 'production': production})
+        
+        return template('./www/plot.html', plot_data=plot_data)
         
     # Redirigeix a la plantilla 'forecast.html' i passa les dades obtingudes
     return template('./www/error.html',) #data = data

@@ -108,7 +108,7 @@
   </footer> 
 
   <script>
-    const plotData = JSON.parse('{{ plot_data_json | safe }}');
+    const plotData = JSON.parse('{{!plot_data}}');
 
     // Dades unificades
     const labels = plotData.timestamps;
