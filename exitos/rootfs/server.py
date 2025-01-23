@@ -5,6 +5,7 @@ from bottle import Bottle, template, run, static_file, HTTPError, redirect, requ
 import optimalScheduler.OptimalScheduler as OptimalScheduler
 import optimalScheduler.ForecastersManager as ForecastersManager
 import pandas as pd
+import json
 
 # Paràmetres de l'execució
 HOSTNAME = '0.0.0.0'
@@ -71,10 +72,13 @@ def submit_forecast():
     elif action == ['forecast']:
         consumption = ForecastersManager.predictConsumption(optimalScheduler.meteo_data, building_consumption_df) #building consumption
         production = ForecastersManager.predictProduction(optimalScheduler.meteo_data, building_generation_df) #building prodiction
-        # mostrem les dades en un gràfic
-        plot_data = {'consumption': consumption, 'production': production}
-        return template('./www/plot.html', plot_data = plot_data)
-    
+        
+        # Serialitzem les dades en format JSON
+        plot_data_json = json.dumps({'consumption': consumption, 'production': production})
+
+        # Retornem la plantilla amb les dades JSON
+        return template('./www/plot.html', plot_data_json=plot_data_json)
+        
     # Redirigeix a la plantilla 'forecast.html' i passa les dades obtingudes
     return template('./www/error.html',) #data = data
 
