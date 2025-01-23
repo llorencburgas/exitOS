@@ -432,31 +432,31 @@ class Forecaster:
                 logging.error("Dades buides: no es pot continuar amb el processament.")
                 return
 
-            # Pas 1 - Fem el windowing
+            #Fem el windowing
             dad = self.do_windowing(data, look_back)
 
-            # Pas 2 - Afegim variables derivades, si escau
+            #Afegim variables derivades, si escau
             if extra_vars:
                 dad = self.timestamp_to_attrs(dad, extra_vars)
 
-            # Pas 3 - Eliminem colinearitats
+            #Eliminem colinearitats
             if colinearity_remove_level_to_drop:
                 dad.drop(columns=colinearity_remove_level_to_drop, errors='ignore', inplace=True)
 
-            # Pas 4 - Eliminem la classe
+            #Eliminem la classe
             if y in dad.columns:
                 del dad[y]
             else:
                 logging.warning(f"La columna '{y}' no es troba a les dades.")
 
-            # Pas 5 - Tractament de NaN
+            #Tractament de NaN
             if dad.isna().any().any():
                 dad = dad.dropna()
 
             if dad.empty:
                 raise ValueError("El DataFrame 'dad' està buit després de tractar els NaN.")
 
-            # Pas 6 - Escalat
+            #Escalat
             if scaler:
                 # Renombrar les columnes per assegurar-nos que són coherents amb el model
                 dad.columns = [col.replace('value', 'state') for col in dad.columns]
@@ -464,15 +464,15 @@ class Forecaster:
                 # Aplicar l'escalat
                 dad = pd.DataFrame(scaler.transform(dad), index=dad.index, columns=dad.columns)
 
-            # Pas 7 - Seleccionem atributs
+            #Seleccionem atributs
             if model_select:
                 dad = model_select.transform(dad)
 
-            # Pas 8 - Predicció
+            #Predicció
             if dad.empty:
                 raise ValueError("El DataFrame 'dad' està buit abans de la predicció.")
 
-            # Realitzem la predicció
+            #Realitzem la predicció
             out = pd.DataFrame(model.predict(dad), columns=[y], index=dad.index)
 
             return out

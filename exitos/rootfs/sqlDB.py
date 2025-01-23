@@ -131,7 +131,7 @@ class sqlDB():
 
                     # Renombrar la columna 'value'
                     #sensor_data = sensor_data.rename(columns={'value': f'value_{sensor_id}'})
-                    print(f"Data for sensor_id '{sensor_id}': \n{sensor_data}")
+                    #print(f"Data for sensor_id '{sensor_id}': \n{sensor_data}")
 
                     # Comprova si merged_data està buit
                     if merged_data.empty:
@@ -140,7 +140,7 @@ class sqlDB():
                         # Fusionar amb merged_data
                         merged_data = pd.merge(merged_data, sensor_data, on='timestamp', how='outer')
                     
-                    print(f"Merged data after adding sensor_id '{sensor_id}': \n{merged_data}")
+                    #print(f"Merged data after adding sensor_id '{sensor_id}': \n{merged_data}")
 
                 except Exception as e:
                     print(f"Error querying sensor_id '{sensor_id}': {e}")
@@ -151,7 +151,7 @@ class sqlDB():
         else:
             print("merged_data is empty. Skipping sort_values.")
 
-        print("Final merged data: \n", merged_data)
+        #print("Final merged data: \n", merged_data)
         return merged_data
     
 
