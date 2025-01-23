@@ -63,9 +63,6 @@ class sqlDB():
         '''
         Returns a list of sensors that measure energy in W or kW
         '''
-        # Print a message indicating the start of the sensors search
-        print("Searching for sensors list")
-        
         # Send a GET request to the Home Assistant API to fetch the sensor data
         response = get(self.base_url + 'states', headers=self.headers)
         
