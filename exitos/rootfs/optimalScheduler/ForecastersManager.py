@@ -105,7 +105,7 @@ def predictProduction(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame):
     data = data.set_index('timestamp')
     data.index = pd.to_datetime(data.index)
 
-    production = prod_forecaster.forecast(data)
+    production = prod_forecaster.forecast(data, 'value') #passar la y per parametre
     print("--------------------PRODUCTION PREDICTION DONE--------------------")
 
     return production
