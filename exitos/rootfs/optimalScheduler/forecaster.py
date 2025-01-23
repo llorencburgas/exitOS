@@ -408,14 +408,15 @@ class Forecaster:
 
         def forecast(self, data, y):
             """
-            Funció que fa la predicció basada en un model entrenat.
+            Processem les dades passant per diversos passos: windowing, afegir variables derivades, eliminar colinearitats,
+            escalar, seleccionar atributs i realitzar la predicció amb el model carregat.
 
-            Paràmetres:
-                - data: DataFrame amb `timestamp` a l'índex. Ha de contenir tots els atributs incloent la classe.
-                        Aquest `DataFrame` ha d'estar preparat per al windowing.
-            
-            Retorna:
-                - out: DataFrame amb les prediccions fetes pel model.
+            Args:
+                data (pd.DataFrame): Dades originals a processar.
+                y (str): Nom de la columna que es vol predir.
+
+            Returns:
+                pd.DataFrame: Dades amb la predicció del model.
             """
             # Recuperem els paràmetres del model
             model = self.db.get('model')
@@ -425,100 +426,101 @@ class Forecaster:
             extra_vars = self.db.get('extra_vars', [])
             look_back = self.db.get('look_back', 0)
 
+            # Eliminar les files amb NaN a la columna 'value'
             data = data.dropna(subset=['value'])
             if data.empty:
                 logging.error("Dades buides: no es pot continuar amb el processament.")
                 return
-                        
-
-            if model is None:
-                raise ValueError("El model no està carregat.")
-
-            # Log de les dades originals
-            logging.info(f"Dades inicials abans del windowing: {data.shape}")
-            logging.info(f"Primeres files de les dades: {data.head()}")
 
             # Pas 1 - Fem el windowing
             dad = self.do_windowing(data, look_back)
-            logging.info(f"Després del windowing: {dad.shape}")
-            logging.info(f"Primeres files després del windowing: {dad.head()}")
 
             # Pas 2 - Afegim variables derivades, si escau
             if extra_vars:
                 dad = self.timestamp_to_attrs(dad, extra_vars)
-            logging.info(f"Després d'afegir variables derivades: {dad.shape}")
 
             # Pas 3 - Eliminem colinearitats
             if colinearity_remove_level_to_drop:
                 dad.drop(columns=colinearity_remove_level_to_drop, errors='ignore', inplace=True)
-            logging.info(f"Després d'eliminar colinearitats: {dad.shape}")
 
             # Pas 4 - Eliminem la classe
-            del dad[y]
-            logging.info(f"Després d'eliminar la classe: {dad.shape}")
+            if y in dad.columns:
+                del dad[y]
+            else:
+                logging.warning(f"La columna '{y}' no es troba a les dades.")
 
             # Pas 5 - Tractament de NaN
-            logging.info(f"Columnes amb NaN abans del tractament: {dad.isna().sum()}")
             if dad.isna().any().any():
                 dad = dad.dropna()
-                logging.info(f"Després de dropna: {dad.shape}")
-            
+
             if dad.empty:
                 raise ValueError("El DataFrame 'dad' està buit després de tractar els NaN.")
 
-            # Pass 6 - Escalat
-            if scaler is not None:
+            # Pas 6 - Escalat
+            if scaler:
                 # Renombrar les columnes per assegurar-nos que són coherents amb el model
                 dad.columns = [col.replace('value', 'state') for col in dad.columns]
-                
-                # Ara podem aplicar l'escalat
+
+                # Aplicar l'escalat
                 dad = pd.DataFrame(scaler.transform(dad), index=dad.index, columns=dad.columns)
-            logging.info(f"Després d'aplicar l'escalat: {dad.shape}")
 
             # Pas 7 - Seleccionem atributs
             if model_select:
                 dad = model_select.transform(dad)
-            logging.info(f"Després de seleccionar atributs: {dad.shape}")
 
             # Pas 8 - Predicció
             if dad.empty:
                 raise ValueError("El DataFrame 'dad' està buit abans de la predicció.")
-            
+
+            # Realitzem la predicció
             out = pd.DataFrame(model.predict(dad), columns=[y], index=dad.index)
-            logging.info(f"Després de la predicció: {out.shape}")
 
             return out
 
 
         def timestamp_to_attrs(self, dad, extra_vars):
+            """
+            Afegeix columnes derivades de l'índex temporal al DataFrame `dad` segons les opcions indicades a `extra_vars`.
 
-            ##
-            # Creem variable dia_setmana, hora, mes
-            ##
+            Args:
+                dad (pd.DataFrame): DataFrame amb un índex temporal.
+                extra_vars (dict): Diccionari amb opcions per generar columnes addicionals. 
+                                Possibles claus: 'variables', 'festius'.
 
-            if extra_vars is not None:
-                # si es none no cal afegir res
-                for i in extra_vars.keys():  # Per cada un dels keys del dict
-                    if i == 'variables':  # si es afegir variables generades de l'index
-                        for j in extra_vars[i]:
-                            if j == 'Dia':
-                                dad['Dia'] = dad.index.dayofweek
-                            elif j == 'Hora':
-                                dad['Hora'] = dad.index.hour
-                            elif j == 'Mes':
-                                dad['Mes'] = dad.index.month
-                            elif j == 'Minut':
-                                dad['Minut'] = dad.index.minute
+            Returns:
+                pd.DataFrame: El mateix DataFrame amb les noves columnes afegides.
+            """
 
-                    elif i == 'festius':  # si es afegir variables generades de llibreria de festius
-                        festius = extra_vars[i]
-                        if len(festius) == 1:
-                            h = holidays.country_holidays(festius[0])
-                            dad['festius'] = [x in h for x in dad.index.strftime('%Y-%m-%d').values]
+            if not extra_vars:
+                # Si extra_vars és None o buit, no cal fer res
+                return dad
 
-                        if len(festius) == 2:
-                            h = holidays.country_holidays(festius[0], festius[1])
-                            dad['festius'] = [x in h for x in dad.index.strftime('%Y-%m-%d').values]
+            # Afegim columnes basades en l'índex temporal
+            if 'variables' in extra_vars:
+                for variable in extra_vars['variables']:
+                    if variable == 'Dia':
+                        dad['Dia'] = dad.index.dayofweek  # Dia de la setmana (0=Dll, 6=Dg)
+                    elif variable == 'Hora':
+                        dad['Hora'] = dad.index.hour  # Hora del dia
+                    elif variable == 'Mes':
+                        dad['Mes'] = dad.index.month  # Mes de l'any
+                    elif variable == 'Minut':
+                        dad['Minut'] = dad.index.minute  # Minut de l'hora
+
+            # Afegim columnes per a dies festius
+            if 'festius' in extra_vars:
+                festius = extra_vars['festius']
+                if len(festius) == 1:
+                    # Festius d'un sol país
+                    h = holidays.country_holidays(festius[0])
+                elif len(festius) == 2:
+                    # Festius d'un país amb una regió específica
+                    h = holidays.country_holidays(festius[0], festius[1])
+                else:
+                    raise ValueError("La clau 'festius' només suporta 1 o 2 paràmetres (país i opcionalment regió).")
+
+                # Afegeix una columna booleana indicant si cada dia és festiu
+                dad['festius'] = dad.index.strftime('%Y-%m-%d').isin(h)
 
             return dad
 
