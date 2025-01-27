@@ -418,6 +418,11 @@ class Forecaster:
             Returns:
                 pd.DataFrame: Dades amb la predicció del model.
             """
+            logging.info("Iniciant la predicció...")
+            print(data.isna().sum())
+            logging.info(data)
+            logging.info(y)
+
             # Recuperem els paràmetres del model
             model = self.db.get('model')
             model_select = self.db.get('model_select', [])
