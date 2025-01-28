@@ -61,7 +61,7 @@ def submit_forecast():
     # Assigna les dades del formulari a variables individuals
     building_consumption_id = form_data.get('buildingConsumptionId')
     building_generation_id = form_data.get('buildingGenerationId')
-
+    
     # Get sensors from the database
     building_consumption_df = database.get_data_from_db(building_consumption_id)
     building_generation_df = database.get_data_from_db(building_generation_id)
