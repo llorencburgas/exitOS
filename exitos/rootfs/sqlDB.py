@@ -7,6 +7,7 @@ import traceback
 import os
 import configparser
 import numpy as np
+import logging
 
 
 class sqlDB():
@@ -175,8 +176,7 @@ class sqlDB():
         '''
 
         try:
-            print("Iniciant l'actualització de la base de dades...")
-            
+            logging.info("Iniciant l'actualització de la base de dades...")
             sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json()) # obtenció llista sensors de la API convertits en DataFrame
             
             for j in sensors_list.index: #per cada sensor de la llista         
