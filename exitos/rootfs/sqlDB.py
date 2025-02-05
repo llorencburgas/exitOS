@@ -22,10 +22,8 @@ class sqlDB():
         #per conectar a la api de home assistant
         self.supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
         self.base_url = "http://supervisor/core/api/"
-        self.headers = {
-                    "Authorization": "Bearer " + self.supervisor_token,
-                    "content-type": "application/json",
-                    }
+        self.headers = {"Authorization": "Bearer " + self.supervisor_token,
+                        "content-type": "application/json",}
 
         # Comprova si la base de dades existeix
         if not os.path.isfile(self.filename):
@@ -172,7 +170,8 @@ class sqlDB():
 
     def update(self):
         '''
-        Actualitza la base de dades amb les dades de la API de Home Assistant
+        Actualitza la base de dades amb les dades de la API de Home Assistant.
+        Aquesta funció sincronitza els sensors existents amb la base de dades i actualitza els valors històrics si cal.
         '''
 
         try:
