@@ -64,7 +64,7 @@ def predictConsumption(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame):
     meteo_data['timestamp'] = pd.to_datetime(meteo_data['timestamp']).dt.tz_localize(None)
     print(meteo_data['timestamp'].head())
     print(scheduling_data.columns)
-    scheduling_data['timestamp'] = pd.to_datetime(scheduling_data['timestamp']).dt.tz_localize(None)
+    scheduling_data['timestamp'] = pd.to_datetime(scheduling_data['timestamp']).dt.floor('H').dt.tz_localize(None)
     print(scheduling_data['timestamp'].head())
 
     print(f"Data mínima i màxima de meteo_data: {meteo_data['timestamp'].min()}, {meteo_data['timestamp'].max()}")
