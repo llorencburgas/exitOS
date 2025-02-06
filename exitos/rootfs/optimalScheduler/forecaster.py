@@ -474,8 +474,8 @@ class Forecaster:
                 dad = model_select.transform(dad)
 
             #Predicció
-            if dad.empty:
-                raise ValueError("El DataFrame 'dad' està buit abans de la predicció.")
+            #if dad.empty:
+             #   raise ValueError("El DataFrame 'dad' està buit abans de la predicció.")
 
             #Realitzem la predicció
             out = pd.DataFrame(model.predict(dad), columns=[y], index=dad.index)
