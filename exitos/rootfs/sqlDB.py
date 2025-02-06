@@ -120,7 +120,7 @@ class sqlDB():
                         FROM dades
                         WHERE sensor_id = ? 
                     """
-                    sensor_data = pd.read_sql_query(query, con, params=(sensor_id,))
+                    sensor_data = pd.read_sql_query(query, con, params=(sensor_id,), index=False)
                     
                     # Assegura't que 'timestamp' és datetime
                     sensor_data['timestamp'] = pd.to_datetime(sensor_data['timestamp'], format='ISO8601')
