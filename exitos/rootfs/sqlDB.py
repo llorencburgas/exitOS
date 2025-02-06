@@ -174,7 +174,7 @@ class sqlDB():
         Aquesta funció sincronitza els sensors existents amb la base de dades i actualitza els valors històrics si cal.
         '''
 
-        try:
+        #try:
             logging.info("Iniciant l'actualització de la base de dades...")
             sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json()) # obtenció llista sensors de la API convertits en DataFrame
             
@@ -249,10 +249,10 @@ class sqlDB():
                     # Tanca el cursor i confirma els canvis
                     cur.close()
                     self.__con__.commit()
-        except:
+        #except:
             # Gestiona errors, mostrant un missatge d'error i la traça d'errors
-            print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + " No s'han pogut inserir o descarregar dades...:(")
-            traceback.print_exc()
+            #print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + " No s'han pogut inserir o descarregar dades...:(")
+            #traceback.print_exc()
 
     
     
