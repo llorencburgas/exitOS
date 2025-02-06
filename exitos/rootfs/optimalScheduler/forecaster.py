@@ -418,7 +418,7 @@ class Forecaster:
             Returns:
                 pd.DataFrame: Dades amb la predicció del model.
             """
-            logging.info("Iniciant la predicció...")
+            logging.info("Starting forecast.py prediction...")
             print(data.isna().sum())
             logging.info(data)
             logging.info(y)
@@ -431,54 +431,38 @@ class Forecaster:
             extra_vars = self.db.get('extra_vars', [])
             look_back = self.db.get('look_back', 0)
 
-            # Eliminar les files amb NaN a la columna 'value'
-            data = data.dropna(subset=['value'])
-            if data.empty:
-                logging.error("Dades buides: no es pot continuar amb el processament.")
-                return
+            ####### Now we have the model and the data, we can start the prediction process #######
 
             #Fem el windowing
             dad = self.do_windowing(data, look_back)
 
             #Afegim variables derivades, si escau
-            if extra_vars:
-                dad = self.timestamp_to_attrs(dad, extra_vars)
+            dad = self.timestamp_to_attrs(dad, extra_vars)
 
             #Eliminem colinearitats
-            if colinearity_remove_level_to_drop:
-                dad.drop(columns=colinearity_remove_level_to_drop, errors='ignore', inplace=True)
+            if np.array(colinearity_remove_level_to_drop != None).any():
+                dad.drop(colinearity_remove_level_to_drop, axis=1, inplace=True)
 
             #Eliminem la classe
-            if y in dad.columns:
-                del dad[y]
-            else:
-                logging.warning(f"La columna '{y}' no es troba a les dades.")
+            del dad[y]
 
             #Tractament de NaN
-            if dad.isna().any().any():
-                dad = dad.dropna()
-
-            #if dad.empty:
-             #   raise ValueError("El DataFrame 'dad' està buit després de tractar els NaN.")
+            X = dad.dropna()
 
             #Escalat
-            if scaler:
-                # Renombrar les columnes per assegurar-nos que són coherents amb el model
-                dad.columns = [col.replace('value', 'state') for col in dad.columns]
-
-                # Aplicar l'escalat
-                dad = pd.DataFrame(scaler.transform(dad), index=dad.index, columns=dad.columns)
+            if scaler is not None:
+                x_i = pd.DataFrame(scaler.transform(X))
+                X = x_i.set_index(X.index)
 
             #Seleccionem atributs
-            if model_select:
-                dad = model_select.transform(dad)
-
+            if model_select == []:
+                 X_new = X.values
+            else:
+                X_new = model_select.transform(X)
+            
             #Predicció
-            #if dad.empty:
-             #   raise ValueError("El DataFrame 'dad' està buit abans de la predicció.")
-
-            #Realitzem la predicció
-            out = pd.DataFrame(model.predict(dad), columns=[y]) #, index=dad.index
+            out = pd.DataFrame(model.predict(X_new), columns=[y])
+            out = out.set_index(X.index)
 
             return out
 
