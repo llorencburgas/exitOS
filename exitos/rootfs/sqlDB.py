@@ -114,7 +114,7 @@ class sqlDB():
         # Connect to the database
         with sqlite3.connect(self.filename) as con:
             for sensor_id in sensors_id:
-                try:
+                #try:
                     query = """
                         SELECT timestamp, value
                         FROM dades
@@ -138,8 +138,8 @@ class sqlDB():
                     
                     #print(f"Merged data after adding sensor_id '{sensor_id}': \n{merged_data}")
 
-                except Exception as e:
-                    print(f"Error querying sensor_id '{sensor_id}': {e}")
+                #except Exception as e:
+                #    print(f"Error querying sensor_id '{sensor_id}': {e}")
         
         # Comprova si merged_data no està buit abans de fer sort_values
         if not merged_data.empty:
