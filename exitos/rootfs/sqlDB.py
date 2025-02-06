@@ -112,34 +112,34 @@ class sqlDB():
         """
         merged_data = pd.DataFrame()
         # Connect to the database
-        with sqlite3.connect(self.filename) as con:
-            for sensor_id in sensors_id:
-                #try:
-                    query = """
-                        SELECT timestamp, value
-                        FROM dades
-                        WHERE sensor_id = ? 
-                    """
-                    sensor_data = pd.read_sql_query(query, con, params=(sensor_id,), index_col=False)
-                    
-                    # Assegura't que 'timestamp' és datetime
-                    sensor_data['timestamp'] = pd.to_datetime(sensor_data['timestamp'], format='ISO8601')
+        #with sqlite3.connect(self.filename) as con:
+        for sensor_id in sensors_id:
+            #try:
+                query = """
+                    SELECT timestamp, value
+                    FROM dades
+                    WHERE sensor_id = ? 
+                """
+                sensor_data = pd.read_sql_query(query, self.__con__, params=(sensor_id,))
+                
+                # Assegura't que 'timestamp' és datetime
+                sensor_data['timestamp'] = pd.to_datetime(sensor_data['timestamp'], format='ISO8601')
 
-                    # Renombrar la columna 'value'
-                    #sensor_data = sensor_data.rename(columns={'value': f'value_{sensor_id}'})
-                    #print(f"Data for sensor_id '{sensor_id}': \n{sensor_data}")
+                # Renombrar la columna 'value'
+                #sensor_data = sensor_data.rename(columns={'value': f'value_{sensor_id}'})
+                #print(f"Data for sensor_id '{sensor_id}': \n{sensor_data}")
 
-                    # Comprova si merged_data està buit
-                    if merged_data.empty:
-                        merged_data = sensor_data
-                    else:
-                        # Fusionar amb merged_data
-                        merged_data = pd.merge(merged_data, sensor_data, on='timestamp', how='outer')
-                    
-                    #print(f"Merged data after adding sensor_id '{sensor_id}': \n{merged_data}")
+                # Comprova si merged_data està buit
+                if merged_data.empty:
+                    merged_data = sensor_data
+                else:
+                    # Fusionar amb merged_data
+                    merged_data = pd.merge(merged_data, sensor_data, on='timestamp', how='outer')
+                
+                #print(f"Merged data after adding sensor_id '{sensor_id}': \n{merged_data}")
 
-                #except Exception as e:
-                #    print(f"Error querying sensor_id '{sensor_id}': {e}")
+            #except Exception as e:
+            #    print(f"Error querying sensor_id '{sensor_id}': {e}")
         
         # Comprova si merged_data no està buit abans de fer sort_values
         if not merged_data.empty:
