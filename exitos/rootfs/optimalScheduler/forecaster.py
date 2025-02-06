@@ -478,7 +478,7 @@ class Forecaster:
              #   raise ValueError("El DataFrame 'dad' està buit abans de la predicció.")
 
             #Realitzem la predicció
-            out = pd.DataFrame(model.predict(dad), columns=[y], index=dad.index)
+            out = pd.DataFrame(model.predict(dad), columns=[y]) #, index=dad.index
 
             return out
 
