@@ -458,8 +458,8 @@ class Forecaster:
             if dad.isna().any().any():
                 dad = dad.dropna()
 
-            if dad.empty:
-                raise ValueError("El DataFrame 'dad' està buit després de tractar els NaN.")
+            #if dad.empty:
+             #   raise ValueError("El DataFrame 'dad' està buit després de tractar els NaN.")
 
             #Escalat
             if scaler:
