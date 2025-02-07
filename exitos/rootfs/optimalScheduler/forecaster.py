@@ -437,7 +437,13 @@ class Forecaster:
 
             # Eliminem columnes que provoquen colinealitat
             if colinearity_remove_level_to_drop:
-                df.drop(colinearity_remove_level_to_drop, axis=1, inplace=True)
+                colinearity_remove_level_to_drop = [col.replace('value', 'state') for col in colinearity_remove_level_to_drop]
+                existing_cols = [col for col in colinearity_remove_level_to_drop if col in df.columns]
+                # Eliminar només les columnes que existeixen
+                if existing_cols:
+                    df.drop(existing_cols, axis=1, inplace=True)
+                else:
+                    logging.warning(f"Columns to drop not found in DataFrame: {colinearity_remove_level_to_drop}")
 
             # Eliminem la columna de la variable objectiu per evitar data leakage
             if y in df.columns:
