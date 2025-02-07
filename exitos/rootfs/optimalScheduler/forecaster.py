@@ -449,6 +449,7 @@ class Forecaster:
 
             # Escalem les dades si hi ha un escalador definit
             if scaler is not None:
+                df.columns = [col.replace('value', 'state') for col in df.columns]
                 X_scaled = pd.DataFrame(scaler.transform(X), index=X.index, columns=X.columns)
                 X = X_scaled
 
