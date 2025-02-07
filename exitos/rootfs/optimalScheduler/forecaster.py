@@ -442,24 +442,24 @@ class Forecaster:
             # Eliminem la columna de la variable objectiu per evitar data leakage
             if y in df.columns:
                 del df[y]
+            else:
+                raise ValueError(f"Column '{y}' not found in the dataset.")
 
             # Eliminem files amb NaN per evitar errors en la predicció
-            df = df.dropna()
+            if df.dropna().any().any():
+                df = df.dropna()
 
             # Escalem les dades si hi ha un escalador definit
-            if scaler is not None:
+            if scaler:
                 df.columns = [col.replace('value', 'state') for col in df.columns]
                 df = pd.DataFrame(scaler.transform(df), index=df.index, columns=df.columns)
                 
             # Seleccionem les característiques a utilitzar segons el selector del model
             if model_select:
-                 X_new = model_select.transform(df) # Si hi ha selector, filtrem les característiques rellevants
-            else:
-                X_new = df.values # Si no hi ha selector, utilitzem totes les característiques
+                 df = model_select.transform(df) # Si hi ha selector, filtrem les característiques rellevants
             
             # Fem la predicció amb el model carregat
-            prediction = model.predict(X_new) #Fem la predicció amb el model carregat
-            out = pd.DataFrame(prediction, columns=[y], index=df.index) #Creem un DataFrame amb la predicció
+            out = pd.DataFrame(model.predict(df), columns=[y]) #Creem un DataFrame amb la predicció
 
             return out # Retornem les dades amb la predicció
 
