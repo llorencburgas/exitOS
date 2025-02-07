@@ -420,8 +420,8 @@ class Forecaster:
             """
             logging.info("Starting forecast.py prediction...")
             print('number of NaN values:', data.isna().sum())
-            logging.info(f"data:", {data})
-            logging.info(f"y:", {y})
+            logging.info(f"data:, {data}")
+            logging.info(f"y:, {y}")
 
             # Recuperem els paràmetres del model
             model = self.db.get('model') # Carreguem el model de predicció
