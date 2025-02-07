@@ -445,23 +445,22 @@ class Forecaster:
                 del df[y]
 
             # Eliminem files amb NaN per evitar errors en la predicció
-            X = df.dropna()
+            df = df.dropna()
 
             # Escalem les dades si hi ha un escalador definit
             if scaler is not None:
                 df.columns = [col.replace('value', 'state') for col in df.columns]
-                X_scaled = pd.DataFrame(scaler.transform(X), index=X.index, columns=X.columns)
-                X = X_scaled
-
+                df = pd.DataFrame(scaler.transform(df), index=df.index, columns=df.columns)
+                
             # Seleccionem les característiques a utilitzar segons el selector del model
             if model_select:
-                 X_new = model_select.transform(X) # Si hi ha selector, filtrem les característiques rellevants
+                 X_new = model_select.transform(df) # Si hi ha selector, filtrem les característiques rellevants
             else:
-                X_new = X.values # Si no hi ha selector, utilitzem totes les característiques
+                X_new = df.values # Si no hi ha selector, utilitzem totes les característiques
             
             # Fem la predicció amb el model carregat
             prediction = model.predict(X_new) #Fem la predicció amb el model carregat
-            out = pd.DataFrame(prediction, columns=[y], index=X.index) #Creem un DataFrame amb la predicció
+            out = pd.DataFrame(prediction, columns=[y], index=df.index) #Creem un DataFrame amb la predicció
 
             return out # Retornem les dades amb la predicció
 
