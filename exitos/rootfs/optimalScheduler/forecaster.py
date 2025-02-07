@@ -419,52 +419,50 @@ class Forecaster:
                 pd.DataFrame: Dades amb la predicció del model.
             """
             logging.info("Starting forecast.py prediction...")
-            print(data.isna().sum())
-            logging.info(data)
-            logging.info(y)
+            print('number of NaN values:', data.isna().sum())
+            logging.info(f"data:", {data})
+            logging.info(f"y:", {y})
 
             # Recuperem els paràmetres del model
-            model = self.db.get('model')
-            model_select = self.db.get('model_select', [])
-            scaler = self.db.get('scaler')
-            colinearity_remove_level_to_drop = self.db.get('colinearity_remove_level_to_drop', [])
-            extra_vars = self.db.get('extra_vars', [])
-            look_back = self.db.get('look_back', 0)
+            model = self.db.get('model') # Carreguem el model de predicció
+            model_select = self.db.get('model_select', []) #Carreguem el selector de característiques si existeix
+            scaler = self.db.get('scaler') # Carreguem l'escalador per normalitzar les dades
+            colinearity_remove_level_to_drop = self.db.get('colinearity_remove_level_to_drop', []) # Columnes a eliminar per evitar colinealitats
+            extra_vars = self.db.get('extra_vars', []) #Variables derivades addicionals
+            look_back = self.db.get('look_back', 0) # Nombre de passos enrere per fer el windowing
 
             ####### Now we have the model and the data, we can start the prediction process #######
 
-            #Fem el windowing
-            dad = self.do_windowing(data, look_back)
+            df = self.do_windowing(data, look_back) #Fem el windowing per preparar les dades en finestres temporals
+            df = self.timestamp_to_attrs(df, extra_vars) #Afegim variables derivades de l'índex temporal
 
-            #Afegim variables derivades, si escau
-            dad = self.timestamp_to_attrs(dad, extra_vars)
+            # Eliminem columnes que provoquen colinealitat
+            if colinearity_remove_level_to_drop:
+                df.drop(colinearity_remove_level_to_drop, axis=1, inplace=True)
 
-            #Eliminem colinearitats
-            if np.array(colinearity_remove_level_to_drop != None).any():
-                dad.drop(colinearity_remove_level_to_drop, axis=1, inplace=True)
+            # Eliminem la columna de la variable objectiu per evitar data leakage
+            if y in df.columns:
+                del df[y]
 
-            #Eliminem la classe
-            del dad[y]
+            # Eliminem files amb NaN per evitar errors en la predicció
+            X = df.dropna()
 
-            #Tractament de NaN
-            X = dad.dropna()
-
-            #Escalat
+            # Escalem les dades si hi ha un escalador definit
             if scaler is not None:
-                x_i = pd.DataFrame(scaler.transform(X))
-                X = x_i.set_index(X.index)
+                X_scaled = pd.DataFrame(scaler.transform(X), index=X.index, columns=X.columns)
+                X = X_scaled
 
-            #Seleccionem atributs
-            if model_select == []:
-                 X_new = X.values
+            # Seleccionem les característiques a utilitzar segons el selector del model
+            if model_select:
+                 X_new = model_select.transform(X) # Si hi ha selector, filtrem les característiques rellevants
             else:
-                X_new = model_select.transform(X)
+                X_new = X.values # Si no hi ha selector, utilitzem totes les característiques
             
-            #Predicció
-            out = pd.DataFrame(model.predict(X_new), columns=[y])
-            out = out.set_index(X.index)
+            # Fem la predicció amb el model carregat
+            prediction = model.predict(X_new) #Fem la predicció amb el model carregat
+            out = pd.DataFrame(prediction, columns=[y], index=X.index) #Creem un DataFrame amb la predicció
 
-            return out
+            return out # Retornem les dades amb la predicció
 
 
         def timestamp_to_attrs(self, dad, extra_vars):
