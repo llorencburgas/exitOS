@@ -419,7 +419,8 @@ class Forecaster:
                 pd.DataFrame: Dades amb la predicció del model.
             """
             logging.info("Starting forecast.py prediction...")
-            logging.info(f"data: {data.to_string()}")
+            logging.info(f"data head: {data.head()}")
+            logging.info(f"data columns: {data.columns}")
             logging.info(f"y: {y}")
 
             # Recuperem els paràmetres del model
