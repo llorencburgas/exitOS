@@ -419,7 +419,7 @@ class Forecaster:
                 pd.DataFrame: Dades amb la predicció del model.
             """
             logging.info("Starting forecast.py prediction...")
-            logging.info(f"data: {data}")
+            logging.info(f"data: {data.to_string()}")
             logging.info(f"y: {y}")
 
             # Recuperem els paràmetres del model
@@ -437,13 +437,7 @@ class Forecaster:
 
             # Eliminem columnes que provoquen colinealitat
             if colinearity_remove_level_to_drop:
-                colinearity_remove_level_to_drop = [col.replace('value', 'state') for col in colinearity_remove_level_to_drop]
-                existing_cols = [col for col in colinearity_remove_level_to_drop if col in df.columns]
-                # Eliminar només les columnes que existeixen
-                if existing_cols:
-                    df.drop(existing_cols, axis=1, inplace=True)
-                else:
-                    logging.warning(f"Columns to drop not found in DataFrame: {colinearity_remove_level_to_drop}")
+                df.drop(colinearity_remove_level_to_drop, axis=1, inplace=True)
 
             # Eliminem la columna de la variable objectiu per evitar data leakage
             if y in df.columns:
