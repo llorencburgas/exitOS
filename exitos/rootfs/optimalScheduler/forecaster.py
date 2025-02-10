@@ -409,14 +409,14 @@ class Forecaster:
         def forecast(self, data, y):
             """
             Processem les dades passant per diversos passos: windowing, afegir variables derivades,
-            eliminar colinearitats, escalar, seleccionar atributs i realitzar la predicci� amb el model carregat.
+            eliminar colinearitats, escalar, seleccionar atributs i realitzar la predicció amb el model carregat.
 
             Args:
                 data (pd.DataFrame): Dades originals a processar.
                 y (str): Nom de la columna que es vol predir.
 
             Returns:
-                pd.DataFrame: Dades amb la predicci� del model.
+                pd.DataFrame: Dades amb la predicció del model.
             """
             logging.info("Starting forecast.py prediction...")
             logging.info(f"data head: {data.head()}")
@@ -424,19 +424,30 @@ class Forecaster:
             logging.info(f"y: {y}")
 
             # Recuperem els paràmetres del model
-            model = self.db.get('model')
-            model_select = self.db.get('model_select', [])
-            scaler = self.db.get('scaler')
-            cols_to_drop = self.db.get('colinearity_remove_level_to_drop', [])
-            extra_vars = self.db.get('extra_vars', [])
-            look_back = self.db.get('look_back', 0)
+            model = self.db.get('model')  # Carreguem el model de predicció
+            model_select = self.db.get('model_select', [])  # Carreguem el selector de característiques, si existeix
+            scaler = self.db.get('scaler')  # Carreguem l'escalador per normalitzar les dades
+            cols_to_drop = self.db.get('colinearity_remove_level_to_drop', [])  # Columnes a eliminar per evitar colinearitats
+            extra_vars = self.db.get('extra_vars', [])  # Variables derivades addicionals
+            look_back = self.db.get('look_back', 0)  # Nombre de passos enrere per fer el windowing
 
             # Preprocessament de les dades
             df = self._preprocess_data(data, y, look_back, extra_vars, cols_to_drop, scaler, model_select)
 
-            # Predicci�
-            predictions = model.predict(df.values if model_select == [] else df)
-            out = pd.DataFrame(predictions, columns=[y], index=df.index)
+            # Si df és un DataFrame, utilitzem el seu índex; sinó, creem un índex numèric
+            if hasattr(df, 'index'):
+                pred_index = df.index
+            else:
+                pred_index = np.arange(len(df))
+
+            # Predicció: si model_select és buit, utilitzem df.values, sinó df (ja hauria de ser un DataFrame)
+            if model_select == []:
+                X_new = df.values
+            else:
+                X_new = df  # Suposant que model_select.transform() a _preprocess_data ja ha convertit df a DataFrame si cal
+
+            predictions = model.predict(X_new)
+            out = pd.DataFrame(predictions, columns=[y], index=pred_index)
             return out
 
         def _preprocess_data(self, data, y, look_back, extra_vars, cols_to_drop, scaler, model_select):
@@ -446,17 +457,17 @@ class Forecaster:
                 logging.error("Dades buides: no es pot continuar amb el processament.")
                 raise ValueError("Dades buides")
             
-            # Windowing: preparaci� de les finestres temporals
+            # Windowing: preparació de les finestres temporals
             df = self.do_windowing(data, look_back)
             
-            # Afegir variables derivades del timestamp (com Dia, Hora, etc.)
+            # Afegir variables derivades del timestamp (per exemple, Dia, Hora, etc.)
             df = self.timestamp_to_attrs(df, extra_vars)
             
-            # Eliminar columnes que provoquen colinearitats
+            # Eliminem columnes que provoquin colinearitats, si hi ha alguna definida
             if cols_to_drop:
                 df.drop(columns=cols_to_drop, inplace=True, errors='ignore')
             
-            # Eliminar la columna de la variable objectiu per evitar data leakage
+            # Eliminem la columna de la variable objectiu per evitar data leakage
             if y in df.columns:
                 del df[y]
             else:
@@ -470,11 +481,15 @@ class Forecaster:
             # Escalat: normalitzar les dades si hi ha escalador definit
             if scaler is not None:
                 df.columns = [col.replace('value', 'state') for col in df.columns]
-                df = pd.DataFrame(scaler.transform(df), index=df.index, columns=df.columns)
+                scaled_array = scaler.transform(df)
+                df = pd.DataFrame(scaled_array, index=df.index, columns=df.columns)
             
-            # Selecci� de caracter�stiques: aplicar el selector si està definit
+            # Selecció de característiques: aplicar el selector si està definit
             if model_select:
                 df = model_select.transform(df)
+                # Si el selector retorna un array, el convertim a DataFrame amb un índex numèric igual al de df original
+                if isinstance(df, np.ndarray):
+                    df = pd.DataFrame(df, index=np.arange(len(df)))  
             
             return df
 
