@@ -419,10 +419,11 @@ class Forecaster:
                 pd.DataFrame: Dades amb la predicció del model.
             """
             logging.info("Starting forecast.py prediction...")
-            logging.info(f"Primeres files de la columna '{y}':\n{data[y].head()}")
-            logging.info(f"Estadístiques de la columna '{y}':\n{data[y].describe()}")
-            logging.info(f"Nombre de valors nuls a la columna '{y}': {data[y].isnull().sum()}")
-
+            #logging.info(f"Primeres files de la columna '{y}':\n{data[y].head()}")
+            #logging.info(f"Estadístiques de la columna '{y}':\n{data[y].describe()}")
+            #logging.info(f"Nombre de valors nuls a la columna '{y}': {data[y].isnull().sum()}")
+            logging.info(f"Columnes disponibles al DataFrame: {data.columns.tolist()}")
+            
             # Recuperem els paràmetres del model
             model = self.db.get('model') # Carreguem el model de predicció
             model_select = self.db.get('model_select', []) #Carreguem el selector de característiques si existeix
