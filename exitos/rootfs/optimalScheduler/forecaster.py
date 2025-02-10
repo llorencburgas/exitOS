@@ -408,8 +408,8 @@ class Forecaster:
 
         def forecast(self, data, y):
             """
-            Processem les dades passant per diversos passos: windowing, afegir variables derivades,
-            eliminar colinearitats, escalar, seleccionar atributs i realitzar la predicció amb el model carregat.
+            Processem les dades passant per diversos passos: windowing, afegir variables derivades, eliminar colinearitats,
+            escalar, seleccionar atributs i realitzar la predicció amb el model carregat.
 
             Args:
                 data (pd.DataFrame): Dades originals a processar.
@@ -419,80 +419,50 @@ class Forecaster:
                 pd.DataFrame: Dades amb la predicció del model.
             """
             logging.info("Starting forecast.py prediction...")
-            logging.info(f"data head: {data.head()}")
-            logging.info(f"data columns: {data.columns}")
-            logging.info(f"y: {y}")
+            logging.info(f"Primeres files de la columna '{y}':\n{data[y].head()}")
+            logging.info(f"Estadístiques de la columna '{y}':\n{data[y].describe()}")
+            logging.info(f"Nombre de valors nuls a la columna '{y}': {data[y].isnull().sum()}")
 
             # Recuperem els paràmetres del model
-            model = self.db.get('model')  # Carreguem el model de predicció
-            model_select = self.db.get('model_select', [])  # Carreguem el selector de característiques, si existeix
-            scaler = self.db.get('scaler')  # Carreguem l'escalador per normalitzar les dades
-            cols_to_drop = self.db.get('colinearity_remove_level_to_drop', [])  # Columnes a eliminar per evitar colinearitats
-            extra_vars = self.db.get('extra_vars', [])  # Variables derivades addicionals
-            look_back = self.db.get('look_back', 0)  # Nombre de passos enrere per fer el windowing
+            model = self.db.get('model') # Carreguem el model de predicció
+            model_select = self.db.get('model_select', []) #Carreguem el selector de característiques si existeix
+            scaler = self.db.get('scaler') # Carreguem l'escalador per normalitzar les dades
+            colinearity_remove_level_to_drop = self.db.get('colinearity_remove_level_to_drop', []) # Columnes a eliminar per evitar colinealitats
+            extra_vars = self.db.get('extra_vars', []) #Variables derivades addicionals
+            look_back = self.db.get('look_back', 0) # Nombre de passos enrere per fer el windowing
 
-            # Preprocessament de les dades
-            df = self._preprocess_data(data, y, look_back, extra_vars, cols_to_drop, scaler, model_select)
+            ####### Now we have the model and the data, we can start the prediction process #######
+            df = self.do_windowing(data, look_back) #Fem el windowing per preparar les dades en finestres temporals
+            df = self.timestamp_to_attrs(df, extra_vars) #Afegim variables derivades de l'índex temporal
 
-            # Si df és un DataFrame, utilitzem el seu índex; sinó, creem un índex numèric
-            if hasattr(df, 'index'):
-                pred_index = df.index
-            else:
-                pred_index = np.arange(len(df))
+            # Eliminem columnes que provoquen colinealitat
+            if colinearity_remove_level_to_drop:
+                existing_cols = [col for col in colinearity_remove_level_to_drop if col in df.columns]
+                df.drop(existing_cols, axis=1, inplace=True)
 
-            # Predicció: si model_select és buit, utilitzem df.values, sinó df (ja hauria de ser un DataFrame)
-            if model_select == []:
-                X_new = df.values
-            else:
-                X_new = df  # Suposant que model_select.transform() a _preprocess_data ja ha convertit df a DataFrame si cal
-
-            predictions = model.predict(X_new)
-            out = pd.DataFrame(predictions, columns=[y], index=pred_index)
-            return out
-
-        def _preprocess_data(self, data, y, look_back, extra_vars, cols_to_drop, scaler, model_select):
-            # Eliminar files amb NaN a la columna objectiu
-            data = data.dropna(subset=[y])
-            if data.empty:
-                logging.error("Dades buides: no es pot continuar amb el processament.")
-                raise ValueError("Dades buides")
-            
-            # Windowing: preparació de les finestres temporals
-            df = self.do_windowing(data, look_back)
-            
-            # Afegir variables derivades del timestamp (per exemple, Dia, Hora, etc.)
-            df = self.timestamp_to_attrs(df, extra_vars)
-            
-            # Eliminem columnes que provoquin colinearitats, si hi ha alguna definida
-            if cols_to_drop:
-                df.drop(columns=cols_to_drop, inplace=True, errors='ignore')
-            
             # Eliminem la columna de la variable objectiu per evitar data leakage
             if y in df.columns:
                 del df[y]
             else:
                 raise ValueError(f"Column '{y}' not found in the dataset.")
-            
-            # Netejar files amb NaN
-            df = df.dropna()
-            if df.empty:
-                raise ValueError("El DataFrame 'df' està buit després de tractar els NaN.")
-            
-            # Escalat: normalitzar les dades si hi ha escalador definit
-            if scaler is not None:
-                df.columns = [col.replace('value', 'state') for col in df.columns]
-                scaled_array = scaler.transform(df)
-                df = pd.DataFrame(scaled_array, index=df.index, columns=df.columns)
-            
-            # Selecció de característiques: aplicar el selector si està definit
-            if model_select:
-                df = model_select.transform(df)
-                # Si el selector retorna un array, el convertim a DataFrame amb un índex numèric igual al de df original
-                if isinstance(df, np.ndarray):
-                    df = pd.DataFrame(df, index=np.arange(len(df)))  
-            
-            return df
 
+            # Eliminem files amb NaN per evitar errors en la predicció
+            if df.dropna().any().any():
+                df = df.dropna()
+
+            # Escalem les dades si hi ha un escalador definit
+            if scaler:
+                df.columns = [col.replace('value', 'state') for col in df.columns]
+                df = pd.DataFrame(scaler.transform(df), index=df.index, columns=df.columns)
+
+            # Seleccionem les característiques a utilitzar segons el selector del model
+            if model_select:
+                 df = model_select.transform(df) # Si hi ha selector, filtrem les característiques rellevants
+
+            # Fem la predicció amb el model carregat
+            out = pd.DataFrame(model.predict(df), columns=[y]) #Creem un DataFrame amb la predicció
+
+            return out # Retornem les dades amb la predicció
 
         def timestamp_to_attrs(self, dad, extra_vars):
             """
