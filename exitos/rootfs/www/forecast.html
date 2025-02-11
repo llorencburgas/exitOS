@@ -124,16 +124,6 @@
   </main>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      document.querySelector('form').addEventListener('submit', function(event) {
-        if (event.submitter.value === 'train') {
-          event.preventDefault();
-          alert("L'entrenament s'ha completat correctament!");
-          this.submit();
-        }
-      });
-    });
-
     function updateSelection(selectId, displayId) {
       const selectElement = document.getElementById(selectId);
       const selectedOptions = Array.from(selectElement.selectedOptions).map(option => option.text);
