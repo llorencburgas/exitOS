@@ -68,12 +68,12 @@ def submit_forecast():
     building_consumption_df = database.get_data_from_db(building_consumption_id)
     building_generation_df = database.get_data_from_db(building_generation_id)
 
-    if action == ['train']:
+    if action == ['train']: #first we need to train the model
         forecast.create_model(building_consumption_df, y='value')
         forecast.create_model(building_generation_df, y='value')
         return {'status': 'success', 'message': 'Model trained successfully'}
 
-    elif action == ['forecast']:
+    elif action == ['forecast']: #then we do the forecast
         consumption = ForecastersManager.predictConsumption(optimalScheduler.meteo_data, building_consumption_df) #building consumption
         production = ForecastersManager.predictProduction(optimalScheduler.meteo_data, building_generation_df) #building prodiction
         

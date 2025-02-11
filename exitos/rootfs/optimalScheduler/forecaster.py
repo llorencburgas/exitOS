@@ -472,6 +472,8 @@ class Forecaster:
                 pd.DataFrame: El mateix DataFrame amb les noves columnes afegides.
             """
 
+            print('type of index:', dad.index.type)
+
             if not extra_vars:
                 # Si extra_vars és None o buit, no cal fer res
                 return dad
