@@ -387,9 +387,7 @@ class Forecaster:
             # Pas 8 - Creem el model
             [model, score] = self.Model(X_new, y_new.values, algorithm, params, max_time=max_time)
 
-            ###
-            #  Finalment un cop tenim el model configurat el guardem en un Object storer
-            ###
+            ####  Finalment un cop tenim el model configurat el guardem en un Object storer ###
 
             # Guardem els diferents models i configuracions que necessitarem per despres poder executar el forcast
             self.db['model'] = model
@@ -476,7 +474,7 @@ class Forecaster:
                 pd.DataFrame: El mateix DataFrame amb les noves columnes afegides.
             """
 
-            print('type of index:', type(dad.index))
+            logging.info('type of index:', type(dad.index))
 
             if not extra_vars:
                 # Si extra_vars és None o buit, no cal fer res
