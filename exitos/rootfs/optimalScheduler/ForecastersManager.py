@@ -8,13 +8,12 @@ import logging
 
 # Create the prediction and the consumption forecasters from the given models
 current_dir = os.getcwd()
-prod_model = joblib.load(current_dir + "/optimalScheduler/forecasterModels/generationModel.joblib")
+#prod_model = joblib.load(current_dir + "/optimalScheduler/forecasterModels/generationModel.joblib")
 prod_forecaster = forecast.Forecaster(debug=True)
-prod_forecaster.db = prod_model
-
-cons_model = joblib.load(current_dir + "/optimalScheduler/forecasterModels/consumptionModel.joblib")
+#prod_forecaster.db = prod_model
+#cons_model = joblib.load(current_dir + "/optimalScheduler/forecasterModels/consumptionModel.joblib")
 cons_forecaster = forecast.Forecaster(debug=True)
-cons_forecaster.db = cons_model
+#cons_forecaster.db = cons_model
 
 def obtainMeteoData(latitude, longitude):
     """
@@ -62,23 +61,13 @@ def predictConsumption(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame):
     """ 
     # Normalitza els timestamps per assegurar consistència
     meteo_data['timestamp'] = pd.to_datetime(meteo_data['timestamp']).dt.tz_localize(None)
-    #print(meteo_data['timestamp'].head())
-    #print(scheduling_data.columns)
     scheduling_data['timestamp'] = pd.to_datetime(scheduling_data['timestamp']).dt.floor('H').dt.tz_localize(None)
-    #print(scheduling_data['timestamp'].head())
 
-    #print(f"Data mínima i màxima de meteo_data: {meteo_data['timestamp'].min()}, {meteo_data['timestamp'].max()}")
-    #print(f"Data mínima i màxima de scheduling_data: {scheduling_data['timestamp'].min()}, {scheduling_data['timestamp'].max()}")
-
-    #print(f"Files abans de fusionar: {len(meteo_data)}, {len(scheduling_data)}")
     data = pd.merge(scheduling_data, meteo_data, on=['timestamp'], how='inner')
-    #print(f"Files després de fusionar: {len(data)}")
-
     data = data.set_index('timestamp')
     data.index = pd.to_datetime(data.index)
-
-    consumption = cons_forecaster.forecast(data, 'value') #passar la y per parametre
     
+    consumption = cons_forecaster.forecast(data, 'value') #passar la y per parametre
     print("S'ha fet la predicció del consum!")
 
     return consumption

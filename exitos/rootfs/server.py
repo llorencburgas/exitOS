@@ -4,7 +4,7 @@ import sqlDB as db  # Importa la base de dades
 from bottle import Bottle, template, run, static_file, HTTPError, redirect, request # Bottle és el que ens fa de servidor web
 import optimalScheduler.OptimalScheduler as OptimalScheduler
 import optimalScheduler.ForecastersManager as ForecastersManager
-import optimalScheduler.forecaster as Forecaster
+import optimalScheduler.forecaster as forecast
 import pandas as pd
 import json
 
@@ -18,6 +18,7 @@ database = db.sqlDB()
 database.update()
 optimalScheduler = OptimalScheduler.OptimalScheduler()
 #model = forecastingModel()
+forecast = forecast.Forecaster(debug=True)
 
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')
@@ -68,8 +69,8 @@ def submit_forecast():
     building_generation_df = database.get_data_from_db(building_generation_id)
 
     if action == ['train']:
-        Forecaster.train_model(building_consumption_df, y='value')
-        Forecaster.train_model(building_generation_df, y='value')
+        forecast.train_model(building_consumption_df, y='value')
+        forecast.train_model(building_generation_df, y='value')
         return {'status': 'success', 'message': 'Model trained successfully'}
 
     elif action == ['forecast']:
