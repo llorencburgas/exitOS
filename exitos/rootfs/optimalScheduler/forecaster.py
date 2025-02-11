@@ -314,8 +314,19 @@ class Forecaster:
             
             logging.info("Iniciant el procés d'entrenament del model")
             
-            # Separar les ddes en variables predictives i objectiu
-            X = data.drop(columns=[y])
+            # Convertir la columna 'timestamp' a format datetime si no ho és ja
+            data['timestamp'] = pd.to_datetime(data['timestamp'])
+
+            # Extraure característiques útils dels timestamps
+            data['year'] = data['timestamp'].dt.year
+            data['month'] = data['timestamp'].dt.month
+            data['day'] = data['timestamp'].dt.day
+            data['hour'] = data['timestamp'].dt.hour
+            data['minute'] = data['timestamp'].dt.minute
+            data['weekday'] = data['timestamp'].dt.weekday
+
+            # Eliminar la columna 'timestamp' de X i afegir les noves variables
+            X = data.drop(columns=[y, 'timestamp'])
             y = data[y]
 
             print(X)
@@ -507,6 +518,9 @@ class Forecaster:
 
                 # Afegeix una columna booleana indicant si cada dia és festiu
                 dad['festius'] = dad.index.strftime('%Y-%m-%d').isin(h)
+
+            logging.info(dad.head(20))
+            dad.drop(columns=['timestamp'], inplace=True)
 
             return dad
 
