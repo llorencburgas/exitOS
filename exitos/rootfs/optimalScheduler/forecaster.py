@@ -314,7 +314,7 @@ class Forecaster:
             
             logging.info("Iniciant el procés d'entrenament del model")
 
-            y = data[y]
+            y_i = data[y]
             
             # Convertir la columna 'timestamp' a format datetime si no ho és ja
             data['timestamp'] = pd.to_datetime(data['timestamp'])
@@ -331,15 +331,15 @@ class Forecaster:
             X = data.drop(columns=[y, 'timestamp'])
             
             print('X:', X.head(20))
-            print('y:', y.head(20))
+            print('y:', y_i.head(20))
 
             # Comprovar si hi ha valors nuls
-            if X.isnull().any().any() or y.isnull().any():
+            if X.isnull().any().any() or y_i.isnull().any():
                 logging.error("Hi ha valors nuls en les dades d'entrada. No es pot continuar.")
                 return None
             
             # Dividim en train i test
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, shuffle=False)  # no fem shufle. volem que aprengui tot el periode no nomes les ultimes observacions.
+            X_train, X_test, y_train, y_test = train_test_split(X, y_i, test_size=0.3, shuffle=False)  # no fem shufle. volem que aprengui tot el periode no nomes les ultimes observacions.
             
             # Escalar les dades
             scaler = StandardScaler()
