@@ -4,6 +4,7 @@ import sqlDB as db  # Importa la base de dades
 from bottle import Bottle, template, run, static_file, HTTPError, redirect, request # Bottle és el que ens fa de servidor web
 import optimalScheduler.OptimalScheduler as OptimalScheduler
 import optimalScheduler.ForecastersManager as ForecastersManager
+import optimalScheduler.forecaster as Forecaster
 import pandas as pd
 import json
 
@@ -67,8 +68,9 @@ def submit_forecast():
     building_generation_df = database.get_data_from_db(building_generation_id)
 
     if action == ['train']:
-        '''ara mateix el train es fa directament amb el forecast'''
-        #print('Training model', data)
+        model_consumption = Forecaster.train_model(building_consumption_df, y='value')
+        model_generation = Forecaster.train_model(building_generation_df, y='value')
+        
     elif action == ['forecast']:
         consumption = ForecastersManager.predictConsumption(optimalScheduler.meteo_data, building_consumption_df) #building consumption
         production = ForecastersManager.predictProduction(optimalScheduler.meteo_data, building_generation_df) #building prodiction

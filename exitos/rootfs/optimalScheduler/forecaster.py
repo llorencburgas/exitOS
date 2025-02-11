@@ -9,6 +9,10 @@ warnings.filterwarnings('ignore')
 import sys
 import logging
 
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import StandardScaler
+
 
 class Forecaster:
         def __init__(self, debug = False):
@@ -303,58 +307,48 @@ class Forecaster:
             return [model_select, X_new, y]
 
         """
-        A partir d'aqui tenim les 2 funcions que controlen tot el funcionament del forcasting (create_model - crear i guardar el model, i forcasting - recuperar i utilitzar el model)
+        A partir d'aqui tenim les 2 funcions que controlen tot el funcionament del forecasting (create_model - crear i guardar el model, i forecasting - recuperar i utilitzar el model)
         """
+
+        def train_model(self, data, y):
+            
+            logging.info("Iniciant el procés d'entrenament del model")
+            
+            # Separar les ddes en variables predictives i objectiu
+            X = data.drop(columns=[y])
+            y = data[y]
+
+            # Comprovar si hi ha valors nuls
+            if X.isnull().any().any() or y.isnull().any():
+                logging.error("Hi ha valors nuls en les dades d'entrada. No es pot continuar.")
+                return None
+            
+            # Dividim en train i test
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, shuffle=False)  # no fem shufle. volem que aprengui tot el periode no nomes les ultimes observacions.
+            
+            # Escalar les dades
+            scaler = StandardScaler()
+            X_train_scaled = scaler.fit_transform(X_train)
+            X_test_scaled = scaler.transform(X_test)
+
+            # Crear i entrenar model
+            model = RandomForestRegressor(n_estimators=100, random_state=42)
+            model.fit(X_train_scaled, y_train)
+
+            # avaluar el model
+            score = model.score(X_test_scaled, y_test)
+            logging.info(f"Model entrenat amb un score de {score}")
+
+            self.db['model'] = model
+            self.db['scaler'] = scaler
+            logging.info("Model entrenat i guardat correctament")
+
+            return model
         
         def create_model(self, data, y, look_back={-1:[25,48]}, extra_vars={'variables':['Dia','Hora','Mes'], 'festius':['ES','CT']},
                          colinearity_remove_level=0.9, feature_selection='Tree', algorithm='RF', params=None, escalat=None, max_time=None):
             """
-            Funcio per crear, guardar i configurar el model de forcasting.
-                datasetin - pandas dataframe amb datetime com a index, format de sempre...
-                
-                y - nom de la columne amb la variable objectiu
-                
-                look_back - Windowing a aplicar, None = no es fara, altrament es un diccionari on la clau es la variable a fer windowing i el valor la finestra que se li ha d'aplicar.
-                            Les claus, son strings indicant el nom de la columna a aplicar el windowing, si com a clau es dona -1 la finestra aplicara a totes les variables no especificades individualment.
-                            
-                            Els valors, son els que defineixen la finestra a aplicar i poden ser [ini, fi] o be [ini, fi, salt]  siguent on comença i acava la finestra de windowing en numero d'observacions (25 -> inici del dia anterior si es horari),  fi es fins on arriba numero d'observacions (48-> ultima hora del dia anterior si es orari), salt es per si no es vol una finestra continua i es vol saltar 24 observaxons per exemple. Amb None no fara res. ULL a no incloure coses que no tindrem en el moment d'execucio!!!!
-                            exemple:
-                                {'y':[25,48],  #la variable y de 25 a 48 observacions anteriors
-                                 -1 : [1,480,24] #totes les que no siguin la 'y' de 1 a 480 pero amb salts de 24 es a dir la 1,25,49,...
-                                }
-                
-                extra_vars - Per crear variables noves. Si es None no creara res.
-                            espera un diccionari on les claus poden ser 'variables' per les generades des de l'index o be 'festius'
-                            exemple: {'variables':['dia','hora','mes'],'festius':['ES','CT']}
-                            A variables s'indicara la llista de variables de temps a posar com a columnes.
-                            A festius s'indicara pais i regio o nomes pais.
-
-                colinearity_remove_level - Per eliminar els atributs molt correlacionats entre ells. 0.9 eliminara atributs amb corr de pearson de mes de 0.9 deixant ne nomes 1. amb None no fara res.
-                
-                feature_selection - metode de seleccio d'atributs o reduccio utilitzat. 
-                                    Pot ser:
-                                        'Tree' -  utilitza un tree per descobrir els mes explicatius
-                                        'PCA' - comprimeix X eliminant linearitats
-                                         numero - Si es passa un numero enter es seleccionaran els KBest attributs 
-                                         None - No fa res
-                
-                algorithm - l'algorisme que s'utilitzara per crear el model
-                            Pot ser:
-                                    'RF' = Random Forest
-                                    'KNN' = KNN
-                                    'SVR' = Super vector Regresor
-                                    'MLP' = MLPRegressor
-                                    'PLS' = PLSRegression
-                
-                params - Es un dict per pasar els parametres que es passaran a l'algorisme de forcasting utilitzat,
-                         En el cas que sigui None i es fara un randomized search per buscar els parametres.
-
-                escalat - Tipus d'escalat que s'aplica a les dades:
-                                'MINMAX' = Minmax scaler
-                                'Robust' = Robust scaler
-                                'Standard' = Standard scaler
-                
-                max_time - Temps maxim en segons de comput per algorisme en mode cerca parametres. Altr. S'ignora.
+            funció que entrena el model i el guarda en un objecte storer.
             
             """
             
