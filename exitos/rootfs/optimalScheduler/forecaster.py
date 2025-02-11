@@ -326,7 +326,8 @@ class Forecaster:
             #data['weekday'] = data['timestamp'].dt.weekday
 
             # Eliminar la columna 'timestamp' de X i afegir les noves variables
-            X = data.drop(columns=[y, 'timestamp'])
+            #X = data.drop(columns=[y, 'timestamp'])
+            X = data.drop(columns=[y])
             y = data[y]
             
             print('X:', X.head(20))
@@ -338,7 +339,7 @@ class Forecaster:
                 return None
             
             # Dividim en train i test
-            X_train, X_test, y_train, y_test = train_test_split(X, y_i, test_size=0.3, shuffle=False)  # no fem shufle. volem que aprengui tot el periode no nomes les ultimes observacions.
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, shuffle=False)  # no fem shufle. volem que aprengui tot el periode no nomes les ultimes observacions.
             
             # Escalar les dades
             scaler = StandardScaler()
