@@ -474,7 +474,8 @@ class Forecaster:
                 pd.DataFrame: El mateix DataFrame amb les noves columnes afegides.
             """
 
-            logging.info('type of index:', type(dad.index))
+            logging.info('type of index:', dad.index.dtype)
+            dad.index = pd.to_datetime(dad.index)
 
             if not extra_vars:
                 # Si extra_vars és None o buit, no cal fer res
