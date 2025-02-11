@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import StandardScaler
 
 import joblib
 import holidays
@@ -8,11 +11,6 @@ import warnings
 warnings.filterwarnings('ignore')
 import sys
 import logging
-
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.preprocessing import StandardScaler
-
 
 class Forecaster:
         def __init__(self, debug = False):
@@ -315,19 +313,19 @@ class Forecaster:
             logging.info("Iniciant el procés d'entrenament del model")
             
             # Convertir la columna 'timestamp' a format datetime si no ho és ja
-            #data['timestamp'] = pd.to_datetime(data['timestamp'])
+            data['timestamp'] = pd.to_datetime(data['timestamp'])
 
             # Extraure característiques útils dels timestamps
-            #data['year'] = data['timestamp'].dt.year
-            #data['month'] = data['timestamp'].dt.month
-            #data['day'] = data['timestamp'].dt.day
-            #data['hour'] = data['timestamp'].dt.hour
-            #data['minute'] = data['timestamp'].dt.minute
-            #data['weekday'] = data['timestamp'].dt.weekday
+            data['year'] = data['timestamp'].dt.year
+            data['month'] = data['timestamp'].dt.month
+            data['day'] = data['timestamp'].dt.day
+            data['hour'] = data['timestamp'].dt.hour
+            data['minute'] = data['timestamp'].dt.minute
+            data['weekday'] = data['timestamp'].dt.weekday
 
             # Eliminar la columna 'timestamp' de X i afegir les noves variables
-            #X = data.drop(columns=[y, 'timestamp'])
-            X = data.drop(columns=[y])
+            X = data.drop(columns=[y, 'timestamp'])
+            #X = data.drop(columns=[y])
             y = data[y]
             
             print('X:', X.head(20))
