@@ -345,6 +345,7 @@ class Forecaster:
             self.db['model'] = model
             self.db['scaler'] = scaler
             logging.info("Model entrenat i guardat correctament")
+            print("##################################################")
 
             return model
         
@@ -475,7 +476,7 @@ class Forecaster:
                 pd.DataFrame: El mateix DataFrame amb les noves columnes afegides.
             """
 
-            print('type of index:', dad.index.type)
+            print('type of index:', type(dad.index))
 
             if not extra_vars:
                 # Si extra_vars és None o buit, no cal fer res

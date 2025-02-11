@@ -69,10 +69,11 @@ def submit_forecast():
     building_generation_df = database.get_data_from_db(building_generation_id)
 
     if action == ['train']: #first we need to train the model
+        forecast.train_model(building_generation_df, y='value')
+
         forecast.create_model(building_consumption_df, y='value')
         forecast.create_model(building_generation_df, y='value')
 
-        forecast.train_model(building_generation_df, y='value')
         return {'status': 'success', 'message': 'Model trained successfully'}
 
     elif action == ['forecast']: #then we do the forecast
