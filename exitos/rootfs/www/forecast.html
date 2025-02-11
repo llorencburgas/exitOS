@@ -89,7 +89,7 @@
   <main class="container my-5">
     <div class="form-container text-center">
       <h2 class="mb-4">Forecasting</h2>
-      <h4 class="mb-4">Select the building consumption and generation sensors to train the model and then you can forecast the energy consumption.</h4>
+      <h5 class="mb-4">Select the building consumption and generation sensors to train the model and then you can forecast the energy consumption.</h5>
       <form action="./submit-forecast" method="post" class="needs-validation" novalidate>
         <!-- Dropdown per Consums d'Edifici -->
         <div class="mb-4">
@@ -117,8 +117,8 @@
           <div id="selectedGenerationId" class="mt-2 text-success"></div>
         </div>
 
-        <button type="submit" name="action" value="train" class="btn btn-success me-2" style="background-color: #2c6e49;">Entrenar</button>
-        <button type="submit" name="action" value="forecast" class="btn btn-success" style="background-color: #a7d129;">Pronosticar</button>
+        <button type="submit" name="action" value="train" class="btn btn-success me-2" style="background-color: #2c6e49;">Train</button>
+        <button type="submit" name="action" value="forecast" class="btn btn-success" style="background-color: #a7d129;">Forecast</button>
       </form>
     </div>
   </main>
