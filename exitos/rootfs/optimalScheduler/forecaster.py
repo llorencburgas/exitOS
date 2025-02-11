@@ -313,28 +313,27 @@ class Forecaster:
         def train_model(self, data, y):
             
             logging.info("Iniciant el procés d'entrenament del model")
-
-            y_i = data[y]
             
             # Convertir la columna 'timestamp' a format datetime si no ho és ja
-            data['timestamp'] = pd.to_datetime(data['timestamp'])
+            #data['timestamp'] = pd.to_datetime(data['timestamp'])
 
             # Extraure característiques útils dels timestamps
-            data['year'] = data['timestamp'].dt.year
-            data['month'] = data['timestamp'].dt.month
-            data['day'] = data['timestamp'].dt.day
-            data['hour'] = data['timestamp'].dt.hour
-            data['minute'] = data['timestamp'].dt.minute
-            data['weekday'] = data['timestamp'].dt.weekday
+            #data['year'] = data['timestamp'].dt.year
+            #data['month'] = data['timestamp'].dt.month
+            #data['day'] = data['timestamp'].dt.day
+            #data['hour'] = data['timestamp'].dt.hour
+            #data['minute'] = data['timestamp'].dt.minute
+            #data['weekday'] = data['timestamp'].dt.weekday
 
             # Eliminar la columna 'timestamp' de X i afegir les noves variables
             X = data.drop(columns=[y, 'timestamp'])
+            y = data[y]
             
             print('X:', X.head(20))
-            print('y:', y_i.head(20))
+            print('y:', y.head(20))
 
             # Comprovar si hi ha valors nuls
-            if X.isnull().any().any() or y_i.isnull().any():
+            if X.isnull().any().any() or y.isnull().any():
                 logging.error("Hi ha valors nuls en les dades d'entrada. No es pot continuar.")
                 return None
             
