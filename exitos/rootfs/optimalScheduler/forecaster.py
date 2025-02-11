@@ -313,6 +313,8 @@ class Forecaster:
         def train_model(self, data, y):
             
             logging.info("Iniciant el procés d'entrenament del model")
+
+            y = data[y]
             
             # Convertir la columna 'timestamp' a format datetime si no ho és ja
             data['timestamp'] = pd.to_datetime(data['timestamp'])
@@ -327,8 +329,7 @@ class Forecaster:
 
             # Eliminar la columna 'timestamp' de X i afegir les noves variables
             X = data.drop(columns=[y, 'timestamp'])
-            y = data[y]
-
+            
             print('X:', X.head(20))
             print('y:', y.head(20))
 
