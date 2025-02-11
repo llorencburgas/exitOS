@@ -318,6 +318,9 @@ class Forecaster:
             X = data.drop(columns=[y])
             y = data[y]
 
+            print(X)
+            print(y)
+
             # Comprovar si hi ha valors nuls
             if X.isnull().any().any() or y.isnull().any():
                 logging.error("Hi ha valors nuls en les dades d'entrada. No es pot continuar.")
