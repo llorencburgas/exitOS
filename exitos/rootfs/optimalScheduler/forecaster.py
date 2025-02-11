@@ -329,8 +329,8 @@ class Forecaster:
             X = data.drop(columns=[y, 'timestamp'])
             y = data[y]
 
-            print(X)
-            print(y)
+            print('X:', X.head(20))
+            print('y:', y.head(20))
 
             # Comprovar si hi ha valors nuls
             if X.isnull().any().any() or y.isnull().any():
@@ -485,8 +485,9 @@ class Forecaster:
                 pd.DataFrame: El mateix DataFrame amb les noves columnes afegides.
             """
 
-            logging.info('type of index:', dad.index.dtype)
             dad.index = pd.to_datetime(dad.index)
+            logging.info(dad.head(20))
+
 
             if not extra_vars:
                 # Si extra_vars és None o buit, no cal fer res
@@ -519,7 +520,6 @@ class Forecaster:
                 # Afegeix una columna booleana indicant si cada dia és festiu
                 dad['festius'] = dad.index.strftime('%Y-%m-%d').isin(h)
 
-            logging.info(dad.head(20))
             dad.drop(columns=['timestamp'], inplace=True)
 
             return dad
