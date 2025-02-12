@@ -323,13 +323,16 @@ class Forecaster:
             data['minute'] = data['timestamp'].dt.minute
             data['weekday'] = data['timestamp'].dt.weekday
 
+            # Eliminar valors nuls de totes les dades abans de separar X i y
+            data = data.dropna()
+
             # Eliminar la columna 'timestamp' de X i afegir les noves variables
-            X = data.drop(columns=[y, 'timestamp'])
             #X = data.drop(columns=[y])
             y = data[y]
-            
-            print('X:', X.head(20))
-            print('y:', y.head(20))
+            X = data.drop(columns=[y, 'timestamp'])
+
+            print('X:', X)
+            print('y:', y)
 
             # Comprovar si hi ha valors nuls
             if X.isnull().any().any() or y.isnull().any():
