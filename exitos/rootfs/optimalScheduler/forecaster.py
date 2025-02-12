@@ -350,6 +350,7 @@ class Forecaster:
             self.db['model'] = model
             self.db['scaler'] = scaler
             logging.info("Model entrenat i guardat correctament")
+            logging.info(f"Model carregat després del train: {model}")
             print("##################################################")
 
             return model
