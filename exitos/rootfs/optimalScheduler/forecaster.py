@@ -328,19 +328,19 @@ class Forecaster:
 
             # Eliminar la columna 'timestamp' de X i afegir les noves variables
             #X = data.drop(columns=[y])
-            y = data[y]
+            y_i = data[y]
             X = data.drop(columns=[y, 'timestamp'])
 
             print('X:', X)
-            print('y:', y)
+            print('y:', y_i)
 
             # Comprovar si hi ha valors nuls
-            if X.isnull().any().any() or y.isnull().any():
-                logging.error("Hi ha valors nuls en les dades d'entrada. No es pot continuar.")
-                return None
+            #if X.isnull().any().any() or y.isnull().any():
+            #    logging.error("Hi ha valors nuls en les dades d'entrada. No es pot continuar.")
+            #    return None
             
             # Dividim en train i test
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, shuffle=False)  # no fem shufle. volem que aprengui tot el periode no nomes les ultimes observacions.
+            X_train, X_test, y_train, y_test = train_test_split(X, y_i, test_size=0.3, shuffle=False)  # no fem shufle. volem que aprengui tot el periode no nomes les ultimes observacions.
             
             # Escalar les dades
             scaler = StandardScaler()
