@@ -369,7 +369,7 @@ class Forecaster:
             dad = self.do_windowing(data, look_back)
 
             # Pas 2 - Creem variable dia_setmana, hora, mes
-            dad =self.timestamp_to_attrs(dad, extra_vars)
+            dad = self.timestamp_to_attrs(dad, extra_vars)
             
             # Pas 3 - treiem colinearitats!
             [dad, to_drop] = self.colinearity_remove(dad, y, level=colinearity_remove_level)
@@ -427,10 +427,10 @@ class Forecaster:
             #logging.info(f"Columnes disponibles al DataFrame: {data[y].head(20)}")
             
             # Recuperem els paràmetres del model
-            model = self.db.get('model') # Carreguem el model de predicció
+            model = self.db['model'] # Carreguem el model de predicció
             logging.info(f"Model carregat: {model}")
             model_select = self.db.get('model_select', []) #Carreguem el selector de característiques si existeix
-            scaler = self.db.get('scaler') # Carreguem l'escalador per normalitzar les dades
+            scaler = self.db['scaler'] # Carreguem l'escalador per normalitzar les dades
             colinearity_remove_level_to_drop = self.db.get('colinearity_remove_level_to_drop', []) # Columnes a eliminar per evitar colinealitats
             extra_vars = self.db.get('extra_vars', []) #Variables derivades addicionals
             look_back = {-1:[25,48]}
