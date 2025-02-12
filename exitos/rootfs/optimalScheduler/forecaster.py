@@ -331,14 +331,6 @@ class Forecaster:
             y_i = data[y]
             X = data.drop(columns=[y, 'timestamp'])
 
-            print('X:', X)
-            print('y:', y_i)
-
-            # Comprovar si hi ha valors nuls
-            #if X.isnull().any().any() or y.isnull().any():
-            #    logging.error("Hi ha valors nuls en les dades d'entrada. No es pot continuar.")
-            #    return None
-            
             # Dividim en train i test
             X_train, X_test, y_train, y_test = train_test_split(X, y_i, test_size=0.3, shuffle=False)  # no fem shufle. volem que aprengui tot el periode no nomes les ultimes observacions.
             
@@ -431,11 +423,11 @@ class Forecaster:
             #logging.info(f"Primeres files de la columna '{y}':\n{data[y].head()}")
             #logging.info(f"Estadístiques de la columna '{y}':\n{data[y].describe()}")
             #logging.info(f"Nombre de valors nuls a la columna '{y}': {data[y].isnull().sum()}")
-            logging.info(f"Columnes disponibles al DataFrame: {data[y].head(20)}")
+            #logging.info(f"Columnes disponibles al DataFrame: {data[y].head(20)}")
             
             # Recuperem els paràmetres del model
             model = self.db.get('model') # Carreguem el model de predicció
-            print(f"Model carregat: {model}")
+            logging.info(f"Model carregat: {model}")
             model_select = self.db.get('model_select', []) #Carreguem el selector de característiques si existeix
             scaler = self.db.get('scaler') # Carreguem l'escalador per normalitzar les dades
             colinearity_remove_level_to_drop = self.db.get('colinearity_remove_level_to_drop', []) # Columnes a eliminar per evitar colinealitats
