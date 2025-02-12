@@ -435,6 +435,7 @@ class Forecaster:
             
             # Recuperem els paràmetres del model
             model = self.db.get('model') # Carreguem el model de predicció
+            print(f"Model carregat: {model}")
             model_select = self.db.get('model_select', []) #Carreguem el selector de característiques si existeix
             scaler = self.db.get('scaler') # Carreguem l'escalador per normalitzar les dades
             colinearity_remove_level_to_drop = self.db.get('colinearity_remove_level_to_drop', []) # Columnes a eliminar per evitar colinealitats
