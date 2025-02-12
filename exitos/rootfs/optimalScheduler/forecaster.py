@@ -439,7 +439,8 @@ class Forecaster:
             scaler = self.db.get('scaler') # Carreguem l'escalador per normalitzar les dades
             colinearity_remove_level_to_drop = self.db.get('colinearity_remove_level_to_drop', []) # Columnes a eliminar per evitar colinealitats
             extra_vars = self.db.get('extra_vars', []) #Variables derivades addicionals
-            look_back = self.db.get('look_back', 0) # Nombre de passos enrere per fer el windowing
+            look_back = {-1:[25,48]}
+            #look_back = self.db.get('look_back', 0) # Nombre de passos enrere per fer el windowing
 
             ####### Now we have the model and the data, we can start the prediction process #######
             df = self.do_windowing(data, look_back) #Fem el windowing per preparar les dades en finestres temporals
