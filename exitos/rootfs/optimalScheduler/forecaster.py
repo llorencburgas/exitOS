@@ -517,6 +517,7 @@ class Forecaster:
                 # Afegeix una columna booleana indicant si cada dia és festiu
                 dad['festius'] = dad.index.strftime('%Y-%m-%d').isin(h)
 
+            logging.info(dad.head(20))
             dad.drop(columns=['timestamp'], inplace=True)
 
             return dad
