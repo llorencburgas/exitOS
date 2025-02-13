@@ -349,6 +349,7 @@ class Forecaster:
 
             self.db['model'] = model
             self.db['scaler'] = scaler
+            logging.info("Scaler utilitzat per normalitzar les dades: " + str(scaler))
             logging.info("Model entrenat i guardat correctament")
             logging.info(f"Model carregat després del train: {model}")
             print("##################################################")
@@ -428,9 +429,9 @@ class Forecaster:
             
             # Recuperem els paràmetres del model
             #model = self.db['model'] # Carreguem el model de predicció
-            logging.info(f"Model carregat: {model}")
             model_select = self.db.get('model_select', []) #Carreguem el selector de característiques si existeix
             scaler = self.db['scaler'] # Carreguem l'escalador per normalitzar les dades
+            logging.info("Scaler utilitzat per normalitzar les dades: " + str(scaler))
             colinearity_remove_level_to_drop = self.db.get('colinearity_remove_level_to_drop', []) # Columnes a eliminar per evitar colinealitats
             extra_vars = self.db.get('extra_vars', []) #Variables derivades addicionals
             look_back = {-1:[25,48]}
