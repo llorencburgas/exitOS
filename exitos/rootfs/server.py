@@ -70,10 +70,10 @@ def submit_forecast():
 
     if action == ['train']: #first we need to train the model
         model_consumption = forecast.train_model(building_consumption_df, y='value')
-        forecast.save_model("consumptionModel.joblib") #Guara el model de consum
+        forecast.save_model("/optimalScheduler/forecasterModels/consumptionModel.joblib") #Guara el model de consum
 
         model_generation = forecast.train_model(building_generation_df, y='value')
-        forecast.save_model("generationModel.joblib")
+        forecast.save_model("/optimalScheduler/forecasterModels/generationModel.joblib")
         
         #forecast.create_model(building_consumption_df, y='value')
         #forecast.create_model(building_generation_df, y='value')
@@ -82,8 +82,8 @@ def submit_forecast():
 
     elif action == ['forecast']: #then we do the forecast
         # obtenir el model de consumption de la base de dades
-        forecast.load_model("consumptionModel.joblib")
-        forecast.load_model("generationModel.joblib")
+        forecast.load_model("/optimalScheduler/forecasterModels/consumptionModel.joblib")
+        forecast.load_model("/optimalScheduler/forecasterModels/generationModel.joblib")
 
         consumption = ForecastersManager.predictConsumption(forecast.db['model'], optimalScheduler.meteo_data, building_consumption_df) #building consumption
         production = ForecastersManager.predictProduction(forecast.db['model'], optimalScheduler.meteo_data, building_generation_df) #building prodiction

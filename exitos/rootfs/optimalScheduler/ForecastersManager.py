@@ -12,8 +12,8 @@ current_dir = os.getcwd()
 prod_forecaster = forecast.Forecaster(debug=True)
 cons_forecaster = forecast.Forecaster(debug=True)
 
-prod_forecaster.load_model("generationModel.joblib")
-cons_forecaster.load_model("consumptionModel.joblib")
+prod_forecaster.load_model("/optimalScheduler/forecasterModels/generationModel.joblib")
+cons_forecaster.load_model("/optimalScheduler/forecasterModels/consumptionModel.joblib")
 
 def obtainMeteoData(latitude, longitude):
     """
