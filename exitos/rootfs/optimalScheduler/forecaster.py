@@ -518,7 +518,7 @@ class Forecaster:
                 dad['festius'] = dad.index.strftime('%Y-%m-%d').isin(h)
 
             logging.info(dad.head(20))
-            dad.drop(columns=['timestamp'], inplace=True)
+            #dad.drop(columns=['timestamp'], inplace=True)
 
             return dad
 
