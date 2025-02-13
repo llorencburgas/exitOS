@@ -351,7 +351,6 @@ class Forecaster:
             self.db['scaler'] = scaler
             logging.info("Model entrenat i guardat correctament")
             logging.info(f"Model carregat després del train: {model}")
-            logging.info(self.db.get('model'))
             print("##################################################")
 
             return model
@@ -409,7 +408,7 @@ class Forecaster:
             if self.debug:  # m'interessa veure quan s'ha guardat un model, per saber per on va i que tot ha anat bé
                 print('Model guardat!  Score:' + str(score))
 
-        def forecast(self, data, y):
+        def forecast(self, data, y, model):
             """
             Processem les dades passant per diversos passos: windowing, afegir variables derivades, eliminar colinearitats,
             escalar, seleccionar atributs i realitzar la predicció amb el model carregat.
@@ -428,7 +427,7 @@ class Forecaster:
             #logging.info(f"Columnes disponibles al DataFrame: {data[y].head(20)}")
             
             # Recuperem els paràmetres del model
-            model = self.db['model'] # Carreguem el model de predicció
+            #model = self.db['model'] # Carreguem el model de predicció
             logging.info(f"Model carregat: {model}")
             model_select = self.db.get('model_select', []) #Carreguem el selector de característiques si existeix
             scaler = self.db['scaler'] # Carreguem l'escalador per normalitzar les dades

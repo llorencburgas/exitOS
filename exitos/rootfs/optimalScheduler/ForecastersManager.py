@@ -8,12 +8,12 @@ import logging
 
 # Create the prediction and the consumption forecasters from the given models
 current_dir = os.getcwd()
-#prod_model = joblib.load(current_dir + "/optimalScheduler/forecasterModels/generationModel.joblib")
+
 prod_forecaster = forecast.Forecaster(debug=True)
-#prod_forecaster.db = prod_model
-#cons_model = joblib.load(current_dir + "/optimalScheduler/forecasterModels/consumptionModel.joblib")
 cons_forecaster = forecast.Forecaster(debug=True)
-#cons_forecaster.db = cons_model
+
+prod_forecaster.load_model("generationModel.joblib")
+cons_forecaster.load_model("consumptionModel.joblib")
 
 def obtainMeteoData(latitude, longitude):
     """
@@ -41,7 +41,7 @@ def obtainMeteoData(latitude, longitude):
     return meteo_data
 
 
-def predictConsumption(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame):
+def predictConsumption(model_consumption, meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame):
     """
     Predict the consumption taking into account the active hours scheduled of the assets
 
@@ -67,13 +67,13 @@ def predictConsumption(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame):
     data = data.set_index('timestamp')
     data.index = pd.to_datetime(data.index)
     
-    consumption = cons_forecaster.forecast(data, 'value') #passar la y per parametre
+    consumption = prod_forecaster.forecast(data, 'value', model_consumption) #passar la y per parametre
     print("S'ha fet la predicció del consum!")
 
     return consumption
 
 
-def predictProduction(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame):
+def predictProduction(model_generation, meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame):
     """
     Predict the production taking into account the active hours scheduled of the assets
 
@@ -98,7 +98,7 @@ def predictProduction(meteo_data: pd.DataFrame, scheduling_data: pd.DataFrame):
     data = data.set_index('timestamp')
     data.index = pd.to_datetime(data.index)
 
-    production = prod_forecaster.forecast(data, 'value') #passar la y per parametre
+    production = cons_forecaster.forecast(data, 'value', model_generation) #passar la y per parametre
     print("S'ha fet la predicció de la producció!")
 
     return production
