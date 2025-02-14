@@ -85,6 +85,8 @@ def submit_forecast():
         forecast.load_model("/optimalScheduler/forecasterModels/consumptionModel.joblib")
         forecast.load_model("/optimalScheduler/forecasterModels/generationModel.joblib")
 
+        forecast.db.get('scaler', None)
+
         consumption = ForecastersManager.predictConsumption(forecast.db['model'], optimalScheduler.meteo_data, building_consumption_df) #building consumption
         production = ForecastersManager.predictProduction(forecast.db['model'], optimalScheduler.meteo_data, building_generation_df) #building prodiction
         
