@@ -7,6 +7,7 @@ import optimalScheduler.ForecastersManager as ForecastersManager
 import optimalScheduler.forecaster as forecast
 import pandas as pd
 import json
+import joblib
 
 # Paràmetres de l'execució
 HOSTNAME = '0.0.0.0'
@@ -69,11 +70,14 @@ def submit_forecast():
     building_generation_df = database.get_data_from_db(building_generation_id)
 
     if action == ['train']: #first we need to train the model
-        model_consumption = forecast.train_model(building_consumption_df, y='value')
+        model_consumption, scaler_consumption = forecast.train_model(building_consumption_df, y='value')
         forecast.save_model("/optimalScheduler/forecasterModels/consumptionModel.joblib") #Guara el model de consum
 
-        model_generation = forecast.train_model(building_generation_df, y='value')
+        model_generation, scaler_prodiction = forecast.train_model(building_generation_df, y='value')
         forecast.save_model("/optimalScheduler/forecasterModels/generationModel.joblib")
+
+        joblib.dump(scaler_consumption, "/optimalScheduler/forecasterModels/scaler_consumption.joblib") #Guarda el scaler
+        joblib.dump(scaler_prodiction, "/optimalScheduler/forecasterModels/scaler_prodiction.joblib")
         
         #forecast.create_model(building_consumption_df, y='value')
         #forecast.create_model(building_generation_df, y='value')
@@ -85,7 +89,8 @@ def submit_forecast():
         forecast.load_model("/optimalScheduler/forecasterModels/consumptionModel.joblib")
         forecast.load_model("/optimalScheduler/forecasterModels/generationModel.joblib")
 
-        forecast.db.get('scaler', None)
+        scaler_consumption = joblib.load("/optimalScheduler/forecasterModels/scaler_consumption.joblib")
+        scaler_prodiction = joblib.load("/optimalScheduler/forecasterModels/scaler_prodiction.joblib")
 
         consumption = ForecastersManager.predictConsumption(forecast.db['model'], optimalScheduler.meteo_data, building_consumption_df) #building consumption
         production = ForecastersManager.predictProduction(forecast.db['model'], optimalScheduler.meteo_data, building_generation_df) #building prodiction

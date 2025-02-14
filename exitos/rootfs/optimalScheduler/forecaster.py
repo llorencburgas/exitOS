@@ -307,55 +307,7 @@ class Forecaster:
         """
         A partir d'aqui tenim les 2 funcions que controlen tot el funcionament del forecasting (create_model - crear i guardar el model, i forecasting - recuperar i utilitzar el model)
         """
-
-        def train_model(self, data, y):
-            
-            logging.info("Iniciant el procés d'entrenament del model")
-            
-            # Convertir la columna 'timestamp' a format datetime si no ho és ja
-            data['timestamp'] = pd.to_datetime(data['timestamp'])
-
-            # Extraure característiques útils dels timestamps
-            data['year'] = data['timestamp'].dt.year
-            data['month'] = data['timestamp'].dt.month
-            data['day'] = data['timestamp'].dt.day
-            data['hour'] = data['timestamp'].dt.hour
-            data['minute'] = data['timestamp'].dt.minute
-            data['weekday'] = data['timestamp'].dt.weekday
-
-            # Eliminar valors nuls de totes les dades abans de separar X i y
-            data = data.dropna()
-
-            # Eliminar la columna 'timestamp' de X i afegir les noves variables
-            #X = data.drop(columns=[y])
-            y_i = data[y]
-            X = data.drop(columns=[y, 'timestamp'])
-
-            # Dividim en train i test
-            X_train, X_test, y_train, y_test = train_test_split(X, y_i, test_size=0.3, shuffle=False)  # no fem shufle. volem que aprengui tot el periode no nomes les ultimes observacions.
-            
-            # Escalar les dades
-            scaler = MinMaxScaler()
-            X_train_scaled = scaler.fit_transform(X_train)
-            X_test_scaled = scaler.transform(X_test)
-
-            # Crear i entrenar model
-            model = RandomForestRegressor(n_estimators=100, random_state=42)
-            model.fit(X_train_scaled, y_train)
-
-            # avaluar el model
-            score = model.score(X_test_scaled, y_test)
-            logging.info(f"Model entrenat amb un score de {score}")
-
-            self.db['model'] = model
-            self.db['scaler'] = scaler
-            logging.info("Scaler utilitzat per normalitzar les dades: " + str(scaler))
-            logging.info("Model entrenat i guardat correctament")
-            logging.info(f"Model carregat després del train: {model}")
-            print("##################################################")
-
-            return model
-        
+      
         def create_model(self, data, y, look_back={-1:[25,48]}, extra_vars={'variables':['Dia','Hora','Mes'], 'festius':['ES','CT']},
                          colinearity_remove_level=0.9, feature_selection='Tree', algorithm='RF', params=None, escalat=None, max_time=None):
             """
@@ -409,6 +361,54 @@ class Forecaster:
             if self.debug:  # m'interessa veure quan s'ha guardat un model, per saber per on va i que tot ha anat bé
                 print('Model guardat!  Score:' + str(score))
 
+        def train_model(self, data, y):
+            
+            logging.info("Iniciant el procés d'entrenament del model")
+            
+            # Convertir la columna 'timestamp' a format datetime si no ho és ja
+            data['timestamp'] = pd.to_datetime(data['timestamp'])
+
+            # Extraure característiques útils dels timestamps
+            data['year'] = data['timestamp'].dt.year
+            data['month'] = data['timestamp'].dt.month
+            data['day'] = data['timestamp'].dt.day
+            data['hour'] = data['timestamp'].dt.hour
+            data['minute'] = data['timestamp'].dt.minute
+            data['weekday'] = data['timestamp'].dt.weekday
+
+            # Eliminar valors nuls de totes les dades abans de separar X i y
+            data = data.dropna()
+
+            # Eliminar la columna 'timestamp' de X i afegir les noves variables
+            #X = data.drop(columns=[y])
+            y_i = data[y]
+            X = data.drop(columns=[y, 'timestamp'])
+
+            # Dividim en train i test
+            X_train, X_test, y_train, y_test = train_test_split(X, y_i, test_size=0.3, shuffle=False)  # no fem shufle. volem que aprengui tot el periode no nomes les ultimes observacions.
+            
+            # Escalar les dades
+            scaler = MinMaxScaler()
+            X_train_scaled = scaler.fit_transform(X_train)
+            X_test_scaled = scaler.transform(X_test)
+
+            # Crear i entrenar model
+            model = RandomForestRegressor(n_estimators=100, random_state=42)
+            model.fit(X_train_scaled, y_train)
+
+            # avaluar el model
+            score = model.score(X_test_scaled, y_test)
+            logging.info(f"Model entrenat amb un score de {score}")
+
+            self.db['model'] = model
+            self.db['scaler'] = scaler
+            logging.info("Scaler utilitzat per normalitzar les dades: " + str(scaler))
+            logging.info("Model entrenat i guardat correctament")
+            logging.info(f"Model carregat després del train: {model}")
+            print("##################################################")
+
+            return model, scaler
+        
         def forecast(self, data, y, model):
             """
             Processem les dades passant per diversos passos: windowing, afegir variables derivades, eliminar colinearitats,
