@@ -71,13 +71,10 @@ def submit_forecast():
 
     if action == ['train']: #first we need to train the model
         model_consumption, scaler_consumption = forecast.train_model(building_consumption_df, y='value')
-        forecast.save_model("/optimalScheduler/forecasterModels/consumptionModel.joblib") #Guara el model de consum
+        forecast.save_model(model_consumption, "/optimalScheduler/forecasterModels/consumptionModel.joblib", scaler_consumption, "/optimalScheduler/forecasterModels/consumptionScaler.joblib") #Guara el model de consum
 
-        model_generation, scaler_prodiction = forecast.train_model(building_generation_df, y='value')
-        forecast.save_model("/optimalScheduler/forecasterModels/generationModel.joblib")
-
-        joblib.dump(scaler_consumption, "/optimalScheduler/forecasterModels/scaler_consumption.joblib") #Guarda el scaler
-        joblib.dump(scaler_prodiction, "/optimalScheduler/forecasterModels/scaler_prodiction.joblib")
+        model_generation, scaler_generation = forecast.train_model(building_generation_df, y='value')
+        forecast.save_model(model_generation, "/optimalScheduler/forecasterModels/generationModel.joblib", scaler_generation, "/optimalScheduler/forecasterModels/generationScaler.joblib")     
         
         #forecast.create_model(building_consumption_df, y='value')
         #forecast.create_model(building_generation_df, y='value')
@@ -86,11 +83,8 @@ def submit_forecast():
 
     elif action == ['forecast']: #then we do the forecast
         # obtenir el model de consumption de la base de dades
-        forecast.load_model("/optimalScheduler/forecasterModels/consumptionModel.joblib")
-        forecast.load_model("/optimalScheduler/forecasterModels/generationModel.joblib")
-
-        scaler_consumption = joblib.load("/optimalScheduler/forecasterModels/scaler_consumption.joblib")
-        scaler_prodiction = joblib.load("/optimalScheduler/forecasterModels/scaler_prodiction.joblib")
+        forecast.load_model("/optimalScheduler/forecasterModels/consumptionModel.joblib", "/optimalScheduler/forecasterModels/consumptionScaler.joblib")
+        forecast.load_model("/optimalScheduler/forecasterModels/generationModel.joblib", "/optimalScheduler/forecasterModels/generationScaler.joblib")
 
         consumption = ForecastersManager.predictConsumption(forecast.db['model'], optimalScheduler.meteo_data, building_consumption_df) #building consumption
         production = ForecastersManager.predictProduction(forecast.db['model'], optimalScheduler.meteo_data, building_generation_df) #building prodiction

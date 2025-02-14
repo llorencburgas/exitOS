@@ -402,9 +402,9 @@ class Forecaster:
 
             self.db['model'] = model
             self.db['scaler'] = scaler
-            logging.info("Scaler utilitzat per normalitzar les dades: " + str(scaler))
-            logging.info("Model entrenat i guardat correctament")
-            logging.info(f"Model carregat després del train: {model}")
+            
+            logging.info("Scaler utilitzat per normalitzar les dades: " + scaler)
+            
             print("##################################################")
 
             return model, scaler
@@ -422,16 +422,12 @@ class Forecaster:
                 pd.DataFrame: Dades amb la predicció del model.
             """
             logging.info("Starting forecast.py prediction...")
-            #logging.info(f"Primeres files de la columna '{y}':\n{data[y].head()}")
-            #logging.info(f"Estadístiques de la columna '{y}':\n{data[y].describe()}")
-            #logging.info(f"Nombre de valors nuls a la columna '{y}': {data[y].isnull().sum()}")
-            #logging.info(f"Columnes disponibles al DataFrame: {data[y].head(20)}")
             
             # Recuperem els paràmetres del model
             #model = self.db['model'] # Carreguem el model de predicció
             model_select = self.db.get('model_select', []) #Carreguem el selector de característiques si existeix
             scaler = self.db['scaler'] # Carreguem l'escalador per normalitzar les dades
-            logging.info("Scaler utilitzat per normalitzar les dades: " + str(scaler))
+            logging.info("Scaler utilitzat per normalitzar les dades: " + scaler)
             colinearity_remove_level_to_drop = self.db.get('colinearity_remove_level_to_drop', []) # Columnes a eliminar per evitar colinealitats
             extra_vars = self.db.get('extra_vars', []) #Variables derivades addicionals
             look_back = {-1:[25,48]}
@@ -552,9 +548,16 @@ class Forecaster:
 
             return dad, scaler
 
-        def save_model(self, filename='Model-data.joblib'):
-            joblib.dump(self.db, filename)
-            print("Model guardat al fitxer " + filename)
+        def save_model(self, model, model_filename, scaler, scaler_filename):
+            # Guardem tant el model com l'escalador
+            joblib.dump(model, model_filename)
+            joblib.dump(scaler, scaler_filename)
+            print(f"Model guardat al fitxer {model_filename}")
+            print(f"Scaler guardat al fitxer {scaler_filename}")
 
-        def load_model(self, filename):
-            self.db = joblib.load(filename)
+        def load_model(self, model_filename, scaler_filename):
+            # Carregar tant el model com l'escalador
+            self.db['model'] = joblib.load(model_filename)
+            self.db['scaler'] = joblib.load(scaler_filename)
+            print(f"Model carregat des de {model_filename}")
+            print(f"Scaler carregat des de {scaler_filename}")
