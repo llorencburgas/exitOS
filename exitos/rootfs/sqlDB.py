@@ -228,7 +228,13 @@ class sqlDB():
                 
                 # Fa una crida a l'API per obtenir l'històric de dades del sensor des de t_ini fins a t_fi
                 url = self.base_url + "history/period/" + t_ini + "?end_time=" + t_fi + "&filter_entity_id=" + id_sensor
-                aux = pd.json_normalize(get(url, headers=self.headers).json())
+                
+                response = get(url, headers=self.headers)
+                print("Response Text:", response.text)
+                print("Content-Type:", response.headers.get('Content-Type'))
+
+
+                # aux = pd.json_normalize(get(url, headers=self.headers).json())
 
                 # Actualitza cada valor obtingut de l'historial del sensor
                 cur = self.__con__.cursor()
