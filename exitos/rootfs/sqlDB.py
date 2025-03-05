@@ -9,7 +9,6 @@ import configparser
 import numpy as np
 import logging
 
-from datetime import datetime
 
 
 class sqlDB():
@@ -213,7 +212,7 @@ class sqlDB():
             
             # Defineix el temps inicial de l'historial
             if llista is None:
-                t_ini = "2022-01-01T00:00:00"  # Valor per defecte si no hi ha dades prèvies
+                t_ini = "2025-01-01T00:00:00"  # Valor per defecte si no hi ha dades prèvies
                 valor_ant = []
             else:
                 t_ini = llista  # Últim timestamp guardat per iniciar des d'allà
@@ -226,8 +225,7 @@ class sqlDB():
             
             if llista[0][0]:  # Si `update_sensor` és True
                 print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + ' Actualitzant sensor: ' + id_sensor)                   
-                t_fi = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-                # t_fi = "2099-01-01T00:00:00" # Defineix el final de l'interval de temps per a la crida
+                t_fi = "2099-01-01T00:00:00" # Defineix el final de l'interval de temps per a la crida
                 
                 # Fa una crida a l'API per obtenir l'històric de dades del sensor des de t_ini fins a t_fi
                 url = self.base_url + "history/period/" + t_ini + "?end_time=" + t_fi + "&filter_entity_id=" + id_sensor
