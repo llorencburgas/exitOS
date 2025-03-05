@@ -186,7 +186,7 @@ class sqlDB():
             var = (id_sensor,)
             llista = cur.execute('SELECT * FROM sensors WHERE sensor_id = ?', var).fetchall()
             cur.close()
-            
+            #/share/exitos/dades.db
             # si el sensor no existeix, el crea
             if len(llista) == 0:
                 cur = self.__con__.cursor()
@@ -233,7 +233,9 @@ class sqlDB():
                 print("Response Text:", response.text)
                 print("Content-Type:", response.headers.get('Content-Type'))
 
-                aux = pd.json_normalize(response.json())
+                jsonResponse = response.json()
+                
+                aux = pd.json_normalize(jsonResponse)
                 # aux = pd.json_normalize(get(url, headers=self.headers).json())
 
                 # Actualitza cada valor obtingut de l'historial del sensor
