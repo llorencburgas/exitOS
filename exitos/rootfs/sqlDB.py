@@ -227,18 +227,18 @@ class sqlDB():
                 t_fi = "2099-01-01T00:00:00" # Defineix el final de l'interval de temps per a la crida
                 
                 # Fa una crida a l'API per obtenir l'històric de dades del sensor des de t_ini fins a t_fi
-                url = self.base_url + "history/period/" + t_ini + "?end_time=" + t_fi + "&filter_entity_id=" + id_sensor
-                print("URL: ", url)
+                # url = self.base_url + "history/period/" + t_ini + "?end_time=" + t_fi + "&filter_entity_id=" + id_sensor
+                url = self.base_url + "states/" + id_sensor
 
-                
-                response = get(url, headers=self.headers)
-                print("Response Text:", response.text)
-                print("Content-Type:", response.headers.get('Content-Type'))
+                #print("URL: ", url)
+                # response = get(url, headers=self.headers)
+                # print("Response Text:", response.text)
+                # print("Content-Type:", response.headers.get('Content-Type'))
 
-                jsonResponse = response.json()
-                
-                aux = pd.json_normalize(jsonResponse)
-                # aux = pd.json_normalize(get(url, headers=self.headers).json())
+                # jsonResponse = response.json()
+                # aux = pd.json_normalize(jsonResponse)
+
+                aux = pd.json_normalize(get(url, headers=self.headers).json())
 
                 # Actualitza cada valor obtingut de l'historial del sensor
                 cur = self.__con__.cursor()
