@@ -228,6 +228,8 @@ class sqlDB():
                 
                 # Fa una crida a l'API per obtenir l'històric de dades del sensor des de t_ini fins a t_fi
                 url = self.base_url + "history/period/" + t_ini + "?end_time=" + t_fi + "&filter_entity_id=" + id_sensor
+                print("URL: ", url)
+
                 
                 response = get(url, headers=self.headers)
                 print("Response Text:", response.text)
