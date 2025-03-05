@@ -212,7 +212,7 @@ class sqlDB():
             
             # Defineix el temps inicial de l'historial
             if llista is None:
-                t_ini = "2025-01-01T00:00:00"  # Valor per defecte si no hi ha dades prèvies
+                t_ini = "2025-03-01T00:00:00"  # Valor per defecte si no hi ha dades prèvies
                 valor_ant = []
             else:
                 t_ini = llista  # Últim timestamp guardat per iniciar des d'allà
