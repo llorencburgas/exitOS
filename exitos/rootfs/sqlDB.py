@@ -233,7 +233,7 @@ class sqlDB():
                 print("Response Text:", response.text)
                 print("Content-Type:", response.headers.get('Content-Type'))
 
-
+                aux = pd.json_normalize(response.json())
                 # aux = pd.json_normalize(get(url, headers=self.headers).json())
 
                 # Actualitza cada valor obtingut de l'historial del sensor
