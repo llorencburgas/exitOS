@@ -237,7 +237,9 @@ class sqlDB():
                     url = self.base_url + "history/period/" + string_start_date + "?end_time=" + string_end_date + "&filter_entity_id=" + id_sensor + "&minimal_response" + "&no_attributes"
 
                     aux = pd.json_normalize(get(url, headers=self.headers).json())
+                    
 
+                    print("INFO:" + aux)
                     # Actualitza cada valor obtingut de l'historial del sensor
                     cur = self.__con__.cursor()
                     for column in aux.columns:
