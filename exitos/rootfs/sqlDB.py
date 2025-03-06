@@ -232,7 +232,9 @@ class sqlDB():
                     t_fi = t_ini + timedelta(days=7) # Defineix el final de l'interval de temps per a la crida (7 dies més que l'inici)
                     
                     # Fa una crida a l'API per obtenir l'històric de dades del sensor des de t_ini fins a t_fi
-                    url = self.base_url + "history/period/" + t_ini.isoformat() + "?end_time=" + t_fi.isoformat + "&filter_entity_id=" + id_sensor + "&minimal_response" + "&no_attributes"
+                    string_start_date = t_ini.isoformat()
+                    string_end_date = t_fi.isoformat()
+                    url = self.base_url + "history/period/" + string_start_date + "?end_time=" + string_end_date + "&filter_entity_id=" + id_sensor + "&minimal_response" + "&no_attributes"
 
                     aux = pd.json_normalize(get(url, headers=self.headers).json())
 
