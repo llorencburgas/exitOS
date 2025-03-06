@@ -213,7 +213,7 @@ class sqlDB():
             
             # Defineix el temps inicial de l'historial
             if llista is None:
-                t_ini = datetime.fromisoformat(datetime.now() - timedelta(days=21))  # Valor per defecte si no hi ha dades prèvies (3 setmanes anteriors a avui)
+                t_ini = datetime.now(timezone.utc) - timedelta(days = 21)  # Valor per defecte si no hi ha dades prèvies (3 setmanes anteriors a avui)
                 valor_ant = []
             else:
                 t_ini = datetime.fromisoformat(llista)  # Últim timestamp guardat per iniciar des d'allà
@@ -230,18 +230,29 @@ class sqlDB():
 
                 while (t_ini < current_time):
                     t_fi = t_ini + timedelta(days=7) # Defineix el final de l'interval de temps per a la crida (7 dies més que l'inici)
-                    if (t_fi > datetime.now(timezone.utc)): t_fi = datetime.now(timezone.utc)
                     
+                    if (t_fi > datetime.now(timezone.utc)): 
+                        t_fi = datetime.now(timezone.utc)
+
                     # Fa una crida a l'API per obtenir l'històric de dades del sensor des de t_ini fins a t_fi
-                    string_start_date = t_ini.isoformat()
-                    string_end_date = t_fi.isoformat()
-                    url = self.base_url + "history/period/" + string_start_date + "?end_time=" + string_end_date + "&filter_entity_id=" + id_sensor + "&minimal_response" + "&no_attributes"
+                    string_start_date = t_ini.isoformat(timespec='seconds') + "Z"
+                    string_end_date = t_fi.isoformat(timespec='seconds') + "Z"
+
+                    print("START DATE: " + string_start_date)
+                    print("END DATE: " + string_end_date)
+                    
+
+                    url = (
+                        self.base_url + "history/period/" + string_start_date +
+                         "?end_time=" + string_end_date +
+                         "&filter_entity_id=" + id_sensor +
+                         "&minimal_response&no_attributes"
+                    )
 
                     aux = pd.json_normalize(get(url, headers=self.headers).json())
                     
-                    print("START DATE" + string_start_date)
-                    print("END DATE: " + string_end_date)
                     print("INFO:" + aux)
+
                     # Actualitza cada valor obtingut de l'historial del sensor
                     cur = self.__con__.cursor()
                     for column in aux.columns:
@@ -258,7 +269,7 @@ class sqlDB():
                             values = (id_sensor, TS, valor)
                             cur.execute("INSERT INTO dades (sensor_id, timestamp, value) VALUES(?, ?, ?)", values)
                     
-                    t_ini = t_ini + timedelta(days=7)
+                    t_ini += timedelta(days=7)
                 
                 # Tanca el cursor i confirma els canvis
                 cur.close()
