@@ -8,7 +8,7 @@ import configparser
 import numpy as np
 import logging
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 
@@ -225,7 +225,7 @@ class sqlDB():
             cur.close()
             
             if llista[0][0]:  # Si `update_sensor` és True
-                current_time = datetime.now()
+                current_time = datetime.now(timezone.utc)
                 print('[' + current_time.isoformat() + ']' + ' Actualitzant sensor: ' + id_sensor)                   
 
                 while (t_ini < current_time):
