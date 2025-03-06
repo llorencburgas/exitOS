@@ -235,8 +235,9 @@ class sqlDB():
                         t_fi = datetime.now(timezone.utc)
 
                     # Fa una crida a l'API per obtenir l'històric de dades del sensor des de t_ini fins a t_fi
-                    string_start_date = t_ini.isoformat(timespec='seconds') + "Z"
-                    string_end_date = t_fi.isoformat(timespec='seconds') + "Z"
+                    string_start_date = t_ini.strftime("%Y-%m-%dT%H:%M:%SZ")  # Converts to 'YYYY-MM-DDTHH:MM:SSZ'
+                    string_end_date = t_fi.strftime("%Y-%m-%dT%H:%M:%SZ")  # Ensures correct format
+
 
                     print("START DATE: " + string_start_date)
                     print("END DATE: " + string_end_date)
@@ -249,8 +250,10 @@ class sqlDB():
                          "&minimal_response&no_attributes"
                     )
 
-                    aux = pd.json_normalize(get(url, headers=self.headers).json())
-                    
+                    response = get(url, headers=self.headers).json()
+                    print("API RESPONSE: " + response)
+
+                    aux = pd.json_normalize(response)
                     print("INFO:" + aux)
 
                     # Actualitza cada valor obtingut de l'historial del sensor
