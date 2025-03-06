@@ -253,7 +253,7 @@ class sqlDB():
                     print("URL:" + url)
 
                     response = get(url, headers=self.headers).json()
-                    print("API RESPONSE: " + response)
+                    print("API RESPONSE: " + response[0])
 
                     aux = pd.json_normalize(response)
                     print("INFO:" + aux)
