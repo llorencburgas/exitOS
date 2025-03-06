@@ -250,6 +250,8 @@ class sqlDB():
                          "&minimal_response&no_attributes"
                     )
 
+                    print("URL:" + url)
+
                     response = get(url, headers=self.headers).json()
                     print("API RESPONSE: " + response)
 
