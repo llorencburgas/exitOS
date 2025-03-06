@@ -225,9 +225,10 @@ class sqlDB():
             cur.close()
             
             if llista[0][0]:  # Si `update_sensor` és True
-                print('[' + datetime.strptime(datetime.now(), '%Y-%m-%dT%H:%M:%SZ') + ']' + ' Actualitzant sensor: ' + id_sensor)                   
+                current_time = datetime.now()
+                print('[' + current_time.strftime("%Y-%m-%d %H:%M:%S") + ']' + ' Actualitzant sensor: ' + id_sensor)                   
 
-                while (t_ini < datetime.now()):
+                while (t_ini < current_time):
                     t_fi = t_ini + timedelta(days=7) # Defineix el final de l'interval de temps per a la crida (7 dies més que l'inici)
                     
                     # Fa una crida a l'API per obtenir l'històric de dades del sensor des de t_ini fins a t_fi
