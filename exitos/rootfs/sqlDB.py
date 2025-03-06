@@ -9,6 +9,8 @@ import configparser
 import numpy as np
 import logging
 
+from datetime import datetime, timedelta
+
 
 
 class sqlDB():
@@ -212,7 +214,7 @@ class sqlDB():
             
             # Defineix el temps inicial de l'historial
             if llista is None:
-                t_ini = "2025-02-18T00:00:00"  # Valor per defecte si no hi ha dades prèvies
+                t_ini = datetime.now() - timedelta(days=21)  # Valor per defecte si no hi ha dades prèvies (3 setmanes anteriors a avui)
                 valor_ant = []
             else:
                 t_ini = llista  # Últim timestamp guardat per iniciar des d'allà
@@ -225,28 +227,32 @@ class sqlDB():
             
             if llista[0][0]:  # Si `update_sensor` és True
                 print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + ' Actualitzant sensor: ' + id_sensor)                   
-                t_fi = "2099-01-01T00:00:00" # Defineix el final de l'interval de temps per a la crida
                 
-                # Fa una crida a l'API per obtenir l'històric de dades del sensor des de t_ini fins a t_fi
-                url = self.base_url + "history/period/" + t_ini + "?end_time=" + t_fi + "&filter_entity_id=" + id_sensor
-
-                aux = pd.json_normalize(get(url, headers=self.headers).json())
-
-                # Actualitza cada valor obtingut de l'historial del sensor
-                cur = self.__con__.cursor()
-                for column in aux.columns:
-                    valor = aux[column][0]['state']
+                while (t_ini < datetime.now()):
+                    t_fi = t_ini + timedelta(days=7) # Defineix el final de l'interval de temps per a la crida (7 dies més que l'inici)
                     
-                    # Comprova si el valor és vàlid; ignora valors com `unknown`, `unavailable` o buits
-                    if (valor == 'unknown') or (valor == 'unavailable') or (valor == ''):
-                        valor = np.nan
+                    # Fa una crida a l'API per obtenir l'històric de dades del sensor des de t_ini fins a t_fi
+                    url = self.base_url + "history/period/" + t_ini + "?end_time=" + t_fi + "&filter_entity_id=" + id_sensor + "&minimal_response" + "&no_attributes"
+
+                    aux = pd.json_normalize(get(url, headers=self.headers).json())
+
+                    # Actualitza cada valor obtingut de l'historial del sensor
+                    cur = self.__con__.cursor()
+                    for column in aux.columns:
+                        valor = aux[column][0]['state']
+                        
+                        # Comprova si el valor és vàlid; ignora valors com `unknown`, `unavailable` o buits
+                        if (valor == 'unknown') or (valor == 'unavailable') or (valor == ''):
+                            valor = np.nan
+                        
+                        # Només desa el valor si és diferent de l'anterior
+                        if valor_ant != valor:
+                            valor_ant = valor  # Actualitza el valor anterior
+                            TS = aux[column][0]['last_changed']  # Obté el timestamp de l'última actualització
+                            values = (id_sensor, TS, valor)
+                            cur.execute("INSERT INTO dades (sensor_id, timestamp, value) VALUES(?, ?, ?)", values)
                     
-                    # Només desa el valor si és diferent de l'anterior
-                    if valor_ant != valor:
-                        valor_ant = valor  # Actualitza el valor anterior
-                        TS = aux[column][0]['last_updated']  # Obté el timestamp de l'última actualització
-                        values = (id_sensor, TS, valor)
-                        cur.execute("INSERT INTO dades (sensor_id, timestamp, value) VALUES(?, ?, ?)", values)
+                    t_ini = t_ini + timedelta(days=7)
                 
                 # Tanca el cursor i confirma els canvis
                 cur.close()
