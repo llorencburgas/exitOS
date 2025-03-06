@@ -226,7 +226,7 @@ class sqlDB():
             
             if llista[0][0]:  # Si `update_sensor` és True
                 current_time = datetime.now().isoformat()
-                print('[' + current_time.strftime("%Y-%m-%d %H:%M:%S") + ']' + ' Actualitzant sensor: ' + id_sensor)                   
+                print('[' + current_time + ']' + ' Actualitzant sensor: ' + id_sensor)                   
 
                 while (t_ini < current_time):
                     t_fi = t_ini + timedelta(days=7) # Defineix el final de l'interval de temps per a la crida (7 dies més que l'inici)
