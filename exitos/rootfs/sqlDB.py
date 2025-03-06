@@ -230,6 +230,7 @@ class sqlDB():
 
                 while (t_ini < current_time):
                     t_fi = t_ini + timedelta(days=7) # Defineix el final de l'interval de temps per a la crida (7 dies més que l'inici)
+                    if (t_fi > datetime.now(timezone.utc)): t_fi = datetime.now(timezone.utc)
                     
                     # Fa una crida a l'API per obtenir l'històric de dades del sensor des de t_ini fins a t_fi
                     string_start_date = t_ini.isoformat()
