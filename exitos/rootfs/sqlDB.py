@@ -235,8 +235,8 @@ class sqlDB():
                         t_fi = datetime.now(timezone.utc)
 
                     # Fa una crida a l'API per obtenir l'històric de dades del sensor des de t_ini fins a t_fi
-                    string_start_date = t_ini.strftime("%Y-%m-%dT%H:%M:%SZ")  # Converts to 'YYYY-MM-DDTHH:MM:SSZ'
-                    string_end_date = t_fi.strftime("%Y-%m-%dT%H:%M:%SZ")  # Ensures correct format
+                    string_start_date = t_ini.isoformat()  # Converts to 'YYYY-MM-DDTHH:MM:SSZ'
+                    string_end_date = t_fi.isoformat()  # Ensures correct format
 
 
                     print("START DATE: " + string_start_date)
