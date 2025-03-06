@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import sqlite3
-import time
 import pandas as pd
 from requests import get
 import traceback
@@ -197,7 +196,7 @@ class sqlDB():
                 cur.execute("INSERT INTO sensors(sensor_id, units, description, update_sensor) VALUES(?, ?, ?, ?)", values)
                 cur.close()
                 self.__con__.commit()
-                print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + ' Afegint sensor: ' + id_sensor)
+                print('[' + datetime.strptime(datetime.now(), '%Y-%m-%dT%H:%M:%SZ') + ']' + ' Afegint sensor: ' + id_sensor)
                 llista = None # inicialitza la llista per a la següent iteració
             # si el sensor ja existeix, comprova si cal actualitzar les dades
             else:
@@ -217,7 +216,7 @@ class sqlDB():
                 t_ini = datetime.now() - timedelta(days=21)  # Valor per defecte si no hi ha dades prèvies (3 setmanes anteriors a avui)
                 valor_ant = []
             else:
-                t_ini = llista  # Últim timestamp guardat per iniciar des d'allà
+                t_ini = datetime.fromisoformat(llista)  # Últim timestamp guardat per iniciar des d'allà
             
             # Verifica si el sensor ha de ser actualitzat consultant el camp 'update_sensor'
             cur = self.__con__.cursor()
@@ -226,14 +225,13 @@ class sqlDB():
             cur.close()
             
             if llista[0][0]:  # Si `update_sensor` és True
-                print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + ' Actualitzant sensor: ' + id_sensor)                   
+                print('[' + datetime.strptime(datetime.now(), '%Y-%m-%dT%H:%M:%SZ') + ']' + ' Actualitzant sensor: ' + id_sensor)                   
 
-                print("FORMAT DE LA DATA INICIAL: " + t_ini)
                 while (t_ini < datetime.now()):
                     t_fi = t_ini + timedelta(days=7) # Defineix el final de l'interval de temps per a la crida (7 dies més que l'inici)
                     
                     # Fa una crida a l'API per obtenir l'històric de dades del sensor des de t_ini fins a t_fi
-                    url = self.base_url + "history/period/" + t_ini + "?end_time=" + t_fi + "&filter_entity_id=" + id_sensor + "&minimal_response" + "&no_attributes"
+                    url = self.base_url + "history/period/" + t_ini.isoformat() + "?end_time=" + t_fi.isoformat + "&filter_entity_id=" + id_sensor + "&minimal_response" + "&no_attributes"
 
                     aux = pd.json_normalize(get(url, headers=self.headers).json())
 
