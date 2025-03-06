@@ -238,7 +238,8 @@ class sqlDB():
 
                     aux = pd.json_normalize(get(url, headers=self.headers).json())
                     
-
+                    print("START DATE" + string_start_date)
+                    print("END DATE: " + string_end_date)
                     print("INFO:" + aux)
                     # Actualitza cada valor obtingut de l'historial del sensor
                     cur = self.__con__.cursor()
