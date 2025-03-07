@@ -228,9 +228,9 @@ class sqlDB():
                 current_time = datetime.now()
                 print('[' + current_time.strftime('%Y-%m-%dT%H:%M:%S') + ']' + ' Actualitzant sensor: ' + id_sensor)  
 
-                print("CURRENT DATE: " + current_time)            
-                print("START DATE:" + t_ini)
-                print("LIST DATE:" + llista)     
+                print("CURRENT DATE: " , current_time)            
+                print("START DATE:" , t_ini)
+                print("LIST DATE:" , llista)     
 
                 while (t_ini < current_time):
                     t_fi = min(t_ini + timedelta(days=7), datetime.now()) # Defineix el final de l'interval de temps per a la crida (7 dies més que l'inici)
