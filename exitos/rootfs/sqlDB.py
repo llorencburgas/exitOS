@@ -213,10 +213,10 @@ class sqlDB():
             
             # Defineix el temps inicial de l'historial
             if llista is None:
-                t_ini = (datetime.now - timedelta(days = 21)).strftime('%Y-%m-%dT%H:%M:%S')  # Valor per defecte si no hi ha dades prèvies (3 setmanes anteriors a avui)
+                t_ini = (datetime.now - timedelta(days = 21))  # Valor per defecte si no hi ha dades prèvies (3 setmanes anteriors a avui)
                 valor_ant = []
             else:
-                t_ini = datetime.fromisoformat(llista).strftime('%Y-%m-%dT%H:%M:%S')  # Últim timestamp guardat per iniciar des d'allà
+                t_ini = datetime.fromisoformat(llista)  # Últim timestamp guardat per iniciar des d'allà
             
             # Verifica si el sensor ha de ser actualitzat consultant el camp 'update_sensor'
             cur = self.__con__.cursor()
@@ -225,16 +225,16 @@ class sqlDB():
             cur.close()
             
             if llista[0][0]:  # Si `update_sensor` és True
-                current_time = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-                print('[' + current_time.isoformat() + ']' + ' Actualitzant sensor: ' + id_sensor)                   
+                current_time = datetime.now()
+                print('[' + current_time.strftime('%Y-%m-%dT%H:%M:%S') + ']' + ' Actualitzant sensor: ' + id_sensor)                   
 
                 while (t_ini < current_time):
-                    t_fi = min(t_ini + timedelta(days=7), datetime.now(timezone.utc)) # Defineix el final de l'interval de temps per a la crida (7 dies més que l'inici)
+                    t_fi = min(t_ini + timedelta(days=7), datetime.now()) # Defineix el final de l'interval de temps per a la crida (7 dies més que l'inici)
                     
 
                     # Fa una crida a l'API per obtenir l'històric de dades del sensor des de t_ini fins a t_fi
-                    string_start_date = t_ini.replace(microsecond=0).strftime('%Y-%m-%dT%H:%M:%S') 
-                    string_end_date = t_fi.replace(microsecond=0).strftime('%Y-%m-%dT%H:%M:%S')
+                    string_start_date = t_ini.strftime('%Y-%m-%dT%H:%M:%S') 
+                    string_end_date = t_fi.strftime('%Y-%m-%dT%H:%M:%S')
 
 
                     print("START DATE: " + string_start_date)
