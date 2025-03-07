@@ -212,7 +212,7 @@ class sqlDB():
             else:
                 cursor = self.__con__.cursor()
                 cursor.execute('SELECT timestamp, value FROM dades WHERE sensor_id = ? ORDER BY timestamp DESC LIMIT 1',(sensor_id,))
-                last_data_saved = cursor.fetchone()
+                last_date_saved = cursor.fetchone()
 
                 if(last_date_saved == None): last_date_saved = None
                 else: last_date_saved, last_value = last_date_saved
@@ -225,7 +225,7 @@ class sqlDB():
                 start_time = datetime.now(timezone.utc) - timedelta(days=21) #valor per defecte, fa 21 dies
                 last_value = []
             else:
-                start_time = datetime.fromisoformat(last_data_saved)
+                start_time = datetime.fromisoformat(last_date_saved)
             
             # comrpovem si el sensor actual necessita ser actualitzat mirant 'update_sensor'
             cursor = self.__con__.cursor()
