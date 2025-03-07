@@ -253,17 +253,17 @@ class sqlDB():
                          "&minimal_response&no_attributes"
                     )
 
-                    print("URL:" + url)
 
                     response = get(url, headers=self.headers).json()
                     # print("API RESPONSE: " + response)
 
                     aux = pd.json_normalize(response)
-                    print("INFO:" + aux)
 
-                    # Actualitza cada valor obtingut de l'historial del sensor
-                    cur = self.__con__.cursor()
+                    
                     for column in aux.columns:
+                        # Actualitza cada valor obtingut de l'historial del sensor
+                        cur = self.__con__.cursor()
+
                         valor = aux[column][0]['state']
                         
                         # Comprova si el valor és vàlid; ignora valors com `unknown`, `unavailable` o buits
@@ -276,12 +276,14 @@ class sqlDB():
                             TS = aux[column][0]['last_changed']  # Obté el timestamp de l'última actualització
                             values = (id_sensor, TS, valor)
                             cur.execute("INSERT INTO dades (sensor_id, timestamp, value) VALUES(?, ?, ?)", values)
+                        
+                        # Tanca el cursor i confirma els canvis
+                        cur.close()
+                        self.__con__.commit()
                     
                     t_ini += timedelta(days=7)
                 
-                # Tanca el cursor i confirma els canvis
-                cur.close()
-                self.__con__.commit()
+                
         #except:
             # Gestiona errors, mostrant un missatge d'error i la traça d'errors
             #print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + " No s'han pogut inserir o descarregar dades...:(")
