@@ -257,7 +257,6 @@ class sqlDB():
                     )
 
                     sensor_data_historic = pd.json_normalize(get(url, headers=self.headers).json())
-                    print("HISTORIC DE DADES: ", sensor_data_historic)
 
                     #actualitzem cada valor obtingut de l'historial del sensor
                     cursor = self.__con__.cursor()
@@ -279,6 +278,9 @@ class sqlDB():
                     self.__con__.commit()
 
                     start_time += timedelta(days=7)
+        
+        print('[' + current_time.strftime('%Y-%m-%dT%H:%M:%S') + ']' +
+                           'TOTS ELS SENSORS HAN ESTAT ACTUALITZATS.')
 
 
 
