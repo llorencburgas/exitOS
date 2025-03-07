@@ -225,7 +225,7 @@ class sqlDB():
             cur.close()
             
             if llista[0][0]:  # Si `update_sensor` és True
-                current_time = datetime.now.strftime('%Y-%m-%dT%H:%M:%S')
+                current_time = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
                 print('[' + current_time.isoformat() + ']' + ' Actualitzant sensor: ' + id_sensor)                   
 
                 while (t_ini < current_time):
