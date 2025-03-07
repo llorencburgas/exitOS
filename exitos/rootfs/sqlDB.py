@@ -279,6 +279,7 @@ class sqlDB():
                     # Tanca el cursor i confirma els canvis
                     cur.close()
                     self.__con__.commit()
+                    self.__con__.close()    
                     
                     t_ini += timedelta(days=7)
                 
