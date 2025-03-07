@@ -178,114 +178,17 @@ class sqlDB():
 
         #try:
         logging.info("Iniciant l'actualització de la base de dades...")
-        sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json()) # obtenció llista sensors de la API convertits en DataFrame
+
+        # obtenció llista sensors de la API convertits en DataFrame
+        sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json()) 
+
+        print("LLISTA DE SENSORS: ", sensors_list)
+
+        for j in sensors_list.index:
+
+            #guardem id del sensor
+            sensor_id = sensors_list.iloc[j]['entity_id']
         
-        for j in sensors_list.index: #per cada sensor de la llista         
-            id_sensor = sensors_list.iloc[j]['entity_id'] # es guarda el id del sensor
-            
-            # comprova si el sensor ja existeix a la base de dades
-            cur = self.__con__.cursor()
-            var = (id_sensor,)
-            llista = cur.execute('SELECT * FROM sensors WHERE sensor_id = ?', var).fetchall()
-            cur.close()
-            #/share/exitos/dades.db
-            # si el sensor no existeix, el crea
-            if len(llista) == 0:
-                cur = self.__con__.cursor()
-                values = (id_sensor, sensors_list.iloc[j]['attributes.unit_of_measurement'], '', True)  # sensor_id, unitats, descripció, update_sensor
-                cur.execute("INSERT INTO sensors(sensor_id, units, description, update_sensor) VALUES(?, ?, ?, ?)", values)
-                cur.close()
-                self.__con__.commit()
-                print('[' + datetime.strptime(datetime.now(), '%Y-%m-%dT%H:%M:%SZ') + ']' + ' Afegint sensor: ' + id_sensor)
-                llista = None # inicialitza la llista per a la següent iteració
-            # si el sensor ja existeix, comprova si cal actualitzar les dades
-            else:
-                cur = self.__con__.cursor()
-                var = (id_sensor,)
-                aux = cur.execute('SELECT timestamp, value FROM dades WHERE sensor_id = ? ORDER BY timestamp DESC LIMIT 1', var).fetchone()
-                if aux is None:
-                    # Si no hi ha dades prèvies, inicialitza variables
-                    llista = None
-                else:
-                    # Assigna el timestamp i el valor anterior per verificar canvis
-                    llista, valor_ant = aux
-                cur.close()
-            
-            # Defineix el temps inicial de l'historial
-            if llista is None:
-                t_ini = datetime.now(timezone.utc) - timedelta(days = 21)  # Valor per defecte si no hi ha dades prèvies (3 setmanes anteriors a avui)
-                valor_ant = []
-            else:
-                t_ini = datetime.fromisoformat(llista)  # Últim timestamp guardat per iniciar des d'allà
-            
-            # Verifica si el sensor ha de ser actualitzat consultant el camp 'update_sensor'
-            cur = self.__con__.cursor()
-            var = (id_sensor,)
-            llista = cur.execute('SELECT update_sensor FROM sensors WHERE sensor_id = ?', var).fetchall()
-            cur.close()
-            
-            if llista[0][0]:  # Si `update_sensor` és True
-                current_time = datetime.now(timezone.utc)
-                print('[' + current_time.strftime('%Y-%m-%dT%H:%M:%S') + ']' + ' Actualitzant sensor: ' + id_sensor)  
-
-                while (t_ini < current_time):
-                    print('[' + current_time.strftime('%Y-%m-%dT%H:%M:%S') + ']' + ' Obtenint dades del sensor: ' + id_sensor)  
-                    t_fi = min(t_ini + timedelta(days=7), datetime.now(timezone.utc)) # Defineix el final de l'interval de temps per a la crida (7 dies més que l'inici)
-                    
-
-                    # Fa una crida a l'API per obtenir l'històric de dades del sensor des de t_ini fins a t_fi
-                    string_start_date = t_ini.strftime('%Y-%m-%dT%H:%M:%S') 
-                    string_end_date = t_fi.strftime('%Y-%m-%dT%H:%M:%S')
-
-
-                    url = (
-                        self.base_url + "history/period/" + string_start_date +
-                         "?end_time=" + string_end_date +
-                         "&filter_entity_id=" + id_sensor 
-                    )
-
-
-                    response = get(url, headers=self.headers).json()
-                    # print("API RESPONSE: " + response)
-
-                    aux = pd.json_normalize(response)
-                    print("AUX RESPONSE :", aux)
-
-                    # Actualitza cada valor obtingut de l'historial del sensor
-                    cur = self.__con__.cursor()
-                    print("OUTSIDE, BEFORE FOR:  ")
-
-                    for column in aux.columns:
-                        
-                        print("INSIDE FOR:")
-
-                        valor = aux[column][0]['state']
-                        
-                        # Comprova si el valor és vàlid; ignora valors com `unknown`, `unavailable` o buits
-                        if (valor == 'unknown') or (valor == 'unavailable') or (valor == ''):
-                            valor = np.nan
-                        
-                        # Només desa el valor si és diferent de l'anterior
-                        if valor_ant != valor:
-                            valor_ant = valor  # Actualitza el valor anterior
-                            TS = aux[column][0]['last_changed']  # Obté el timestamp de l'última actualització
-                            values = (id_sensor, TS, valor)
-                            cur.execute("INSERT INTO dades (sensor_id, timestamp, value) VALUES(?, ?, ?)", values)
-                    
-
-                    print("OUTSIDE, after FOR:  ")
-
-                    # Tanca el cursor i confirma els canvis
-                    cur.close()
-                    self.__con__.commit()
-                    
-                    t_ini += timedelta(days=7)
-                
-                
-        #except:
-            # Gestiona errors, mostrant un missatge d'error i la traça d'errors
-            #print('[' + time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()) + ']' + " No s'han pogut inserir o descarregar dades...:(")
-            #traceback.print_exc()
 
     
     
