@@ -216,7 +216,7 @@ class sqlDB():
                 t_ini = (datetime.now(timezone.utc) - timedelta(days = 21))  # Valor per defecte si no hi ha dades prèvies (3 setmanes anteriors a avui)
                 valor_ant = []
             else:
-                t_ini = datetime.fromisoformat(llista).replace  # Últim timestamp guardat per iniciar des d'allà
+                t_ini = datetime.fromisoformat(llista)  # Últim timestamp guardat per iniciar des d'allà
                 print("LIST DATE:" , llista) 
             
             # Verifica si el sensor ha de ser actualitzat consultant el camp 'update_sensor'
