@@ -217,7 +217,6 @@ class sqlDB():
                 valor_ant = []
             else:
                 t_ini = datetime.fromisoformat(llista)  # Últim timestamp guardat per iniciar des d'allà
-                print("LIST DATE:" , llista) 
             
             # Verifica si el sensor ha de ser actualitzat consultant el camp 'update_sensor'
             cur = self.__con__.cursor()
@@ -239,10 +238,6 @@ class sqlDB():
                     string_end_date = t_fi.strftime('%Y-%m-%dT%H:%M:%S')
 
 
-                    print("START DATE: " + string_start_date)
-                    print("END DATE: " + string_end_date)
-                    
-
                     url = (
                         self.base_url + "history/period/" + string_start_date +
                          "?end_time=" + string_end_date +
@@ -255,6 +250,7 @@ class sqlDB():
                     # print("API RESPONSE: " + response)
 
                     aux = pd.json_normalize(response)
+                    print("AUX RESPONSE :", aux)
 
                     
                     for column in aux.columns:
