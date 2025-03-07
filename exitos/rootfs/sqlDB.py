@@ -252,11 +252,13 @@ class sqlDB():
                     aux = pd.json_normalize(response)
                     print("AUX RESPONSE :", aux)
 
-                    
+                    # Actualitza cada valor obtingut de l'historial del sensor
+                    cur = self.__con__.cursor()
+                    print("OUTSIDE, BEFORE FOR:  ")
+
                     for column in aux.columns:
-                        # Actualitza cada valor obtingut de l'historial del sensor
-                        cur = self.__con__.cursor()
-                        print("INSIDE FOR:" , cur)
+                        
+                        print("INSIDE FOR:")
 
                         valor = aux[column][0]['state']
                         
@@ -270,11 +272,14 @@ class sqlDB():
                             TS = aux[column][0]['last_changed']  # Obté el timestamp de l'última actualització
                             values = (id_sensor, TS, valor)
                             cur.execute("INSERT INTO dades (sensor_id, timestamp, value) VALUES(?, ?, ?)", values)
-                        
-                        # Tanca el cursor i confirma els canvis
-                        cur.close()
-                        self.__con__.commit()
-                        self.__con__.close()
+                    
+
+                    print("OUTSIDE, after FOR:  ")
+
+                    # Tanca el cursor i confirma els canvis
+                    cur.close()
+                    self.__con__.commit()
+                    self.__con__.close()    
                     
                     t_ini += timedelta(days=7)
                 
