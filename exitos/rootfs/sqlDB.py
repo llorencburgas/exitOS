@@ -229,11 +229,8 @@ class sqlDB():
                 current_time = datetime.now(timezone.utc)
                 print('[' + current_time.strftime('%Y-%m-%dT%H:%M:%S') + ']' + ' Actualitzant sensor: ' + id_sensor)  
 
-                print("CURRENT DATE: " , current_time)            
-                print("START DATE:" , t_ini)
-                    
-
                 while (t_ini < current_time):
+                    print('[' + current_time.strftime('%Y-%m-%dT%H:%M:%S') + ']' + ' Obtenint dades del sensor: ' + id_sensor)  
                     t_fi = min(t_ini + timedelta(days=7), datetime.now(timezone.utc)) # Defineix el final de l'interval de temps per a la crida (7 dies més que l'inici)
                     
 
@@ -263,6 +260,7 @@ class sqlDB():
                     for column in aux.columns:
                         # Actualitza cada valor obtingut de l'historial del sensor
                         cur = self.__con__.cursor()
+                        print("INSIDE FOR:" , cur)
 
                         valor = aux[column][0]['state']
                         
@@ -280,6 +278,7 @@ class sqlDB():
                         # Tanca el cursor i confirma els canvis
                         cur.close()
                         self.__con__.commit()
+                        self.__con__.close()
                     
                     t_ini += timedelta(days=7)
                 
