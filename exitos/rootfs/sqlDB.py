@@ -184,25 +184,25 @@ class sqlDB():
             id_sensor = sensors_list.iloc[j]['entity_id'] # es guarda el id del sensor
             
             # comprova si el sensor ja existeix a la base de dades
+            cur = self.__con__.cursor()
             var = (id_sensor,)
-            with self.__con__.cursor() as cur:
-                llista = cur.execute('SELECT * FROM sensors WHERE sensor_id = ?', var).fetchall()
-            
+            llista = cur.execute('SELECT * FROM sensors WHERE sensor_id = ?', var).fetchall()
+            cur.close()
             #/share/exitos/dades.db
             # si el sensor no existeix, el crea
             if len(llista) == 0:
-                with self.__con__.cursor() as cur:
-                    values = (id_sensor, sensors_list.iloc[j]['attributes.unit_of_measurement'], '', True)  # sensor_id, unitats, descripció, update_sensor
-                    cur.execute("INSERT INTO sensors(sensor_id, units, description, update_sensor) VALUES(?, ?, ?, ?)", values)
+                cur = self.__con__.cursor()
+                values = (id_sensor, sensors_list.iloc[j]['attributes.unit_of_measurement'], '', True)  # sensor_id, unitats, descripció, update_sensor
+                cur.execute("INSERT INTO sensors(sensor_id, units, description, update_sensor) VALUES(?, ?, ?, ?)", values)
+                cur.close()
                 self.__con__.commit()
                 print('[' + datetime.strptime(datetime.now(), '%Y-%m-%dT%H:%M:%SZ') + ']' + ' Afegint sensor: ' + id_sensor)
                 llista = None # inicialitza la llista per a la següent iteració
-
             # si el sensor ja existeix, comprova si cal actualitzar les dades
             else:
-                with self.__con__.cursor() as cur:
-                    var = (id_sensor,)
-                    aux = cur.execute('SELECT timestamp, value FROM dades WHERE sensor_id = ? ORDER BY timestamp DESC LIMIT 1', var).fetchone()
+                cur = self.__con__.cursor()
+                var = (id_sensor,)
+                aux = cur.execute('SELECT timestamp, value FROM dades WHERE sensor_id = ? ORDER BY timestamp DESC LIMIT 1', var).fetchone()
                 if aux is None:
                     # Si no hi ha dades prèvies, inicialitza variables
                     llista = None
@@ -219,9 +219,9 @@ class sqlDB():
                 t_ini = datetime.fromisoformat(llista)  # Últim timestamp guardat per iniciar des d'allà
             
             # Verifica si el sensor ha de ser actualitzat consultant el camp 'update_sensor'
-            with self.__con__.cursor() as cur:
-                var = (id_sensor,)
-                llista = cur.execute('SELECT update_sensor FROM sensors WHERE sensor_id = ?', var).fetchall()
+            cur = self.__con__.cursor()
+            var = (id_sensor,)
+            llista = cur.execute('SELECT update_sensor FROM sensors WHERE sensor_id = ?', var).fetchall()
             cur.close()
             
             if llista[0][0]:  # Si `update_sensor` és True
@@ -254,11 +254,11 @@ class sqlDB():
 
                     # Actualitza cada valor obtingut de l'historial del sensor
                     cur = self.__con__.cursor()
-                    print("OUTSIDE, BEFORE FOR  ")
+                    print("OUTSIDE, BEFORE FOR:  ")
 
                     for column in aux.columns:
                         
-                        print("INSIDE FOR")
+                        print("INSIDE FOR:")
 
                         valor = aux[column][0]['state']
                         
@@ -274,7 +274,7 @@ class sqlDB():
                             cur.execute("INSERT INTO dades (sensor_id, timestamp, value) VALUES(?, ?, ?)", values)
                     
 
-                    print("OUTSIDE, after FOR  ")
+                    print("OUTSIDE, after FOR:  ")
 
                     # Tanca el cursor i confirma els canvis
                     cur.close()
