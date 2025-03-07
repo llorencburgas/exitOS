@@ -176,18 +176,121 @@ class sqlDB():
         Aquesta funció sincronitza els sensors existents amb la base de dades i actualitza els valors històrics si cal.
         '''
 
-        #try:
         logging.info("Iniciant l'actualització de la base de dades...")
 
         # obtenció llista sensors de la API convertits en DataFrame
         sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json()) 
 
-        print("LLISTA DE SENSORS: ", sensors_list)
-
+        #per cada sensor de la llista
         for j in sensors_list.index:
 
             #guardem id del sensor
             sensor_id = sensors_list.iloc[j]['entity_id']
+
+            #Obtenim els sensors de la nostra DB que tinguin un id igual al obtingut anteriorment
+            cursor = self.__con__.cursor()
+            cursor.execute('SELECT * FROM sensors WHERE sensor_id = ?', (sensor_id,))
+            aux_list = cursor.fetchall()
+            cursor.close()
+
+            #si no hem obtingut cap sensor (és a dir no existeix) el creem com a nou
+            if len(aux_list) == 0:
+                cursor = self.__con__.cursor()
+                values_to_insert = (sensor_id, #ID del sensor
+                                    sensors_list.iloc[j]['attributes.unit_of_measurement'], # unitats de mesura
+                                    '', #descripció
+                                    True) #update_sensor
+                cursor.execute("INSERT INTO sensors(sensor_id, units, description, update_sensor) VALUES(?, ?, ?, ?)", values_to_insert)
+                cursor.close()
+                self.__con__.commit()
+
+                print('[' + datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S') +']' 
+                      + "Afegint sensor: " + sensor_id)
+                aux_list = None #reiniciem la llista per a la següent iteració
+            
+            #si el sensor Sí que existeix, comprovem si cal actualitzar les dades que tenim
+            else:
+                cursor = self.__con__.cursor()
+                cursor.execute('SELECT timestamp, value FROM dades WHERE sensor_id = ? ORDER BY timestamp DESC LIMIT 1',(sensor_id,))
+                last_data_saved = cursor.fetchone()
+
+                if(last_date_saved == None): last_date_saved = None
+                else: last_date_saved, last_value = last_date_saved
+
+                cursor.close()
+
+            
+            #si no tenim cap data guardada al sensor
+            if(last_date_saved is None):
+                start_time = datetime.now(timezone.utc) - timedelta(days=21) #valor per defecte, fa 21 dies
+                last_value = []
+            else:
+                start_time = datetime.fromisoformat(last_data_saved)
+            
+            # comrpovem si el sensor actual necessita ser actualitzat mirant 'update_sensor'
+            cursor = self.__con__.cursor()
+            cursor.execute('SELECT update_sensor FROM sensors WHERE sensor_id = ?', (sensor_id,))
+            update_sensor = cursor.fetchall()
+            cursor.close()
+
+            if(update_sensor[0][0]): #mirem si "update_sensor" és True
+                current_time = datetime.now(timezone.utc)
+                print('[' + current_time.strftime('%Y-%m-%dT%H:%M:%S') + ']' +
+                       ' Actualitzant sensor: ' + sensor_id)  
+                
+                while(start_time < current_time):
+                    print('[' + current_time.strftime('%Y-%m-%dT%H:%M:%S') + ']' +
+                           ' Obtenint dades del sensor: ' + sensor_id)  
+                    
+                    #definim un rang de 7 dies
+                    end_time = start_time + timedelta(days = 7)
+
+                    #fem una crida a l'API per obtneir l'històric de dades del sensor dins el rang 
+                    string_start_date = start_time.strftime('%Y-%m-%dT%H:%M:%S') 
+                    string_end_date = end_time.strftime('%Y-%m-%dT%H:%M:%S')
+
+                    url = (
+                        self.base_url + "history/period/" + string_start_date +
+                         "?end_time=" + string_end_date +
+                         "&filter_entity_id=" + sensor_id 
+                        #  + "&minimal_response&no_attributes"
+                    )
+
+                    sensor_data_historic = pd.json_normalize(get(url, headers=self.headers).json())
+                    print("HISTORIC DE DADES: ", sensor_data_historic)
+
+                    #actualitzem cada valor obtingut de l'historial del sensor
+                    cursor = self.__con__.cursor()
+                    for column in sensor_data_historic.columns:
+                        value = sensor_data_historic[column][0]['state']
+
+                        #mirem si el valor és vàlid
+                        if(value == 'unknown') or (value == 'unavailable') or (value == ''):
+                            value = np.nan
+                        
+                        #desem el valor únicament si és diferent a l'anterior
+                        if(last_value != value):
+                            last_value = value
+                            time_stamp = sensor_data_historic[column][0]['last_changed']
+                            cursor.execute("INSERT INTO dades (sensor_id, timestamp, value) VALUES(?, ?, ?)",
+                                           (sensor_id, time_stamp, value))
+                            
+                    cursor.close()
+                    self.__con__.commit()
+
+                    start_time += timedelta(days=7)
+
+
+
+
+                
+
+
+
+
+
+
+
         
 
     
