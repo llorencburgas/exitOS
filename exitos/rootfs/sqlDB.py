@@ -183,7 +183,7 @@ class sqlDB():
 
         #per cada sensor de la llista
         for j in sensors_list.index:
-            print("ITERACIÓ: ", j)
+            # print("ITERACIÓ: ", j)
 
             #guardem id del sensor
             sensor_id = sensors_list.iloc[j]['entity_id']
