@@ -208,6 +208,7 @@ class sqlDB():
                 print('[' + datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S') +']' 
                       + "Afegint sensor: " + sensor_id)
                 aux_list = None #reiniciem la llista per a la següent iteració
+                last_date_saved = None
             
             #si el sensor Sí que existeix, comprovem si cal actualitzar les dades que tenim
             else:
