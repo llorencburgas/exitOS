@@ -181,8 +181,11 @@ class sqlDB():
         # obtenció llista sensors de la API convertits en DataFrame
         sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json()) 
 
+        print("NUMERO DE SENSORS:", sensors_list.index)
+
         #per cada sensor de la llista
         for j in sensors_list.index:
+            print("ITERACIÓ: ", j)
 
             #guardem id del sensor
             sensor_id = sensors_list.iloc[j]['entity_id']
@@ -239,8 +242,6 @@ class sqlDB():
                        ' Actualitzant sensor: ' + sensor_id)  
                 
                 while(start_time < current_time):
-                    print('[' + current_time.strftime('%Y-%m-%dT%H:%M:%S') + ']' +
-                           ' Obtenint dades del sensor: ' + sensor_id)  
                     
                     #definim un rang de 7 dies
                     end_time = start_time + timedelta(days = 7)
@@ -279,8 +280,7 @@ class sqlDB():
 
                     start_time += timedelta(days=7)
         
-        print('[' + current_time.strftime('%Y-%m-%dT%H:%M:%S') + ']' +
-                           'TOTS ELS SENSORS HAN ESTAT ACTUALITZATS.')
+        print('[' + current_time.strftime('%Y-%m-%dT%H:%M:%S') + ']' +'TOTS ELS SENSORS HAN ESTAT ACTUALITZATS.')
 
 
 
