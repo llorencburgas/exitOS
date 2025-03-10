@@ -181,8 +181,6 @@ class sqlDB():
         # obtenció llista sensors de la API convertits en DataFrame
         sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json()) 
 
-        print("NUMERO DE SENSORS:", sensors_list.index)
-
         #per cada sensor de la llista
         for j in sensors_list.index:
             print("ITERACIÓ: ", j)
