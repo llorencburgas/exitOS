@@ -157,7 +157,7 @@ class sqlDB():
                 cur.execute("INSERT INTO sensors (sensor_id, units, update_sensor, save_sensor) VALUES (?,?,?,?)", values_to_insert)
                 cur.close()
                 self.__conn__.commit()
-                print("[" + datetime.now(timezone.utc).strftime("%d-%b-%Y   %X")
+                print("[" + datetime.now().strftime("%d-%b-%Y   %X")
                              + "] Afegit un nou sensor a la base de dades: " + sensor_id)
 
                 sensor_info = None
@@ -166,17 +166,17 @@ class sqlDB():
             save_sensor = self.query_select(sensor_id,"save_sensor", "sensors")[0][0]
             update_sensor = self.query_select(sensor_id,"update_sensor", "sensors")[0][0]
             if save_sensor and update_sensor:
-                print("[" + datetime.now(timezone.utc).strftime("%d-%b-%Y   %X") + "] Actualitzant sensor: " + sensor_id)
+                print("[" + datetime.now().strftime("%d-%b-%Y   %X") + "] Actualitzant sensor: " + sensor_id)
 
                 last_date_saved = self.query_select(sensor_id,"timestamp, value", "dades")
                 if len(last_date_saved) == 0:
-                    start_time = datetime.now(timezone.utc) - timedelta(days=21)
+                    start_time = datetime.now() - timedelta(days=21)
                     last_value = []
                 else:
                     last_date_saved, last_value = last_date_saved[0]
                     start_time = datetime.fromisoformat(last_date_saved)
 
-                current_date = datetime.now(timezone.utc)
+                current_date = datetime.now()
 
                 while start_time < current_date:
                     end_time = start_time + timedelta(days = 7)

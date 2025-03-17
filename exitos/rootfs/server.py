@@ -10,7 +10,7 @@ PORT = 8000
 #INICIACIÓ DE L'APLICACIÓ I LA BASE DE DADES
 app = Bottle()
 database = db.sqlDB()
-database.update()
+# database.update()
 
 #Ruta inicial
 # Ruta per servir fitxers estàtics i imatges des de 'www'
