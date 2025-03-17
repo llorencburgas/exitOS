@@ -6,7 +6,7 @@ from bottle import Bottle, template, run, static_file, HTTPError, redirect, requ
 
 # PARÀMETRES DE L'EXECUCIÓ
 HOSTNAME = '0.0.0.0'
-PORT = 28932
+PORT = 8000
 
 #INICIACIÓ DE L'APLICACIÓ I LA BASE DE DADES
 app = Bottle()
