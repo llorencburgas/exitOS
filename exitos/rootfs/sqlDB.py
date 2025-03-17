@@ -192,7 +192,7 @@ class sqlDB():
 
                     sensor_data_historic = pd.DataFrame()
 
-                    repsonse = get(url, headers=self.headers)
+                    response = get(url, headers=self.headers)
                     if response.status_code == 200:
                         try:
                             sensor_data_historic = pd.json_normalize(repsonse.json())
