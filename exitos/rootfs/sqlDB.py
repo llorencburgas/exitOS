@@ -6,7 +6,6 @@ import pandas as pd
 from requests import get
 from datetime import datetime, timedelta, timezone
 
-from exitos.rootfs.bottle import response
 
 
 class sqlDB():
