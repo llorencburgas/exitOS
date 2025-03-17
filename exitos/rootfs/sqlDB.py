@@ -1,290 +1,204 @@
-# -*- coding: utf-8 -*-
+import os
+import logging
 import sqlite3
+import numpy as np
 import pandas as pd
 from requests import get
-import traceback
-import os
-import configparser
-import numpy as np
-import logging
-
 from datetime import datetime, timedelta, timezone
-
-
 
 class sqlDB():
     def __init__(self):
-        '''
-        Constructor de la classe. Crea la connexió a la base de dades
-        '''
-        # Nom de la base de dades
-        self.filename = "/share/exitos/dades.db"
-        self.config_path = '/share/exitos/user_info.conf'
-        
-        #per conectar a la api de home assistant
-        self.supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
-        self.base_url = "http://supervisor/core/api/"
-        self.headers = {"Authorization": "Bearer " + self.supervisor_token,
-                        "content-type": "application/json",}
+        """
+        Constructor de la classe. \n
+        Crea la connexió a la base de dades
+        """
+        # DADES A DESCOMENTAR QUAN SIGUI REMOT ****
+        # self.database_file = "/share/exitos/dades.db"
+        # self.config_path = "'"/share/exitos/user_info.conf"
+        #self.supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
+        # self.base_url = "http://supervisor/core/api/"
 
-        # Comprova si la base de dades existeix
-        if not os.path.isfile(self.filename):
-            print("No s'ha trobat la BDD. La creem de nou!")
-            "No existeix, creem la base de dades de nou"
-            self.__install__()  # Assegura't que aquest mètode està definit i funciona correctament
-            
-        # Connexió a la base de dades
-        self.__con__ = sqlite3.connect(self.filename, timeout=10)
-    
-    def __del__(self):
-        '''
-        Destructor de l'objecte. Tanca la connexió de manera segura
-        '''
-        try:
-            self.__con__.close()  # Tanca la connexió, si existeix
-        except AttributeError:
-            pass  # Si la connexió no existeix, no fem res
-    
-    def __install__(self):
-        '''
-        Crea les taules inicials de la BDD
-        '''
-        print("Creem una BDD nova")
-        con = sqlite3.connect(self.filename)        
+        #Dades a comentar quan sigui remot
+        self.database_file = "dades.db"
+        self.config_path = "user_info.config"
+        self.supervisor_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI5YzMxMjU1MzQ0NGY0YTg5YjU5NzQ5NWM0ODI2ZmNhZiIsImlhdCI6MTc0MTE3NzM4NSwiZXhwIjoyMDU2NTM3Mzg1fQ.5-ST2_WQNJ4XRwlgHK0fX8P6DnEoCyEKEoeuJwl-dkE"
+        self.base_url = "http://margarita.udg.edu:28932/api/"
+        # ****************************************
+        self.headers = {
+            "Authorization": "Bearer " + self.supervisor_token,
+            "Content-Type": "application/json"
+        }
+
+        #comprovem si la Base de Dades existeix
+        if not os.path.isfile(self.database_file):
+            print("La base de dades no existeix")
+            print("Creant la base de dades...")
+            self.__initDB__()
+
+        #connecta a la Base de Dades
+        self.__conn__ = sqlite3.connect(self.database_file, timeout=10)
+
+    def __initDB__(self):
+        """
+        Crea les taules de la base de dades \n
+            -> DADES: conté els valors i timestamps de les dades \n
+            -> SENSORS: conté la info dels sensors
+        """
+
+        con = sqlite3.connect(self.database_file)
         cur = con.cursor()
-        
-        #creem les taules
-        cur.execute("CREATE TABLE dades(sensor_id TEXT, timestamp NUMERIC, value)")       
-        cur.execute("CREATE TABLE sensors(sensor_id TEXT, units TEXT, description TEXT, update_sensor BINARY)")
-        
+
+        #creant les taules
+        cur.execute("CREATE TABLE dades(sensor_id TEXT, timestamp NUMERIC, value)")
+        cur.execute("CREATE TABLE sensors(sensor_id TEXT, units TEXT, update_sensor BINARY, save_sensor BINARY)")
+
         con.commit()
         con.close()
-        
-    def get_sensor_names_W(self):
-        '''
-        Returns a list of sensors that measure energy in W or kW
-        '''
-        # Send a GET request to the Home Assistant API to fetch the sensor data
-        response = get(self.base_url + 'states', headers=self.headers)
-        
-        # Flatten the nested JSON response into a DataFrame
-        sensors_list = pd.json_normalize(response.json())
-        
-        # Check if the 'entity_id' column exists in the response data
-        if 'entity_id' in sensors_list.columns:
-            aux = sensors_list[['entity_id', 'attributes.unit_of_measurement']] # Create a temporary DataFrame 'aux' cotaining 'entity_id' and 'unist_of_measurement'
-            llista = aux[aux['attributes.unit_of_measurement'] == 'W'] # Filter the sensors that measure energy in Wh or kWh
-            llista = pd.concat([llista, aux[aux['attributes.unit_of_measurement'] == 'kW']]) # Add sensors that measure energy in kWh
-            return llista # Return the list of sensors
-        else:
-            # If 'entity_id' is not found, print and error message and list available columns
-            print("'entity_id' column not found in response data")
-            print(f"Available columns: {sensors_list.columns.tolist()}")
-            # Return a failure message
-            return "Doesn't work"
 
-    def get_latitude_longitude(self):
-            '''
-            Returns the latitude and longitude of the Home Assistant instance
-            '''
-
-            # Send a GET request to the Home Assistant API to fetch the sensor data
-            response = get(self.base_url + 'config', headers=self.headers)
-
-            # Flatten the nested JSON response into a DataFrame
-            config = pd.json_normalize(response.json())
-
-            # Check if the 'latitude' and 'longitude' columns exist in the response data
-            if 'latitude' in config.columns and 'longitude' in config.columns:
-                # Return the latitude and longitude
-                latitude = config['latitude'][0]
-                longitude = config['longitude'][0]
-
-                return latitude, longitude
-            else:
-                # If 'latitude' or 'longitude' is not found, print and error message and list available columns
-                print("'latitude' or 'longitude' column not found in response data")
-                print(f"Available columns: {config.columns.tolist()}")
-                # Return a failure message
-                return "Doesn't work"
-    
-    def get_data_from_db(self, sensors_id):
+    def query_select(self, sensor_id, value, db):
         """
-        Select values from the database for the given sensors.
+        Executa una query SQL a la base de dades
+        :param sensor_id: id del sensor a mirar
+        :param value: valor de la base de dades que es vol obtenir
+        :param db: Base de dades a utilitzar
+        :return: valor obtingut de la Base de Dades al executar la query
         """
-        merged_data = pd.DataFrame()
-        # Connect to the database
-        #with sqlite3.connect(self.filename) as con:
-        for sensor_id in sensors_id:
-            #try:
-                query = """
-                    SELECT timestamp, value
-                    FROM dades
-                    WHERE sensor_id = ? 
-                """
-                sensor_data = pd.read_sql_query(query, self.__con__, params=(sensor_id,))
-                
-                # Assegura't que 'timestamp' és datetime
-                sensor_data['timestamp'] = pd.to_datetime(sensor_data['timestamp'], format='ISO8601')
-
-                # Renombrar la columna 'value'
-                #sensor_data = sensor_data.rename(columns={'value': f'value_{sensor_id}'})
-                #print(f"Data for sensor_id '{sensor_id}': \n{sensor_data}")
-
-                # Comprova si merged_data està buit
-                if merged_data.empty:
-                    merged_data = sensor_data
-                else:
-                    # Fusionar amb merged_data
-                    merged_data = pd.merge(merged_data, sensor_data, on='timestamp', how='outer')
-                
-                #print(f"Merged data after adding sensor_id '{sensor_id}': \n{merged_data}")
-
-            #except Exception as e:
-            #    print(f"Error querying sensor_id '{sensor_id}': {e}")
-        
-        # Comprova si merged_data no està buit abans de fer sort_values
-        if not merged_data.empty:
-            merged_data = merged_data.sort_values(by='timestamp').reset_index(drop=True)
-        else:
-            print("merged_data is empty. Skipping sort_values.")
-
-        #print("Final merged data: \n", merged_data)
-        return merged_data
-    
-
-    def get_config_values(self):
-        '''
-        Returns the values of the API configuration and the sensor list
-        '''
-        return self.headers, self.base_url, self.get_sensor_names()
-    
-    def query(self, sql):
-        '''
-        Executa una query a la base de dades
-        '''
-        cur = self.__con__.cursor()
-        cur.execute(sql)
+        cur = self.__conn__.cursor()
+        cur.execute("SELECT " + value + " FROM " + db + " WHERE sensor_id = '" + sensor_id + "'" )
         result = cur.fetchall()
         cur.close()
 
         return result
 
-    def update(self):
-        '''
-        Actualitza la base de dades amb les dades de la API de Home Assistant.
-        Aquesta funció sincronitza els sensors existents amb la base de dades i actualitza els valors històrics si cal.
-        '''
+    def get_all_sensors(self):
+        """
+        Obté una llista amb tots els id i "friendly name" dels sensors de la base de dades
+        """
+        response = get(self.base_url + "states", headers=self.headers)
+        sensors_list = pd.json_normalize(response.json())
 
+        if 'entity_id' in sensors_list.columns:
+            sensors = sensors_list[['entity_id', 'attributes.friendly_name']]
+            return sensors
+        else:
+            return None
+
+    def get_sensors_save(self, sensors):
+        """
+        Obté una llista amb l'estat save_sensor dels sensors de la base de dades en el mateix ordre que sensors
+        :param sensors: llista amb id dels sensors a obtenir l'estat save_sensor'
+        """
+        sensors_save = []
+        for sensor in sensors:
+            aux = self.query_select(sensor, "save_sensor", "sensors")
+
+            if aux: #assegurem que aux tingui contingut
+                sensors_save.append(aux[0][0])
+            else:
+                sensors_save.append(0)
+
+        return sensors_save
+
+    def update_sensor_active(self, sensor, active):
+        """
+        Actualitza a la base de dades l'estat save_sensor pel sensor indicat
+        :param sensor: sensor a modificar
+        :param active: estat nou del sensor
+        """
+        cur = self.__conn__.cursor()
+        cur.execute("UPDATE sensors SET save_sensor = ? WHERE sensor_id = ?", (active, sensor))
+        cur.close()
+        self.__conn__.commit()
+
+    def update(self):
+        """
+        Actualitza la base de dades amb la API del Home Assistant.
+        Aquesta funció sincronitza els sensors existents amb la base de dades i
+        actualitza els valors històrics únicament si estan marcats com a
+        "update_sensor" i "save_sensor" TRUE
+        """
         logging.info("Iniciant l'actualització de la base de dades...")
 
-        # obtenció llista sensors de la API convertits en DataFrame
-        sensors_list = pd.json_normalize(get(self.base_url+'states', headers=self.headers).json()) 
+        #obtenim la llista de sensors de la API
+        sensors_list = pd.json_normalize(
+            get(self.base_url + "states", headers=self.headers).json()
+        )
 
-        #per cada sensor de la llista
-        for j in sensors_list.index:
-            # print("ITERACIÓ: ", j)
+        for j in sensors_list.index: #per a cada sensor de la llista
+            sensor_id = sensors_list.iloc[j]["entity_id"]
 
-            #guardem id del sensor
-            sensor_id = sensors_list.iloc[j]['entity_id']
+            #obtenim de la nostra BD el sensor amb id igual al obtingut anteriorment
 
-            #Obtenim els sensors de la nostra DB que tinguin un id igual al obtingut anteriorment
-            cursor = self.__con__.cursor()
-            cursor.execute('SELECT * FROM sensors WHERE sensor_id = ?', (sensor_id,))
-            aux_list = cursor.fetchall()
-            cursor.close()
+            sensor_info = self.query_select(sensor_id, "*", "sensors")
 
-            #si no hem obtingut cap sensor (és a dir no existeix) el creem com a nou
-            if len(aux_list) == 0:
-                cursor = self.__con__.cursor()
-                values_to_insert = (sensor_id, #ID del sensor
-                                    sensors_list.iloc[j]['attributes.unit_of_measurement'], # unitats de mesura
-                                    '', #descripció
-                                    True) #update_sensor
-                cursor.execute("INSERT INTO sensors(sensor_id, units, description, update_sensor) VALUES(?, ?, ?, ?)", values_to_insert)
-                cursor.close()
-                self.__con__.commit()
+            #si no hem obtingut cap sensor ( és a dir, no existeix a la nosta BD)
+            if len(sensor_info) == 0:
+                cur = self.__conn__.cursor()
+                values_to_insert = (sensor_id,
+                                    sensors_list.iloc[j]["attributes.unit_of_measurement"],
+                                    True,
+                                    True)
+                cur.execute("INSERT INTO sensors (sensor_id, units, update_sensor, save_sensor) VALUES (?,?,?,?)", values_to_insert)
+                cur.close()
+                self.__conn__.commit()
+                print("[" + datetime.now(timezone.utc).strftime("%d-%b-%Y   %X")
+                             + "] Afegit un nou sensor a la base de dades: " + sensor_id)
 
-                print('[' + datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S') +']' 
-                      + "Afegint sensor: " + sensor_id)
-                aux_list = None #reiniciem la llista per a la següent iteració
+                sensor_info = None
                 last_date_saved = None
-            
-            #si el sensor Sí que existeix, comprovem si cal actualitzar les dades que tenim
-            else:
-                cursor = self.__con__.cursor()
-                cursor.execute('SELECT timestamp, value FROM dades WHERE sensor_id = ? ORDER BY timestamp DESC LIMIT 1',(sensor_id,))
-                last_date_saved = cursor.fetchone()
 
-                if(last_date_saved == None): last_date_saved = None
-                else: last_date_saved, last_value = last_date_saved
+            save_sensor = self.query_select(sensor_id,"save_sensor", "sensors")[0][0]
+            update_sensor = self.query_select(sensor_id,"update_sensor", "sensors")[0][0]
+            if save_sensor and update_sensor:
+                print("[" + datetime.now(timezone.utc).strftime("%d-%b-%Y   %X") + "] Actualitzant sensor: " + sensor_id)
 
-                cursor.close()
+                last_date_saved = self.query_select(sensor_id,"timestamp, value", "dades")
+                if len(last_date_saved) == 0:
+                    start_time = datetime.now(timezone.utc) - timedelta(days=21)
+                    last_value = []
+                else:
+                    last_date_saved, last_value = last_date_saved[0]
+                    start_time = datetime.fromisoformat(last_date_saved)
 
-            
-            #si no tenim cap data guardada al sensor
-            if(last_date_saved is None):
-                start_time = datetime.now(timezone.utc) - timedelta(days=21) #valor per defecte, fa 21 dies
-                last_value = []
-            else:
-                start_time = datetime.fromisoformat(last_date_saved)
-            
-            # comrpovem si el sensor actual necessita ser actualitzat mirant 'update_sensor'
-            cursor = self.__con__.cursor()
-            cursor.execute('SELECT update_sensor FROM sensors WHERE sensor_id = ?', (sensor_id,))
-            update_sensor = cursor.fetchall()
-            cursor.close()
+                current_date = datetime.now(timezone.utc)
 
-            if(update_sensor[0][0]): #mirem si "update_sensor" és True
-                current_time = datetime.now(timezone.utc)
-                print('[' + current_time.strftime('%Y-%m-%dT%H:%M:%S') + ']' +
-                       ' Actualitzant sensor: ' + sensor_id)  
-                
-                while(start_time < current_time):
-                    
-                    #definim un rang de 7 dies
+                while start_time < current_date:
                     end_time = start_time + timedelta(days = 7)
 
-                    #fem una crida a l'API per obtneir l'històric de dades del sensor dins el rang 
-                    string_start_date = start_time.strftime('%Y-%m-%dT%H:%M:%S') 
+                    string_start_date = start_time.strftime('%Y-%m-%dT%H:%M:%S')
                     string_end_date = end_time.strftime('%Y-%m-%dT%H:%M:%S')
 
                     url = (
                         self.base_url + "history/period/" + string_start_date +
-                         "?end_time=" + string_end_date +
-                         "&filter_entity_id=" + sensor_id 
-                        #  + "&minimal_response&no_attributes"
+                        "?end_time=" + string_end_date +
+                        "&filter_entity_id=" + sensor_id
                     )
 
-                    sensor_data_historic = pd.json_normalize(get(url, headers=self.headers).json())
+                    sensor_data_historic = pd.json_normalize(
+                        get(url, headers=self.headers).json()
+                    )
 
-                    #actualitzem cada valor obtingut de l'historial del sensor
-                    cursor = self.__con__.cursor()
+                    #actualitzem el valor obtingut de l'històric del sensor
+                    cur = self.__conn__.cursor()
                     for column in sensor_data_historic.columns:
                         value = sensor_data_historic[column][0]['state']
 
                         #mirem si el valor és vàlid
-                        if(value == 'unknown') or (value == 'unavailable') or (value == ''):
+                        if value == 'unknown' or value == 'unavailable' or value == '':
                             value = np.nan
-                        
-                        #desem el valor únicament si és diferent a l'anterior
-                        if(last_value != value):
+                        if last_value != value:
                             last_value = value
                             time_stamp = sensor_data_historic[column][0]['last_changed']
-                            cursor.execute("INSERT INTO dades (sensor_id, timestamp, value) VALUES(?, ?, ?)",
-                                           (sensor_id, time_stamp, value))
-                            
-                    cursor.close()
-                    self.__con__.commit()
+                            cur.execute("INSERT INTO dades (sensor_id, timestamp, value) VALUES (?,?,?)",
+                                        (sensor_id, time_stamp, value))
 
-                    start_time += timedelta(days=7)
-        
-        print('[' + current_time.strftime('%Y-%m-%dT%H:%M:%S') + ']' +'TOTS ELS SENSORS HAN ESTAT ACTUALITZATS.')
+                    cur.close()
+                    self.__conn__.commit()
 
+                    start_time += timedelta(days = 7)
 
-
-
-                
+        print("[" + datetime.now(timezone.utc).strftime("%d-%b-%Y   %X") +
+                     "] TOTS ELS SENSORS HAN ESTAT ACTUALITZATS")
 
 
 
@@ -292,11 +206,16 @@ class sqlDB():
 
 
 
-        
 
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
+
+
+
+

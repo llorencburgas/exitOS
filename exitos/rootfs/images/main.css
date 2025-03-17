@@ -1,0 +1,125 @@
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap');
+
+:root{
+    --color-primary: #000;
+    --main-bg-color: #2c6e49;
+    --white-background: #fff;
+    --text-color: #0f2418;
+    --text-hover-color: #44a26c;
+    --text-active-color: #000;
+}
+
+
+*{
+    margin: 0;
+    padding: 0;
+}
+html{
+
+    box-sizing: border-box;
+    font-family: 'Rubik', Arial, sans-serif;
+    line-height: 1.5rem;
+
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: var(--white-background);
+}
+
+main{
+    /*padding: min(30px, 2rem);*/
+}
+header{
+    /*padding-block: 1rem;*/
+}
+.nav-image-link img{
+    width: 5%;
+    margin-right: 15px;
+    transition: transform 0.3s ease;
+    float: left;
+}
+.nav-image-link img:hover{
+    transform: scale(1.05);
+}
+.navbar-container{
+    background-color: var(--main-bg-color);
+    overflow: hidden;
+    padding: 1%;
+}
+.nav-link{
+    align-items: center;
+    color: var(--text-color);
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 17px;
+
+
+
+    transition: .2s;
+}
+.nav-link:hover{
+    color: var(--text-hover-color);
+}
+.nav-link.active{
+    color: var(--text-active-color);
+}
+
+
+/*HERO*/
+.hero-section{
+    background: url('community.webp') no-repeat center center/cover;
+    height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--text-color);
+    position: relative;
+}
+.hero::after{
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(44, 110, 73, 0.6);
+}
+
+.hero-content{
+    position: relative;
+    z-index: 1;
+}
+.hero-content h1{
+    font-size: 3rem;
+    margin-bottom: 10px;
+}
+.hero-content p{
+    font-size: 1.2rem;
+}.content-section{
+    padding: 40px 20px;
+    background-color: var(--white-background);
+    margin: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+ }
+
+ /*CONTAINER*/
+
+.container{
+    color: var(--text-color);
+    padding: 10px;
+
+    h2{
+        text-align: center;
+    }
+}
+ /*FOOTER*/
+.footer{
+    background-color: var(--main-bg-color);
+    color: var(--text-color);
+    padding: 10px;
+    text-align: center;
+}
+a.mail-text{
+    color: var(--text-color);
+}
