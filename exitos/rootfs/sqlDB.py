@@ -13,16 +13,16 @@ class sqlDB():
         Crea la connexió a la base de dades
         """
         # DADES A DESCOMENTAR QUAN SIGUI REMOT ****
-        # self.database_file = "/share/exitos/dades.db"
-        # self.config_path = "'"/share/exitos/user_info.conf"
-        #self.supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
-        # self.base_url = "http://supervisor/core/api/"
+        self.database_file = "/share/exitos/dades.db"
+        self.config_path = "/share/exitos/user_info.conf"
+        self.supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
+        self.base_url = "http://supervisor/core/api/"
 
         #Dades a comentar quan sigui remot
-        self.database_file = "dades.db"
-        self.config_path = "user_info.config"
-        self.supervisor_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI5YzMxMjU1MzQ0NGY0YTg5YjU5NzQ5NWM0ODI2ZmNhZiIsImlhdCI6MTc0MTE3NzM4NSwiZXhwIjoyMDU2NTM3Mzg1fQ.5-ST2_WQNJ4XRwlgHK0fX8P6DnEoCyEKEoeuJwl-dkE"
-        self.base_url = "http://margarita.udg.edu:28932/api/"
+        # self.database_file = "dades.db"
+        # self.config_path = "user_info.config"
+        # self.supervisor_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI5YzMxMjU1MzQ0NGY0YTg5YjU5NzQ5NWM0ODI2ZmNhZiIsImlhdCI6MTc0MTE3NzM4NSwiZXhwIjoyMDU2NTM3Mzg1fQ.5-ST2_WQNJ4XRwlgHK0fX8P6DnEoCyEKEoeuJwl-dkE"
+        # self.base_url = "http://margarita.udg.edu:28932/api/"
         # ****************************************
         self.headers = {
             "Authorization": "Bearer " + self.supervisor_token,
