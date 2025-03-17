@@ -1,6 +1,7 @@
 
 import os
 import sqlDB as db
+import json
 from bottle import Bottle, template, run, static_file, HTTPError, redirect, request, response
 
 # PARÀMETRES DE L'EXECUCIÓ
@@ -47,6 +48,7 @@ def get_sensors():
 @app.post('/update_sensors')
 def update_sensors():
     data = request.json
+    print("Received JSON:", json.dumps(data, indent=2))
     sensors = data.get("sensors", [])
 
     if not sensors:
