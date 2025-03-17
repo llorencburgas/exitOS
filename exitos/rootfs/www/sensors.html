@@ -80,50 +80,53 @@
                     </div>
                 </nav>
             </header>
-
-        <div class="container">
-            <div class="content-section">
-                <h2>Sensors Disponibles</h2>
-                <p> Seleccioni els sensors que vol guardar </p>
-                <div class="button-div">
-                    <button class="save-sensors" onclick="saveSensors()">Guardar Canvis</button>
-                    <button class="select-sensors" onclick="selectAll(true)">Seleccionar Tots</button>
-                    <button class="select-sensors" onclick="selectAll(false)">Deseleccionar Tots</button>
+        <form action="/update_sensors" method="POST">
+            <div class="container">
+                <div class="content-section">
+                    <h2>Sensors Disponibles</h2>
+                    <p> Seleccioni els sensors que vol guardar </p>
+                    <div class="button-div">
+                        <button class="save-sensors" type="submit">Guardar Canvis</button>
+                        <button class="select-sensors" onclick="selectAll(true)">Seleccionar Tots</button>
+                        <button class="select-sensors" onclick="selectAll(false)">Deseleccionar Tots</button>
+                    </div>
                 </div>
 
-                <!-- TABLE -->
-            <table id="sensors-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Guardar</th>
-                        <th>Nom del sensor</th>
-                        <th>ID del sensor</th>
-                    </tr>
-                </thead>
-                <tbody id="sensors-table-body">
-                     % for i, id in enumerate(sensors['sensors_id']):
-                    <tr>
-                        <td>{{ i }} </td>
-                        <td>
-                            <label>
-                                <input type="checkbox" class="checkboxes" data-id="{{ id }}"
-                                 % if sensors['sensors_save'][i] == 1:
-                                    checked
-                                 % end
-                                />
-                            </label>
-                        </td>
-                        <td>{{ sensors['sensors_name'][i] }}</td>
-                        <td>{{ id }}</td>
-                    </tr>
 
-                    %end
-                </tbody>
+                    <!-- TABLE -->
+                <table id="sensors-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Guardar</th>
+                            <th>Nom del sensor</th>
+                            <th>ID del sensor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sensors-table-body">
+                         % for i, id in enumerate(sensors['sensors_id']):
+                        <tr>
+                            <td>{{ i }} </td>
+                            <td>
+                                <label>
+                                    <input type="checkbox" class="checkboxes" name="sensor_id" value="{{ id }}"
+                                     % if sensors['sensors_save'][i] == 1:
+                                        checked
+                                     % end
+                                    />
+                                </label>
+                            </td>
+                            <td>{{ sensors['sensors_name'][i] }}</td>
+                            <td>{{ id }}</td>
+                        </tr>
+
+                        %end
+                    </tbody>
 
 
-            </table>
+                </table>
             </div>
+        </form>
 
 
         </div>
@@ -144,26 +147,26 @@
     }
 
     //funció per recollir data i enviar-la al servidor (checkboxes)
-    function saveSensors(){
-        let updates = [];
-
-        document.querySelectorAll('.checkboxes').forEach(checkbox => {
-            updates.push({
-                sensor_id: checkbox.getAttribute('data-id'),
-                active: checkbox.checked
-            });
-        });
-
-
-        fetch('/update_sensors',{
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({sensors: updates})
-        }).then(response => response.json())
-            .then(data => alert("Sensors updated successfully"))
-            .catch(error => console.error('Error:', error));
-    }
+    // function saveSensors(){
+    //     let updates = [];
+    //
+    //     document.querySelectorAll('.checkboxes').forEach(checkbox => {
+    //         updates.push({
+    //             sensor_id: checkbox.getAttribute('data-id'),
+    //             active: checkbox.checked
+    //         });
+    //     });
+    //
+    //
+    //     fetch('/update_sensors',{
+    //         method: 'POST',
+    //         headers: {
+    //             'Content-Type': 'application/json'
+    //         },
+    //         body: JSON.stringify({sensors: updates})
+    //     }).then(response => response.json())
+    //         .then(data => alert("Sensors updated successfully"))
+    //         .catch(error => console.error('Error:', error));
+    // }
 </script>
 </html>

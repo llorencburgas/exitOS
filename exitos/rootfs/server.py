@@ -45,23 +45,36 @@ def get_sensors():
 
     return template('./www/sensors.html', sensors = context )
 
-@app.get('/update_sensors')
+# @app.get('/update_sensors')
+# def update_sensors():
+#     data = request.json
+#     print("Received JSON:", json.dumps(data, indent=2))
+#     sensors = data.get("sensors", [])
+#
+#     if not sensors:
+#         response.status = 400
+#         return {"error": "No data received"}
+#
+#     #Actualitzar la base de dades per a cada sensor
+#     for sensor in sensors:
+#         sensor_id = sensor.get("sensor_id")
+#         is_active = sensor.get("active")
+#         database.update_sensor_active(sensor_id, is_active)
+#
+#     return{"success": True, "updated_sensors": len(sensors)}
+
+@app.post('/update_sensors')
 def update_sensors():
-    data = request.json
-    print("Received JSON:", json.dumps(data, indent=2))
-    sensors = data.get("sensors", [])
+    checked_sensors = request.forms.getall("sensor_id")
+    sensors = database.get_all_sensors()
+    sensors_id = sensors['entity_id'].tolist()
 
-    if not sensors:
-        response.status = 400
-        return {"error": "No data received"}
-
-    #Actualitzar la base de dades per a cada sensor
-    for sensor in sensors:
-        sensor_id = sensor.get("sensor_id")
-        is_active = sensor.get("active")
+    for sensor_id in sensors_id:
+        is_active = sensor_id in checked_sensors
         database.update_sensor_active(sensor_id, is_active)
 
-    return{"success": True, "updated_sensors": len(sensors)}
+    print(f"Sensors actualitzats: {checked_sensors}")
+    return redirect("/sensors")
 
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')
