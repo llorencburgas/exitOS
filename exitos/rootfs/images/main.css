@@ -123,3 +123,8 @@ header{
 a.mail-text{
     color: var(--text-color);
 }
+.content-section{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

@@ -4,49 +4,62 @@
     <meta charset="UTF-8">
      <title>Control energètic eXIT</title>
     <link rel="stylesheet" href="static/main.css">
-<!--    <link rel="stylesheet" href="../images/main.css">-->
 
         <!-- llibreria d'icontes per al navbar-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
-        table{
-            margin: 0 auto;
-            font-size: large;
-            border: 1px solid black;
-        }
-        td{
-            background-color: #E4F5D4;
-			border: 1px solid black;
-        }
-        p{
+
+        p {
             text-align: center;
             margin-bottom: 20px;
         }
-        th, td{
-            font-weight: bold;
-			border: 1px solid black;
-			padding: 10px;
-			text-align: center;
+        #sensors-table{
+            margin: 0 auto;
+            font-size: large;
+            border-collapse: collapse;
+            width: 100%;
+            word-break: break-all;
+            word-wrap: break-word;
         }
-        td{
-            font-weight: lighter;
+        #sensors-table td, #sensors-table th{
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        #sensors-table tr:nth-child(even){
+            background-color: #f2f2f2;
+        }
+        #sensors-table tr:hover{
+            background-color: #ddd;
+        }
+        #sensors-table th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            text-align: left;
+            background-color: #04AA6D;
+            color: white;
         }
         button{
             border: none;
-            position: relative;
+            /*align-items: center;*/
             color: white;
             padding: 10px 24px;
             border-radius: 8px;
             text-align: center;
             text-decoration: none;
-            display: inline-block;
+            /*display: inline-block;*/
             font-size: 12px;
             margin-bottom: 10px;
+            margin-right: 10px;
 
             background-color: #04AA6D;
         }
         button:hover{
             background-color: #04D984;
+        }
+        .button-div{
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
     </style>
 </head>
@@ -71,13 +84,14 @@
             <div class="content-section">
                 <h2>Sensors Disponibles</h2>
                 <p> Seleccioni els sensors que vol guardar </p>
-
-                <button class="save-sensors" onclick="saveSensors()">Guardar Canvis</button>
-                <button class="select-sensors" onclick="selectAll(true)">Seleccionar Tots</button>
-                <button class="select-sensors" onclick="selectAll(false)">Deseleccionar Tots</button>
+                <div class="button-div">
+                    <button class="save-sensors" onclick="saveSensors()">Guardar Canvis</button>
+                    <button class="select-sensors" onclick="selectAll(true)">Seleccionar Tots</button>
+                    <button class="select-sensors" onclick="selectAll(false)">Deseleccionar Tots</button>
+                </div>
 
                 <!-- TABLE -->
-            <table>
+            <table id="sensors-table">
                 <thead>
                     <tr>
                         <th>#</th>
