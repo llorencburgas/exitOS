@@ -45,7 +45,7 @@ def get_sensors():
 
     return template('./www/sensors.html', sensors = context )
 
-@app.post('/update_sensors')
+@app.get('/update_sensors')
 def update_sensors():
     data = request.json
     print("Received JSON:", json.dumps(data, indent=2))
