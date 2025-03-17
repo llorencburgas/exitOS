@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
      <title>Control energètic eXIT</title>
     <link rel="stylesheet" href="static/main.css">
+    <link rel="icon" type="image/x-icon" href="static/favicon.ico">
 
         <!-- llibreria d'icontes per al navbar-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -56,6 +57,7 @@
         button:hover{
             background-color: #04D984;
         }
+        button:
         .button-div{
             display: flex;
             justify-content: center;
@@ -152,6 +154,8 @@
                 active: checkbox.checked
             });
         });
+
+        console.log("Sending data:", updates);
 
         fetch('/update_sensors',{
             method: 'POST',
