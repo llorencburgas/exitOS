@@ -195,7 +195,7 @@ class sqlDB():
                     response = get(url, headers=self.headers)
                     if response.status_code == 200:
                         try:
-                            sensor_data_historic = pd.json_normalize(repsonse.json())
+                            sensor_data_historic = pd.json_normalize(response.json())
                         except ValueError as e:
                             print("Error parsing JSON: " + str(e))
                     elif response.status_code == 500:
