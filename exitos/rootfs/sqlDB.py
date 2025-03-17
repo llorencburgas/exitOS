@@ -19,16 +19,16 @@ class sqlDB():
         print("INICIANT LA BASE DE DATES...")
 
         # DADES A DESCOMENTAR QUAN SIGUI REMOT ****
-        self.database_file = "/share/exitos/dades.db"
-        self.config_path = "/share/exitos/user_info.conf"
-        self.supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
-        self.base_url = "http://supervisor/core/api/"
+        # self.database_file = "/share/exitos/dades.db"
+        # self.config_path = "/share/exitos/user_info.conf"
+        # self.supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
+        # self.base_url = "http://supervisor/core/api/"
 
         #Dades a comentar quan sigui remot
-        # self.database_file = "dades.db"
-        # self.config_path = "user_info.config"
-        # self.supervisor_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI5YzMxMjU1MzQ0NGY0YTg5YjU5NzQ5NWM0ODI2ZmNhZiIsImlhdCI6MTc0MTE3NzM4NSwiZXhwIjoyMDU2NTM3Mzg1fQ.5-ST2_WQNJ4XRwlgHK0fX8P6DnEoCyEKEoeuJwl-dkE"
-        # self.base_url = "http://margarita.udg.edu:28932/api/"
+        self.database_file = "dades.db"
+        self.config_path = "user_info.config"
+        self.supervisor_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI5YzMxMjU1MzQ0NGY0YTg5YjU5NzQ5NWM0ODI2ZmNhZiIsImlhdCI6MTc0MTE3NzM4NSwiZXhwIjoyMDU2NTM3Mzg1fQ.5-ST2_WQNJ4XRwlgHK0fX8P6DnEoCyEKEoeuJwl-dkE"
+        self.base_url = "http://margarita.udg.edu:28932/api/"
         # ****************************************
         self.headers = {
             "Authorization": "Bearer " + self.supervisor_token,
@@ -191,22 +191,20 @@ class sqlDB():
                         "&filter_entity_id=" + sensor_id
                     )
 
-                    # sensor_data_historic = pd.json_normalize(
-                    #     get(url, headers=self.headers).json()
-                    # )
+                    sensor_data_historic = pd.DataFrame()
 
                     repsonse = get(url, headers=self.headers)
                     if response.status_code == 200:
                         try:
-                            sensors_data_historic = pd.json_normalize(repsonse.json())
+                            sensor_data_historic = pd.json_normalize(repsonse.json())
                         except ValueError as e:
                             print("Error parsing JSON: " + str(e))
                     elif response.status_code == 500:
                         print("Server error (500): Internal server error at sensor ", sensor_id)
-                        sensors_data_historic = pd.DataFrame()
+                        sensor_data_historic = pd.DataFrame()
                     else:
                         print("Request failed with status code: ", response.status_code)
-                        sensors_data_historic = pd.DataFrame()
+                        sensor_data_historic = pd.DataFrame()
 
                     #actualitzem el valor obtingut de l'històric del sensor
                     cur = self.__conn__.cursor()
