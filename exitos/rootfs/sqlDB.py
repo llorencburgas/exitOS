@@ -12,6 +12,9 @@ class sqlDB():
         Constructor de la classe. \n
         Crea la connexió a la base de dades
         """
+
+        print("INICIANT LA BASE DE DATES...")
+
         # DADES A DESCOMENTAR QUAN SIGUI REMOT ****
         self.database_file = "/share/exitos/dades.db"
         self.config_path = "/share/exitos/user_info.conf"
@@ -38,12 +41,23 @@ class sqlDB():
         #connecta a la Base de Dades
         self.__conn__ = sqlite3.connect(self.database_file, timeout=10)
 
+    def __del__(self):
+        """
+        Destructor de l'objecte. Tanca la connexió de manera segura
+        """
+        try:
+            self.__conn__.close()
+        except AttributeError:
+            pass
+
     def __initDB__(self):
         """
         Crea les taules de la base de dades \n
             -> DADES: conté els valors i timestamps de les dades \n
             -> SENSORS: conté la info dels sensors
         """
+
+        print("S'ESTÀ CREANT LA BASE DE DATES...")
 
         con = sqlite3.connect(self.database_file)
         cur = con.cursor()
