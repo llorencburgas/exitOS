@@ -210,6 +210,7 @@ class sqlDB():
                     self.__conn__.commit()
 
                     start_time += timedelta(days = 7)
+                    sensor_data_historic = None
 
         print("[" + datetime.now(timezone.utc).strftime("%d-%b-%Y   %X") +
                      "] TOTS ELS SENSORS HAN ESTAT ACTUALITZATS")
