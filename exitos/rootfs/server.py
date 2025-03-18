@@ -13,7 +13,7 @@ app = Bottle()
 database = db.sqlDB()
 
 # COMENTAT PER AGILITZAR EL DEBUG, RECORDA A DESCOMENTAR-HO DESPRÉS!!!!
-database.update()
+database.update("all")
 
 #Ruta inicial
 # Ruta per servir fitxers estàtics i imatges des de 'www'
@@ -56,7 +56,14 @@ def update_sensors():
 
     for sensor_id in sensors_id:
         is_active = sensor_id in checked_sensors
+        was_active = database.get_sensor_active(sensor_id)
         database.update_sensor_active(sensor_id, is_active)
+
+        if is_active is not was_active: #si el valor és diferent al que teniem abans
+            if is_active: #si ara està actiu
+                database.update(sensor_id)
+            else: #si ara està inactiu
+                database.remove_sensor_data(sensor_id)
 
     sensors_name = sensors['attributes.friendly_name'].tolist()
     sensors_save = database.get_sensors_save(sensors_id)

@@ -126,7 +126,30 @@ class sqlDB():
         cur.close()
         self.__conn__.commit()
 
-    def update(self):
+    def get_sensor_active(self, sensor):
+        """
+        Obté l'estat save_sensor del sensor indicat
+        :param sensor: sensor a obtenir l'estat save_sensor'
+        :return: estat del sensor (0, 1)
+        """
+        cur = self.__conn__.cursor()
+        cur.execute("SELECT save_sensor FROM sensors WHERE sensor_id = ?", (sensor,))
+        result = cur.fetchall()
+        cur.close()
+
+        return result[0][0]
+
+    def remove_sensor_data(self, sensor_id):
+        """
+        Elimina totes les dades del sensor indicat
+        :param sensor_id: id del sensor a eliminar les dades
+        """
+        cur = self.__conn__.cursor()
+        cur.execute("DELETE FROM dades WHERE sensor_id = ?", (sensor_id,))
+        cur.close()
+        self.__conn__.commit()
+
+    def update(self, sensor_to_update):
         """
         Actualitza la base de dades amb la API del Home Assistant.
         Aquesta funció sincronitza els sensors existents amb la base de dades i
@@ -136,9 +159,18 @@ class sqlDB():
         logging.info("Iniciant l'actualització de la base de dades...")
 
         #obtenim la llista de sensors de la API
-        sensors_list = pd.json_normalize(
-            get(self.base_url + "states", headers=self.headers).json()
-        )
+        if sensor_to_update == "all":
+            sensors_list = pd.json_normalize(
+                get(self.base_url + "states", headers=self.headers).json()
+            )
+        else:
+            sensors_list = pd.json_normalize(
+                get(self.base_url + "states?filter_entity_id=" + sensor_to_update, headers=self.headers).json()
+            )
+            if len(sensors_list) == 0:
+                print("No existeix un sensor amb l'ID indicat")
+                return None
+
         current_date = datetime.now(timezone.utc) + timedelta(hours=1)
 
         for j in sensors_list.index: #per a cada sensor de la llista
