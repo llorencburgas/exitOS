@@ -58,7 +58,9 @@ def update_sensors():
         is_active = sensor_id in checked_sensors
         database.update_sensor_active(sensor_id, is_active)
 
-    redirect('/sensors', code=303)
+    base_url = request.environ.get('HTTP_REFERER')
+    redirect(base_url)
+
 
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')
