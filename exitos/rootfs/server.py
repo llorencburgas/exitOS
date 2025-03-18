@@ -13,7 +13,7 @@ app = Bottle()
 database = db.sqlDB()
 
 # COMENTAT PER AGILITZAR EL DEBUG, RECORDA A DESCOMENTAR-HO DESPRÉS!!!!
-# database.update()
+database.update()
 
 #Ruta inicial
 # Ruta per servir fitxers estàtics i imatges des de 'www'
@@ -47,25 +47,8 @@ def get_sensors():
 
     return template('./www/sensors.html', sensors = context )
 
-# @app.get('/update_sensors')
-# def update_sensors():
-#     data = request.json
-#     print("Received JSON:", json.dumps(data, indent=2))
-#     sensors = data.get("sensors", [])
-#
-#     if not sensors:
-#         response.status = 400
-#         return {"error": "No data received"}
-#
-#     #Actualitzar la base de dades per a cada sensor
-#     for sensor in sensors:
-#         sensor_id = sensor.get("sensor_id")
-#         is_active = sensor.get("active")
-#         database.update_sensor_active(sensor_id, is_active)
-#
-#     return{"success": True, "updated_sensors": len(sensors)}
 
-@app.post('/update_sensors')
+@app.get('/update_sensors')
 def update_sensors():
     checked_sensors = request.forms.getall("sensor_id")
     sensors = database.get_all_sensors()
