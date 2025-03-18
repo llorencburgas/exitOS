@@ -70,7 +70,7 @@ def get_page(page):
         # Control de dades segons la pàgina
         return static_file(f'{page}.html', root='./www/')
     else:
-        return HTTPError(404, "Page not found")
+        return HTTPError(404, "La pàgina no existeix")
 
 
 
