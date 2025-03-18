@@ -189,6 +189,7 @@ class sqlDB():
                         self.base_url + "history/period/" + string_start_date +
                         "?end_time=" + string_end_date +
                         "&filter_entity_id=" + sensor_id
+                        + "&minimal_response&no_attributes"
                     )
 
                     sensor_data_historic = pd.DataFrame()
