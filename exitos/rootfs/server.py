@@ -11,6 +11,8 @@ PORT = 8000
 #INICIACIÓ DE L'APLICACIÓ I LA BASE DE DADES
 app = Bottle()
 database = db.sqlDB()
+
+# COMENTAT PER AGILITZAR EL DEBUG, RECORDA A DESCOMENTAR-HO DESPRÉS!!!!
 # database.update()
 
 #Ruta inicial
