@@ -154,7 +154,7 @@ class sqlDB():
                 values_to_insert = (sensor_id,
                                     sensors_list.iloc[j]["attributes.unit_of_measurement"],
                                     True,
-                                    True)
+                                    False)
                 cur.execute("INSERT INTO sensors (sensor_id, units, update_sensor, save_sensor) VALUES (?,?,?,?)", values_to_insert)
                 cur.close()
                 self.__conn__.commit()
@@ -180,7 +180,7 @@ class sqlDB():
 
 
                 while start_time < current_date:
-                    end_time = start_time + timedelta(days = 7)
+                    end_time = start_time + timedelta(days = 1)
 
                     string_start_date = start_time.strftime('%Y-%m-%dT%H:%M:%S')
                     string_end_date = end_time.strftime('%Y-%m-%dT%H:%M:%S')

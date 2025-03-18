@@ -48,7 +48,7 @@ def get_sensors():
     return template('./www/sensors.html', sensors = context )
 
 
-@app.get('/update_sensors')
+@app.post('/update_sensors')
 def update_sensors():
     checked_sensors = request.forms.getall("sensor_id")
     sensors = database.get_all_sensors()
@@ -58,7 +58,6 @@ def update_sensors():
         is_active = sensor_id in checked_sensors
         database.update_sensor_active(sensor_id, is_active)
 
-    print(f"Sensors actualitzats: {checked_sensors}")
     return redirect("/sensors")
 
 # Ruta dinàmica per a les pàgines HTML
