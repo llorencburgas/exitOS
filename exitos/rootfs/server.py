@@ -58,8 +58,16 @@ def update_sensors():
         is_active = sensor_id in checked_sensors
         database.update_sensor_active(sensor_id, is_active)
 
-    base_url = request.environ.get('HTTP_REFERER')
-    redirect(base_url)
+    sensors_name = sensors['attributes.friendly_name'].tolist()
+    sensors_save = database.get_sensors_save(sensors_id)
+
+    context = {
+        "sensors_id": sensors_id,
+        "sensors_name": sensors_name,
+        "sensors_save": sensors_save
+    }
+
+    return template('./www/sensors.html', sensors=context)
 
 
 # Ruta dinàmica per a les pàgines HTML
