@@ -13,7 +13,7 @@ app = Bottle()
 database = db.sqlDB()
 
 # COMENTAT PER AGILITZAR EL DEBUG, RECORDA A DESCOMENTAR-HO DESPRÉS!!!!
-# database.update()
+database.update()
 
 #Ruta inicial
 # Ruta per servir fitxers estàtics i imatges des de 'www'
@@ -58,7 +58,7 @@ def update_sensors():
         is_active = sensor_id in checked_sensors
         database.update_sensor_active(sensor_id, is_active)
 
-    get_sensors()
+    return redirect('www.google.com')
 
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')

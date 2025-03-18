@@ -28,7 +28,7 @@ class sqlDB():
         # self.config_path = "user_info.config"
         # self.supervisor_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI5YzMxMjU1MzQ0NGY0YTg5YjU5NzQ5NWM0ODI2ZmNhZiIsImlhdCI6MTc0MTE3NzM4NSwiZXhwIjoyMDU2NTM3Mzg1fQ.5-ST2_WQNJ4XRwlgHK0fX8P6DnEoCyEKEoeuJwl-dkE"
         # self.base_url = "http://margarita.udg.edu:28932/api/"
-        # ****************************************
+        # # ****************************************
         self.headers = {
             "Authorization": "Bearer " + self.supervisor_token,
             "Content-Type": "application/json"
