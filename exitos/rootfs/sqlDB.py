@@ -139,6 +139,7 @@ class sqlDB():
         sensors_list = pd.json_normalize(
             get(self.base_url + "states", headers=self.headers).json()
         )
+        current_date = datetime.now(timezone.utc) + timedelta(hours=1)
 
         for j in sensors_list.index: #per a cada sensor de la llista
             sensor_id = sensors_list.iloc[j]["entity_id"]
@@ -157,7 +158,7 @@ class sqlDB():
                 cur.execute("INSERT INTO sensors (sensor_id, units, update_sensor, save_sensor) VALUES (?,?,?,?)", values_to_insert)
                 cur.close()
                 self.__conn__.commit()
-                print("[" + datetime.now().strftime("%d-%b-%Y   %X")
+                print("[" + current_date.strftime("%d-%b-%Y   %X")
                              + "] Afegit un nou sensor a la base de dades: " + sensor_id)
 
                 sensor_info = None
@@ -166,17 +167,17 @@ class sqlDB():
             save_sensor = self.query_select(sensor_id,"save_sensor", "sensors")[0][0]
             update_sensor = self.query_select(sensor_id,"update_sensor", "sensors")[0][0]
             if save_sensor and update_sensor:
-                print("[" + datetime.now().strftime("%d-%b-%Y   %X") + "] Actualitzant sensor: " + sensor_id)
+                print("[" + current_date.strftime("%d-%b-%Y   %X") + "] Actualitzant sensor: " + sensor_id)
 
                 last_date_saved = self.query_select(sensor_id,"timestamp, value", "dades")
                 if len(last_date_saved) == 0:
-                    start_time = datetime.now() - timedelta(days=21)
+                    start_time = current_date - timedelta(days=21)
                     last_value = []
                 else:
                     last_date_saved, last_value = last_date_saved[0]
                     start_time = datetime.fromisoformat(last_date_saved)
 
-                current_date = datetime.now()
+
 
                 while start_time < current_date:
                     end_time = start_time + timedelta(days = 7)
