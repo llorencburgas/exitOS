@@ -13,7 +13,7 @@ app = Bottle()
 database = db.sqlDB()
 
 # COMENTAT PER AGILITZAR EL DEBUG, RECORDA A DESCOMENTAR-HO DESPRÉS!!!!
-database.update()
+# database.update()
 
 #Ruta inicial
 # Ruta per servir fitxers estàtics i imatges des de 'www'
@@ -48,7 +48,7 @@ def get_sensors():
     return template('./www/sensors.html', sensors = context )
 
 
-@app.post('/update_sensors')
+@app.post('/update_sensors', method='POST')
 def update_sensors():
     checked_sensors = request.forms.getall("sensor_id")
     sensors = database.get_all_sensors()
