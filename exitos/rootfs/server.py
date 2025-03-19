@@ -130,7 +130,7 @@ def monthly_task():
         database.__close_connection__(connection)
         print("Running monthly task at ", datetime.datetime.now().strftime("%d-%b-%Y   %X") )
 
-schedule.every().day.at("11:56").do(daily_task)
+schedule.every().day.at("12:10").do(daily_task)
 schedule.every().day.at("00:00").do(monthly_task)
 
 def run_scheduled_tasks():
