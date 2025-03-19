@@ -88,15 +88,17 @@ class sqlDB():
         con.commit()
         con.close()
 
-    def query_select(self, sensor_id, value, db):
+    @staticmethod
+    def query_select(sensor_id, value, db, connection):
         """
         Executa una query SQL a la base de dades
         :param sensor_id: id del sensor a mirar
         :param value: valor de la base de dades que es vol obtenir
         :param db: Base de dades a utilitzar
+        :param connection: Connexió amb la base de dades
         :return: valor obtingut de la Base de Dades al executar la query
         """
-        cur = self.__conn__.cursor()
+        cur = connection.cursor()
         cur.execute("SELECT " + value + " FROM " + db + " WHERE sensor_id = '" + sensor_id + "'" )
         result = cur.fetchall()
         cur.close()
@@ -122,14 +124,16 @@ class sqlDB():
         :param sensors: llista amb id dels sensors a obtenir l'estat save_sensor'
         """
         sensors_save = []
+        connection = self.__open_connection__()
         for sensor in sensors:
-            aux = self.query_select(sensor, "save_sensor", "sensors")
+            aux = self.query_select(sensor, "save_sensor", "sensors", connection)
 
             if aux: #assegurem que aux tingui contingut
                 sensors_save.append(aux[0][0])
             else:
                 sensors_save.append(0)
 
+        self.__close_connection__(connection)
         return sensors_save
 
     @staticmethod
@@ -203,7 +207,7 @@ class sqlDB():
 
             #obtenim de la nostra BD el sensor amb id igual al obtingut anteriorment
 
-            sensor_info = self.query_select(sensor_id, "*", "sensors")
+            sensor_info = self.query_select(sensor_id, "*", "sensors", connection)
 
             #si no hem obtingut cap sensor ( és a dir, no existeix a la nosta BD)
             if len(sensor_info) == 0:
@@ -221,12 +225,12 @@ class sqlDB():
                 sensor_info = None
                 last_date_saved = None
 
-            save_sensor = self.query_select(sensor_id,"save_sensor", "sensors")[0][0]
-            update_sensor = self.query_select(sensor_id,"update_sensor", "sensors")[0][0]
+            save_sensor = self.query_select(sensor_id,"save_sensor", "sensors", connection)[0][0]
+            update_sensor = self.query_select(sensor_id,"update_sensor", "sensors", connection)[0][0]
             if save_sensor and update_sensor:
                 print("[" + current_date.strftime("%d-%b-%Y   %X") + "] Actualitzant sensor: " + sensor_id)
 
-                last_date_saved = self.query_select(sensor_id,"timestamp, value", "dades")
+                last_date_saved = self.query_select(sensor_id,"timestamp, value", "dades", connection)
                 if len(last_date_saved) == 0:
                     start_time = current_date - timedelta(days=21)
                     last_value = []
