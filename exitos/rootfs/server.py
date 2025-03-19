@@ -102,11 +102,11 @@ def daily_task():
 
 def monthly_task():
     today = datetime.date.today()
-    last_day = (today.replace(day=28) + datetime.timedelta(days=4)).replace(day=1) - datetime.timedelta(days=1)
+    last_day = (today.replace(day=28) + datetime.timedelta(days=4)).replace(day=1) - datetime.timedelta(days=1) #últim dia del mes
     if today == last_day:
         print("Running monthly task at ", datetime.datetime.now().strftime("%d-%b-%Y   %X") )
 
-schedule.every().day.at("09:30").do(daily_task)
+schedule.every().day.at("09:40").do(daily_task)
 schedule.every().day.at("00:00").do(monthly_task)
 
 def run_scheduled_tasks():
