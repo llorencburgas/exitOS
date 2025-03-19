@@ -17,7 +17,9 @@ app = Bottle()
 database = db.sqlDB()
 
 # COMENTAT PER AGILITZAR EL DEBUG, RECORDA A DESCOMENTAR-HO DESPRÉS!!!!
-database.update("all")
+# database.update("all")
+
+
 
 #Ruta inicial
 # Ruta per servir fitxers estàtics i imatges des de 'www'
@@ -60,14 +62,7 @@ def update_sensors():
 
     for sensor_id in sensors_id:
         is_active = sensor_id in checked_sensors
-        was_active = database.get_sensor_active(sensor_id)
         database.update_sensor_active(sensor_id, is_active)
-
-        # if is_active is not was_active: #si el valor és diferent al que teniem abans
-        #     if is_active: #si ara està actiu
-        #         database.update(sensor_id)
-        #     else: #si ara està inactiu
-        #         database.remove_sensor_data(sensor_id)
 
     sensors_name = sensors['attributes.friendly_name'].tolist()
     sensors_save = database.get_sensors_save(sensors_id)
@@ -98,15 +93,32 @@ def get_page(page):
 #####################################
 
 def daily_task():
-    print("Running daily task at ", datetime.datetime.now().strftime("%d-%b-%Y   %X") )
+    print("Running daily task at ", datetime.datetime.now().strftime("%d-%b-%Y   %X"))
+    print("Running daily task at ", datetime.datetime.now().strftime("%d-%b-%Y   %X"))
+    print("Running daily task at ", datetime.datetime.now().strftime("%d-%b-%Y   %X"))
+
+    sensors_id = database.get_all_sensors()
+    sensors_id = sensors_id['entity_id'].tolist()
+    for sensor_id in sensors_id:
+        is_active = database.get_sensor_active(sensor_id)
+        if is_active:
+            database.update(sensor_id)
+
+
 
 def monthly_task():
     today = datetime.date.today()
     last_day = (today.replace(day=28) + datetime.timedelta(days=4)).replace(day=1) - datetime.timedelta(days=1) #últim dia del mes
     if today == last_day:
+        sensors_id = database.get_all_sensors()
+        sensors_id = sensors_id['entity_id'].tolist()
+        for sensor_id in sensors_id:
+            is_active = database.get_sensor_active(sensor_id)
+            if not is_active:
+                database.remove_sensor_data(sensor_id)
         print("Running monthly task at ", datetime.datetime.now().strftime("%d-%b-%Y   %X") )
 
-schedule.every().day.at("09:40").do(daily_task)
+schedule.every().day.at("10:00").do(daily_task)
 schedule.every().day.at("00:00").do(monthly_task)
 
 def run_scheduled_tasks():
@@ -116,6 +128,7 @@ def run_scheduled_tasks():
 
 scheduler_thread = threading.Thread(target=run_scheduled_tasks, daemon=True)
 scheduler_thread.start()
+
 #####################################
 
 
