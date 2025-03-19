@@ -41,14 +41,31 @@ class sqlDB():
             self.__initDB__()
 
         #connecta a la Base de Dades
-        self.__conn__ = sqlite3.connect(self.database_file, timeout=10)
+        # self.__conn__ = sqlite3.connect(self.database_file, timeout=10)
 
-    def __del__(self):
+    # def __del__(self):
+    #     """
+    #     Destructor de l'objecte. Tanca la connexió de manera segura
+    #     """
+    #     try:
+    #         self.__conn__.close()
+    #     except AttributeError:
+    #         pass
+
+    def __open_connection__(self):
         """
-        Destructor de l'objecte. Tanca la connexió de manera segura
+        Obre una connexió amb la base de dades i retorna el connector
+        """
+        connection = sqlite3.connect(self.database_file)
+        return connection
+
+
+    def __close_connection__(self, connection):
+        """
+        Tanca la connexió amb la base de dades de manera segura
         """
         try:
-            self.__conn__.close()
+            connection.close()
         except AttributeError:
             pass
 
@@ -115,41 +132,47 @@ class sqlDB():
 
         return sensors_save
 
-    def update_sensor_active(self, sensor, active):
+    @staticmethod
+    def update_sensor_active(sensor, active, connection):
         """
         Actualitza a la base de dades l'estat save_sensor pel sensor indicat
         :param sensor: sensor a modificar
         :param active: estat nou del sensor
+        :param connection: Connexió amb la base de dades
         """
-        cur = self.__conn__.cursor()
+        cur = connection.cursor()
         cur.execute("UPDATE sensors SET save_sensor = ? WHERE sensor_id = ?", (active, sensor))
         cur.close()
-        self.__conn__.commit()
+        connection.commit()
 
-    def get_sensor_active(self, sensor):
+    @staticmethod
+    def get_sensor_active(sensor, connection):
         """
         Obté l'estat save_sensor del sensor indicat
         :param sensor: sensor a obtenir l'estat save_sensor'
+        :param connection: connexió amb la base de dades
         :return: estat del sensor (0, 1)
         """
-        cur = self.__conn__.cursor()
+        cur = connection.cursor()
         cur.execute("SELECT save_sensor FROM sensors WHERE sensor_id = ?", (sensor,))
         result = cur.fetchall()
         cur.close()
 
         return result[0][0]
 
-    def remove_sensor_data(self, sensor_id):
+    @staticmethod
+    def remove_sensor_data(sensor_id, connection):
         """
         Elimina totes les dades del sensor indicat
         :param sensor_id: id del sensor a eliminar les dades
+        :param connection: Connexió amb la base de dades
         """
-        cur = self.__conn__.cursor()
+        cur = connection.cursor()
         cur.execute("DELETE FROM dades WHERE sensor_id = ?", (sensor_id,))
         cur.close()
-        self.__conn__.commit()
+        connection.commit()
 
-    def update(self, sensor_to_update):
+    def update_database(self, sensor_to_update):
         """
         Actualitza la base de dades amb la API del Home Assistant.
         Aquesta funció sincronitza els sensors existents amb la base de dades i
@@ -157,6 +180,8 @@ class sqlDB():
         "update_sensor" i "save_sensor" TRUE
         """
         logging.info("Iniciant l'actualització de la base de dades...")
+
+        connection = self.__open_connection__()
 
         #obtenim la llista de sensors de la API
         if sensor_to_update == "all":
@@ -182,14 +207,14 @@ class sqlDB():
 
             #si no hem obtingut cap sensor ( és a dir, no existeix a la nosta BD)
             if len(sensor_info) == 0:
-                cur = self.__conn__.cursor()
+                cur = connection.cursor()
                 values_to_insert = (sensor_id,
                                     sensors_list.iloc[j]["attributes.unit_of_measurement"],
                                     True,
                                     False)
                 cur.execute("INSERT INTO sensors (sensor_id, units, update_sensor, save_sensor) VALUES (?,?,?,?)", values_to_insert)
                 cur.close()
-                self.__conn__.commit()
+                connection.commit()
                 print("[" + current_date.strftime("%d-%b-%Y   %X")
                              + "] Afegit un nou sensor a la base de dades: " + sensor_id)
 
@@ -240,7 +265,7 @@ class sqlDB():
                         sensor_data_historic = pd.DataFrame()
 
                     #actualitzem el valor obtingut de l'històric del sensor
-                    cur = self.__conn__.cursor()
+                    cur = connection.cursor()
                     for column in sensor_data_historic.columns:
                         value = sensor_data_historic[column][0]['state']
 
@@ -254,10 +279,11 @@ class sqlDB():
                                         (sensor_id, time_stamp, value))
 
                     cur.close()
-                    self.__conn__.commit()
+                    connection.commit()
 
                     start_time += timedelta(days = 7)
 
+        self.__close_connection__(connection)
         print("[" + datetime.now(timezone.utc).strftime("%d-%b-%Y   %X") +
                      "] TOTS ELS SENSORS HAN ESTAT ACTUALITZATS")
 

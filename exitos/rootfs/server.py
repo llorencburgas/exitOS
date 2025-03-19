@@ -17,7 +17,7 @@ app = Bottle()
 database = db.sqlDB()
 
 # COMENTAT PER AGILITZAR EL DEBUG, RECORDA A DESCOMENTAR-HO DESPRÉS!!!!
-# database.update("all")
+# database.update_database("all")
 
 
 
@@ -60,12 +60,16 @@ def update_sensors():
     sensors = database.get_all_sensors()
     sensors_id = sensors['entity_id'].tolist()
 
+    connection = database.__open_connection__()
+
     for sensor_id in sensors_id:
         is_active = sensor_id in checked_sensors
-        database.update_sensor_active(sensor_id, is_active)
+        database.update_sensor_active(sensor_id, is_active, connection)
 
     sensors_name = sensors['attributes.friendly_name'].tolist()
     sensors_save = database.get_sensors_save(sensors_id)
+
+    database.__close_connection__(connection)
 
     context = {
         "sensors_id": sensors_id,
@@ -90,19 +94,22 @@ def get_page(page):
         return HTTPError(404, "La pàgina no existeix")
 
 
-#####################################
+##################################### SCHEDULE --> ACTUALITZACIÓ BASE DE DADES DIARIA I NETEJA MENSUAL
 
 def daily_task():
-    print("Running daily task at ", datetime.datetime.now().strftime("%d-%b-%Y   %X"))
-    print("Running daily task at ", datetime.datetime.now().strftime("%d-%b-%Y   %X"))
     print("Running daily task at ", datetime.datetime.now().strftime("%d-%b-%Y   %X"))
 
     sensors_id = database.get_all_sensors()
     sensors_id = sensors_id['entity_id'].tolist()
+
+    connection = database.__open_connection__()
+
     for sensor_id in sensors_id:
-        is_active = database.get_sensor_active(sensor_id)
+        is_active = database.get_sensor_active(sensor_id, connection)
         if is_active:
-            database.update(sensor_id)
+            database.update_database(sensor_id)
+
+    database.__close_connection__(connection)
 
 
 
@@ -112,10 +119,15 @@ def monthly_task():
     if today == last_day:
         sensors_id = database.get_all_sensors()
         sensors_id = sensors_id['entity_id'].tolist()
+
+        connection = database.__open_connection__()
+
         for sensor_id in sensors_id:
-            is_active = database.get_sensor_active(sensor_id)
+            is_active = database.get_sensor_active(sensor_id, connection)
             if not is_active:
-                database.remove_sensor_data(sensor_id)
+                database.remove_sensor_data(sensor_id, connection)
+
+        database.__close_connection__(connection)
         print("Running monthly task at ", datetime.datetime.now().strftime("%d-%b-%Y   %X") )
 
 schedule.every().day.at("10:00").do(daily_task)
@@ -130,6 +142,7 @@ scheduler_thread = threading.Thread(target=run_scheduled_tasks, daemon=True)
 scheduler_thread.start()
 
 #####################################
+
 
 
 #################################################################################
