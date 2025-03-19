@@ -1,7 +1,11 @@
 
 import os
+import threading
+
 import sqlDB as db
-import json
+import schedule
+import datetime
+import time
 from bottle import Bottle, template, run, static_file, HTTPError, redirect, request, response
 
 # PARÀMETRES DE L'EXECUCIÓ
@@ -59,11 +63,11 @@ def update_sensors():
         was_active = database.get_sensor_active(sensor_id)
         database.update_sensor_active(sensor_id, is_active)
 
-        if is_active is not was_active: #si el valor és diferent al que teniem abans
-            if is_active: #si ara està actiu
-                database.update(sensor_id)
-            else: #si ara està inactiu
-                database.remove_sensor_data(sensor_id)
+        # if is_active is not was_active: #si el valor és diferent al que teniem abans
+        #     if is_active: #si ara està actiu
+        #         database.update(sensor_id)
+        #     else: #si ara està inactiu
+        #         database.remove_sensor_data(sensor_id)
 
     sensors_name = sensors['attributes.friendly_name'].tolist()
     sensors_save = database.get_sensors_save(sensors_id)
@@ -91,6 +95,28 @@ def get_page(page):
         return HTTPError(404, "La pàgina no existeix")
 
 
+#####################################
+
+def daily_task():
+    print("Running daily task at ", datetime.datetime.now().strftime("%d-%b-%Y   %X") )
+
+def monthly_task():
+    today = datetime.date.today()
+    last_day = (today.replace(day=28) + datetime.timedelta(days=4)).replace(day=1) - datetime.timedelta(days=1)
+    if today == last_day:
+        print("Running monthly task at ", datetime.datetime.now().strftime("%d-%b-%Y   %X") )
+
+schedule.every().day.at("09:30").do(daily_task)
+schedule.every().day.at("00:00").do(monthly_task)
+
+def run_scheduled_tasks():
+    while True:
+        schedule.run_pending()
+        time.sleep(60)
+
+scheduler_thread = threading.Thread(target=run_scheduled_tasks, daemon=True)
+scheduler_thread.start()
+#####################################
 
 
 #################################################################################
