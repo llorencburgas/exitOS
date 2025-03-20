@@ -69,13 +69,14 @@ def database_graph_page():
 
 @app.route('/graphsView', method='POST')
 def graphs_view():
+    sensors_id = database.get_all_saved_sensors_id()
+    selected_sensors = request.forms.getall("sensor_id")
 
-    sensors_id = request.forms.getall("sensor_id")
     date_to_check = request.forms.getall("datetimes")[0].split(' - ')
     start_date = datetime.strptime(date_to_check[0], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
     end_date = datetime.strptime(date_to_check[1], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
 
-    sensors_data = database.get_all_saved_sensors_data(sensors_id, start_date, end_date)
+    sensors_data = database.get_all_saved_sensors_data(selected_sensors, start_date, end_date)
     graphs_html = {}
 
     for sensor_id, data in sensors_data.items():
