@@ -76,7 +76,7 @@ def graphs_view():
     start_date = datetime.strptime(date_to_check[0], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
     end_date = datetime.strptime(date_to_check[1], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
 
-    sensors_data = database.get_all_saved_sensors_data(selected_sensors, start_date, end_date)
+    sensors_data = database.get_all_saved_sensors_data(sensors_id, start_date, end_date)
     graphs_html = {}
 
     for sensor_id, data in sensors_data.items():
