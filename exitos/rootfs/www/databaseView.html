@@ -9,7 +9,7 @@
     <!-- llibreria d'icones per al navbar-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <!--  PLOTLY: gràfiques  -->
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
     <!--  jQuery, Moments.js, Date Range Picker Files  -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
@@ -17,10 +17,90 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 
 
+
     <style>
         h1{
             text-align: center;
             margin-bottom: 20px;
+        }
+        h2{
+            margin-bottom: 20px;
+            margin-top: 20px;
+        }
+        .sensor-container{
+            max-width: 400px;
+        }
+        .tag-container{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-height: 40px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        #fetch-data{
+            border: none;
+            /*align-items: center;*/
+            color: white;
+            padding: 10px 24px;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            /*display: inline-block;*/
+            font-size: 12px;
+            margin-top: 10px;
+            margin-right: 10px;
+
+            background-color: #04AA6D;
+        }
+        #fetch-data:hover{
+            background-color: #04D984;
+        }
+        .tag{
+            background-color: #04AA6D;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .tag .remove{
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .search-box{
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .sensor-list{
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            border: 1px solid #ccc;
+            max-height: 150px;
+            overflow-y: auto;
+            background: white;
+            display: none;
+            position: absolute;
+            width: 100%;
+            z-index: 1000;
+        }
+        .sensor-list li {
+            padding: 8px;
+            cursor: pointer;
+        }
+        .sensor-list li:hover {
+            background: #007bff;
+            color: white;
+        }
+        .dropdown {
+            position: relative;
         }
     </style>
 </head>
@@ -43,27 +123,27 @@
 
         <div class="container">
             <div class="content-section">
-                <h1>Data</h1>
+                <form action ="./graphsView" method="POST" id="graphs-form">
+                    <h1>Data</h1>
 
-                <label> Tria un rang de dates:
-                    <input type="text" name="datetimes" />
+                    <label> Tria un rang de dates:
+                        <input type="text" name="datetimes" />
+                     </label>
 
-                 </label>
+                    <div id="sensor-data" data-sensors="{{sensors_id}}"></div>
 
-                <div id="sensor-data" data-sensors="{{sensors_id}}"></div>
+                    <div class="sensor-container">
+                        <h2>Sensors a Mostrar:</h2>
+                        <div class="tag-container" id="selected-sensors"></div>
 
-                <div class="sensor-container">
-                    <h2>Sensors a Mostrar:</h2>
-                    <div class="tag-container" id="selected-sensors"></div>
-
-                    <div class="dropdown">
-                        <input type="text" class="search-box" id="sensor-search" placeholder="Cerca i seleccioni sensors...">
-                        <ul class="sensor-list" id="sensor-list"></ul>
+                        <div class="dropdown">
+                            <input type="text" class="search-box" id="sensor-search" placeholder="Cerca i seleccioni sensors...">
+                            <ul class="sensor-list" id="sensor-list"></ul>
+                        </div>
                     </div>
-                </div>
 
-
-
+                    <button id="fetch-data" type="submit"> Mostrar Gràfiques </button>
+                </form>
 
                 % for sensor_id, graph_html in graphs.items():
                     <h2>Sensor {{ sensor_id }}</h2>
@@ -82,8 +162,8 @@
 <script>
 
     let sensors = document.getElementById("sensor-data").getAttribute("data-sensors").split(",");
+    sensors = sensors.map(sensor => sensor.replace(/['\[\]]/g, ''));
 
-    console.log(sensors);
 
     const selectedSensors = new Set();
     const sensorSearch = document.getElementById("sensor-search");
@@ -112,11 +192,42 @@
     });
 
     //Filtra dinamicament mentre s'escriu
-    // sensorSearch.addEcentListener("input", () => {
-    //   const query = sensorSearch.value.toLowerCase();
-    //   const filteredSensors = sensors.filter(sensor => sensor.toLowerCase().includes(query));
-    //   updateSensorList(filteredSensors);
-    // }
+    sensorSearch.addEventListener("input", () => {
+      const query = sensorSearch.value.toLowerCase();
+      const filteredSensors = sensors.filter(sensor => sensor.toLowerCase().includes(query));
+      updateSensorList(filteredSensors);
+    });
+
+    //selecciona sensor i afageix com a tag
+    function selectSensor(sensor){
+        if(!selectedSensors.has(sensor)){
+            selectedSensors.add(sensor);
+
+            const tag = document.createElement("div");
+            tag.className = "tag";
+            tag.innerHTML = `${sensor} <span class="remove" onclick="removeSensor(event, '${sensor}')">&times;</span>`;
+            tag.setAttribute("data-sensor", sensor);
+            selectedSensorsContainer.appendChild(tag);
+        }
+
+        sensorSearch.value = "";
+        sensorList.style.display = "none";
+    }
+
+    //Eliminar tag de sensor
+    function removeSensor(event, sensor){
+        selectedSensors.delete(sensor);
+
+        //elimina només el sensor clicat
+        event.target.parentElement.remove();
+    }
+
+    //amaga la llista al fer clic a fora
+    document.addEventListener("click", (event) => {
+        if(!event.target.closest(".dropdown")){
+            sensorList.style.display = "none";
+        }
+    });
 
 
 
@@ -147,7 +258,8 @@
           },
           alwaysShowCalendars: true,
       },function(start, end, label){
-            console.log("A new date selection was made: " + start.format('YYYY-MM-DD hh:mm:ss') + ' to ' + end.format('YYYY-MM-DD hh:mm:ss'))
+          $('input[name="datetimes"]').val(start.format('DD/MM/YYYY HH:mm') + ' - ' + end.format('DD/MM/YYYY HH:mm'));
+          // $('input[name="datetimes"]').trigger('change');
       });
     });
     </script>

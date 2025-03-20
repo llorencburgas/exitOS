@@ -17,7 +17,7 @@ class sqlDB():
 
         print("INICIANT LA BASE DE DATES...")
 
-        # DADES A DESCOMENTAR QUAN SIGUI REMOT ****
+        # # DADES A DESCOMENTAR QUAN SIGUI REMOT ****
         self.database_file = "/share/exitos/dades.db"
         self.config_path = "/share/exitos/user_info.conf"
         self.supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
@@ -137,11 +137,14 @@ class sqlDB():
         self.__close_connection__(connection)
         return sensors_save
 
-    def get_all_saved_sensors_data(self):
+    def get_all_saved_sensors_data(self,start_date, end_date):
         """
-        Obté les dades dels sensors marcats com a "save_sensor" de la base de dades
+        Obté les dades dels sensors marcats com a "save_sensor" de la base de dades amb timestamp entre start_date i end_date
+        :param start_date: data inicial pel timestamp
+        :param end_date: data final pel timestamp
         :return: Diccionari de dades dels sensors marcats com a "save_sensor" de la base de dades
         """
+
         connection = self.__open_connection__()
         cur = connection.cursor()
 
@@ -150,7 +153,13 @@ class sqlDB():
 
         data = []
         for sensor in sensors_saved:
-            cur.execute("SELECT sensor_id, timestamp, value FROM dades WHERE sensor_id = ? ORDER BY timestamp", (sensor[0],))
+            cur.execute("""
+            SELECT sensor_id, timestamp, value
+            FROM dades
+            WHERE sensor_id = ?
+            AND timestamp BETWEEN ? AND ?
+            """, (sensor[0], start_date, end_date))
+
             aux = cur.fetchall()
             data.extend(aux)
 
@@ -164,6 +173,29 @@ class sqlDB():
             sensors_data[sensor_id].append((timestamp, value))
 
         return sensors_data
+
+
+    def get_all_saved_sensors_id(self,):
+        """
+        Obté el id dels sensors marcats com a "save_sensor" de la base de dades
+        """
+        connection = self.__open_connection__()
+        cur = connection.cursor()
+        cur.execute("SELECT sensor_id FROM sensors WHERE save_sensor = 1")
+        sensors_saved = cur.fetchall()
+        cur.close()
+        self.__close_connection__(connection)
+
+        sensors_return = []
+
+        for sensor in sensors_saved:
+            if sensor:
+                sensors_return.append(sensor[0])
+            else:
+                sensors_return.append(0)
+
+
+        return sensors_return
 
 
 

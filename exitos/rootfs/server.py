@@ -4,7 +4,6 @@ import threading
 
 import sqlDB as db
 import schedule
-import datetime
 import time
 import json
 
@@ -12,6 +11,7 @@ import plotly.graph_objs as go
 import plotly.offline as pyo
 
 from bottle import Bottle, template, run, static_file, HTTPError, redirect, request, response
+from datetime import datetime
 
 # PARÀMETRES DE L'EXECUCIÓ
 HOSTNAME = '0.0.0.0'
@@ -62,14 +62,21 @@ def get_sensors():
 
 @app.get('/databaseView')
 def database_graph_page():
-    sensors_data = database.get_all_saved_sensors_data()
-    sensors_id = list(sensors_data.keys())
+    sensors_id = database.get_all_saved_sensors_id()
     graphs_html = {}
 
     return template('./www/databaseView.html', sensors_id=sensors_id, graphs=graphs_html)
 
-def database_view():
-    sensors_data = database.get_all_saved_sensors_data()
+@app.route('/graphsView', method='POST')
+def graphs_view():
+    sensors_id = database.get_all_saved_sensors_id()
+    graphs_html = {}
+
+    date_to_check = request.forms.getall("datetimes")[0].split(' - ')
+    start_date = datetime.strptime(date_to_check[0], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
+    end_date = datetime.strptime(date_to_check[1], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
+
+    sensors_data = database.get_all_saved_sensors_data(start_date, end_date)
     graphs_html = {}
 
     for sensor_id, data in sensors_data.items():
@@ -84,13 +91,13 @@ def database_view():
         fig = go.Figure(data=[trace], layout=layout)
         graph_html = pyo.plot(fig, output_type='div', include_plotlyjs=False)
 
-        print(f"Graph for sensor {sensor_id}: ")
-        # print(graphs_html[sensor_id])
-        print("___________________________")
+        # print(f"Graph for sensor {sensor_id}: ")
+        # # print(graphs_html[sensor_id])
+        # print("___________________________")
 
         graphs_html[sensor_id] = graph_html
 
-    return template('./www/databaseView.html', graphs=graphs_html)
+    return template('./www/databaseView.html',sensors_id=sensors_id, graphs=graphs_html)
 
 
 @app.route('/update_sensors', method='POST')
