@@ -137,9 +137,10 @@ class sqlDB():
         self.__close_connection__(connection)
         return sensors_save
 
-    def get_all_saved_sensors_data(self,start_date, end_date):
+    def get_all_saved_sensors_data(self,sensors_saved, start_date, end_date):
         """
         Obté les dades dels sensors marcats com a "save_sensor" de la base de dades amb timestamp entre start_date i end_date
+        :param sensors_saved: llista amb id dels sensors a obtenir les dades
         :param start_date: data inicial pel timestamp
         :param end_date: data final pel timestamp
         :return: Diccionari de dades dels sensors marcats com a "save_sensor" de la base de dades
@@ -147,9 +148,6 @@ class sqlDB():
 
         connection = self.__open_connection__()
         cur = connection.cursor()
-
-        cur.execute("SELECT sensor_id FROM sensors WHERE save_sensor = 1")
-        sensors_saved = cur.fetchall()
 
         data = []
         for sensor in sensors_saved:

@@ -69,14 +69,13 @@ def database_graph_page():
 
 @app.route('/graphsView', method='POST')
 def graphs_view():
-    sensors_id = database.get_all_saved_sensors_id()
-    graphs_html = {}
 
+    sensors_id = request.forms.getall("sensor_id")
     date_to_check = request.forms.getall("datetimes")[0].split(' - ')
     start_date = datetime.strptime(date_to_check[0], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
     end_date = datetime.strptime(date_to_check[1], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
 
-    sensors_data = database.get_all_saved_sensors_data(start_date, end_date)
+    sensors_data = database.get_all_saved_sensors_data(sensors_id, start_date, end_date)
     graphs_html = {}
 
     for sensor_id, data in sensors_data.items():
@@ -86,14 +85,11 @@ def graphs_view():
         trace = go.Scatter(x=timestamps, y=values, mode='lines', name=f"Sensor {sensor_id}")
         layout = go.Layout(title=f"Sensor {sensor_id} Data",
                            xaxis=dict(title="Timestamp"),
-                           yaxis=dict(title="Value (lorem)"))
+                           yaxis=dict(title="Value "))
 
         fig = go.Figure(data=[trace], layout=layout)
         graph_html = pyo.plot(fig, output_type='div', include_plotlyjs=False)
 
-        # print(f"Graph for sensor {sensor_id}: ")
-        # # print(graphs_html[sensor_id])
-        # print("___________________________")
 
         graphs_html[sensor_id] = graph_html
 

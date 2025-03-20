@@ -207,6 +207,7 @@
             tag.className = "tag";
             tag.innerHTML = `${sensor} <span class="remove" onclick="removeSensor(event, '${sensor}')">&times;</span>`;
             tag.setAttribute("data-sensor", sensor);
+            tag.setAttribute("name", "sensors_id");
             selectedSensorsContainer.appendChild(tag);
         }
 
