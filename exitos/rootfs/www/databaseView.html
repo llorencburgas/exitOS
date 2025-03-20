@@ -49,7 +49,9 @@
                     <input type="text" name="datetimes" />
 
                  </label>
-                <div id="sensor-data" data-sensors="{{!json.dumps(sensors_id) | safe }}"></div>
+
+                <div id="sensor-data" data-sensors="{{json.dumps(sensors_id) | safe }}"></div>
+
                 <div class="sensor-container">
                     <h2>Sensors a Mostrar:</h2>
                     <div class="tag-container" id="selected-sensors"></div>
