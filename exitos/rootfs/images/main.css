@@ -112,7 +112,14 @@ header{
     h2{
         text-align: center;
     }
+
+    .content-section{
+    display: grid;
+        place-items: center;
+    }
 }
+
+
  /*FOOTER*/
 .footer{
     background-color: var(--main-bg-color);

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Selector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .sensor-container {
+            max-width: 400px;
+        }
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-height: 40px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .tag {
+            background-color: #007bff;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .tag .remove {
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .search-box {
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .sensor-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            border: 1px solid #ccc;
+            max-height: 150px;
+            overflow-y: auto;
+            background: white;
+            display: none;
+            position: absolute;
+            width: 100%;
+            z-index: 1000;
+        }
+        .sensor-list li {
+            padding: 8px;
+            cursor: pointer;
+        }
+        .sensor-list li:hover {
+            background: #007bff;
+            color: white;
+        }
+        .dropdown {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sensor-container">
+    <h2>Select Sensors</h2>
+    <div class="tag-container" id="selected-sensors"></div>
+
+    <div class="dropdown">
+        <input type="text" class="search-box" id="sensor-search" placeholder="Search sensors...">
+        <ul class="sensor-list" id="sensor-list"></ul>
+    </div>
+</div>
+
+<script>
+    const sensors = [
+        "sensor_temperature", "sensor_humidity", "sensor_motion", "sensor_light",
+        "sensor_pressure", "sensor_air_quality", "sensor_tv", "sensor_fridge",
+        "sensor_plug_1", "sensor_plug_2", "sensor_window_1", "sensor_window_2"
+    ]; // Replace with dynamic sensor list
+
+    const selectedSensors = new Set();
+    const sensorSearch = document.getElementById("sensor-search");
+    const sensorList = document.getElementById("sensor-list");
+    const selectedContainer = document.getElementById("selected-sensors");
+
+    // Function to update the sensor dropdown list
+    function updateSensorList(filteredSensors) {
+        sensorList.innerHTML = "";
+        if (filteredSensors.length > 0) {
+            sensorList.style.display = "block";
+            filteredSensors.forEach(sensor => {
+                const li = document.createElement("li");
+                li.textContent = sensor;
+                li.onclick = () => selectSensor(sensor);
+                sensorList.appendChild(li);
+            });
+        } else {
+            sensorList.style.display = "none";
+        }
+    }
+
+    // Show full sensor list when clicking the search box
+    sensorSearch.addEventListener("focus", () => {
+        updateSensorList(sensors);
+    });
+
+    // Filter list dynamically while typing
+    sensorSearch.addEventListener("input", () => {
+        const query = sensorSearch.value.toLowerCase();
+        const filteredSensors = sensors.filter(sensor => sensor.toLowerCase().includes(query));
+        updateSensorList(filteredSensors);
+    });
+
+    // Select sensor and add as tag
+    function selectSensor(sensor) {
+        if (!selectedSensors.has(sensor)) {
+            selectedSensors.add(sensor);
+
+            const tag = document.createElement("div");
+            tag.className = "tag";
+            tag.innerHTML = `${sensor} <span class="remove" onclick="removeSensor(event, '${sensor}')">&times;</span>`;
+            tag.setAttribute("data-sensor", sensor);
+            selectedContainer.appendChild(tag);
+        }
+
+        sensorSearch.value = "";
+        sensorList.style.display = "none";
+    }
+
+    // Remove sensor tag
+    function removeSensor(event, sensor) {
+        selectedSensors.delete(sensor);
+
+        // Remove only the clicked sensor tag
+        event.target.parentElement.remove();
+    }
+
+    // Hide list when clicking outside
+    document.addEventListener("click", (event) => {
+        if (!event.target.closest(".dropdown")) {
+            sensorList.style.display = "none";
+        }
+    });
+
+</script>
+
+</body>
+</html>

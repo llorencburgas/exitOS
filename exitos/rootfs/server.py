@@ -6,6 +6,11 @@ import sqlDB as db
 import schedule
 import datetime
 import time
+import json
+
+import plotly.graph_objs as go
+import plotly.offline as pyo
+
 from bottle import Bottle, template, run, static_file, HTTPError, redirect, request, response
 
 # PARÀMETRES DE L'EXECUCIÓ
@@ -17,7 +22,7 @@ app = Bottle()
 database = db.sqlDB()
 
 # COMENTAT PER AGILITZAR EL DEBUG, RECORDA A DESCOMENTAR-HO DESPRÉS!!!!
-# database.update_database("all")
+database.update_database("all")
 
 
 
@@ -54,6 +59,40 @@ def get_sensors():
     return template('./www/sensors.html', sensors = context )
 
 
+
+@app.get('/databaseView')
+def database_graph_page():
+    sensors_data = database.get_all_saved_sensors_data()
+    sensors_id = list(sensors_data.keys())
+    graphs_html = {}
+
+    return template('./www/databaseView.html', sensors_id=sensors_id, graphs=graphs_html)
+
+def database_view():
+    sensors_data = database.get_all_saved_sensors_data()
+    graphs_html = {}
+
+    for sensor_id, data in sensors_data.items():
+        timestamps = [record[0] for record in data]
+        values = [record[1] for record in data]
+
+        trace = go.Scatter(x=timestamps, y=values, mode='lines', name=f"Sensor {sensor_id}")
+        layout = go.Layout(title=f"Sensor {sensor_id} Data",
+                           xaxis=dict(title="Timestamp"),
+                           yaxis=dict(title="Value (lorem)"))
+
+        fig = go.Figure(data=[trace], layout=layout)
+        graph_html = pyo.plot(fig, output_type='div', include_plotlyjs=False)
+
+        print(f"Graph for sensor {sensor_id}: ")
+        # print(graphs_html[sensor_id])
+        print("___________________________")
+
+        graphs_html[sensor_id] = graph_html
+
+    return template('./www/databaseView.html', graphs=graphs_html)
+
+
 @app.route('/update_sensors', method='POST')
 def update_sensors():
     checked_sensors = request.forms.getall("sensor_id")
@@ -78,8 +117,6 @@ def update_sensors():
     }
 
     return template('./www/sensors.html', sensors=context)
-
-
 
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')
@@ -111,8 +148,6 @@ def daily_task():
 
     database.__close_connection__(connection)
 
-
-
 def monthly_task():
     today = datetime.date.today()
     last_day = (today.replace(day=28) + datetime.timedelta(days=4)).replace(day=1) - datetime.timedelta(days=1) #últim dia del mes
@@ -130,7 +165,7 @@ def monthly_task():
         database.__close_connection__(connection)
         print("Running monthly task at ", datetime.datetime.now().strftime("%d-%b-%Y   %X") )
 
-schedule.every().day.at("12:10").do(daily_task)
+schedule.every().day.at("00:00").do(daily_task)
 schedule.every().day.at("00:00").do(monthly_task)
 
 def run_scheduled_tasks():

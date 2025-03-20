@@ -18,16 +18,16 @@ class sqlDB():
         print("INICIANT LA BASE DE DATES...")
 
         # DADES A DESCOMENTAR QUAN SIGUI REMOT ****
-        self.database_file = "/share/exitos/dades.db"
-        self.config_path = "/share/exitos/user_info.conf"
-        self.supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
-        self.base_url = "http://supervisor/core/api/"
+        # self.database_file = "/share/exitos/dades.db"
+        # self.config_path = "/share/exitos/user_info.conf"
+        # self.supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
+        # self.base_url = "http://supervisor/core/api/"
 
         # #Dades a comentar quan sigui remot
-        # self.database_file = "dades.db"
-        # self.config_path = "user_info.config"
-        # self.supervisor_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI5YzMxMjU1MzQ0NGY0YTg5YjU5NzQ5NWM0ODI2ZmNhZiIsImlhdCI6MTc0MTE3NzM4NSwiZXhwIjoyMDU2NTM3Mzg1fQ.5-ST2_WQNJ4XRwlgHK0fX8P6DnEoCyEKEoeuJwl-dkE"
-        # self.base_url = "http://margarita.udg.edu:28932/api/"
+        self.database_file = "dades.db"
+        self.config_path = "user_info.config"
+        self.supervisor_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI5YzMxMjU1MzQ0NGY0YTg5YjU5NzQ5NWM0ODI2ZmNhZiIsImlhdCI6MTc0MTE3NzM4NSwiZXhwIjoyMDU2NTM3Mzg1fQ.5-ST2_WQNJ4XRwlgHK0fX8P6DnEoCyEKEoeuJwl-dkE"
+        self.base_url = "http://margarita.udg.edu:28932/api/"
         # # ****************************************
         self.headers = {
             "Authorization": "Bearer " + self.supervisor_token,
@@ -60,7 +60,8 @@ class sqlDB():
         return connection
 
 
-    def __close_connection__(self, connection):
+    @staticmethod
+    def __close_connection__(connection):
         """
         Tanca la connexió amb la base de dades de manera segura
         """
@@ -135,6 +136,36 @@ class sqlDB():
 
         self.__close_connection__(connection)
         return sensors_save
+
+    def get_all_saved_sensors_data(self):
+        """
+        Obté les dades dels sensors marcats com a "save_sensor" de la base de dades
+        :return: Diccionari de dades dels sensors marcats com a "save_sensor" de la base de dades
+        """
+        connection = self.__open_connection__()
+        cur = connection.cursor()
+
+        cur.execute("SELECT sensor_id FROM sensors WHERE save_sensor = 1")
+        sensors_saved = cur.fetchall()
+
+        data = []
+        for sensor in sensors_saved:
+            cur.execute("SELECT sensor_id, timestamp, value FROM dades WHERE sensor_id = ? ORDER BY timestamp", (sensor[0],))
+            aux = cur.fetchall()
+            data.extend(aux)
+
+        cur.close()
+        self.__close_connection__(connection)
+
+        sensors_data = {}
+        for sensor_id, timestamp, value in data:
+            if sensor_id not in sensors_data:
+                sensors_data[sensor_id] = []
+            sensors_data[sensor_id].append((timestamp, value))
+
+        return sensors_data
+
+
 
     @staticmethod
     def update_sensor_active(sensor, active, connection):
