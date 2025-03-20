@@ -13,7 +13,7 @@ ADD ./rootfs/bottle.py .
 ADD ./rootfs/sqlDB.py .
 COPY ./rootfs/www /www/
 COPY ./rootfs/images/ /images/
-COPY ./rootfs/optimalScheduler /optimalScheduler/
+#COPY ./rootfs/optimalScheduler /optimalScheduler/
 
 COPY config.yaml config.yaml
 
