@@ -50,7 +50,7 @@
 
                  </label>
 
-                <div id="sensor-data" data-sensors="{{json.dumps(sensors_id) | safe }}"></div>
+                <div id="sensor-data" data-sensors="{{sensors_id}}"></div>
 
                 <div class="sensor-container">
                     <h2>Sensors a Mostrar:</h2>
@@ -81,8 +81,7 @@
 
 <script>
 
-    let sensorsElement = document.getElementById("sensor-data");
-    let sensors = JSON.parse(sensorsElement.dataset.sensors);
+    let sensors = document.getElementById("sensor-data").getAttribute("data-sensors").split(",");
 
     console.log(sensors);
 
