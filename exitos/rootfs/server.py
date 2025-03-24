@@ -5,13 +5,12 @@ import threading
 import sqlDB as db
 import schedule
 import time
-import json
 
 import plotly.graph_objs as go
 import plotly.offline as pyo
 
-from bottle import Bottle, template, run, static_file, HTTPError, redirect, request, response
-from datetime import datetime
+from bottle import Bottle, template, run, static_file, HTTPError, request, response
+from datetime import datetime, timedelta
 
 # PARÀMETRES DE L'EXECUCIÓ
 HOSTNAME = '0.0.0.0'
@@ -70,13 +69,14 @@ def database_graph_page():
 @app.route('/graphsView', method='POST')
 def graphs_view():
     sensors_id = database.get_all_saved_sensors_id()
-    selected_sensors = request.forms.getall("sensor_id")
+    selected_sensors = request.forms.get("sensors_id")
+    selected_sensors_list = selected_sensors.split(',') if selected_sensors else []
 
     date_to_check = request.forms.getall("datetimes")[0].split(' - ')
     start_date = datetime.strptime(date_to_check[0], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
     end_date = datetime.strptime(date_to_check[1], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
 
-    sensors_data = database.get_all_saved_sensors_data(sensors_id, start_date, end_date)
+    sensors_data = database.get_all_saved_sensors_data(selected_sensors_list, start_date, end_date)
     graphs_html = {}
 
     for sensor_id, data in sensors_data.items():
@@ -138,7 +138,7 @@ def get_page(page):
 ##################################### SCHEDULE --> ACTUALITZACIÓ BASE DE DADES DIARIA I NETEJA MENSUAL
 
 def daily_task():
-    print("Running daily task at ", datetime.datetime.now().strftime("%d-%b-%Y   %X"), flush=True)
+    print("Running daily task at ", datetime.now().strftime("%d-%b-%Y   %X"), flush=True)
 
     sensors_id = database.get_all_sensors()
     sensors_id = sensors_id['entity_id'].tolist()
@@ -153,8 +153,8 @@ def daily_task():
     database.__close_connection__(connection)
 
 def monthly_task():
-    today = datetime.date.today()
-    last_day = (today.replace(day=28) + datetime.timedelta(days=4)).replace(day=1) - datetime.timedelta(days=1) #últim dia del mes
+    today = datetime.today()
+    last_day = (today.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1) #últim dia del mes
     if today == last_day:
         sensors_id = database.get_all_sensors()
         sensors_id = sensors_id['entity_id'].tolist()
@@ -167,7 +167,7 @@ def monthly_task():
                 database.remove_sensor_data(sensor_id, connection)
 
         database.__close_connection__(connection)
-        print("Running monthly task at ", datetime.datetime.now().strftime("%d-%b-%Y   %X") )
+        print("Running monthly task at ", datetime.now().strftime("%d-%b-%Y   %X") )
 
 schedule.every().day.at("00:00").do(daily_task)
 schedule.every().day.at("00:00").do(monthly_task)

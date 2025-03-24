@@ -142,6 +142,9 @@
                         </div>
                     </div>
 
+                    <!-- Hidden Input per guardar els sensors seleccionats -->
+                    <input type="hidden" name="sensors_id" id="sensors-input" value="">
+
                     <button id="fetch-data" type="submit"> Mostrar Gràfiques </button>
                 </form>
 
@@ -169,6 +172,12 @@
     const sensorSearch = document.getElementById("sensor-search");
     const sensorList = document.getElementById("sensor-list");
     const selectedSensorsContainer = document.getElementById("selected-sensors");
+    const sensorsInput = document.getElementById("sensors-input");
+
+    //Funció per actualitzar el hidden input field
+    function updateSensorsHiddenInput(){
+        sensorsInput.value = Array.from(selectedSensors).join(",");
+    }
 
     //Funció per actualitzar els sensors del Dropdown
     function updateSensorList(filteredSensors){
@@ -207,8 +216,9 @@
             tag.className = "tag";
             tag.innerHTML = `${sensor} <span class="remove" onclick="removeSensor(event, '${sensor}')">&times;</span>`;
             tag.setAttribute("data-sensor", sensor);
-            tag.setAttribute("name", "sensors_id");
             selectedSensorsContainer.appendChild(tag);
+
+            updateSensorsHiddenInput()
         }
 
         sensorSearch.value = "";
@@ -221,6 +231,7 @@
 
         //elimina només el sensor clicat
         event.target.parentElement.remove();
+        updateSensorsHiddenInput()
     }
 
     //amaga la llista al fer clic a fora
