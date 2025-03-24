@@ -83,6 +83,11 @@ def graphs_view():
         timestamps = [record[0] for record in data]
         values = [record[1] for record in data]
 
+        if not values:
+            graphs_html[sensor_id] = f'<div class="no-data">No data available for Sensor {sensor_id}</div>'
+            continue
+
+
         trace = go.Scatter(x=timestamps, y=values, mode='lines', name=f"Sensor {sensor_id}")
         layout = go.Layout(title=f"Sensor {sensor_id} Data",
                            xaxis=dict(title="Timestamp"),
