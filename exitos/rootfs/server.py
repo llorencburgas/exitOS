@@ -24,7 +24,6 @@ database = db.sqlDB()
 database.update_database("all")
 
 
-
 #Ruta inicial
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')
@@ -70,7 +69,7 @@ def database_graph_page():
 def graphs_view():
     sensors_id = database.get_all_saved_sensors_id()
     selected_sensors = request.forms.get("sensors_id")
-    selected_sensors_list = selected_sensors.split(',') if selected_sensors else []
+    selected_sensors_list = [sensor.strip() for sensor in selected_sensors.split(',')] if selected_sensors else []
 
     date_to_check = request.forms.getall("datetimes")[0].split(' - ')
     start_date = datetime.strptime(date_to_check[0], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
