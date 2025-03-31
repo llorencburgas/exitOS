@@ -11,9 +11,11 @@ RUN apt update \
 ADD ./rootfs/server.py .
 ADD ./rootfs/bottle.py .
 ADD ./rootfs/sqlDB.py .
+
 COPY ./rootfs/www /www/
 COPY ./rootfs/images/ /images/
-#COPY ./rootfs/optimalScheduler /optimalScheduler/
+COPY ./rootfs/forecast /forecast/
+COPY ./rootfs/objectStorer /objectStorer/
 
 COPY config.yaml config.yaml
 

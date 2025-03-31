@@ -5,12 +5,15 @@ import threading
 import sqlDB as db
 import schedule
 import time
+import json
 
 import plotly.graph_objs as go
 import plotly.offline as pyo
+import forecast.Forecaster as forecast
 
 from bottle import Bottle, template, run, static_file, HTTPError, request, response
 from datetime import datetime, timedelta
+
 
 # PARÀMETRES DE L'EXECUCIÓ
 HOSTNAME = '0.0.0.0'
@@ -19,9 +22,8 @@ PORT = 55023
 #INICIACIÓ DE L'APLICACIÓ I LA BASE DE DADES
 app = Bottle()
 database = db.sqlDB()
-
-# COMENTAT PER AGILITZAR EL DEBUG, RECORDA A DESCOMENTAR-HO DESPRÉS!!!!
 database.update_database("all")
+forecast = forecast.Forecaster(debug=True)
 
 
 #Ruta inicial
@@ -29,6 +31,14 @@ database.update_database("all")
 @app.get('/static/<filepath:path>')
 def serve_static(filepath):
     return static_file(filepath, root='./images/')
+
+@app.get('/resources/<filepath:path>')
+def serve_resources(filepath):
+    return static_file(filepath, root='./resources/')
+
+@app.get('models/<filepath:path>')
+def serve_models(filepath):
+    return static_file(filepath, root='./models/')
 
 # Ruta inicial
 @app.get('/')
@@ -42,6 +52,7 @@ def get_init():
 #Ruta per a configurar quins sensors volem guardar
 @app.get('/sensors')
 def get_sensors():
+    #TODO: SQLWeb marca 340 sensors, dades.db té 340 sensors, però la llista en rep 329
     sensors = database.get_all_sensors()
     sensors_id = sensors['entity_id'].tolist()
     sensors_name = sensors['attributes.friendly_name'].tolist()
@@ -55,8 +66,6 @@ def get_sensors():
     }
 
     return template('./www/sensors.html', sensors = context )
-
-
 
 @app.get('/databaseView')
 def database_graph_page():
@@ -126,15 +135,53 @@ def update_sensors():
 
     return template('./www/sensors.html', sensors=context)
 
+@app.get('/forecast')
+def forecast_page():
+    sensors_id = database.get_all_saved_sensors_id()
+    return template('./www/forecast.html', sensors=sensors_id)
+
+@app.route('/submit-forecast', method='POST')
+def submit_forecast():
+    try:
+        selected_model = request.forms.get("model")
+        # sensors_id = database.get_all_saved_sensors_id()
+        config = {}
+
+        for key in request.forms.keys():
+            if key != "model":
+                config[key] = request.forms.get(key)
+
+
+        generation_sensor  = config.get("generationId")
+        consumption_sensor = config.get("consumptionId")
+        config.pop("generationId")
+        config.pop("consumptionId")
+
+        generation_df = database.get_data_from_sensor(generation_sensor)
+        consumption_df = database.get_data_from_sensor(consumption_sensor)
+
+        print(f"Selected model: {selected_model}, Config: {config}")
+        print(f"Generation: {generation_sensor}")
+        print(f"Consumption: {consumption_sensor}")
+
+        forecast.create_model(data=generation_df, y='value', escalat="Standard")
+
+        return f"Selected Model: {selected_model}, Config: {json.dumps(config)}"
+    except Exception as e:
+        return f"Error! : {str(e)}"
+
+
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')
 def get_page(page):
     # Ruta del fitxer HTML
-    file_path = f'./www/{page}.html'
+    # file_path = f'./www/{page}.html'
     # Comprova si el fitxer existeix
-    if os.path.exists(file_path):
+    if os.path.exists(f'./www/{page}.html'):
         # Control de dades segons la pàgina
         return static_file(f'{page}.html', root='./www/')
+    elif os.path.exists(f'./www/{page}.css'):
+        return static_file(f'{page}.css', root='./www/')
     else:
         return HTTPError(404, "La pàgina no existeix")
 

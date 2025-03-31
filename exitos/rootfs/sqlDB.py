@@ -59,7 +59,6 @@ class sqlDB():
         connection = sqlite3.connect(self.database_file)
         return connection
 
-
     @staticmethod
     def __close_connection__(connection):
         """
@@ -172,6 +171,36 @@ class sqlDB():
 
         return sensors_data
 
+    def get_data_from_sensor(self, sensor_id):
+        """
+        Selecciona els valors "value" i "timestamp" del sensor indicat de la base de dades  \n
+        #TODO de moment només selecciona i accepta un sensor, més endavant mirar i cal acceptar llista de ID
+        :param sensor_id: id del/s sensor/s a obtenir les dades
+        """
+
+        merged_data = pd.DataFrame()
+        # connection = self.__open_connection__()
+        # cur = connection.cursor()
+
+
+        query = """SELECT timestamp, value FROM dades WHERE sensor_id = ? """
+
+        aux = pd.read_sql_query(query, self.__open_connection__(), params=(sensor_id,))
+
+        aux['timestamp'] = pd.to_datetime(aux['timestamp'], format='ISO8601')
+
+        if merged_data.empty:
+            merged_data = aux
+        else:
+            merged_data = pd.merge(merged_data, aux, on='timestamp', how='outer')
+
+
+        if not merged_data.empty:
+            merged_data = merged_data.sort_values(by='timestamp').reset_index(drop=True)
+        else:
+            print("Data for selected sensors is empty. Skipping...")
+
+        return merged_data
 
     def get_all_saved_sensors_id(self,):
         """
@@ -194,8 +223,6 @@ class sqlDB():
 
 
         return sensors_return
-
-
 
     @staticmethod
     def update_sensor_active(sensor, active, connection):
