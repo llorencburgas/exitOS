@@ -7,15 +7,20 @@ RUN apt update \
     && pip install --upgrade pip \
     && pip install requests pandas scikit-learn psutil numpy holidays tomli func_timeout schedule plotly
 
+
+
 #afegim els fitxers del servidor dins el container de docker
 ADD ./rootfs/server.py .
 ADD ./rootfs/bottle.py .
 ADD ./rootfs/sqlDB.py .
 
-COPY ./rootfs/www //www/
-COPY ./rootfs/images/ //images/
-COPY ./rootfs/forecast //forecast/
-COPY ./rootfs/objectStorer //objectStorer/
+#Forecast
+COPY ./rootfs/forecast / /forecast/
+COPY ./rootfs/objectStorer / /objectStorer/
+
+#HTML and images
+COPY ./rootfs/www / /www/
+COPY ./rootfs/images/ / /images/
 
 COPY config.yaml config.yaml
 
