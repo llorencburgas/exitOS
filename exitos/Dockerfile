@@ -3,9 +3,9 @@ FROM ${BUILD_FROM}
 
 #instalem python, pip i llibreries que necessitarem
 RUN apt update \
-    && apt install -y dos2unix python3 python3-pip python3-dev libhdf5-dev\
+    && apt install -y dos2unix python3 python3-pip\
     && pip install --upgrade pip \
-    && pip install requests pandas scikit-learn psutil numpy holidays tomli func_timeout schedule plotly h5py
+    && pip install requests pandas scikit-learn psutil numpy holidays tomli func_timeout schedule plotly python3-h5py
 
 
 
@@ -16,7 +16,6 @@ ADD ./rootfs/sqlDB.py .
 
 #Forecast
 COPY ./rootfs/forecast / /forecast/
-COPY ./rootfs/objectStorer / /objectStorer/
 
 #HTML and images
 COPY ./rootfs/www /www/
