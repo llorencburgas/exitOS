@@ -3,7 +3,7 @@ FROM ${BUILD_FROM}
 
 #instalem python, pip i llibreries que necessitarem
 RUN apt update \
-    && apt install -y dos2unix python3 python3-pip \
+    && apt install -y dos2unix python3 python3-pip python3-dev libhdf5-dev\
     && pip install --upgrade pip \
     && pip install requests pandas scikit-learn psutil numpy holidays tomli func_timeout schedule plotly h5py
 
