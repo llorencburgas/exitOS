@@ -26,6 +26,11 @@ database.update_database("all")
 forecast = forecast.Forecaster(debug=True)
 
 
+print("Current working directory:", os.getcwd())
+print("Contents of /:", os.listdir("/"))
+print("Contents of /objectStorer/ (if exists):", os.listdir("/objectStorer") if os.path.exists("/objectStorer") else "Not Found")
+
+
 #Ruta inicial
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import holidays
 
-from exitos.rootfs.objectStorer import ObjectStorer as ObjectStorer
+# import objectStorer.ObjectStorer as ObjectStorer
 
 
 
@@ -484,30 +484,30 @@ class Forecaster:
     #     print("#################################################")
     #
     #     return model, scaler
-
-    @staticmethod
-    def save_model(model, model_filename, scaler, scaler_filename):
-        """
-        Guarda el model i l'escalador
-        """
-        a = ObjectStorer.ObjectStorer(username=model_filename)
-        a.store(model, 'model')
-        a.close()
-        a = ObjectStorer.ObjectStorer(username=scaler_filename)
-        a.store(scaler, 'scaler')
-        a.close()
-        del a
-
-    @staticmethod
-    def load_model( model_filename, scaler_filename):
-        """
-        Carreguem el model i l'escalador'
-        """
-        a = ObjectStorer.ObjectStorer(username=model_filename)
-        model = a.get('model')
-        a.close()
-        a = ObjectStorer.ObjectStorer(username=scaler_filename)
-        scaler = a.get('scaler')
-        a.close()
-        del a
-        return model, scaler
+    #
+    # @staticmethod
+    # def save_model(model, model_filename, scaler, scaler_filename):
+    #     """
+    #     Guarda el model i l'escalador
+    #     """
+    #     a = ObjectStorer.ObjectStorer(username=model_filename)
+    #     a.store(model, 'model')
+    #     a.close()
+    #     a = ObjectStorer.ObjectStorer(username=scaler_filename)
+    #     a.store(scaler, 'scaler')
+    #     a.close()
+    #     del a
+    #
+    # @staticmethod
+    # def load_model( model_filename, scaler_filename):
+    #     """
+    #     Carreguem el model i l'escalador'
+    #     """
+    #     a = ObjectStorer.ObjectStorer(username=model_filename)
+    #     model = a.get('model')
+    #     a.close()
+    #     a = ObjectStorer.ObjectStorer(username=scaler_filename)
+    #     scaler = a.get('scaler')
+    #     a.close()
+    #     del a
+    #     return model, scaler
