@@ -19,8 +19,10 @@ COPY ./rootfs/forecast / /forecast/
 COPY ./rootfs/objectStorer / /objectStorer/
 
 #HTML and images
-COPY ./rootfs/www / /www/
-COPY ./rootfs/images/ / /images/
+COPY ./rootfs/www /www/
+COPY ./rootfs/images/ /images/
+COPY ./rootfs/resources/ /resources/
+
 
 COPY config.yaml config.yaml
 
