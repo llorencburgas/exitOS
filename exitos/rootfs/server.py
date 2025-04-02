@@ -24,7 +24,7 @@ logger = setup_logger()
 
 # PARÀMETRES DE L'EXECUCIÓ
 HOSTNAME = '0.0.0.0'
-PORT = 55023
+PORT = 550230
 
 #INICIACIÓ DE L'APLICACIÓ I LA BASE DE DADES
 app = Bottle()
