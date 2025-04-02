@@ -19,12 +19,8 @@ from logging_config import setup_logger
 
 
 
-# DEBUG LOGGING
+# LOGGER COLORS
 logger = setup_logger()
-
-logger.info("This is an INFO log from the add-on!")
-logger.warning("This is a WARNING log from the add-on!")
-logger.error("This is an ERROR log from the add-on!")
 
 # PARÀMETRES DE L'EXECUCIÓ
 HOSTNAME = '0.0.0.0'
@@ -174,16 +170,16 @@ def submit_forecast():
         generation_df = database.get_data_from_sensor(generation_sensor)
         consumption_df = database.get_data_from_sensor(consumption_sensor)
 
-        print(f"Selected model: {selected_model}, Config: {config}")
-        print(f"Generation: {generation_sensor}")
-        print(f"Consumption: {consumption_sensor}")
+        logger.infp(f"Selected model: {selected_model}, Config: {config}")
+        logger.info(f"Generation: {generation_sensor}")
+        logger.info(f"Consumption: {consumption_sensor}")
 
         if action == 'train':
             forecast.create_model(data=consumption_df, y='value', escalat="Standard", filename='Consumption')
             forecast.create_model(data=generation_df, y='value', escalat="Standard", filename='Generation')
         elif action == 'forecast':
             consumption = ForecatManager.predict_consumption_production(optimalScheduler.meteo_data, consumption_df)
-            print(consumption)
+            logger.debug(consumption)
 
 
         return f"Selected Model: {selected_model}, Config: {json.dumps(config)}"
@@ -209,7 +205,7 @@ def get_page(page):
 ##################################### SCHEDULE --> ACTUALITZACIÓ BASE DE DADES DIARIA I NETEJA MENSUAL
 
 def daily_task():
-    print("Running daily task at ", datetime.now().strftime("%d-%b-%Y   %X"), flush=True)
+    logger.debug("Running daily task at ", datetime.now().strftime("%d-%b-%Y   %X"), flush=True)
 
     sensors_id = database.get_all_sensors()
     sensors_id = sensors_id['entity_id'].tolist()
@@ -238,7 +234,7 @@ def monthly_task():
                 database.remove_sensor_data(sensor_id, connection)
 
         database.__close_connection__(connection)
-        print("Running monthly task at ", datetime.now().strftime("%d-%b-%Y   %X") )
+        logger.debug("Running monthly task at ", datetime.now().strftime("%d-%b-%Y   %X") )
 
 schedule.every().day.at("00:00").do(daily_task)
 schedule.every().day.at("00:00").do(monthly_task)

@@ -15,6 +15,31 @@
             margin-top: 20px;
             margin-bottom: 10px;
         }
+        #loadingSpinner{
+            position: fixed;
+            top: 50%
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 1000;
+        }
+        .spinner{
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #04AA6D;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #loadingText{
+            margin-top: 10px;
+            font-size: 16px;
+            color: #3498db;
+        }
     </style>
 </head>
 <body>
@@ -39,7 +64,7 @@
                 <h2> Forecasting </h2>
                 <p> Instruccions a seguir per l'usuari</p>
 
-                <form action="./submit-forecast" method="POST" >
+                <form action="./submit-forecast" method="POST" onsubmit="showLoadingSpinner()" >
 
                     <h3> 1. Selecciona els sensors de consum</h3>
                     <select class="form-select" id="consumptionId" name="consumptionId" required multiple
@@ -76,6 +101,10 @@
 
                 </form>
 
+                <div id="loadingSpinner" style="display: none;">
+                    <div class="spinner"></div>
+                    <p id="loadingText">Processant Forecast. Això pot tardar uns minuts....</p>
+                </div>
             </div>
         </div>
 
@@ -86,6 +115,11 @@
     </main>
 
 <script>
+
+    function showLoadingSpinner(){
+        document.getElementById('loadingSpinner').style.display = 'block';
+    }
+
     function updateSelection(selectId, displayId){
         const selectElement= document.getElementById(selectId);
         const selectedOptions = Array.from(selectElement.selectedOptions).map(option => option.value);

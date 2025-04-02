@@ -2,6 +2,10 @@ import joblib
 import numpy as np
 import pandas as pd
 import holidays
+import logging
+
+
+logger = logging.getLogger("exitOS")
 
 
 class Forecaster:
@@ -135,7 +139,7 @@ class Forecaster:
 
         if 'timestamp' in dad.columns:
             dad.index = pd.to_datetime(dad['timestamp'])
-        print("DAD HEAD 1 (timestamps_to_attrs())", dad.head(20))
+        logger.info(f"DAD HEAD 1 (timestamps_to_attrs()){dad.head(20)}")
 
         if not extra_vars:
             #si extra_vars és None o buit, no cal fer res
@@ -170,7 +174,7 @@ class Forecaster:
 
         if 'timestamp' in dad.columns:
             dad.drop(columns=['timestamp'], inplace=True)
-        print("DAD HEAD 2 (timestamps_to_attrs())", dad.head(20))
+        logger.info(f"DAD HEAD 2 (timestamps_to_attrs()) {dad.head(20)}")
 
         return dad
 
@@ -324,8 +328,8 @@ class Forecaster:
                 impo2 = d[algorithm_list[i]][3]
 
                 if self.debug:
-                    print("  ")
-                    print("Començant a optimitzar: " + algorithm_list[i] + ' - Algorisme ' + str(
+                    logger.info("  ")
+                    logger.info("Començant a optimitzar: " + algorithm_list[i] + ' - Algorisme ' + str(
                         algorithm_list.index(algorithm_list[i]) + 1) + ' de ' + str(
                         len(algorithm_list)) + ' - Maxim comput aprox (segons): ' + str(iters))
 
@@ -341,7 +345,7 @@ class Forecaster:
                     t = time.perf_counter()
 
                     if self.debug:
-                        print("Maxim " + str(len(sampler)) + " configuracions a probar!")
+                        logger.debug("Maxim " + str(len(sampler)) + " configuracions a probar!")
                         j = 0
 
                     best_model = None
@@ -363,11 +367,11 @@ class Forecaster:
 
                         if (time.perf_counter() - t) > iters:
                             if self.debug:
-                                print("Algorisme " + algorithm_list[i] + " -- Abortat per Maxim comput aprox (segons): " + str(iters))
+                                logger.debug("Algorisme " + algorithm_list[i] + " -- Abortat per Maxim comput aprox (segons): " + str(iters))
                                 break
 
                 except Exception as e:
-                    print("WARNING: Algorisme ", algorithm_list[i], " -- Abortat per Motiu: ", str(e))
+                    logger.warning("WARNING: Algorisme ", algorithm_list[i], " -- Abortat per Motiu: ", str(e))
 
                 if best_model is not None:
                     best_model.fit(X, y)
@@ -443,14 +447,14 @@ class Forecaster:
         self.save_model(filename)
 
         if self.debug:
-            print('Model guardat! Score: ' + str(score))
+            logger.debug('Model guardat! Score: ' + str(score))
 
     def forecast(self, data, y, model):
         """
 
         :return:
         """
-        print("Iniciant forecast...")
+        logger.info("Iniciant forecast...")
 
         # PAS 1 - Obtenir els valors del model
         model_select = self.db.get('model_select', []) #intenta obtenir model_select, si no existeix retorna []
@@ -504,11 +508,11 @@ class Forecaster:
         :param model_filename: Nom que es vol donar al fitxer, si és nul serà "savedModel"
         """
         joblib.dump(self.db, model_filename + '.pkl')
-        print(f"Model guardat al fitxer {model_filename}.pkl")
+        logger.info(f"Model guardat al fitxer {model_filename}.pkl")
 
         self.db.clear()
 
     def load_model(self, model_filename):
         self.db = joblib.load(model_filename + '.pkl')
-        print(f"Model carregat del fitxer {model_filename}.pkl")
+        logger.info(f"Model carregat del fitxer {model_filename}.pkl")
 

@@ -13,13 +13,6 @@ headers = {
     "Authorization": f"Bearer {bearer_token}",
     "Content-Type": "application/json",
 }
-logging.basicConfig(
-    level=logging.INFO,  # Set the logging level
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler(sys.stdout)]
-)
-logger = logging.getLogger(__name__)
-
 
 class OptimalScheduler:
     def __init__(self):

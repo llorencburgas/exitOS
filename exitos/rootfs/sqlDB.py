@@ -18,7 +18,7 @@ class sqlDB():
         Crea la connexió a la base de dades
         """
 
-        logging.info("INICIANT LA BASE DE DADES...")
+        logger.info("INICIANT LA BASE DE DADES...")
 
         if "HASSIO_TOKEN" in os.environ: RUNNING_IN_HA = True
         else: RUNNING_IN_HA = False
@@ -28,13 +28,13 @@ class sqlDB():
             self.config_path = "/share/exitos/user_info.conf"
             self.supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
             self.base_url = "http://supervisor/core/api/"
-            logging.debug("Running in Home Assistant!")
+            logger.debug("Running in Home Assistant!")
         else:
             self.database_file = "dades.db"
             self.config_path = "user_info.config"
             self.supervisor_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI5YzMxMjU1MzQ0NGY0YTg5YjU5NzQ5NWM0ODI2ZmNhZiIsImlhdCI6MTc0MTE3NzM4NSwiZXhwIjoyMDU2NTM3Mzg1fQ.5-ST2_WQNJ4XRwlgHK0fX8P6DnEoCyEKEoeuJwl-dkE"
             self.base_url = "http://margarita.udg.edu:28932/api/"
-            logging.debug("Running in local machine!")
+            logger.debug("Running in local machine!")
 
 
         self.headers = {
@@ -316,8 +316,7 @@ class sqlDB():
                 cur.execute("INSERT INTO sensors (sensor_id, units, update_sensor, save_sensor) VALUES (?,?,?,?)", values_to_insert)
                 cur.close()
                 connection.commit()
-                logger.debug("[" + current_date.strftime("%d-%b-%Y   %X")
-                             + "] Afegit un nou sensor a la base de dades: " + sensor_id)
+                logger.debug(f"[ {current_date.strftime("%d-%b-%Y   %X")} ] Afegit un nou sensor a la base de dades: {sensor_id}")
 
                 sensor_info = None
                 last_date_saved = None
@@ -325,7 +324,7 @@ class sqlDB():
             save_sensor = self.query_select(sensor_id,"save_sensor", "sensors", connection)[0][0]
             update_sensor = self.query_select(sensor_id,"update_sensor", "sensors", connection)[0][0]
             if save_sensor and update_sensor:
-                logger.debug("[" + current_date.strftime("%d-%b-%Y   %X") + "] Actualitzant sensor: " + sensor_id)
+                logger.debug(f"[ {current_date.strftime("%d-%b-%Y   %X")} ] Actualitzant sensor: {sensor_id}")
 
                 last_date_saved = self.query_select(sensor_id,"timestamp, value", "dades", connection)
                 if len(last_date_saved) == 0:
@@ -357,12 +356,12 @@ class sqlDB():
                         try:
                             sensor_data_historic = pd.json_normalize(response.json())
                         except ValueError as e:
-                            logger.error("Error parsing JSON: " + str(e))
+                            logger.error(f"Error parsing JSON: {str(e)}")
                     elif response.status_code == 500:
-                        logger.critical("Server error (500): Internal server error at sensor ", sensor_id)
+                        logger.critical(f"Server error (500): Internal server error at sensor {sensor_id}")
                         sensor_data_historic = pd.DataFrame()
                     else:
-                        logger.error("Request failed with status code: ", response.status_code)
+                        logger.error(f"Request failed with status code: {response.status_code}")
                         sensor_data_historic = pd.DataFrame()
 
                     #actualitzem el valor obtingut de l'històric del sensor
@@ -385,8 +384,7 @@ class sqlDB():
                     start_time += timedelta(days = 7)
 
         self.__close_connection__(connection)
-        logger.info("[" + datetime.now(timezone.utc).strftime("%d-%b-%Y   %X") +
-                     "] TOTS ELS SENSORS HAN ESTAT ACTUALITZATS")
+        logger.info(f"[ {datetime.now(timezone.utc).strftime("%d-%b-%Y   %X")} ] TOTS ELS SENSORS HAN ESTAT ACTUALITZATS")
 
     def get_lat_long(self):
         """
@@ -402,7 +400,7 @@ class sqlDB():
             return latitude, longitude
         else:
             logger.error("Could not found the data in the response file")
-            logger.info("Available columns: ", {config.columns.tolist()})
+            logger.info(f"Available columns: {config.columns.tolist()}")
 
             return -1
 
