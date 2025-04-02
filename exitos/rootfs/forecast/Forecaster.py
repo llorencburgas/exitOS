@@ -329,8 +329,7 @@ class Forecaster:
 
                 if self.debug:
                     logger.info("  ")
-                    logger.info(f"Començant a optimitzar:  {algorithm_list[i]}  - Algorisme ' {str(algorithm_list.index(algorithm_list[i]) + 1)}  de  {str(
-                        len(algorithm_list))} - Maxim comput aprox (segons): {str(iters)}")
+                    logger.info(f"Començant a optimitzar:  {algorithm_list[i]}  - Algorisme {str(algorithm_list.index(algorithm_list[i]) + 1)}  de  {str(len(algorithm_list))} - Maxim comput aprox (segons): {str(iters)}")
 
 
 
