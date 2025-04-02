@@ -358,11 +358,9 @@ class Forecaster:
                             best_mae = act
 
                         if self.debug:
-                            print("\r", end="")
+                            logger.info("\r")
                             j += 1
-                            print(str(j) + "/" + str(len(sampler)) + " Best MAE: " + str(best_mae) + " (" + type(
-                                best_model).__name__ + ") Last MAE: " + str(act) + " Elapsed: " + str(
-                                time.perf_counter() - t) + " s         ", end="")
+                            logger.debug(f"{str(j)} / {str(len(sampler))} Best MAE: {str(best_mae)} ({type(best_model).__name__}) Last MAE: {str(act)}  Elapsed: {str(time.perf_counter() - t)} s ")
 
                         if (time.perf_counter() - t) > iters:
                             if self.debug:
@@ -507,7 +505,9 @@ class Forecaster:
         :param model_filename: Nom que es vol donar al fitxer, si és nul serà "savedModel"
         """
         joblib.dump(self.db, model_filename + '.pkl')
-        logger.warning(os.path())
+        logger.warning(f"GET CWD: {os.getcwd()}")
+        logger.warning(f"GET FILE PATH {os.path.realpath(__file__)}")
+        logger.warning(f"GET DIR PATH {os.path.dirname(os.path.abspath(__file__))}")
         logger.info(f"Model guardat al fitxer {model_filename}.pkl")
 
         self.db.clear()
