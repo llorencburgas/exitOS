@@ -316,7 +316,7 @@ class sqlDB():
                 cur.execute("INSERT INTO sensors (sensor_id, units, update_sensor, save_sensor) VALUES (?,?,?,?)", values_to_insert)
                 cur.close()
                 connection.commit()
-                logger.debug(f"[ {current_date.strftime("%d-%b-%Y   %X")} ] Afegit un nou sensor a la base de dades: {sensor_id}")
+                logger.debug(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] Afegit un nou sensor a la base de dades: {sensor_id}")
 
                 sensor_info = None
                 last_date_saved = None
@@ -324,7 +324,7 @@ class sqlDB():
             save_sensor = self.query_select(sensor_id,"save_sensor", "sensors", connection)[0][0]
             update_sensor = self.query_select(sensor_id,"update_sensor", "sensors", connection)[0][0]
             if save_sensor and update_sensor:
-                logger.debug(f"[ {current_date.strftime("%d-%b-%Y   %X")} ] Actualitzant sensor: {sensor_id}")
+                logger.debug(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] Actualitzant sensor: {sensor_id}")
 
                 last_date_saved = self.query_select(sensor_id,"timestamp, value", "dades", connection)
                 if len(last_date_saved) == 0:
@@ -384,7 +384,7 @@ class sqlDB():
                     start_time += timedelta(days = 7)
 
         self.__close_connection__(connection)
-        logger.info(f"[ {datetime.now(timezone.utc).strftime("%d-%b-%Y   %X")} ] TOTS ELS SENSORS HAN ESTAT ACTUALITZATS")
+        logger.info(f"[ {datetime.now(timezone.utc).strftime('%d-%b-%Y   %X')} ] TOTS ELS SENSORS HAN ESTAT ACTUALITZATS")
 
     def get_lat_long(self):
         """

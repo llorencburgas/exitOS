@@ -205,7 +205,7 @@ def get_page(page):
 ##################################### SCHEDULE --> ACTUALITZACIÓ BASE DE DADES DIARIA I NETEJA MENSUAL
 
 def daily_task():
-    logger.debug(f"Running daily task at {datetime.now().strftime("%d-%b-%Y   %X")}")
+    logger.debug(f"Running daily task at {datetime.now().strftime('%d-%b-%Y   %X')}")
 
     sensors_id = database.get_all_sensors()
     sensors_id = sensors_id['entity_id'].tolist()
@@ -234,7 +234,7 @@ def monthly_task():
                 database.remove_sensor_data(sensor_id, connection)
 
         database.__close_connection__(connection)
-        logger.debug(f"Running monthly task at {datetime.now().strftime("%d-%b-%Y   %X")}" )
+        logger.debug(f"Running monthly task at {datetime.now().strftime('%d-%b-%Y   %X')}" )
 
 schedule.every().day.at("00:00").do(daily_task)
 schedule.every().day.at("00:00").do(monthly_task)
