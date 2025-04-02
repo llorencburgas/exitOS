@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import holidays
 import logging
+import os
 
 
 logger = logging.getLogger("exitOS")
@@ -506,6 +507,7 @@ class Forecaster:
         :param model_filename: Nom que es vol donar al fitxer, si és nul serà "savedModel"
         """
         joblib.dump(self.db, model_filename + '.pkl')
+        logger.warning(os.path())
         logger.info(f"Model guardat al fitxer {model_filename}.pkl")
 
         self.db.clear()
