@@ -1,10 +1,13 @@
 import os
-import logging
 import sqlite3
 import numpy as np
 import pandas as pd
 from requests import get
 from datetime import datetime, timedelta, timezone
+import logging
+
+logger = logging.getLogger("exitOS")  # Reuse the same logger
+
 
 
 
@@ -15,20 +18,25 @@ class sqlDB():
         Crea la connexió a la base de dades
         """
 
-        print("INICIANT LA BASE DE DATES...")
+        logging.info("INICIANT LA BASE DE DADES...")
 
-        # # DADES A DESCOMENTAR QUAN SIGUI REMOT ****
-        self.database_file = "/share/exitos/dades.db"
-        self.config_path = "/share/exitos/user_info.conf"
-        self.supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
-        self.base_url = "http://supervisor/core/api/"
+        if "HASSIO_TOKEN" in os.environ: RUNNING_IN_HA = True
+        else: RUNNING_IN_HA = False
 
-        # #Dades a comentar quan sigui remot
-        # self.database_file = "dades.db"
-        # self.config_path = "user_info.config"
-        # self.supervisor_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI5YzMxMjU1MzQ0NGY0YTg5YjU5NzQ5NWM0ODI2ZmNhZiIsImlhdCI6MTc0MTE3NzM4NSwiZXhwIjoyMDU2NTM3Mzg1fQ.5-ST2_WQNJ4XRwlgHK0fX8P6DnEoCyEKEoeuJwl-dkE"
-        # self.base_url = "http://margarita.udg.edu:28932/api/"
-        # # ****************************************
+        if RUNNING_IN_HA:
+            self.database_file = "/share/exitos/dades.db"
+            self.config_path = "/share/exitos/user_info.conf"
+            self.supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
+            self.base_url = "http://supervisor/core/api/"
+            logging.debug("Running in Home Assistant!")
+        else:
+            self.database_file = "dades.db"
+            self.config_path = "user_info.config"
+            self.supervisor_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI5YzMxMjU1MzQ0NGY0YTg5YjU5NzQ5NWM0ODI2ZmNhZiIsImlhdCI6MTc0MTE3NzM4NSwiZXhwIjoyMDU2NTM3Mzg1fQ.5-ST2_WQNJ4XRwlgHK0fX8P6DnEoCyEKEoeuJwl-dkE"
+            self.base_url = "http://margarita.udg.edu:28932/api/"
+            logging.debug("Running in local machine!")
+
+
         self.headers = {
             "Authorization": "Bearer " + self.supervisor_token,
             "Content-Type": "application/json"
@@ -36,8 +44,9 @@ class sqlDB():
 
         #comprovem si la Base de Dades existeix
         if not os.path.isfile(self.database_file):
-            print("La base de dades no existeix")
-            print("Creant la base de dades...")
+
+            logger.info("La base de dades no existeix")
+            logger.info("Creant la base de dades...")
             self.__initDB__()
 
         #connecta a la Base de Dades
@@ -271,7 +280,7 @@ class sqlDB():
         actualitza els valors històrics únicament si estan marcats com a
         "update_sensor" i "save_sensor" TRUE
         """
-        logging.info("Iniciant l'actualització de la base de dades...")
+        logger.info("Iniciant l'actualització de la base de dades...")
 
         connection = self.__open_connection__()
 
@@ -285,7 +294,7 @@ class sqlDB():
                 get(self.base_url + "states?filter_entity_id=" + sensor_to_update, headers=self.headers).json()
             )
             if len(sensors_list) == 0:
-                print("No existeix un sensor amb l'ID indicat")
+                logger.error("No existeix un sensor amb l'ID indicat")
                 return None
 
         current_date = datetime.now(timezone.utc) + timedelta(hours=1)
@@ -307,7 +316,7 @@ class sqlDB():
                 cur.execute("INSERT INTO sensors (sensor_id, units, update_sensor, save_sensor) VALUES (?,?,?,?)", values_to_insert)
                 cur.close()
                 connection.commit()
-                print("[" + current_date.strftime("%d-%b-%Y   %X")
+                logger.debug("[" + current_date.strftime("%d-%b-%Y   %X")
                              + "] Afegit un nou sensor a la base de dades: " + sensor_id)
 
                 sensor_info = None
@@ -316,7 +325,7 @@ class sqlDB():
             save_sensor = self.query_select(sensor_id,"save_sensor", "sensors", connection)[0][0]
             update_sensor = self.query_select(sensor_id,"update_sensor", "sensors", connection)[0][0]
             if save_sensor and update_sensor:
-                print("[" + current_date.strftime("%d-%b-%Y   %X") + "] Actualitzant sensor: " + sensor_id)
+                logger.debug("[" + current_date.strftime("%d-%b-%Y   %X") + "] Actualitzant sensor: " + sensor_id)
 
                 last_date_saved = self.query_select(sensor_id,"timestamp, value", "dades", connection)
                 if len(last_date_saved) == 0:
@@ -348,12 +357,12 @@ class sqlDB():
                         try:
                             sensor_data_historic = pd.json_normalize(response.json())
                         except ValueError as e:
-                            print("Error parsing JSON: " + str(e))
+                            logger.error("Error parsing JSON: " + str(e))
                     elif response.status_code == 500:
-                        print("Server error (500): Internal server error at sensor ", sensor_id)
+                        logger.critical("Server error (500): Internal server error at sensor ", sensor_id)
                         sensor_data_historic = pd.DataFrame()
                     else:
-                        print("Request failed with status code: ", response.status_code)
+                        logger.error("Request failed with status code: ", response.status_code)
                         sensor_data_historic = pd.DataFrame()
 
                     #actualitzem el valor obtingut de l'històric del sensor
@@ -376,10 +385,26 @@ class sqlDB():
                     start_time += timedelta(days = 7)
 
         self.__close_connection__(connection)
-        print("[" + datetime.now(timezone.utc).strftime("%d-%b-%Y   %X") +
+        logger.info("[" + datetime.now(timezone.utc).strftime("%d-%b-%Y   %X") +
                      "] TOTS ELS SENSORS HAN ESTAT ACTUALITZATS")
 
+    def get_lat_long(self):
+        """
+        Retorna la lat i long del home assistant
+        """
+        response = get(self.base_url + "config", headers=self.headers)
+        config = pd.json_normalize(response.json())
 
+        if 'latitude' in config.columns and 'longitude' in config.columns:
+            latitude = config['latitude'][0]
+            longitude = config['longitude'][0]
+
+            return latitude, longitude
+        else:
+            logger.error("Could not found the data in the response file")
+            logger.info("Available columns: ", {config.columns.tolist()})
+
+            return -1
 
 
 

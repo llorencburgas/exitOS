@@ -1,10 +1,7 @@
+import joblib
 import numpy as np
 import pandas as pd
 import holidays
-
-import objectStorer.ObjectStorer as ObjectStorer
-
-
 
 
 class Forecaster:
@@ -136,7 +133,8 @@ class Forecaster:
         :return: El mateix DataFrame amb les noves columnes afegides.
         """
 
-        dad.index = pd.to_datetime(dad['timestamp'])
+        if 'timestamp' in dad.columns:
+            dad.index = pd.to_datetime(dad['timestamp'])
         print("DAD HEAD 1 (timestamps_to_attrs())", dad.head(20))
 
         if not extra_vars:
@@ -170,7 +168,8 @@ class Forecaster:
             #Afageix una columna booleana indicant si cada dia es festiu
             dad['festius'] = dad.index.strftime('%Y-%m-%d').isin(h)
 
-        dad.drop(columns=['timestamp'], inplace=True)
+        if 'timestamp' in dad.columns:
+            dad.drop(columns=['timestamp'], inplace=True)
         print("DAD HEAD 2 (timestamps_to_attrs())", dad.head(20))
 
         return dad
@@ -384,10 +383,18 @@ class Forecaster:
     def create_model(self, data, y, look_back={-1: [25, 48]},
                      extra_vars={'variables': ['Dia', 'Hora', 'Mes'], 'festius': ['ES', 'CT']},
                      colinearity_remove_level=0.9, feature_selection='Tree', algorithm='RF', params=None, escalat=None,
-                     max_time=None):
+                     max_time=None, filename='savedModel'):
         """
         Funció per crear, guardar i configurar el model de forecasting.
 
+        :param filename:
+        :param max_time:
+        :param escalat:
+        :param params:
+        :param algorithm:
+        :param feature_selection:
+        :param extra_vars:
+        :param colinearity_remove_level:
         :param data: Dataframe amb datetime com a índex
         :param y: Nom de la columna amb la variable a predir
         :param look_back: #TODO
@@ -422,92 +429,86 @@ class Forecaster:
 
         #PAS 8 - Crear el model
         [model, score] = self.Model(X_new, y_new.values, algorithm, params, max_time=max_time)
-        print(model)
-        print(score)
 
-        #Pas 9 - Guardar el model en un Object Storer
-        # db = ObjectStorer.ObjectStorer(self.debug, "ModelConsum", filename="TestModel")
-        #
-        # db.store(model,'model')
-        # db.store(scaler,'scaler')
-        # db.store(score, 'score')
-        #
-        # db.close()
-        #
-        # if(self.debug):
-        #     print("Model guardat! Score: " + str(score))
+        #PAS 9 - Guardar el model
+        self.db['model'] = model
+        self.db['scaler'] = scaler
+        self.db['model_select'] = model_select
+        self.db['colinearity_remove_level_to_drop'] = colinearity_remove_level_to_drop
+        self.db['extra_vars'] = extra_vars
+        self.db['look_back'] = look_back
+        self.db['score'] = score
+        self.db['objective'] = nomy
+
+        self.save_model(filename)
+
+        if self.debug:
+            print('Model guardat! Score: ' + str(score))
+
+    def forecast(self, data, y, model):
+        """
+
+        :return:
+        """
+        print("Iniciant forecast...")
+
+        # PAS 1 - Obtenir els valors del model
+        model_select = self.db.get('model_select', []) #intenta obtenir model_select, si no existeix retorna []
+        scaler = self.db['scaler']
+        colinearity_remove_level_to_drop = self.db.get('colinearity_remove_level_to_drop', [])
+        extra_vars = self.db.get('extra_vars', [])
+        look_back = self.db.get('look_back', {-1:[25,48]})
+
+        # PAS 2 - Aplicar el windowing
+        df = self.do_windowing(data, look_back)
+
+        # PAS 3 - Afegir variables derivades de l'índex temporal {dia, hora, mes, ...}
+        df = self.timestamp_to_attrs(df, extra_vars)
+
+        # PAS 4 - Eliminar colinearitats
+        if colinearity_remove_level_to_drop:
+            existing_cols = [col for col in colinearity_remove_level_to_drop if col in df.columns]
+            df.drop(existing_cols, axis=1, inplace=True)
+
+        # PAS 5 - Eliminar la y
+        if y in df.columns:
+            del df[y]
+        else:
+            raise ValueError(f"Columna {y} no trobada en el dataset")
+
+        # PAS 6 - Elinimar els NaN
+        if df.dropna().any().any():
+            df = df.dropna()
+
+        # PAS 7 - Escalar les dades
+        if scaler:
+            df.columns = [col.replace('value', 'state') for col in df.columns]
+            df = pd.DataFrame(scaler.transform(df), index=df.index, columns=df.columns)
+
+        # PAS 8 - Seleccionar característiques a usar segons el selector del model
+        if model_select:
+            df = model_select.transform(df)
+
+        # PAS 9 - Fer la predicció
+        out = pd.DataFrame(model.predict(df), columns=[y])
+
+        return out
 
 
 
 
-    # def train_model(self, data, y):
-    #     print("Iniciant el procés d'entrenament del model")
-    #
-    #     data['timestamp'] = pd.to_datetime(data['timestamp'], format='ISO8601')
-    #
-    #     #Extreiem característiques útils dels timestamps
-    #     data['year'] = data['timestamp'].dt.year
-    #     data['month'] = data['timestamp'].dt.month
-    #     data['day'] = data['timestamp'].dt.day
-    #     data['hour'] = data['timestamp'].dt.hour
-    #     data['minute'] = data['timestamp'].dt.minute
-    #     data['weekday'] = data['timestamp'].dt.weekday
-    #
-    #     # Eliminem els valors nuls de totes les dades abans de separar X i Y
-    #     data = data.dropna()
-    #
-    #     # Eliminem la columna 'timestamp' de X i afegim les noves variables
-    #     y_i = data[y]
-    #     X = data.drop(columns=[y, 'timestamp'])
-    #
-    #     # Dividim en train i test
-    #     X_train, X_test, Y_train, Y_test = train_test_split(X, y_i, test_size=0.3, shuffle=False)
-    #
-    #
-    #     # Escalem les dades
-    #     scaler = MinMaxScaler()
-    #     X_train_scaled = scaler.fit_transform(X_train)
-    #     X_test_scaled = scaler.transform(X_test)
-    #
-    #     # Creem i entrenem el mode
-    #     model = RandomForestRegressor(n_estimators=100, random_state=42)
-    #     model.fit(X_train_scaled, Y_train)
-    #
-    #     #Avaluar el model
-    #     score = model.score(X_test_scaled, Y_test)
-    #     print("Model entrenat amb score de ", score)
-    #
-    #     self.db['model'] = model
-    #     self.db['scaler'] = scaler
-    #
-    #     print("Scaler usat per normalitzar les dades: ", scaler)
-    #     print("#################################################")
-    #
-    #     return model, scaler
-    #
-    # @staticmethod
-    # def save_model(model, model_filename, scaler, scaler_filename):
-    #     """
-    #     Guarda el model i l'escalador
-    #     """
-    #     a = ObjectStorer.ObjectStorer(username=model_filename)
-    #     a.store(model, 'model')
-    #     a.close()
-    #     a = ObjectStorer.ObjectStorer(username=scaler_filename)
-    #     a.store(scaler, 'scaler')
-    #     a.close()
-    #     del a
-    #
-    # @staticmethod
-    # def load_model( model_filename, scaler_filename):
-    #     """
-    #     Carreguem el model i l'escalador'
-    #     """
-    #     a = ObjectStorer.ObjectStorer(username=model_filename)
-    #     model = a.get('model')
-    #     a.close()
-    #     a = ObjectStorer.ObjectStorer(username=scaler_filename)
-    #     scaler = a.get('scaler')
-    #     a.close()
-    #     del a
-    #     return model, scaler
+
+    def save_model(self, model_filename):
+        """
+        Guarda el model en un arxiu .pkl i l'elimina de la base de daades interna del forecast (self.db)
+        :param model_filename: Nom que es vol donar al fitxer, si és nul serà "savedModel"
+        """
+        joblib.dump(self.db, model_filename + '.pkl')
+        print(f"Model guardat al fitxer {model_filename}.pkl")
+
+        self.db.clear()
+
+    def load_model(self, model_filename):
+        self.db = joblib.load(model_filename + '.pkl')
+        print(f"Model carregat del fitxer {model_filename}.pkl")
+

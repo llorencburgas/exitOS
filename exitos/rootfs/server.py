@@ -10,10 +10,21 @@ import json
 import plotly.graph_objs as go
 import plotly.offline as pyo
 import forecast.Forecaster as forecast
+import forecast.ForecasterManager as ForecatManager
+import forecast.OptimalScheduler as OptimalScheduler
 
 from bottle import Bottle, template, run, static_file, HTTPError, request, response
 from datetime import datetime, timedelta
+from logging_config import setup_logger
 
+
+
+# DEBUG LOGGING
+logger = setup_logger()
+
+logger.info("This is an INFO log from the add-on!")
+logger.warning("This is a WARNING log from the add-on!")
+logger.error("This is an ERROR log from the add-on!")
 
 # PARÀMETRES DE L'EXECUCIÓ
 HOSTNAME = '0.0.0.0'
@@ -24,11 +35,7 @@ app = Bottle()
 database = db.sqlDB()
 database.update_database("all")
 forecast = forecast.Forecaster(debug=True)
-
-
-print("Current working directory:", os.getcwd())
-print("Contents of /:", os.listdir("/"))
-print("Contents of /objectStorer/ (if exists):", os.listdir("/objectStorer") if os.path.exists("/objectStorer") else "Not Found")
+optimalScheduler = OptimalScheduler.OptimalScheduler()
 
 
 #Ruta inicial
@@ -159,8 +166,10 @@ def submit_forecast():
 
         generation_sensor  = config.get("generationId")
         consumption_sensor = config.get("consumptionId")
+        action = config.get("action")
         config.pop("generationId")
         config.pop("consumptionId")
+        config.pop("action")
 
         generation_df = database.get_data_from_sensor(generation_sensor)
         consumption_df = database.get_data_from_sensor(consumption_sensor)
@@ -169,7 +178,13 @@ def submit_forecast():
         print(f"Generation: {generation_sensor}")
         print(f"Consumption: {consumption_sensor}")
 
-        forecast.create_model(data=generation_df, y='value', escalat="Standard")
+        if action == 'train':
+            forecast.create_model(data=consumption_df, y='value', escalat="Standard", filename='Consumption')
+            forecast.create_model(data=generation_df, y='value', escalat="Standard", filename='Generation')
+        elif action == 'forecast':
+            consumption = ForecatManager.predict_consumption_production(optimalScheduler.meteo_data, consumption_df)
+            print(consumption)
+
 
         return f"Selected Model: {selected_model}, Config: {json.dumps(config)}"
     except Exception as e:
