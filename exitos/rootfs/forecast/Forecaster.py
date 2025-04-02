@@ -329,9 +329,8 @@ class Forecaster:
 
                 if self.debug:
                     logger.info("  ")
-                    logger.info("Començant a optimitzar: " + algorithm_list[i] + ' - Algorisme ' + str(
-                        algorithm_list.index(algorithm_list[i]) + 1) + ' de ' + str(
-                        len(algorithm_list)) + ' - Maxim comput aprox (segons): ' + str(iters))
+                    logger.info(f"Començant a optimitzar:  {algorithm_list[i]}  - Algorisme ' {str(algorithm_list.index(algorithm_list[i]) + 1)}  de  {str(
+                        len(algorithm_list))} - Maxim comput aprox (segons): {str(iters)}")
 
 
 
@@ -345,7 +344,7 @@ class Forecaster:
                     t = time.perf_counter()
 
                     if self.debug:
-                        logger.debug("Maxim " + str(len(sampler)) + " configuracions a probar!")
+                        logger.debug(f"Maxim {str(len(sampler))}  configuracions a probar!")
                         j = 0
 
                     best_model = None
@@ -371,7 +370,7 @@ class Forecaster:
                                 break
 
                 except Exception as e:
-                    logger.warning("WARNING: Algorisme ", algorithm_list[i], " -- Abortat per Motiu: ", str(e))
+                    logger.warning(f"WARNING: Algorisme {algorithm_list[i]},  -- Abortat per Motiu: {str(e)}")
 
                 if best_model is not None:
                     best_model.fit(X, y)
