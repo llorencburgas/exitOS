@@ -4,6 +4,7 @@ import pandas as pd
 import holidays
 import logging
 import os
+import glob
 
 
 logger = logging.getLogger("exitOS")
@@ -504,10 +505,8 @@ class Forecaster:
         Guarda el model en un arxiu .pkl i l'elimina de la base de daades interna del forecast (self.db)
         :param model_filename: Nom que es vol donar al fitxer, si és nul serà "savedModel"
         """
-        joblib.dump(self.db, model_filename + '.pkl')
-        logger.warning(f"GET CWD: {os.getcwd()}")
-        logger.warning(f"GET FILE PATH {os.path.realpath(__file__)}")
-        logger.warning(f"GET DIR PATH {os.path.dirname(os.path.abspath(__file__))}")
+        joblib.dump(self.db, "/share/exitos/"+ model_filename + '.pkl')
+        logger.warning(glob.glob("/share/exitos/*"))
         logger.info(f"Model guardat al fitxer {model_filename}.pkl")
 
         self.db.clear()

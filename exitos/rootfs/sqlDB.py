@@ -49,17 +49,7 @@ class sqlDB():
             logger.info("Creant la base de dades...")
             self.__initDB__()
 
-        #connecta a la Base de Dades
-        # self.__conn__ = sqlite3.connect(self.database_file, timeout=10)
 
-    # def __del__(self):
-    #     """
-    #     Destructor de l'objecte. Tanca la connexió de manera segura
-    #     """
-    #     try:
-    #         self.__conn__.close()
-    #     except AttributeError:
-    #         pass
 
     def __open_connection__(self):
         """
