@@ -10,7 +10,6 @@ import glob
 logger = logging.getLogger("exitOS")
 
 
-
 class Forecaster:
     def __init__(self, debug = False):
         """

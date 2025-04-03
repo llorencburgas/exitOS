@@ -75,7 +75,7 @@ class sqlDB():
             -> SENSORS: conté la info dels sensors
         """
 
-        print("S'ESTÀ CREANT LA BASE DE DATES...")
+        logger.info("S'ESTÀ CREANT LA BASE DE DATES...")
 
         con = sqlite3.connect(self.database_file)
         cur = con.cursor()
