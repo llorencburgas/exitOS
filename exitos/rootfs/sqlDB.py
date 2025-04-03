@@ -24,8 +24,8 @@ class sqlDB():
         else: RUNNING_IN_HA = False
 
         if RUNNING_IN_HA:
-            self.database_file = "/share/exitos/dades.db"
-            self.config_path = "/share/exitos/user_info.conf"
+            self.database_file = "forecast/share/exitos/dades.db"
+            self.config_path = "forecast/share/exitos/user_info.conf"
             self.supervisor_token = os.environ.get('SUPERVISOR_TOKEN')
             self.base_url = "http://supervisor/core/api/"
             logger.debug("Running in Home Assistant!")

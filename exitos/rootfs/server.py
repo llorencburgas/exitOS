@@ -29,7 +29,7 @@ PORT = 55023
 #INICIACIÓ DE L'APLICACIÓ I LA BASE DE DADES
 app = Bottle()
 database = db.sqlDB()
-database.update_database("all")
+# database.update_database("all")
 forecast = forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler()
 
@@ -143,6 +143,67 @@ def update_sensors():
 
     return template('./www/sensors.html', sensors=context)
 
+@app.get('/model')
+def create_model_page():
+    sensors_id = database.get_all_saved_sensors_id()
+    return template('./www/model.html', sensors=sensors_id)
+
+@app.route('/submit-model', method='POST')
+def submit_model():
+    try:
+        selected_model = request.forms.get("model")
+        # sensors_id = database.get_all_saved_sensors_id()
+        config = {}
+
+        for key in request.forms.keys():
+            if key != "model":
+                value = request.forms.get(key)
+
+                if value.isdigit():
+                    config[key] = int(value)
+                else:
+                    try:
+                        config[key] = float(value)
+                    except ValueError:
+                        config[key] = value
+
+
+        generation_sensor  = config.get("generationId")
+        consumption_sensor = config.get("consumptionId")
+        scaled = config.get("scaled")
+        model_name = config.get("modelName")
+
+        config.pop("generationId")
+        config.pop("consumptionId")
+        config.pop("scaled")
+        config.pop("modelName")
+
+        if model_name == "": model_name = "newModel"
+
+        generation_df = database.get_data_from_sensor(generation_sensor)
+        consumption_df = database.get_data_from_sensor(consumption_sensor)
+
+        logger.info(f"Selected model: {selected_model}, Config: {config}")
+
+        forecast.create_model(data=consumption_df,
+                              y='value',
+                              extra_vars={'variables': ['Dia', 'Hora', 'Mes'], 'festius': ['ES', 'CT']},
+                              colinearity_remove_level = 0.9,
+                              feature_selection = 'Tree',
+                              algorithm = selected_model,
+                              params = config,
+                              escalat= scaled,
+                              max_time = 300, #CANVIAR!!!!!
+                              filename = model_name,
+                              meteo_data = optimalScheduler.meteo_data)
+        # forecast.create_model(data=generation_df, y='value', escalat="Standard", filename='Generation')
+
+
+
+        return f"Selected Model: {selected_model}, Config: {json.dumps(config)}"
+    except Exception as e:
+        return f"Error! : {str(e)}"
+
 @app.get('/forecast')
 def forecast_page():
     sensors_id = database.get_all_saved_sensors_id()
@@ -151,40 +212,13 @@ def forecast_page():
 @app.route('/submit-forecast', method='POST')
 def submit_forecast():
     try:
-        selected_model = request.forms.get("model")
-        # sensors_id = database.get_all_saved_sensors_id()
-        config = {}
-
-        for key in request.forms.keys():
-            if key != "model":
-                config[key] = request.forms.get(key)
-
-
-        generation_sensor  = config.get("generationId")
-        consumption_sensor = config.get("consumptionId")
-        action = config.get("action")
-        config.pop("generationId")
-        config.pop("consumptionId")
-        config.pop("action")
-
-        generation_df = database.get_data_from_sensor(generation_sensor)
-        consumption_df = database.get_data_from_sensor(consumption_sensor)
-
-        logger.info(f"Selected model: {selected_model}, Config: {config}")
-        logger.info(f"Generation: {generation_sensor}")
-        logger.info(f"Consumption: {consumption_sensor}")
-
-        if action == 'train':
-            forecast.create_model(data=consumption_df, y='value', escalat="Standard", filename='Consumption')
-            forecast.create_model(data=generation_df, y='value', escalat="Standard", filename='Generation')
-        elif action == 'forecast':
-            consumption = ForecatManager.predict_consumption_production(optimalScheduler.meteo_data, consumption_df)
-            logger.debug(consumption)
-
-
-        return f"Selected Model: {selected_model}, Config: {json.dumps(config)}"
+        forecast = ForecatManager.predict_consumption_production(optimalScheduler.meteo_data, consumption_df)
+        logger.debug(consumption)
     except Exception as e:
-        return f"Error! : {str(e)}"
+        return f"Error! : {str(e)} \n ARGS {e.args}"
+
+
+
 
 
 # Ruta dinàmica per a les pàgines HTML

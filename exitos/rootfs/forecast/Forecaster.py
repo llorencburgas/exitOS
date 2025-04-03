@@ -10,6 +10,7 @@ import glob
 logger = logging.getLogger("exitOS")
 
 
+
 class Forecaster:
     def __init__(self, debug = False):
         """
@@ -129,7 +130,7 @@ class Forecaster:
 
 
     @staticmethod
-    def timestamp_to_attrs(dad, extra_vars):
+    def timestamp_to_attrs(dad, extra_vars, meteo_data:pd.DataFrame):
         """
         Afageix columnes derivades de l'índex temporal al DataFreame 'dad' segons les opcions indicades en 'extra_vars'. \n'
         :param dad: Dataframe amb un índex timestamp
@@ -142,6 +143,7 @@ class Forecaster:
         if 'timestamp' in dad.columns:
             dad.index = pd.to_datetime(dad['timestamp'])
         logger.info(f"DAD HEAD 1 (timestamps_to_attrs()){dad.head(20)}")
+
 
         if not extra_vars:
             #si extra_vars és None o buit, no cal fer res
@@ -298,7 +300,22 @@ class Forecaster:
         with open(self.search_space_config_file) as json_file:
             d = json.load(json_file)
 
-        if params is None: #no tenim paràmetres. Els busquem
+        if type(params) == dict:
+            try:
+                impo1 = d[algorithm][2]
+                impo2 = d[algorithm][3]
+            except:
+                raise ValueError("Undefined Firecasting Algorithm!")
+
+            a = __import__(impo1, globals(), locals(), [impo2])
+            forecast_algorithm = eval("a. " + impo2)
+
+            f = forecast_algorithm()
+            f.set_params(**params)
+            f.fit(X, y)
+            score = 'none'
+            return [f, score]
+        elif  params is None: #no tenim paràmetres. Els busquem
             from sklearn.model_selection import train_test_split
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, shuffle=False)
 
@@ -380,15 +397,18 @@ class Forecaster:
                     score = np.inf
 
                 return [model, score]
+        else:
+            raise ValueError('Paràmetres en format incorrecte!')
 
 
     def create_model(self, data, y, look_back={-1: [25, 48]},
                      extra_vars={'variables': ['Dia', 'Hora', 'Mes'], 'festius': ['ES', 'CT']},
                      colinearity_remove_level=0.9, feature_selection='Tree', algorithm='RF', params=None, escalat=None,
-                     max_time=None, filename='savedModel'):
+                     max_time=None, filename='savedModel', meteo_data:pd.DataFrame = None,):
         """
         Funció per crear, guardar i configurar el model de forecasting.
 
+        :param meteo_data:
         :param filename:
         :param max_time:
         :param escalat:
@@ -403,11 +423,16 @@ class Forecaster:
 
         """
 
-        #PAS 1 - Fer el Windowing
-        dad = self.do_windowing(data, look_back)
+        meteo_data['timestamp'] = pd.to_datetime(meteo_data['timestamp']).dt.tz_localize(None).dt.floor('h')
+        data['timestamp'] = pd.to_datetime(data['timestamp']).dt.tz_localize(None).dt.floor('h')
 
-        #PAS 2 - Crear variable dia_setmana, hora, mes
-        dad = self.timestamp_to_attrs(dad, extra_vars)
+        mergedData = pd.merge(data, meteo_data, on='timestamp', how='inner')
+
+        #PAS 1 - Fer el Windowing
+        dad = self.do_windowing(mergedData, look_back)
+
+        #PAS 2 - Crear variable dia_setmana, hora, mes i meteoData
+        dad = self.timestamp_to_attrs(dad, extra_vars, meteo_data)
 
         #PAS 3 - Treure Colinearitats
         [dad, to_drop] = self.colinearity_remove(dad, y, level=colinearity_remove_level)
@@ -441,6 +466,7 @@ class Forecaster:
         self.db['look_back'] = look_back
         self.db['score'] = score
         self.db['objective'] = nomy
+        self.db['initial_data'] = mergedData
 
         self.save_model(filename)
 

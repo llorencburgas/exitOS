@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>Control energètic eXIT</title>
+    <link rel="stylesheet" href="resources/mainStyle.css">
+    <link rel="icon" type="image/x-icon" href="static/favicon.ico">
+<!--    <link rel="stylesheet" href="../images/mainStyle.css">-->
+
+        <!-- llibreria d'icontes per al navbar-->
+    <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
+
+    <style>
+        h3{
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        #loadingSpinner{
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 1000;
+        }
+        .spinner{
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #04AA6D;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #loadingText{
+            margin-top: 10px;
+            font-size: 16px;
+            color: #3498db;
+        }
+        form{
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <header>
+            <nav class="nav">
+                <div class="navbar-container">
+                    <a href="https://exit.udg.edu/ca/" class="nav-image-link" target="_blank">
+                        <img src="./static/exitlogo.png" alt="Exit research group logo">
+                    </a>
+                    <a href="./" class="nav-link"> <i class="fa-solid fa-house"></i> Inici</a>
+                    <a href="./sensors" class="nav-link"> <i class="fa-solid fa-square-check"></i> Sensors</a>
+                    <a href="./databaseView" class="nav-link"> <i class="fa-solid fa-database"></i> Base de Dades</a>
+                    <a href="./model" class="nav-link"> <i class="fa-solid fa-poo"></i> Crear Model</a>
+                    <a href="./forecast" class="nav-link"> <i class="fa-solid fa-wand-magic-sparkles"></i> Forecast</a>
+                </div>
+            </nav>
+        </header>
+
+
+        <div class="container">
+            <div class="content-section">
+                <h2> Creació del Model </h2>
+                <p> Instruccions a seguir per l'usuari</p>
+
+                <form action="./submit-model" method="POST" onsubmit="showLoadingSpinner()" >
+
+                    <h3> 1. Selecciona els sensors de consum</h3>
+                    <select class="form-select" id="consumptionId" name="consumptionId" required multiple
+                            onchange="updateSelection('consumptionId', 'selectedConsumptionId')">
+
+                        % for sensor in sensors:
+                          <option value="{{sensor}}">{{sensor}}</option>
+                        % end
+                    </select>
+                    <div id="selectedConsumptionId" ></div>
+
+
+                    <h3> 2. Selecciona els sensors de generació</h3>
+                    <select class="form-select" id="generationId" name="generationId" required multiple
+                            onchange="updateSelection('generationId','selectedGenerationId')">
+                        % for sensor in sensors:
+                          <option value="{{sensor}}">{{sensor}}</option>
+                        % end
+                    </select>
+                    <div id="selectedGenerationId"></div>
+
+                    <h3>3. Selecciona el model i les configuracions</h3>
+
+                    <label for="model">Model:
+                        <select name="model" id="modelSelect">
+                            <option value="SVR">Support Vector Regression (SVR)</option>
+                            <option value="KNN">K-Nearest Neighbors (KNN)</option>
+                            <option value="RF">Random Forest (RF)</option>
+                            <option value="Dummy">Dummy</option>
+                            <option value="PLS">Partial Least Squares (PLS)</option>
+                            <option value="MLP">Multi-Layer Perceptron (MLP)</option>
+                        </select>
+                    </label>
+                    <div id="modelConfig"></div>
+
+                    <label for="scaled">Escalat
+                        <select name="scaled" id="scaled">
+                            <option value="Standard">Standard</option>
+                            <option value="Robust">Robust</option>
+                            <option value="MINMAX">MINMAX</option>
+                        </select>
+                    </label>
+
+                    <label for="modelName">Nom del Model
+                        <input type="text" name="modelName" id="modelName" placeholder="Nom del Model">
+                    </label>
+
+                    <button type="submit">Train</button>
+
+                </form>
+
+                <div id="loadingSpinner" style="display: none;">
+                    <div class="spinner"></div>
+                    <p id="loadingText">Processant Forecast. Això pot tardar uns minuts....</p>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>Created by: Grup Exit | Copyright &copy; 2024</p>
+            <p><a href="mailto:comunitatenergeticaexit@gmail.com" class="mail-text">comunitatenergeticaexit@gmail.com</a></p>
+        </footer>
+    </main>
+
+<script>
+
+    function showLoadingSpinner(){
+        document.getElementById('loadingSpinner').style.display = 'block';
+    }
+
+    function updateSelection(selectId, displayId){
+        const selectElement= document.getElementById(selectId);
+        const selectedOptions = Array.from(selectElement.selectedOptions).map(option => option.value);
+        document.getElementById(displayId).innerHTML = selectedOptions.length ? selectedOptions.join(', ') : 'Null Selection';
+    }
+
+    const modelConfigs = {
+        "SVR": {
+            "kernel": ["linear", "rbf", "poly"],
+            "C": [0.01, 0.1, 1, 10, 100, 1000],
+            "degree": [2, 3, 4, 5],
+            "max_iter": [100000, null],
+            "gamma": ["scale", "auto"]
+        },
+        "KNN":{
+            "n_neighbors": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            "algorithm": ["auto", "ball_tree", "kd_tree", "brute"],
+            "weights": ["uniform", "distance"]
+        },
+        "RF": {
+            "n_estimators": [200, 266, 333, 400, 466, 533, 600, 666, 733, 800],
+            "max_features": ["sqrt", "log2", null],
+            "max_depth": [100, 422, 744, 1066, 1388, 1711, 2033, 2355, 2677, 3000, null],
+            "min_samples_split": [2, 5, 10],
+            "min_samples_leaf": [1, 2, 4],
+            "bootstrap": [true, false]
+        },
+        "Dummy": {
+            "strategy": ["mean", "median", "constant"],
+            "quantile": [0.25, 0.75],
+            "constant": [0]
+        },
+        "PLS": {
+            "n_components": [1, 2, 3, 4, 5, 6],
+            "scale": [true, false],
+            "max_iter": [200, 300, 400, 500, 600, 700, 800, 900, 1000]
+        },
+        "MLP": {
+            "hidden_layer_sizes": [50, 75, 100, 150, 200, 250, 300, 350],
+            "activation": ["identity", "logistic", "tanh", "relu"],
+            "solver": ["lbfgs", "sgd", "adam"],
+            "learning_rate": ["constant", "invscaling", "adaptive"]
+        }
+    };
+
+    function updateModelConfig(){
+        const selectedModel = document.getElementById('modelSelect').value;
+        const configDiv = document.getElementById('modelConfig');
+        configDiv.innerHTML = '';
+
+        if(modelConfigs[selectedModel]){
+            Object.keys(modelConfigs[selectedModel]).forEach(key => {
+                let label = document.createElement('label');
+                label.innerText = key + ": "
+                configDiv.appendChild(label);
+
+                let select = document.createElement('select');
+                select.name = key;
+                modelConfigs[selectedModel][key].forEach(option => {
+                    let optionElement = document.createElement('option');
+                    optionElement.value = option;
+
+                    if(option === null)optionElement.innerText = "Null";
+                    else optionElement.innerText = option;
+
+                    select.appendChild(optionElement);
+                });
+                configDiv.appendChild(select);
+                configDiv.appendChild(document.createElement('br'));
+            });
+        }
+    }
+
+    document.getElementById('modelSelect').addEventListener('change', updateModelConfig);
+    updateModelConfig();
+
+</script>
+
+</body>
+</html>

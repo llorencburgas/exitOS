@@ -5,41 +5,29 @@
     <title>Control energètic eXIT</title>
     <link rel="stylesheet" href="resources/mainStyle.css">
     <link rel="icon" type="image/x-icon" href="static/favicon.ico">
-<!--    <link rel="stylesheet" href="../images/mainStyle.css">-->
 
-        <!-- llibreria d'icontes per al navbar-->
+    <!-- llibreria d'icones per al navbar-->
     <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
+    <!--  PLOTLY: gràfiques  -->
+    <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
+    <!--  jQuery, Moments.js, Date Range Picker Files  -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
+
 
     <style>
-        h3{
-            margin-top: 20px;
-            margin-bottom: 10px;
-        }
-        #loadingSpinner{
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+        h1{
             text-align: center;
-            z-index: 1000;
+            margin-bottom: 20px;
         }
-        .spinner{
-            border: 8px solid #f3f3f3;
-            border-top: 8px solid #04AA6D;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
+        h2{
+            margin-bottom: 20px;
+            margin-top: 20px;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        #loadingText{
-            margin-top: 10px;
-            font-size: 16px;
-            color: #3498db;
-        }
+
     </style>
 </head>
 <body>
@@ -53,7 +41,8 @@
                     <a href="./" class="nav-link"> <i class="fa-solid fa-house"></i> Inici</a>
                     <a href="./sensors" class="nav-link"> <i class="fa-solid fa-square-check"></i> Sensors</a>
                     <a href="./databaseView" class="nav-link"> <i class="fa-solid fa-database"></i> Base de Dades</a>
-                    <a href="./forecast" class="nav-link"> <i class="fa-solid fa-poo"></i> Forecast</a>
+                    <a href="./model" class="nav-link"> <i class="fa-solid fa-poo"></i> Crear Model</a>
+                    <a href="./forecast" class="nav-link"> <i class="fa-solid fa-wand-magic-sparkles"></i> Forecast</a>
                 </div>
             </nav>
         </header>
@@ -61,50 +50,12 @@
 
         <div class="container">
             <div class="content-section">
-                <h2> Forecasting </h2>
-                <p> Instruccions a seguir per l'usuari</p>
+                <form action ="./submit-forecast" method="POST" id="forecast-form">
+                    <h1>FORECAST</h1>
+                    <button id="fetch-data" type="submit"> Realitzar Forecast </button>
 
-                <form action="./submit-forecast" method="POST" onsubmit="showLoadingSpinner()" >
-
-                    <h3> 1. Selecciona els sensors de consum</h3>
-                    <select class="form-select" id="consumptionId" name="consumptionId" required multiple
-                            onchange="updateSelection('consumptionId', 'selectedConsumptionId')">
-
-                        % for sensor in sensors:
-                          <option value="{{sensor}}">{{sensor}}</option>
-                        % end
-                    </select>
-                    <div id="selectedConsumptionId" ></div>
-
-
-                    <h3> 2. Selecciona els sensors de generació</h3>
-                    <select class="form-select" id="generationId" name="generationId" required multiple
-                            onchange="updateSelection('generationId','selectedGenerationId')">
-                        % for sensor in sensors:
-                          <option value="{{sensor}}">{{sensor}}</option>
-                        % end
-                    </select>
-                    <div id="selectedGenerationId"></div>
-
-                    <h3>3. Selecciona el model i les configuracions</h3>
-                    <label for="model">Model: </label>
-                    <select name="model" id="modelSelect">
-                        <option value="RF">Random Forest</option>
-                        <option value="Prophet">Prophet</option>
-                        <option value="SVR">SVR</option>
-                    </select>
-                    <div id="modelConfig"></div>
-
-
-                    <button type="submit" name="action" value="train">Train</button>
-                    <button type="submit" name="action" value="forecast">Forecast</button>
 
                 </form>
-
-                <div id="loadingSpinner" style="display: none;">
-                    <div class="spinner"></div>
-                    <p id="loadingText">Processant Forecast. Això pot tardar uns minuts....</p>
-                </div>
             </div>
         </div>
 
@@ -113,71 +64,9 @@
             <p><a href="mailto:comunitatenergeticaexit@gmail.com" class="mail-text">comunitatenergeticaexit@gmail.com</a></p>
         </footer>
     </main>
+</body>
 
 <script>
 
-    function showLoadingSpinner(){
-        document.getElementById('loadingSpinner').style.display = 'block';
-    }
-
-    function updateSelection(selectId, displayId){
-        const selectElement= document.getElementById(selectId);
-        const selectedOptions = Array.from(selectElement.selectedOptions).map(option => option.value);
-        document.getElementById(displayId).innerHTML = selectedOptions.length ? selectedOptions.join(', ') : 'Null Selection';
-    }
-
-    const modelConfigs = {
-        "SVR": {
-            "kernel": ["linear", "rbf", "poly"],
-            "C": [0.01, 0.1, 1, 10, 100, 1000],
-            "degree": [2, 3, 4, 5],
-            "max_iter": [100000],
-            "gamma": ["scale", "auto"]
-        },
-        "RF": {
-            "n_neighbors": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-            "algorithm": ["auto", "ball_tree", "kd_tree", "brute"],
-            "weights": ["uniform", "distance"]
-        },
-        "Prophet": {
-            "n_estimators": [200, 266, 333, 400, 466, 533, 600, 666, 733, 800],
-            "max_features": ["auto", "sqrt"],
-            "max_depth": [100, 422, 744, 1066, 1388, 1711, 2033, 2355, 2677, 3000, null],
-            "min_samples_split": [2, 5, 10],
-            "min_samples_leaf": [1, 2, 4],
-            "bootstrap": [true, false]
-        }
-    };
-
-    function updateModelConfig(){
-        const selectedModel = document.getElementById('modelSelect').value;
-        const configDiv = document.getElementById('modelConfig');
-        configDiv.innerHTML = '';
-
-        if(modelConfigs[selectedModel]){
-            Object.keys(modelConfigs[selectedModel]).forEach(key => {
-                let label = document.createElement('label');
-                label.innerText = key + ": "
-                configDiv.appendChild(label);
-
-                let select = document.createElement('select');
-                select.name = key;
-                modelConfigs[selectedModel][key].forEach(option => {
-                    let optionElement = document.createElement('option');
-                    optionElement.value = option;
-                    optionElement.innerText = option;
-                    select.appendChild(optionElement);
-                });
-                configDiv.appendChild(select);
-                configDiv.appendChild(document.createElement('br'));
-            });
-        }
-    }
-
-    document.getElementById('modelSelect').addEventListener('change', updateModelConfig);
-    updateModelConfig();
-
 </script>
-
-</body>
 </html>
