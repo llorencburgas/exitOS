@@ -44,6 +44,29 @@
             justify-content: center;
             align-items: center;
         }
+        #backToTop{
+            position: fixed;
+            bottom: 30px;
+            right:30px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            background-color: #04AA6D;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 20px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        #backToTop:hover{
+            background-color: #04D984;
+        }
+        #backToTop.show{
+            opacity: 1;
+            visibility: visible;
+        }
     </style>
 </head>
 
@@ -108,6 +131,8 @@
 
                     </table>
                 </form>
+
+                <button id="backToTop" onclick="scrollToTop()" class="fa-solid fa-circle-up"></button>
             </div>
 
         <footer class="footer">
@@ -123,6 +148,19 @@
         document.querySelectorAll('.checkboxes').forEach(checkbox => {
             checkbox.checked = select;
         });
+    }
+
+    window.onscroll = function() {
+        let button = document.getElementById("backToTop");
+        if (document.documentElement.scrollTop > 300) {
+            button.classList.add("show");
+        } else {
+            button.classList.remove("show");
+        }
+    };
+
+    function scrollToTop() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
 </script>
