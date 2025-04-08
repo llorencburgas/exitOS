@@ -54,14 +54,15 @@
                     <h1>FORECAST</h1>
 
                     <h3> 1. Selecciona els sensors</h3>
-                    <select class="form-select" id="models" name="models" required multiple
-                            onchange="updateSelection('models', 'selectedModels')">
+                    <select class="form-select" id="models" name="models" required
+                            onchange="updateSelection('models', 'selectedModel')"
+                            style="width: 100%">
 
                         % for model in models:
-                          <option value="{{model}}">{{model}}</option>
+                          <option class="formOption" value="{{model}}">{{model}}</option>
                         % end
                     </select>
-                    <div id="selectedModels" ></div>
+                    <div id="selectedModel" >{{models[0]}}</div>
 
                     <button id="fetch-data" type="submit"> Realitzar Forecast </button>
 

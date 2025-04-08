@@ -156,6 +156,7 @@ def submit_model():
         # sensors_id = database.get_all_saved_sensors_id()
         config = {}
 
+        keys = request.forms.keys()
         for key in request.forms.keys():
             if key != "model":
                 value = request.forms.get(key)
@@ -210,10 +211,7 @@ def submit_model():
 
 @app.get('/forecast')
 def forecast_page():
-    models_saved = list(glob.glob("../share/exitos/*.pkl"))
-
-    for model in models_saved:
-        model.replace("../share/exitos", "")
+    models_saved = [os.path.basename(f) for f in glob.glob("./share/exitos/*.pkl")]
 
     logger.warning(f"Forecast models saved: {models_saved}")
     return template('./www/forecast.html', models=models_saved)
@@ -221,8 +219,9 @@ def forecast_page():
 @app.route('/submit-forecast', method='POST')
 def submit_forecast():
     try:
-        forecast = ForecatManager.predict_consumption_production(optimalScheduler.meteo_data, consumption_df)
-        logger.debug(consumption)
+        selected_forecast = request.forms.get("models")
+
+        forecast = ForecatManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data, model_name=selected_forecast)
     except Exception as e:
         return f"Error! : {str(e)} \n ARGS {e.args}"
 

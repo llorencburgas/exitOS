@@ -151,3 +151,14 @@ button:hover{
 a.mail-text{
     color: var(--text-color);
 }
+
+/* FORMS */
+select option{
+    margin-bottom: 4px;
+    font-family: 'Rubik', Arial, sans-serif;
+    font-size: 14px;
+}
+select option:checked{
+    background: var(--main-bg-color);
+    color: var(--text-color);
+}

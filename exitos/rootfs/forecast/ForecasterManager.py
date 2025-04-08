@@ -11,11 +11,6 @@ from datetime import datetime, timedelta
 
 current_dir = os.getcwd()
 
-prod_forecaster = forecast.Forecaster(debug=True)
-const_forecaster = forecast.Forecaster(debug=True)
-
-# prod_forecaster.load_model(model_filename='Production')
-# const_forecaster.load_model(model_filename='Consumption')
 
 def obtainmeteoData(latitude, longitude):
     """
@@ -35,31 +30,27 @@ def obtainmeteoData(latitude, longitude):
 
     return meteo_data
 
-def predict_consumption_production(meteo_data:pd.DataFrame, scheduling_data:pd.DataFrame, action:str='consumption'):
+def predict_consumption_production(meteo_data:pd.DataFrame, model_name:str='newModel.pkl'):
     """
     Prediu la consumició tenint en compte les hores actives dels assets
     """
+    forecaster = forecast.Forecaster(debug=True)
+    forecaster.load_model(model_filename=model_name)
+    initial_data = forecaster.db['initial_data']
 
     meteo_data['timestamp'] = pd.to_datetime(meteo_data['timestamp']).dt.tz_localize(None).dt.floor('h')
-    scheduling_data['timestamp'] = pd.to_datetime(scheduling_data['timestamp']).dt.tz_localize(None).dt.floor('h')
+    initial_data['timestamp'] = pd.to_datetime(initial_data['timestamp']).dt.tz_localize(None).dt.floor('h')
 
     print(meteo_data['timestamp'].head())
-    print(scheduling_data['timestamp'].head())
+    print(initial_data['timestamp'].head())
 
-    data = pd.merge(scheduling_data, meteo_data, on=['timestamp'], how='inner')
+    data = pd.merge(initial_data, meteo_data, on=['timestamp'], how='inner')
     data = data.set_index('timestamp')
     data.index = pd.to_datetime(data.index)
 
-    if action == 'consumption':
-        const_forecaster.load_model(model_filename='Consumption')
-        consumption = const_forecaster.forecast(data, 'value', const_forecaster.db['model'])
-        return consumption
-    elif action == 'production':
-        prod_forecaster.load_model(model_filename='Production')
-        production = prod_forecaster.forecast(data, 'value', prod_forecaster.db['model'])
-        return production
-    else:
-        return -1
+
+    prediction = forecaster.forecast(data, 'value', forecaster.db['model'])
+
 
 
 

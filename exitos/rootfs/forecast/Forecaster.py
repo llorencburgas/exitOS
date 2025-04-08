@@ -465,7 +465,7 @@ class Forecaster:
         self.db['look_back'] = look_back
         self.db['score'] = score
         self.db['objective'] = nomy
-        self.db['initial_data'] = mergedData
+        self.db['initial_data'] = data
 
         self.save_model(filename)
 
@@ -537,6 +537,6 @@ class Forecaster:
         self.db.clear()
 
     def load_model(self, model_filename):
-        self.db = joblib.load(model_filename + '.pkl')
-        logger.info(f"Model carregat del fitxer {model_filename}.pkl")
+        self.db = joblib.load('./share/exitos/' + model_filename )
+        logger.info(f"Model carregat del fitxer {model_filename}")
 

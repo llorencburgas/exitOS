@@ -82,7 +82,8 @@
 
                     <h3> 1. Selecciona els sensors</h3>
                     <select class="form-select" id="sensorsId" name="sensorsId" required multiple
-                            onchange="updateSelection('sensorsId', 'selectedSensorsId')">
+                            onchange="updateSelection('sensorsId', 'selectedSensorsId')"
+                            style="width: 100%">
 
                         % for sensor in sensors:
                           <option value="{{sensor}}">{{sensor}}</option>
