@@ -472,7 +472,7 @@ class Forecaster:
         if self.debug:
             logger.debug('Model guardat! Score: ' + str(score))
 
-    def forecast(self, data, y, model):
+    def forecast(self, data, y, model, meteo_data):
         """
 
         :return:
@@ -490,7 +490,7 @@ class Forecaster:
         df = self.do_windowing(data, look_back)
 
         # PAS 3 - Afegir variables derivades de l'índex temporal {dia, hora, mes, ...}
-        df = self.timestamp_to_attrs(df, extra_vars)
+        df = self.timestamp_to_attrs(df, extra_vars, meteo_data)
 
         # PAS 4 - Eliminar colinearitats
         if colinearity_remove_level_to_drop:
