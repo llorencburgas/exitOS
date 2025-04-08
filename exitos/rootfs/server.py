@@ -210,8 +210,11 @@ def submit_model():
 
 @app.get('/forecast')
 def forecast_page():
-    models_saved = list(glob.glob("../share/exitos/*.pkl").replace('../share/exitos', ''))
+    models_saved = list(glob.glob("../share/exitos/*.pkl"))
 
+    for model in models_saved:
+        model.replace("../shared/exitos", "")
+        
     logger.warning(f"Forecast models saved: {models_saved}")
     return template('./www/forecast.html', models=models_saved)
 
