@@ -57,8 +57,8 @@
                     <select class="form-select" id="models" name="models" required multiple
                             onchange="updateSelection('models', 'selectedModels')">
 
-                        % for sensor in sensors:
-                          <option value="{{sensor}}">{{sensor}}</option>
+                        % for model in models:
+                          <option value="{{model}}">{{model}}</option>
                         % end
                     </select>
                     <div id="selectedModels" ></div>
