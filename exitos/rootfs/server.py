@@ -6,6 +6,7 @@ import sqlDB as db
 import schedule
 import time
 import json
+import glob
 
 import plotly.graph_objs as go
 import plotly.offline as pyo
@@ -185,6 +186,7 @@ def submit_model():
         if selected_model == "AUTO":
             forecast.create_model(data=sensors_df,
                                   y = 'value',
+                                  filename = model_name,
                                   meteo_data = optimalScheduler.meteo_data)
         else:
             forecast.create_model(data=sensors_df,
@@ -208,8 +210,9 @@ def submit_model():
 
 @app.get('/forecast')
 def forecast_page():
-    sensors_id = database.get_all_saved_sensors_id()
-    return template('./www/forecast.html', sensors=sensors_id)
+    models_saved = list(glob.glob("../share/exitos/*.pkl"))
+    logger.warning(f"Forecast models saved: {models_saved}")
+    return template('./www/forecast.html', models=models_saved)
 
 @app.route('/submit-forecast', method='POST')
 def submit_forecast():

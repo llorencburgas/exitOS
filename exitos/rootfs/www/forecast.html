@@ -52,6 +52,17 @@
             <div class="content-section">
                 <form action ="./submit-forecast" method="POST" id="forecast-form">
                     <h1>FORECAST</h1>
+
+                    <h3> 1. Selecciona els sensors</h3>
+                    <select class="form-select" id="models" name="models" required multiple
+                            onchange="updateSelection('models', 'selectedModels')">
+
+                        % for sensor in sensors:
+                          <option value="{{sensor}}">{{sensor}}</option>
+                        % end
+                    </select>
+                    <div id="selectedModels" ></div>
+
                     <button id="fetch-data" type="submit"> Realitzar Forecast </button>
 
 
@@ -67,6 +78,10 @@
 </body>
 
 <script>
-
+    function updateSelection(selectId, displayId){
+        const selectElement= document.getElementById(selectId);
+        const selectedOptions = Array.from(selectElement.selectedOptions).map(option => option.value);
+        document.getElementById(displayId).innerHTML = selectedOptions.length ? selectedOptions.join(', ') : 'Null Selection';
+    }
 </script>
 </html>
