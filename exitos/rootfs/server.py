@@ -211,7 +211,7 @@ def submit_model():
 
 @app.get('/forecast')
 def forecast_page():
-    models_saved = [os.path.basename(f) for f in glob.glob("./share/exitos/*.pkl")]
+    models_saved = [os.path.basename(f) for f in glob.glob("/share/exitos/*.pkl")]
 
     logger.warning(f"Forecast models saved: {models_saved}")
     return template('./www/forecast.html', models=models_saved)

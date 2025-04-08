@@ -537,6 +537,6 @@ class Forecaster:
         self.db.clear()
 
     def load_model(self, model_filename):
-        self.db = joblib.load('./share/exitos/' + model_filename )
+        self.db = joblib.load('/share/exitos/' + model_filename )
         logger.info(f"Model carregat del fitxer {model_filename}")
 
