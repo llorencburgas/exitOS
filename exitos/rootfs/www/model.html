@@ -45,6 +45,9 @@
             flex-direction: column;
             justify-content: center;
         }
+        label{
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -72,30 +75,22 @@
 
                 <form action="./submit-model" method="POST" onsubmit="showLoadingSpinner()" >
 
-                    <h3> 1. Selecciona els sensors de consum</h3>
-                    <select class="form-select" id="consumptionId" name="consumptionId" required multiple
-                            onchange="updateSelection('consumptionId', 'selectedConsumptionId')">
+                    <h3> 1. Selecciona els sensors</h3>
+                    <select class="form-select" id="sensorsId" name="sensorsId" required multiple
+                            onchange="updateSelection('sensorsId', 'selectedSensorsId')">
 
                         % for sensor in sensors:
                           <option value="{{sensor}}">{{sensor}}</option>
                         % end
                     </select>
-                    <div id="selectedConsumptionId" ></div>
+                    <div id="selectedSensorsId" ></div>
 
 
-                    <h3> 2. Selecciona els sensors de generació</h3>
-                    <select class="form-select" id="generationId" name="generationId" required multiple
-                            onchange="updateSelection('generationId','selectedGenerationId')">
-                        % for sensor in sensors:
-                          <option value="{{sensor}}">{{sensor}}</option>
-                        % end
-                    </select>
-                    <div id="selectedGenerationId"></div>
-
-                    <h3>3. Selecciona el model i les configuracions</h3>
+                    <h3>2. Configura el model</h3>
 
                     <label for="model">Model:
                         <select name="model" id="modelSelect">
+                            <option value="AUTO">Automàtic</option>
                             <option value="SVR">Support Vector Regression (SVR)</option>
                             <option value="KNN">K-Nearest Neighbors (KNN)</option>
                             <option value="RF">Random Forest (RF)</option>
@@ -106,6 +101,7 @@
                     </label>
                     <div id="modelConfig"></div>
 
+
                     <label for="scaled">Escalat
                         <select name="scaled" id="scaled">
                             <option value="Standard">Standard</option>
@@ -113,6 +109,9 @@
                             <option value="MINMAX">MINMAX</option>
                         </select>
                     </label>
+
+                    <h3 style="margin-bottom: 1px;">3. Introdueix un Nom al model </h3>
+                    <p style="font-size: 14px; font-style: italic; margin-bottom: 5px;"> En cas de deixar en blanc el nom serà "newModel"</p>
 
                     <label for="modelName">Nom del Model
                         <input type="text" name="modelName" id="modelName" placeholder="Nom del Model">
@@ -183,7 +182,8 @@
             "activation": ["identity", "logistic", "tanh", "relu"],
             "solver": ["lbfgs", "sgd", "adam"],
             "learning_rate": ["constant", "invscaling", "adaptive"]
-        }
+        },
+        "AUTO":{}
     };
 
     function updateModelConfig(){

@@ -403,7 +403,7 @@ class Forecaster:
     def create_model(self, data, y, look_back={-1: [25, 48]},
                      extra_vars={'variables': ['Dia', 'Hora', 'Mes'], 'festius': ['ES', 'CT']},
                      colinearity_remove_level=0.9, feature_selection='Tree', algorithm='RF', params=None, escalat=None,
-                     max_time=None, filename='savedModel', meteo_data:pd.DataFrame = None,):
+                     max_time=None, filename='newModel', meteo_data:pd.DataFrame = None,):
         """
         Funció per crear, guardar i configurar el model de forecasting.
 

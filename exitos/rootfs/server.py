@@ -168,34 +168,36 @@ def submit_model():
                         config[key] = value
 
 
-        generation_sensor  = config.get("generationId")
-        consumption_sensor = config.get("consumptionId")
+        sensors_id = config.get("sensorsId")
         scaled = config.get("scaled")
         model_name = config.get("modelName")
 
-        config.pop("generationId")
-        config.pop("consumptionId")
+        config.pop("sensorsId")
         config.pop("scaled")
         config.pop("modelName")
 
         if model_name == "": model_name = "newModel"
 
-        generation_df = database.get_data_from_sensor(generation_sensor)
-        consumption_df = database.get_data_from_sensor(consumption_sensor)
+        sensors_df = database.get_data_from_sensor(sensors_id)
 
         logger.info(f"Selected model: {selected_model}, Config: {config}")
 
-        forecast.create_model(data=consumption_df,
-                              y='value',
-                              extra_vars={'variables': ['Dia', 'Hora', 'Mes'], 'festius': ['ES', 'CT']},
-                              colinearity_remove_level = 0.9,
-                              feature_selection = 'Tree',
-                              algorithm = selected_model,
-                              params = config,
-                              escalat= scaled,
-                              max_time = 300, #CANVIAR!!!!!
-                              filename = model_name,
-                              meteo_data = optimalScheduler.meteo_data)
+        if selected_model == "AUTO":
+            forecast.create_model(data=sensors_df,
+                                  y = 'value',
+                                  meteo_data = optimalScheduler.meteo_data)
+        else:
+            forecast.create_model(data=sensors_df,
+                                  y='value',
+                                  extra_vars={'variables': ['Dia', 'Hora', 'Mes'], 'festius': ['ES', 'CT']},
+                                  colinearity_remove_level = 0.9,
+                                  feature_selection = 'Tree',
+                                  algorithm = selected_model,
+                                  params = config,
+                                  escalat= scaled,
+                                  max_time = 100,
+                                  filename = model_name,
+                                  meteo_data = optimalScheduler.meteo_data)
         # forecast.create_model(data=generation_df, y='value', escalat="Standard", filename='Generation')
 
 

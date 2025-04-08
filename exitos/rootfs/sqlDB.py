@@ -380,19 +380,22 @@ class sqlDB():
         """
         Retorna la lat i long del home assistant
         """
-        response = get(self.base_url + "config", headers=self.headers)
-        config = pd.json_normalize(response.json())
+        try:
+            response = get(self.base_url + "config", headers=self.headers)
+            config = pd.json_normalize(response.json())
 
-        if 'latitude' in config.columns and 'longitude' in config.columns:
-            latitude = config['latitude'][0]
-            longitude = config['longitude'][0]
+            if 'latitude' in config.columns and 'longitude' in config.columns:
+                latitude = config['latitude'][0]
+                longitude = config['longitude'][0]
 
-            return latitude, longitude
-        else:
-            logger.error("Could not found the data in the response file")
-            logger.info(f"Available columns: {config.columns.tolist()}")
+                return latitude, longitude
+            else:
+                logger.error("Could not found the data in the response file")
+                logger.info(f"Available columns: {config.columns.tolist()}")
 
-            return -1
+                return -1
+        except Exception as e:
+            return f"Error! : {str(e)}"
 
 
 
