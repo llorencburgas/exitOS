@@ -6,7 +6,6 @@ import logging
 import os
 import glob
 
-
 logger = logging.getLogger("exitOS")
 
 
@@ -19,6 +18,11 @@ class Forecaster:
         self.debug = debug
         self.search_space_config_file = 'resources/search_space.conf'
         self.db = dict()
+
+        if "HASSIO_TOKEN" in os.environ:
+            self.models_filepath = "share/exitos/"
+        else:
+            self.models_filepath = "./share/exitos/"
 
 
     @staticmethod
@@ -38,10 +42,14 @@ class Forecaster:
         """
 
         ds = dataset.copy()
-        for i in range(0, len(ds.columns)):
-            if ds.columns[i] != 'timestamp':
+        shifted_columns = {}
+
+        for col in ds.columns:
+            if col != 'timestamp':
                 for j in range(look_back_start, look_back_end):
-                    ds[ds.columns[i] + '_' + str(j)] = ds[ds.columns[i]].shift(j)
+                    shifted_columns[f"{col}_{j}"] = ds[col].shift(j)
+
+        ds = pd.concat([ds, pd.DataFrame(shifted_columns, index=ds.index)], axis = 1)
 
         return ds
 
@@ -483,7 +491,7 @@ class Forecaster:
         model_select = self.db.get('model_select', []) #intenta obtenir model_select, si no existeix retorna []
         scaler = self.db['scaler']
         colinearity_remove_level_to_drop = self.db.get('colinearity_remove_level_to_drop', [])
-        extra_vars = self.db.get('extra_vars', [])
+        extra_vars = self.db.get('extra_vars', {})
         look_back = self.db.get('look_back', {-1:[25,48]})
 
         # PAS 2 - Aplicar el windowing
@@ -519,7 +527,8 @@ class Forecaster:
         # PAS 9 - Fer la predicció
         out = pd.DataFrame(model.predict(df), columns=[y])
 
-        return out
+        real_values_to_return = self.db['initial_data']['value'].tail(len(out)).tolist()
+        return out, real_values_to_return
 
 
 
@@ -530,13 +539,13 @@ class Forecaster:
         Guarda el model en un arxiu .pkl i l'elimina de la base de daades interna del forecast (self.db)
         :param model_filename: Nom que es vol donar al fitxer, si és nul serà "savedModel"
         """
-        joblib.dump(self.db, "/share/exitos/"+ model_filename + '.pkl')
-        logger.warning(glob.glob("../share/exitos/*"))
+        joblib.dump(self.db, self.models_filepath + model_filename + '.pkl')
+        logger.warning(glob.glob(self.models_filepath + "*"))
         logger.info(f"Model guardat al fitxer {model_filename}.pkl")
 
         self.db.clear()
 
     def load_model(self, model_filename):
-        self.db = joblib.load('/share/exitos/' + model_filename )
+        self.db = joblib.load(self.models_filepath + model_filename )
         logger.info(f"Model carregat del fitxer {model_filename}")
 

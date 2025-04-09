@@ -11,25 +11,38 @@
     <div id="chart"></div>
 
     <script>
-        const timestamps = {{!timestamps}};
-        const predictions = {{!predictions}};
+    const timestamps = {{!timestamps}};
+    const predictions = {{!predictions}};
+    const realValues = {{!real_values}};
 
-        const trace = {
-            x: timestamps,
-            y: predictions,
-            mode: 'lines+markers',
-            name: 'Predicció',
-            line: { color: 'orange' }
-        };
+    const tracePrediction = {
+        x: timestamps,
+        y: predictions,
+        mode: 'lines+markers',
+        name: 'Predicció',
+        line: { color: 'green' }
+    };
 
-        const layout = {
-            title: 'Predicció d\'Energia',
-            xaxis: { title: 'Temps' },
-            yaxis: { title: 'Consum (kW)' }
-        };
+    const traceReal = {
+        x: timestamps,
+        y: realValues,
+        mode: 'lines+markers',
+        name: 'Dades Reals',
+        line: {
+            color: 'red',
+            dash: 'dot'  // Dotted line
+        }
+    };
 
-        Plotly.newPlot('chart', [trace], layout);
-    </script>
+    const layout = {
+        title: 'Predicció vs Dades Reals',
+        xaxis: { title: 'Temps' },
+        yaxis: { title: 'Consum (kW)' }
+    };
+
+    Plotly.newPlot('chart', [tracePrediction, traceReal], layout);
+</script>
+
 
     <a href="/forecast">← Tornar a la pàgina de forecast</a>
 </body>

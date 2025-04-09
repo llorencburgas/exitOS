@@ -51,6 +51,8 @@ def predict_consumption_production(meteo_data:pd.DataFrame, model_name:str='newM
 
     prediction = forecaster.forecast(data, 'value', forecaster.db['model'], meteo_data)
 
+    return prediction
+
 
 
 

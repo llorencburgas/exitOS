@@ -30,7 +30,7 @@ PORT = 55023
 #INICIACIÓ DE L'APLICACIÓ I LA BASE DE DADES
 app = Bottle()
 database = db.sqlDB()
-# database.update_database("all")
+database.update_database("all")
 forecast = forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler()
 
@@ -211,7 +211,7 @@ def submit_model():
 
 @app.get('/forecast')
 def forecast_page():
-    models_saved = [os.path.basename(f) for f in glob.glob("/share/exitos/*.pkl")]
+    models_saved = [os.path.basename(f) for f in glob.glob(forecast.models_filepath + "*.pkl")]
 
     logger.warning(f"Forecast models saved: {models_saved}")
     return template('./www/forecast.html', models=models_saved)
@@ -220,21 +220,19 @@ def forecast_page():
 def submit_forecast():
     try:
         selected_forecast = request.forms.get("models")
-        forecast_df = ForecatManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data, model_name=selected_forecast)
+        forecast_df, real_values = ForecatManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data, model_name=selected_forecast)
 
-        forecast_df.reset_index(inplace=True)
-        timestamps = forecast_df['timestamp'].astype(str).tolist(),
+        start_time = datetime.now().replace(minute=0, second=0, microsecond=0)
+        timestamps = [(start_time + timedelta(hours=i)).strftime("%Y-%m-%d %H:%M") for i in range(len(forecast_df))]
         predictions = forecast_df['value'].tolist()
 
 
         return template('./www/forecast_results.html',
                         model=selected_forecast,
                         timestamps=timestamps,
-                        predictions=predictions
+                        predictions=predictions,
+                        real_values=real_values
         )
-
-
-
     except Exception as e:
         return f"Error! : {str(e)} \n ARGS {e.args}"
 
