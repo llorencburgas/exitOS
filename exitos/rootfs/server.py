@@ -220,8 +220,21 @@ def forecast_page():
 def submit_forecast():
     try:
         selected_forecast = request.forms.get("models")
+        forecast_df = ForecatManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data, model_name=selected_forecast)
 
-        forecast = ForecatManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data, model_name=selected_forecast)
+        forecast_df.reset_index(inplace=True)
+        timestamps = forecast_df['timestamp'].astype(str).tolist(),
+        predictions = forecast_df['value'].tolist()
+
+
+        return template('./www/forecast_results.html',
+                        model=selected_forecast,
+                        timestamps=timestamps,
+                        predictions=predictions
+        )
+
+
+
     except Exception as e:
         return f"Error! : {str(e)} \n ARGS {e.args}"
 

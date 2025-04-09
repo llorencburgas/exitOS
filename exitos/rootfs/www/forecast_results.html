@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>Resultats del Forecast</title>
+    <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
+</head>
+<body>
+    <h1>Resultats del Forecast per al model: {{model}}</h1>
+
+    <div id="chart"></div>
+
+    <script>
+        const timestamps = {{!timestamps}};
+        const predictions = {{!predictions}};
+
+        const trace = {
+            x: timestamps,
+            y: predictions,
+            mode: 'lines+markers',
+            name: 'Predicció',
+            line: { color: 'orange' }
+        };
+
+        const layout = {
+            title: 'Predicció d\'Energia',
+            xaxis: { title: 'Temps' },
+            yaxis: { title: 'Consum (kW)' }
+        };
+
+        Plotly.newPlot('chart', [trace], layout);
+    </script>
+
+    <a href="/forecast">← Tornar a la pàgina de forecast</a>
+</body>
+</html>
