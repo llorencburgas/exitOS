@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Control energètic eXIT</title>
-    <link rel="stylesheet" href="resources/mainStyle.css">
+    <link rel="stylesheet" href="../resources/mainStyle.css">
     <link rel="icon" type="image/x-icon" href="static/favicon.ico">
 <!--    <link rel="stylesheet" href="../images/mainStyle.css">-->
 
@@ -53,6 +53,17 @@
         label{
             margin-bottom: 5px;
         }
+        .container{
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+        }
+        .content-section {
+            flex: 1;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
     </style>
 </head>
 <body>
@@ -61,7 +72,7 @@
             <nav class="nav">
                 <div class="navbar-container">
                     <a href="https://exit.udg.edu/ca/" class="nav-image-link" target="_blank">
-                        <img src="./static/exitlogo.png" alt="Exit research group logo">
+                        <img src="../images/exitlogo.png" alt="Exit research group logo">
                     </a>
                     <a href="./" class="nav-link"> <i class="fa-solid fa-house"></i> Inici</a>
                     <a href="./sensors" class="nav-link"> <i class="fa-solid fa-square-check"></i> Sensors</a>
@@ -74,6 +85,7 @@
 
 
         <div class="container">
+            <!--  CREAR EL MODEL  -->
             <div class="content-section">
                 <h2> Creació del Model </h2>
                 <p> Instruccions a seguir per l'usuari</p>
@@ -131,6 +143,28 @@
                     <div class="spinner"></div>
                     <p id="loadingText">Processant Forecast. Això pot tardar uns minuts....</p>
                 </div>
+            </div>
+
+            <!--  FORECAST   -->
+            <div class="content-section">
+                <form action ="./submit-forecast" method="POST" id="forecast-form">
+                    <h1>FORECAST</h1>
+
+                    <h3> 1. Selecciona els sensors</h3>
+                    <select class="form-select" id="models" name="models" required
+                            onchange="updateSelection('models', 'selectedModel')"
+                            style="width: 100%">
+
+                        % for model in models:
+                          <option class="formOption" value="{{model}}">{{model}}</option>
+                        % end
+                    </select>
+                    <div id="selectedModel"> {{models[0]}} </div>
+
+                    <button id="fetch-data" type="submit"> Realitzar Forecast </button>
+
+
+                </form>
             </div>
         </div>
 
@@ -220,8 +254,18 @@
         }
     }
 
-    document.getElementById('modelSelect').addEventListener('change', updateModelConfig);
-    updateModelConfig();
+    document.getElementById('models').addEventListener('change', function(){
+        const selectedModel = this.value;
+
+        fetch('get_model_config/${selectedModel}')
+            .then(response => response.text())
+            .then(data => {
+                const lines = data.split('\n');
+                const config = {};
+
+            })
+    })
+
 
 </script>
 

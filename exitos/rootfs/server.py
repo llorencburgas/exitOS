@@ -1,6 +1,9 @@
 
 import os
+import pickle
 import threading
+
+import joblib
 
 import sqlDB as db
 import schedule
@@ -147,7 +150,12 @@ def update_sensors():
 @app.get('/model')
 def create_model_page():
     sensors_id = database.get_all_saved_sensors_id()
-    return template('./www/model.html', sensors=sensors_id)
+    models_saved = [os.path.basement(f)
+                    for f in glob.glob(forecast.models_filepath + "*.pkl")]
+
+    return template('./www/model.html',
+                    sensors = sensors_id,
+                    models = models_saved)
 
 @app.route('/submit-model', method='POST')
 def submit_model():
@@ -191,6 +199,7 @@ def submit_model():
                                   meteo_data = optimalScheduler.meteo_data)
         else:
             forecast.create_model(data=sensors_df,
+                                  sensors_id = sensors_id,
                                   y='value',
                                   extra_vars={'variables': ['Dia', 'Hora', 'Mes'], 'festius': ['ES', 'CT']},
                                   colinearity_remove_level = 0.9,
@@ -209,12 +218,6 @@ def submit_model():
     except Exception as e:
         return f"Error! : {str(e)}"
 
-@app.get('/forecast')
-def forecast_page():
-    models_saved = [os.path.basename(f) for f in glob.glob(forecast.models_filepath + "*.pkl")]
-
-    logger.warning(f"Forecast models saved: {models_saved}")
-    return template('./www/forecast.html', models=models_saved)
 
 @app.route('/submit-forecast', method='POST')
 def submit_forecast():
@@ -236,7 +239,28 @@ def submit_forecast():
     except Exception as e:
         return f"Error! : {str(e)} \n ARGS {e.args}"
 
+@app.route('/get_model_config/<model_name>')
+def get_model_config(model_name):
+    try:
+        model_path = os.path.join(forecast.models_filepath,f"{model_name}.pkl")
+        config = dict()
+        with open(model_path, 'rb') as f:
+            config = joblib.load(f)
 
+        response = ""
+        response += f"model = {config.get('model','')}\n"
+        response += f"scaler = {config.get('scaler','')}\n"
+        response += f"sensorsId = {config.get('sensorsId','')}\n"
+        response += f"model_select = {config.get('model_select','')}\n"
+
+        if "params" in config:
+            for k, v in config["params"].items():
+                response += f"{k} = {v}\n"
+
+        return response
+
+    except Exception as e:
+        return f"Error! : {str(e)}"
 
 
 
