@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Control energètic eXIT</title>
-    <link rel="stylesheet" href="../resources/mainStyle.css">
+    <link rel="stylesheet" href="resources/mainStyle.css">
     <link rel="icon" type="image/x-icon" href="static/favicon.ico">
 <!--    <link rel="stylesheet" href="../images/mainStyle.css">-->
 
@@ -72,13 +72,12 @@
             <nav class="nav">
                 <div class="navbar-container">
                     <a href="https://exit.udg.edu/ca/" class="nav-image-link" target="_blank">
-                        <img src="../images/exitlogo.png" alt="Exit research group logo">
+                        <img src="./static/exitlogo.png" alt="Exit research group logo">
                     </a>
                     <a href="./" class="nav-link"> <i class="fa-solid fa-house"></i> Inici</a>
                     <a href="./sensors" class="nav-link"> <i class="fa-solid fa-square-check"></i> Sensors</a>
                     <a href="./databaseView" class="nav-link"> <i class="fa-solid fa-database"></i> Base de Dades</a>
                     <a href="./model" class="nav-link"> <i class="fa-solid fa-poo"></i> Crear Model</a>
-                    <a href="./forecast" class="nav-link"> <i class="fa-solid fa-wand-magic-sparkles"></i> Forecast</a>
                 </div>
             </nav>
         </header>
@@ -97,7 +96,7 @@
                             onchange="updateSelection('sensorsId', 'selectedSensorsId')"
                             style="width: 100%">
 
-                        % for sensor in sensors:
+                        % for sensor in sensors_input:
                           <option value="{{sensor}}">{{sensor}}</option>
                         % end
                     </select>
@@ -106,7 +105,7 @@
 
                     <h3>2. Configura el model</h3>
 
-                    <label for="model">Model:
+                    <label for="model">Algorisme:
                         <select name="model" id="modelSelect">
                             <option value="AUTO">Automàtic</option>
                             <option value="SVR">Support Vector Regression (SVR)</option>
@@ -150,16 +149,17 @@
                 <form action ="./submit-forecast" method="POST" id="forecast-form">
                     <h1>FORECAST</h1>
 
-                    <h3> 1. Selecciona els sensors</h3>
+                    <h3> 1. Selecciona el model entrenat</h3>
                     <select class="form-select" id="models" name="models" required
                             onchange="updateSelection('models', 'selectedModel')"
                             style="width: 100%">
 
-                        % for model in models:
+                        <option class="formOption" value="none">Escull Un Model</option>
+                        % for model in models_input:
                           <option class="formOption" value="{{model}}">{{model}}</option>
                         % end
                     </select>
-                    <div id="selectedModel"> {{models[0]}} </div>
+                    <div id="selectedModel"> {{models_input[0]}} </div>
 
                     <button id="fetch-data" type="submit"> Realitzar Forecast </button>
 
@@ -182,8 +182,10 @@
 
     function updateSelection(selectId, displayId){
         const selectElement= document.getElementById(selectId);
-        const selectedOptions = Array.from(selectElement.selectedOptions).map(option => option.value);
-        document.getElementById(displayId).innerHTML = selectedOptions.length ? selectedOptions.join(', ') : 'Null Selection';
+        if(selectElement.value != "none"){
+            const selectedOptions = Array.from(selectElement.selectedOptions).map(option => option.value);
+            document.getElementById(displayId).innerHTML = selectedOptions.length ? selectedOptions.join(', ') : 'Null Selection';
+        }
     }
 
     const modelConfigs = {
@@ -226,7 +228,8 @@
         "AUTO":{}
     };
 
-    function updateModelConfig(){
+
+    function updateModelConfig(savedParams = null){
         const selectedModel = document.getElementById('modelSelect').value;
         const configDiv = document.getElementById('modelConfig');
         configDiv.innerHTML = '';
@@ -234,37 +237,92 @@
         if(modelConfigs[selectedModel]){
             Object.keys(modelConfigs[selectedModel]).forEach(key => {
                 let label = document.createElement('label');
-                label.innerText = key + ": "
+                label.innerText = key + ": ";
                 configDiv.appendChild(label);
 
                 let select = document.createElement('select');
                 select.name = key;
+
                 modelConfigs[selectedModel][key].forEach(option => {
                     let optionElement = document.createElement('option');
                     optionElement.value = option;
+                    optionElement.innerText = option === null ? 'Null' : option;
 
-                    if(option === null)optionElement.innerText = "Null";
-                    else optionElement.innerText = option;
+                    if(savedParams && savedParams[key] === option){
+                        optionElement.selected = true;
+                    }
 
                     select.appendChild(optionElement);
                 });
+
                 configDiv.appendChild(select);
                 configDiv.appendChild(document.createElement('br'));
             });
         }
     }
 
-    document.getElementById('models').addEventListener('change', function(){
+    function updateModelSelection(modelPath){
+     fetch('get_model_config/' + modelPath)
+        .then(response => response.text())
+        .then(data => {
+            const lines = data.split('\n');
+            const config = {};
+
+            console.log(config);
+            console.log("DATA INICIAL: \n" + data)
+
+            lines.forEach(line => {
+                const [key, value] = line.split("=");
+                if (key && value !== undefined) {
+                    config[key.trim()] = value.trim();
+                }
+            });
+
+            console.log(config);
+
+            document.getElementById("modelSelect").value = config["algorithm"];
+            document.getElementById("scaled").value = config["scaler"];
+            document.getElementById("modelName").value = modelPath;
+
+            updateModelConfig(config);
+            for (const [key, value] of Object.entries(config)) {
+                const select = document.querySelector(`select[name="${key}"]`);
+                if (select) {
+                    select.value = value;
+                }
+            }
+
+            // Fill sensors (if single select, just select it)
+            const sensorSelect = document.getElementById("sensorsId");
+            const sensorOptions = Array.from(sensorSelect.options);
+            sensorOptions.forEach(opt => {
+                opt.selected = config["sensorsId"] && config["sensorsId"].includes(opt.value);
+            });
+            updateSelection("sensorsId", "selectedSensorsId");
+
+
+        });
+    }
+
+    // document.addEventListener('DOMContentLoaded', function() {
+    //     document.getElementById('modelSelect').value = savedModel;
+    //     updateModelConfig(savedParams);  // ← prefill the UI
+    // });
+
+    document.getElementById('modelSelect').addEventListener('change', updateModelConfig);
+    updateModelConfig();
+
+    document.getElementById('models').addEventListener('change', function() {
         const selectedModel = this.value;
+        if(selectedModel.value !== "none"){
+            const modelPath = selectedModel.replace(".pkl", "")
+            updateModelSelection(modelPath)
+        }
 
-        fetch('get_model_config/${selectedModel}')
-            .then(response => response.text())
-            .then(data => {
-                const lines = data.split('\n');
-                const config = {};
-
-            })
     })
+
+
+
 
 
 </script>

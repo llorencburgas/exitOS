@@ -412,6 +412,7 @@ class Forecaster:
                      extra_vars={'variables': ['Dia', 'Hora', 'Mes'], 'festius': ['ES', 'CT']},
                      colinearity_remove_level=0.9, feature_selection='Tree', algorithm='RF', params=None, escalat=None,
                      max_time=None, filename='newModel', meteo_data:pd.DataFrame = None,):
+
         """
         Funció per crear, guardar i configurar el model de forecasting.
 
@@ -467,7 +468,9 @@ class Forecaster:
 
         #PAS 9 - Guardar el model
         self.db['model'] = model
+        self.db['algorithm'] = algorithm
         self.db['scaler'] = scaler
+        self.db['scaler_name'] = escalat
         self.db['model_select'] = model_select
         self.db['colinearity_remove_level_to_drop'] = colinearity_remove_level_to_drop
         self.db['extra_vars'] = extra_vars

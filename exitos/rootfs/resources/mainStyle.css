@@ -67,7 +67,7 @@ main{
 
 /*HERO*/
 .hero-section{
-    background: url('../static/community.webp') no-repeat center center/cover;
+    background: url('static/community.webp') no-repeat center center/cover;
     height: 60vh;
     display: flex;
     align-items: center;
@@ -114,7 +114,7 @@ main{
     }
 
     .content-section{
-    display: grid;
+        display: grid;
         place-items: center;
     }
 }

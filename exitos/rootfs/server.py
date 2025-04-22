@@ -150,12 +150,12 @@ def update_sensors():
 @app.get('/model')
 def create_model_page():
     sensors_id = database.get_all_saved_sensors_id()
-    models_saved = [os.path.basement(f)
+    models_saved = [os.path.basename(f)
                     for f in glob.glob(forecast.models_filepath + "*.pkl")]
 
     return template('./www/model.html',
-                    sensors = sensors_id,
-                    models = models_saved)
+                    sensors_input = sensors_id,
+                    models_input = models_saved)
 
 @app.route('/submit-model', method='POST')
 def submit_model():
@@ -194,6 +194,7 @@ def submit_model():
 
         if selected_model == "AUTO":
             forecast.create_model(data=sensors_df,
+                                  sensors_id = sensors_id,
                                   y = 'value',
                                   filename = model_name,
                                   meteo_data = optimalScheduler.meteo_data)
@@ -211,8 +212,6 @@ def submit_model():
                                   filename = model_name,
                                   meteo_data = optimalScheduler.meteo_data)
         # forecast.create_model(data=generation_df, y='value', escalat="Standard", filename='Generation')
-
-
 
         return f"Selected Model: {selected_model}, Config: {json.dumps(config)}"
     except Exception as e:
@@ -247,17 +246,16 @@ def get_model_config(model_name):
         with open(model_path, 'rb') as f:
             config = joblib.load(f)
 
-        response = ""
-        response += f"model = {config.get('model','')}\n"
-        response += f"scaler = {config.get('scaler','')}\n"
-        response += f"sensorsId = {config.get('sensorsId','')}\n"
-        response += f"model_select = {config.get('model_select','')}\n"
+        response_config = ""
+        response_config += f"algorithm = {config.get('algorithm','')}\n"
+        response_config += f"scaler = {config.get('scaler_name','')}\n"
+        response_config += f"sensorsId = {config.get('sensors_id','')}\n"
 
         if "params" in config:
             for k, v in config["params"].items():
-                response += f"{k} = {v}\n"
+                response_config += f"{k} = {v}\n"
 
-        return response
+        return response_config
 
     except Exception as e:
         return f"Error! : {str(e)}"
