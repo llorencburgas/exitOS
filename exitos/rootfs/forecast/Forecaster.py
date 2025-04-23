@@ -290,7 +290,7 @@ class Forecaster:
         return [model_select, X_new, y]
 
 
-    def Model(self, X, y, algorithm="RF", params=None, max_time=None):
+    def Model(self, X, y, algorithm=None, params=None, max_time=None):
         """
         Realitza un randomized search per trovar una bona configuració de l'algorisme indicat, o directament, es crea amb els paràmetres indicats.
         :param X:
@@ -343,6 +343,9 @@ class Forecaster:
                 #ens passen només 1
                 algorithm_list = [algorithm]
 
+
+            best_overall_model = None
+            best_overall_score = float("inf")
             #per cada algorisme a probar....
             for i in range(len(algorithm_list)):
                 random_grid = d[algorithm_list[i]][0]
@@ -373,9 +376,15 @@ class Forecaster:
                         j = 0
 
                     best_model = None
+                    best_mae = float("inf")
 
                     for params in sampler:
-                        regr = forecast_algorithm(**params)
+                        try:
+                            regr = forecast_algorithm(**params)
+                        except Exception as e:
+                            logger.warning(f"Failed with params: {params}")
+                            continue
+
                         pred_test = regr.fit(X_train, y_train).predict(X_test)
                         act = mean_absolute_error(y_test, pred_test)
                         if best_mae > act:
@@ -394,23 +403,22 @@ class Forecaster:
 
                 except Exception as e:
                     logger.warning(f"WARNING: Algorisme {algorithm_list[i]},  -- Abortat per Motiu: {str(e)}")
+                    continue
 
                 if best_model is not None:
                     best_model.fit(X, y)
-                    model = best_model
-                    score = best_mae
-                else:
-                    model = None
-                    score = np.inf
+                    if best_mae < best_overall_score:
+                        best_overall_model = best_model
+                        best_overall_score = best_mae
 
-                return [model, score]
+            return [best_overall_model, best_overall_score]
         else:
             raise ValueError('Paràmetres en format incorrecte!')
 
 
     def create_model(self, data, sensors_id,  y, look_back={-1: [25, 48]},
                      extra_vars={'variables': ['Dia', 'Hora', 'Mes'], 'festius': ['ES', 'CT']},
-                     colinearity_remove_level=0.9, feature_selection='Tree', algorithm='RF', params=None, escalat=None,
+                     colinearity_remove_level=0.9, feature_selection='Tree', algorithm=None, params=None, escalat=None,
                      max_time=None, filename='newModel', meteo_data:pd.DataFrame = None,):
 
         """
@@ -467,8 +475,14 @@ class Forecaster:
         [model, score] = self.Model(X_new, y_new.values, algorithm, params, max_time=max_time)
 
         #PAS 9 - Guardar el model
+        if algorithm is None:
+            self.db['max_time'] = max_time
+            self.db['algorithm'] = "AUTO"
+        else:
+            self.db['params'] = params
+            self.db['algorithm'] = algorithm
+
         self.db['model'] = model
-        self.db['algorithm'] = algorithm
         self.db['scaler'] = scaler
         self.db['scaler_name'] = escalat
         self.db['model_select'] = model_select
@@ -478,7 +492,6 @@ class Forecaster:
         self.db['score'] = score
         self.db['objective'] = nomy
         self.db['initial_data'] = data
-        self.db['params'] = params
         self.db['sensors_id'] = sensors_id
 
         self.save_model(filename)

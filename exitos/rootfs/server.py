@@ -161,7 +161,6 @@ def create_model_page():
 def submit_model():
     try:
         selected_model = request.forms.get("model")
-        # sensors_id = database.get_all_saved_sensors_id()
         config = {}
 
         keys = request.forms.keys()
@@ -186,7 +185,9 @@ def submit_model():
         config.pop("scaled")
         config.pop("modelName")
 
-        if model_name == "": model_name = "newModel"
+        if model_name == "":
+            aux = sensors_id.split('.')
+            model_name = aux[1]
 
         sensors_df = database.get_data_from_sensor(sensors_id)
 
@@ -196,6 +197,8 @@ def submit_model():
             forecast.create_model(data=sensors_df,
                                   sensors_id = sensors_id,
                                   y = 'value',
+                                  escalat = scaled,
+                                  max_time = config['max_time'],
                                   filename = model_name,
                                   meteo_data = optimalScheduler.meteo_data)
         else:
@@ -208,7 +211,6 @@ def submit_model():
                                   algorithm = selected_model,
                                   params = config,
                                   escalat= scaled,
-                                  max_time = 100,
                                   filename = model_name,
                                   meteo_data = optimalScheduler.meteo_data)
         # forecast.create_model(data=generation_df, y='value', escalat="Standard", filename='Generation')
@@ -254,7 +256,8 @@ def get_model_config(model_name):
         if "params" in config:
             for k, v in config["params"].items():
                 response_config += f"{k} = {v}\n"
-
+        if "max_time" in config:
+            response_config += f"max_time = {config['max_time']}\n"
         return response_config
 
     except Exception as e:

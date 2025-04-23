@@ -121,6 +121,7 @@
 
                     <label for="scaled">Escalat
                         <select name="scaled" id="scaled">
+                            <option value="None">None</option>
                             <option value="Standard">Standard</option>
                             <option value="Robust">Robust</option>
                             <option value="MINMAX">MINMAX</option>
@@ -225,7 +226,9 @@
             "solver": ["lbfgs", "sgd", "adam"],
             "learning_rate": ["constant", "invscaling", "adaptive"]
         },
-        "AUTO":{}
+        "AUTO":{
+            "max_time": [100, 300, 600, 1200]
+        }
     };
 
 
@@ -262,6 +265,7 @@
     }
 
     function updateModelSelection(modelPath){
+        console.log("MODEL NAME: " + modelPath);
      fetch('get_model_config/' + modelPath)
         .then(response => response.text())
         .then(data => {
