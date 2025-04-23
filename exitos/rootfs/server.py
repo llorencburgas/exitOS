@@ -188,6 +188,7 @@ def submit_model():
         if model_name == "":
             aux = sensors_id.split('.')
             model_name = aux[1]
+        if scaled == 'None': scaled = None
 
         sensors_df = database.get_data_from_sensor(sensors_id)
 
