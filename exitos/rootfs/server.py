@@ -234,9 +234,9 @@ def submit_forecast():
 
         return template('./www/forecast_results.html',
                         model=selected_forecast,
-                        timestamps=timestamps,
-                        predictions=predictions,
-                        real_values=real_values
+                        timestamps=json.dumps(timestamps),
+                        predictions=json.dumps(predictions),
+                        real_values=json.dumps(real_values)
         )
     except Exception as e:
         return f"Error! : {str(e)} \n ARGS {e.args}"
