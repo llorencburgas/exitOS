@@ -168,13 +168,26 @@ def submit_model():
             if key != "model":
                 value = request.forms.get(key)
 
-                if value.isdigit():
-                    config[key] = int(value)
+                value = value.strip().lower()
+
+                if value in ["true", "false", "null", "none"]:
+                    if value == "true": config[key] = True
+                    elif value == "false": config[key] = False
+                    else: config[key] = None
+                elif value.isdigit(): config[key] = int(value)
                 else:
                     try:
                         config[key] = float(value)
                     except ValueError:
                         config[key] = value
+
+                # if value.isdigit():
+                #     config[key] = int(value)
+                # else:
+                #     try:
+                #         config[key] = float(value)
+                #     except ValueError:
+                #         config[key] = value
 
 
         sensors_id = config.get("sensorsId")
@@ -230,6 +243,8 @@ def submit_forecast():
         start_time = datetime.now().replace(minute=0, second=0, microsecond=0)
         timestamps = [(start_time + timedelta(hours=i)).strftime("%Y-%m-%d %H:%M") for i in range(len(forecast_df))]
         predictions = forecast_df['value'].tolist()
+
+        logger.info(f"Forecast realitzat correctament")
 
 
         return template('./www/forecast_results.html',
