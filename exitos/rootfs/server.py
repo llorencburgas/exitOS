@@ -190,6 +190,8 @@ def submit_model():
         config.pop("sensorsId")
         config.pop("scaled")
         config.pop("modelName")
+        config.pop('model')
+        config.pop('extraSensorsId')
 
         if "meteoData" in config:
             meteo_data = True
@@ -262,7 +264,7 @@ def submit_forecast():
                         model=selected_forecast,
                         timestamps=json.dumps(timestamps),
                         predictions=json.dumps(predictions),
-                        real_values=json.dumps(real_values)
+                        real_values=json.dumps(real_values.tolist())
         )
     except Exception as e:
         return f"Error! : {str(e)} \n ARGS {e.args}"

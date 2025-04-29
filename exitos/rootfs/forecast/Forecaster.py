@@ -137,7 +137,7 @@ class Forecaster:
 
 
     @staticmethod
-    def timestamp_to_attrs(dad, extra_vars, meteo_data:pd.DataFrame):
+    def timestamp_to_attrs(dad, extra_vars):
         """
         Afageix columnes derivades de l'índex temporal al DataFreame 'dad' segons les opcions indicades en 'extra_vars'. \n'
         :param dad: Dataframe amb un índex timestamp
@@ -301,6 +301,8 @@ class Forecaster:
 
         import json
 
+        if 'extraSensorsId' in params: params.pop('extraSensorsId')
+        if 'model' in params: params.pop('model')
 
         with open(self.search_space_config_file) as json_file:
             d = json.load(json_file)
@@ -429,6 +431,7 @@ class Forecaster:
             meteo['timestamp'] = pd.to_datetime(meteo['timestamp']).dt.tz_localize(None).dt.floor('h')
             meteo = meteo.drop_duplicates(subset=['timestamp'])
             merged_data = pd.merge(sensor, meteo, on='timestamp', how='inner')
+        else: merged_data = sensor
 
         if extra_sensors is not None:
             aux = pd.DataFrame()
@@ -474,14 +477,14 @@ class Forecaster:
 
         """
         #PREP PAS 0 - preparar els df de meteo-data i dades extra
-        self.prepare_dataframes(data, meteo_data, extra_sensors_df)
-        mergedData = pd.merge(data, meteo_data, on='timestamp', how='inner')
+        merged_data = self.prepare_dataframes(data, meteo_data, extra_sensors_df)
+        merged_data.dropna(inplace=True, axis=0)
 
         #PAS 1 - Fer el Windowing
-        dad = self.do_windowing(mergedData, look_back)
+        dad = self.do_windowing(merged_data, look_back)
 
         #PAS 2 - Crear variable dia_setmana, hora, mes i meteoData
-        dad = self.timestamp_to_attrs(dad, extra_vars, meteo_data)
+        dad = self.timestamp_to_attrs(dad, extra_vars)
 
         #PAS 3 - Treure Colinearitats
         [dad, to_drop] = self.colinearity_remove(dad, y, level=colinearity_remove_level)
@@ -525,13 +528,15 @@ class Forecaster:
         self.db['objective'] = nomy
         self.db['initial_data'] = data
         self.db['sensors_id'] = sensors_id
+        self.db['extra_sensors'] = extra_sensors_df
+        self.db['meteo_data_is_selected'] = (meteo_data if meteo_data is None else True)
 
         self.save_model(filename)
 
         if self.debug:
             logger.debug('Model guardat! Score: ' + str(score))
 
-    def forecast(self, data, y, model, meteo_data):
+    def forecast(self, data, y, model):
         """
 
         :return:
@@ -549,7 +554,7 @@ class Forecaster:
         df = self.do_windowing(data, look_back)
 
         # PAS 3 - Afegir variables derivades de l'índex temporal {dia, hora, mes, ...}
-        df = self.timestamp_to_attrs(df, extra_vars, meteo_data)
+        df = self.timestamp_to_attrs(df, extra_vars)
 
         # PAS 4 - Eliminar colinearitats
         if colinearity_remove_level_to_drop:
@@ -578,7 +583,7 @@ class Forecaster:
         # PAS 9 - Fer la predicció
         out = pd.DataFrame(model.predict(df), columns=[y])
 
-        real_values_to_return = self.db['initial_data']['value'].tail(len(out)).tolist()
+        real_values_to_return = data['value']
         return out, real_values_to_return
 
 

@@ -36,21 +36,20 @@ def predict_consumption_production(meteo_data:pd.DataFrame, model_name:str='newM
     forecaster = forecast.Forecaster(debug=True)
     forecaster.load_model(model_filename=model_name)
     initial_data = forecaster.db['initial_data']
+    meteo_data_boolean = forecaster.db['meteo_data_is_selected']
+    if not meteo_data_boolean: meteo_data = None
+    extra_sensors_df = forecaster.db['extra_sensors']
 
-    meteo_data['timestamp'] = pd.to_datetime(meteo_data['timestamp']).dt.tz_localize(None).dt.floor('h')
-    initial_data['timestamp'] = pd.to_datetime(initial_data['timestamp']).dt.tz_localize(None).dt.floor('h')
+    data = forecaster.prepare_dataframes(initial_data, meteo_data, extra_sensors_df)
 
-    print(meteo_data['timestamp'].head())
-    print(initial_data['timestamp'].head())
-
-    data = pd.merge(initial_data, meteo_data, on=['timestamp'], how='inner')
     data = data.set_index('timestamp')
     data.index = pd.to_datetime(data.index)
+    data.dropna(inplace=True, axis=0)
 
 
-    prediction = forecaster.forecast(data, 'value', forecaster.db['model'], meteo_data)
+    prediction , real_values = forecaster.forecast(data, 'value', forecaster.db['model'])
 
-    return prediction
+    return prediction, real_values
 
 
 
