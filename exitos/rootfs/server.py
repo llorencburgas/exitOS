@@ -162,12 +162,12 @@ def create_model_page():
 def submit_model():
     try:
         selected_model = request.forms.get("model")
-        extra_sensors_id = request.forms.getall("extraSensorsId")
+        extra_sensors_id = request.forms.getall("extraSensorsId") if request.forms.getall("extraSensorsId") else None
         config = {}
 
         keys = request.forms.keys()
         for key in request.forms.keys():
-            if key != "model" or key != "extraSensorsId":
+            if key != "model" or key != "extraSensorsId" or key != 'extraSensorsId':
                 value = request.forms.get(key)
                 value = value.strip().lower()
 
@@ -191,7 +191,6 @@ def submit_model():
         config.pop("scaled")
         config.pop("modelName")
         config.pop('model')
-        config.pop('extraSensorsId')
 
         if "meteoData" in config:
             meteo_data = True

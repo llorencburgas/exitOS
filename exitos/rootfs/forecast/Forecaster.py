@@ -233,17 +233,17 @@ class Forecaster:
         scaler = None
 
         if input_scaler is not None:
-            if input_scaler == 'MINMAX':
+            if input_scaler == 'minmax':
                 from sklearn.preprocessing import MinMaxScaler
                 scaler = MinMaxScaler()
                 scaler.fit(data)
                 dad = scaler.transform(dad)
-            elif input_scaler == 'Robust':
+            elif input_scaler == 'robust':
                 from sklearn.preprocessing import RobustScaler
                 scaler = RobustScaler()
                 scaler.fit(data)
                 dad = scaler.transform(data)
-            elif input_scaler == 'Standard':
+            elif input_scaler == 'standard':
                 from sklearn.preprocessing import StandardScaler
                 scaler = StandardScaler()
                 scaler.fit(data)
