@@ -475,7 +475,7 @@ class Forecaster:
         """
         #PREP PAS 0 - preparar els df de meteo-data i dades extra
         merged_data = self.prepare_dataframes(data, meteo_data, extra_sensors_df)
-        merged_data.dropna(inplace=True, axis=0)
+        merged_data.bfill(inplace=True)
 
         #PAS 1 - Fer el Windowing
         dad = self.do_windowing(merged_data, look_back)
@@ -487,9 +487,9 @@ class Forecaster:
         [dad, to_drop] = self.colinearity_remove(dad, y, level=colinearity_remove_level)
         colinearity_remove_level_to_drop = to_drop
 
-        #PAS 4 - Treure NaN
+        # PAS 4 - Treure NaN
         dad.replace([np.inf, -np.inf], np.nan, inplace=True)
-        X = dad.dropna()
+        X = dad.bfill()
 
         #PAS 5 - Desfer el dataset i guardar matrius X i y
         nomy = y
@@ -566,12 +566,13 @@ class Forecaster:
 
         # PAS 6 - Elinimar els NaN
         if df.dropna().any().any():
-            df = df.dropna()
+            df.bfill(inplace=True)
 
         # PAS 7 - Escalar les dades
         if scaler:
-            # df.columns = [col.replace('value', 'state') for col in df.columns]
+            #df.columns = [col.replace('value', 'state') for col in df.columns]
             df = pd.DataFrame(scaler.transform(df), index=df.index, columns=df.columns)
+
 
         # PAS 8 - Seleccionar característiques a usar segons el selector del model
         if model_select:

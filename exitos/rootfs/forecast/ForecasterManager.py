@@ -44,7 +44,7 @@ def predict_consumption_production(meteo_data:pd.DataFrame, model_name:str='newM
 
     data = data.set_index('timestamp')
     data.index = pd.to_datetime(data.index)
-    data.dropna(inplace=True, axis=0)
+    data.bfill(inplace=True)
 
 
     prediction , real_values = forecaster.forecast(data, 'value', forecaster.db['model'])
