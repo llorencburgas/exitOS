@@ -2,6 +2,7 @@
 import os
 import pickle
 import threading
+import traceback
 
 import joblib
 
@@ -161,13 +162,13 @@ def create_model_page():
 def submit_model():
     try:
         selected_model = request.forms.get("model")
+        extra_sensors_id = request.forms.getall("extraSensorsId")
         config = {}
 
         keys = request.forms.keys()
         for key in request.forms.keys():
-            if key != "model":
+            if key != "model" or key != "extraSensorsId":
                 value = request.forms.get(key)
-
                 value = value.strip().lower()
 
                 if value in ["true", "false", "null", "none"]:
@@ -181,14 +182,6 @@ def submit_model():
                     except ValueError:
                         config[key] = value
 
-                # if value.isdigit():
-                #     config[key] = int(value)
-                # else:
-                #     try:
-                #         config[key] = float(value)
-                #     except ValueError:
-                #         config[key] = value
-
 
         sensors_id = config.get("sensorsId")
         scaled = config.get("scaled")
@@ -198,10 +191,26 @@ def submit_model():
         config.pop("scaled")
         config.pop("modelName")
 
+        if "meteoData" in config:
+            meteo_data = True
+            config.pop("meteoData")
+        else:
+            meteo_data = False
+
         if model_name == "":
             aux = sensors_id.split('.')
             model_name = aux[1]
         if scaled == 'None': scaled = None
+
+        if len(extra_sensors_id) == 0: extra_sensors_id = None
+        elif len(extra_sensors_id) == 1 and extra_sensors_id[0] == "None": extra_sensors_id = None
+        else:
+            if "None" in extra_sensors_id: extra_sensors_id.remove('None')
+            extra_sensors_df = {}
+            for s in extra_sensors_id:
+                aux = database.get_data_from_sensor(s)
+                extra_sensors_df[s] = aux
+
 
         sensors_df = database.get_data_from_sensor(sensors_id)
 
@@ -214,7 +223,8 @@ def submit_model():
                                   escalat = scaled,
                                   max_time = config['max_time'],
                                   filename = model_name,
-                                  meteo_data = optimalScheduler.meteo_data)
+                                  meteo_data = optimalScheduler.meteo_data if meteo_data is True else None,
+                                  extra_sensors_df = extra_sensors_df if extra_sensors_id is not None else None)
         else:
             forecast.create_model(data=sensors_df,
                                   sensors_id = sensors_id,
@@ -226,12 +236,13 @@ def submit_model():
                                   params = config,
                                   escalat= scaled,
                                   filename = model_name,
-                                  meteo_data = optimalScheduler.meteo_data)
-        # forecast.create_model(data=generation_df, y='value', escalat="Standard", filename='Generation')
+                                  meteo_data = optimalScheduler.meteo_data if meteo_data is True else None,
+                                  extra_sensors_df = extra_sensors_df if extra_sensors_id is not None else None)
 
         return f"Selected Model: {selected_model}, Config: {json.dumps(config)}"
     except Exception as e:
-        return f"Error! : {str(e)}"
+        error_message = traceback.format_exc()
+        return f"Error! : {str(e)}\nFull Traceback:\n{error_message}"
 
 
 @app.route('/submit-forecast', method='POST')

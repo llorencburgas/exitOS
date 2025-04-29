@@ -255,7 +255,6 @@ class Forecaster:
 
         return dad, scaler
 
-
     @staticmethod
     def get_attribs(X, y, method = None):
         """
@@ -288,7 +287,6 @@ class Forecaster:
             raise ValueError('Atribut de mètode de selecció no definit')
 
         return [model_select, X_new, y]
-
 
     def Model(self, X, y, algorithm=None, params=None, max_time=None):
         """
@@ -415,17 +413,54 @@ class Forecaster:
         else:
             raise ValueError('Paràmetres en format incorrecte!')
 
+    @staticmethod
+    def prepare_dataframes(sensor, meteo, extra_sensors):
+        """
+        Prepara els df juntant-los en un de sol
+        :param sensor: Sensor objectiu del model
+        :param meteo: Dades meteorològiques (pot ser None)
+        :param extra_sensors: Sensors extra que es volen usar pel model (pot ser empty)
+        """
+        merged_data = []
+        sensor['timestamp'] = pd.to_datetime(sensor['timestamp']).dt.tz_localize(None).dt.floor('h')
+        sensor = sensor.drop_duplicates(subset=['timestamp'])
 
-    def create_model(self, data, sensors_id,  y, look_back={-1: [25, 48]},
+        if meteo is not None:
+            meteo['timestamp'] = pd.to_datetime(meteo['timestamp']).dt.tz_localize(None).dt.floor('h')
+            meteo = meteo.drop_duplicates(subset=['timestamp'])
+            merged_data = pd.merge(sensor, meteo, on='timestamp', how='inner')
+
+        if extra_sensors is not None:
+            aux = pd.DataFrame()
+            merged_extras = []
+            for i in extra_sensors:
+                extra_sensors[i]['timestamp'] = pd.to_datetime(extra_sensors[i]['timestamp']).dt.tz_localize(None).dt.floor('h')
+                extra_sensors[i] = extra_sensors[i].drop_duplicates(subset=['timestamp'])
+                if aux.empty: aux = extra_sensors[i]
+                else:
+                    merged_extras = pd.merge(aux, extra_sensors[i], on='timestamp', how='inner')
+                    aux = merged_extras
+
+            merged_data = pd.merge(merged_data, merged_extras, on='timestamp', how='inner')
+
+        if merged_data is []: merged_data = sensor
+
+
+        return merged_data
+
+    def create_model(self, data, sensors_id, y, look_back={-1: [25, 48]},
                      extra_vars={'variables': ['Dia', 'Hora', 'Mes'], 'festius': ['ES', 'CT']},
-                     colinearity_remove_level=0.9, feature_selection='Tree', algorithm=None, params=None, escalat=None,
-                     max_time=None, filename='newModel', meteo_data:pd.DataFrame = None,):
+                     colinearity_remove_level = 0.9, feature_selection = 'Tree', algorithm = None, params = None, escalat=None,
+                     max_time = None, filename = 'newModel', meteo_data:pd.DataFrame = None, extra_sensors_df = None):
 
         """
         Funció per crear, guardar i configurar el model de forecasting.
 
+        :param extra_sensors_df:
+        :param extra_sensors_id:
+        :param data: Dataframe amb datetime com a índex
         :param sensors_id:
-        :param meteo_data:
+        :param y: Nom de la columna amb la variable a predir
         :param filename:
         :param max_time:
         :param escalat:
@@ -434,15 +469,12 @@ class Forecaster:
         :param feature_selection:
         :param extra_vars:
         :param colinearity_remove_level:
-        :param data: Dataframe amb datetime com a índex
-        :param y: Nom de la columna amb la variable a predir
+        :param meteo_data: Dades meteorològiques de la data
         :param look_back: #TODO
 
         """
-
-        meteo_data['timestamp'] = pd.to_datetime(meteo_data['timestamp']).dt.tz_localize(None).dt.floor('h')
-        data['timestamp'] = pd.to_datetime(data['timestamp']).dt.tz_localize(None).dt.floor('h')
-
+        #PREP PAS 0 - preparar els df de meteo-data i dades extra
+        self.prepare_dataframes(data, meteo_data, extra_sensors_df)
         mergedData = pd.merge(data, meteo_data, on='timestamp', how='inner')
 
         #PAS 1 - Fer el Windowing

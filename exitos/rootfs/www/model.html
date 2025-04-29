@@ -91,19 +91,26 @@
 
                 <form action="./submit-model" method="POST" onsubmit="showLoadingSpinner()" >
 
-                    <h3> 1. Selecciona els sensors</h3>
-                    <select class="form-select" id="sensorsId" name="sensorsId" required multiple
-                            onchange="updateSelection('sensorsId', 'selectedSensorsId')"
-                            style="width: 100%">
-
+                    <h3> 1. Selecciona el sensor objectiu</h3>
+                    <select class="form-select" id="sensorsId" name="sensorsId" required  style="width: 100%;">
                         % for sensor in sensors_input:
                           <option value="{{sensor}}">{{sensor}}</option>
                         % end
                     </select>
+
+
+                    <h3> 2. Selecciona variables extra</h3>
+                     <p style="font-size: 14px; font-style: italic; margin-bottom: 5px;"> Opcional... </p>
+                    <select class="form-select" id="extraSensorsId" name="extraSensorsId" multiple style="width: 100%; height:11vh;"
+                            onchange="updateSelection('extraSensorsId','selectedSensorsId')">
+                        <option value="None">None</option>
+                        % for sensor in sensors_input:
+                            <option value="{{sensor}}">{{sensor}}</option>
+                        % end
+                    </select>
                     <div id="selectedSensorsId" ></div>
 
-
-                    <h3>2. Configura el model</h3>
+                    <h3>3. Configura el model</h3>
 
                     <label for="model">Algorisme:
                         <select name="model" id="modelSelect">
@@ -128,8 +135,14 @@
                         </select>
                     </label>
 
-                    <h3 style="margin-bottom: 1px;">3. Introdueix un Nom al model </h3>
-                    <p style="font-size: 14px; font-style: italic; margin-bottom: 5px;"> En cas de deixar en blanc el nom serà "newModel"</p>
+                    <div>
+                        <label for="meteoData">Dades Meteorològiques: </label>
+                        <input type="checkbox" id="meteoData" name="meteoData" style="margin-left: 3px" value="false">
+                    </div>
+
+
+                    <h3 style="margin-bottom: 1px;">4. Introdueix un Nom al model </h3>
+                    <p style="font-size: 14px; font-style: italic; margin-bottom: 5px;"> En cas de deixar en blanc el nom serà el del sensor </p>
 
                     <label for="modelName">Nom del Model
                         <input type="text" name="modelName" id="modelName" placeholder="Nom del Model">
@@ -316,7 +329,6 @@
             const modelPath = selectedModel.replace(".pkl", "")
             updateModelSelection(modelPath)
         }
-
     })
 
 
