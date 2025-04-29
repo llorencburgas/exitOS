@@ -301,9 +301,6 @@ class Forecaster:
 
         import json
 
-        if 'extraSensorsId' in params: params.pop('extraSensorsId')
-        if 'model' in params: params.pop('model')
-
         with open(self.search_space_config_file) as json_file:
             d = json.load(json_file)
 
