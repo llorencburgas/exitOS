@@ -570,7 +570,7 @@ class Forecaster:
 
         # PAS 7 - Escalar les dades
         if scaler:
-            df.columns = [col.replace('value', 'state') for col in df.columns]
+            # df.columns = [col.replace('value', 'state') for col in df.columns]
             df = pd.DataFrame(scaler.transform(df), index=df.index, columns=df.columns)
 
         # PAS 8 - Seleccionar característiques a usar segons el selector del model
