@@ -401,9 +401,6 @@ class sqlDB():
     def save_forecast(self, data):
         con = self.__open_connection__()
         cur = con.cursor()
-        cur.execute(
-            "CREATE TABLE forecasts(forecast_name TEXT, forecast_run_time NUMERIC, forecasted_time NUMERIC, predicted_value REAL, real_value REAL)")
-
         cur.executemany("""
         INSERT INTO forecasts (forecast_name, forecast_run_time, forecasted_time, predicted_value, real_value) 
         VALUES (?,?,?,?,?)
