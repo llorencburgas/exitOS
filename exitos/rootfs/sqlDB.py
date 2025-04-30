@@ -347,10 +347,8 @@ class sqlDB():
                     last_date_saved, last_value = last_date_saved[0]
                     start_time = datetime.fromisoformat(last_date_saved)
 
-
-
-                while start_time < current_date:
-                    end_time = start_time + timedelta(days = 1)
+                while start_time <= current_date:
+                    end_time = start_time + timedelta(days = 7)
 
                     string_start_date = start_time.strftime('%Y-%m-%dT%H:%M:%S')
                     string_end_date = end_time.strftime('%Y-%m-%dT%H:%M:%S')
@@ -388,6 +386,8 @@ class sqlDB():
                         if last_value != value:
                             last_value = value
                             time_stamp = sensor_data_historic[column][0]['last_changed']
+
+
                             cur.execute("INSERT INTO dades (sensor_id, timestamp, value) VALUES (?,?,?)",
                                         (sensor_id, time_stamp, value))
 
