@@ -65,6 +65,11 @@ def get_init():
 #Ruta per a configurar quins sensors volem guardar
 @app.get('/sensors')
 def get_sensors():
+    
+    connection = database.__open_connection__()
+    database.clean_sensors_db(connection)
+    database.__close_connection__(connection)
+
     #TODO: SQLWeb marca 340 sensors, dades.db té 340 sensors, però la llista en rep 329
     sensors = database.get_all_sensors()
     sensors_id = sensors['entity_id'].tolist()
@@ -89,6 +94,7 @@ def database_graph_page():
 
 @app.route('/graphsView', method='POST')
 def graphs_view():
+
     sensors_id = database.get_all_saved_sensors_id()
     selected_sensors = request.forms.get("sensors_id")
     selected_sensors_list = [sensor.strip() for sensor in selected_sensors.split(',')] if selected_sensors else []
@@ -339,7 +345,7 @@ def daily_task():
         is_active = database.get_sensor_active(sensor_id, connection)
         if is_active:
             database.update_database(sensor_id)
-
+    database.clean_sensors_db(connection)
     database.__close_connection__(connection)
 
 def monthly_task():

@@ -118,6 +118,29 @@ class sqlDB():
         else:
             return None
 
+    def clean_sensors_db(self, connection):
+        all_sensors = self.get_all_sensors()
+        cur = connection.cursor()
+        cur.execute("select sensor_id from sensors")
+        aux = cur.fetchall()
+
+
+        database_sensors = []
+        deleted_sensors = 0
+        for sensor in aux:
+            database_sensors.append(sensor[0])
+
+        for sensor in database_sensors:
+            if sensor not in all_sensors:
+                cur.execute("DELETE FROM sensors WHERE sensor_id = '" + sensor + "'")
+                deleted_sensors += 1
+
+
+        cur.close()
+
+        logger.info(f"La base de dades de Sensors ha estat netejada. {deleted_sensors} sensors han estat eliminats.")
+
+
     def get_sensors_save(self, sensors):
         """
         Obté una llista amb l'estat save_sensor dels sensors de la base de dades en el mateix ordre que sensors
