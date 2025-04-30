@@ -476,6 +476,10 @@ class Forecaster:
         #PREP PAS 0 - preparar els df de meteo-data i dades extra
         merged_data = self.prepare_dataframes(data, meteo_data, extra_sensors_df)
         merged_data.bfill(inplace=True)
+        if merged_data.empty:
+            logger.error(f"\n ************* \n   No hi ha dades per a realitzar el Forecast \n *************")
+            return
+
 
         #PAS 1 - Fer el Windowing
         dad = self.do_windowing(merged_data, look_back)
@@ -583,10 +587,6 @@ class Forecaster:
 
         real_values_to_return = data['value']
         return out, real_values_to_return
-
-
-
-
 
     def save_model(self, model_filename):
         """

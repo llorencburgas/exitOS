@@ -1,5 +1,7 @@
 import os
 import sqlite3
+from multiprocessing import connection
+
 import numpy as np
 import pandas as pd
 from requests import get
@@ -49,8 +51,6 @@ class sqlDB():
             logger.info("Creant la base de dades...")
             self.__initDB__()
 
-
-
     def __open_connection__(self):
         """
         Obre una connexió amb la base de dades i retorna el connector
@@ -83,6 +83,7 @@ class sqlDB():
         #creant les taules
         cur.execute("CREATE TABLE dades(sensor_id TEXT, timestamp NUMERIC, value)")
         cur.execute("CREATE TABLE sensors(sensor_id TEXT, units TEXT, update_sensor BINARY, save_sensor BINARY)")
+        cur.execute("CREATE TABLE forecasts(forecast_name TEXT, forecast_run_time NUMERIC, forecasted_time NUMERIC, predicted_value REAL, real_value REAL)")
 
         con.commit()
         con.close()
@@ -397,6 +398,18 @@ class sqlDB():
         except Exception as e:
             return f"Error! : {str(e)}"
 
+    def save_forecast(self, data):
+        con = self.__open_connection__()
+        cur = con.cursor()
+        cur.execute(
+            "CREATE TABLE forecasts(forecast_name TEXT, forecast_run_time NUMERIC, forecasted_time NUMERIC, predicted_value REAL, real_value REAL)")
+
+        cur.executemany("""
+        INSERT INTO forecasts (forecast_name, forecast_run_time, forecasted_time, predicted_value, real_value) 
+        VALUES (?,?,?,?,?)
+        """, data)
+        con.commit()
+        self.__close_connection__(con)
 
 
 

@@ -191,6 +191,7 @@ def submit_model():
         config.pop("scaled")
         config.pop("modelName")
         config.pop('model')
+        if 'extraSensorsId' in config: config.pop('extraSensorsId')
 
         if "meteoData" in config:
             meteo_data = True
@@ -240,7 +241,7 @@ def submit_model():
                                   meteo_data = optimalScheduler.meteo_data if meteo_data is True else None,
                                   extra_sensors_df = extra_sensors_df if extra_sensors_id is not None else None)
 
-        return f"Selected Model: {selected_model}, Config: {json.dumps(config)}"
+        return create_model_page()
     except Exception as e:
         error_message = traceback.format_exc()
         return f"Error! : {str(e)}\nFull Traceback:\n{error_message}"
@@ -257,6 +258,17 @@ def submit_forecast():
         predictions = forecast_df['value'].tolist()
 
         logger.info(f"Forecast realitzat correctament")
+
+        rows = []
+
+        for i in range(len(timestamps)):
+            forecasted_time = timestamps[i]
+            predicted = predictions[i]
+            actual = real_values[i] if i < len(real_values) else None
+
+            rows.append((selected_forecast, start_time, forecasted_time, predicted, actual))
+
+        database.save_forecast(rows)
 
 
         return template('./www/forecast_results.html',
@@ -280,10 +292,15 @@ def get_model_config(model_name):
         response_config += f"algorithm = {config.get('algorithm','')}\n"
         response_config += f"scaler = {config.get('scaler_name','')}\n"
         response_config += f"sensorsId = {config.get('sensors_id','')}\n"
+        response_config += f"meteo_data = {config.get('meteo_data_is_selected', 'false')}\n"
 
         if "params" in config:
             for k, v in config["params"].items():
-                response_config += f"{k} = {v}\n"
+                if k == 'bootstrap':
+                    aux = 'true' if v else 'false'
+                    response_config += f"{k} = {aux}\n"
+                else:
+                    response_config += f"{k} = {v}\n"
         if "max_time" in config:
             response_config += f"max_time = {config['max_time']}\n"
         return response_config

@@ -16,8 +16,11 @@ def obtainmeteoData(latitude, longitude):
     """
     Obté el forecast de meteo data per al dia següent i les dades actuals per les coordenades indicades.
     """
-    today = (datetime.today() - timedelta(days=5)).strftime("%Y-%m-%d")
-    tomorrow = (datetime.today() - timedelta(days=4)).strftime("%Y-%m-%d")
+    today = datetime.today().strftime("%Y-%m-%d")
+    tomorrow = (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
+
+    # today = "2025-04-17"
+    # tomorrow = "2025-04-18"
 
 
     url = f"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&start_date={today}&end_date={tomorrow}&hourly=temperature_2m,relativehumidity_2m,dewpoint_2m,apparent_temperature,precipitation,rain,weathercode,pressure_msl,surface_pressure,cloudcover,cloudcover_low,cloudcover_mid,cloudcover_high,et0_fao_evapotranspiration,vapor_pressure_deficit,windspeed_10m,windspeed_100m,winddirection_10m,winddirection_100m,windgusts_10m,shortwave_radiation_instant,direct_radiation_instant,diffuse_radiation_instant,direct_normal_irradiance_instant,terrestrial_radiation_instant"
