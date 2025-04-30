@@ -119,11 +119,11 @@ class sqlDB():
             return None
 
     def clean_sensors_db(self, connection):
+        logger.debug("Iniciant neteja de la Base de Dades de Sensors")
         all_sensors = self.get_all_sensors()
         cur = connection.cursor()
         cur.execute("select sensor_id from sensors")
         aux = cur.fetchall()
-
 
         database_sensors = []
         deleted_sensors = 0
@@ -133,12 +133,11 @@ class sqlDB():
         for sensor in database_sensors:
             if sensor not in all_sensors:
                 cur.execute("DELETE FROM sensors WHERE sensor_id = '" + sensor + "'")
+                logger.debug(f"··· Eliminant Sensor {sensor} ···")
                 deleted_sensors += 1
 
-
         cur.close()
-
-        logger.info(f"La base de dades de Sensors ha estat netejada. {deleted_sensors} sensors han estat eliminats.")
+        logger.debug(f"La base de dades de Sensors ha estat netejada. {deleted_sensors} sensors han estat eliminats.")
 
 
     def get_sensors_save(self, sensors):

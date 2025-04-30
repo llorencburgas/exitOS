@@ -65,7 +65,7 @@ def get_init():
 #Ruta per a configurar quins sensors volem guardar
 @app.get('/sensors')
 def get_sensors():
-    
+
     connection = database.__open_connection__()
     database.clean_sensors_db(connection)
     database.__close_connection__(connection)
