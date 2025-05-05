@@ -352,12 +352,14 @@ def save_config():
         config_dir = forecast.models_filepath + '/config'
         config_path = os.path.join(config_dir,"user.config")
 
+        logger.warning(glob.glob(config_dir + "*"))
+
         os.makedirs(config_dir, exist_ok=True)
 
         with open(config_path, 'w') as f:
             json.dump({'consumption': consumption, 'generation': generation, 'name' : name}, f)
 
-        logger.warning(glob.glob(config_dir + "*"))
+
         return "OK"
 
     except Exception as e:
