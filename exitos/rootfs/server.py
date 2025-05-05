@@ -352,19 +352,15 @@ def save_config():
         config_dir = forecast.models_filepath + '/config'
         config_path = os.path.join(config_dir,"user.config")
 
-        logger.error("Saving config")
-        logger.warning(glob.glob(config_dir + "*"))
-
         os.makedirs(config_dir, exist_ok=True)
 
         with open(config_path, 'w') as f:
             json.dump({'consumption': consumption, 'generation': generation, 'name' : name}, f)
-
-
         return "OK"
 
     except Exception as e:
-        response.status = 500
+        logger.error(f"Error deleting config file :c : {str(e)}")
+        logger.error(traceback.format_exc())
         return f"Error! : {str(e)}"
 
 @app.route('/delete_config', method='DELETE')
