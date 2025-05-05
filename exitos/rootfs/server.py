@@ -352,6 +352,7 @@ def save_config():
         config_dir = forecast.models_filepath + '/config'
         config_path = os.path.join(config_dir,"user.config")
 
+        logger.error("Saving config")
         logger.warning(glob.glob(config_dir + "*"))
 
         os.makedirs(config_dir, exist_ok=True)
