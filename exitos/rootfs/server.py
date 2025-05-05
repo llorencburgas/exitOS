@@ -34,7 +34,7 @@ PORT = 55023
 #INICIACIÓ DE L'APLICACIÓ I LA BASE DE DADES
 app = Bottle()
 database = db.sqlDB()
-database.update_database("all")
+# database.update_database("all")
 forecast = forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler()
 
@@ -252,7 +252,6 @@ def submit_model():
         error_message = traceback.format_exc()
         return f"Error! : {str(e)}\nFull Traceback:\n{error_message}"
 
-
 @app.route('/submit-forecast', method='POST')
 def submit_forecast():
     try:
@@ -314,6 +313,63 @@ def get_model_config(model_name):
     except Exception as e:
         return f"Error! : {str(e)}"
 
+@app.route('/config_page')
+def config_page():
+    sensors_id = database.get_all_saved_sensors_id(kw=True)
+    user_lat = optimalScheduler.latitude
+    user_long = optimalScheduler.longitude
+    user_location = {'lat': user_lat, 'lon': user_long}
+
+    config_dir = forecast.models_filepath + '/config/user.config'
+    user_data = {
+        'name': '',
+        'consumption': '',
+        'generation': '',
+        'locked': False,
+    }
+
+    if os.path.exists(config_dir):
+        with open(config_dir, 'r') as f:
+            data = json.load(f)
+            user_data['name'] = data['name']
+            user_data['consumption'] = data['consumption']
+            user_data['generation'] = data['generation']
+            user_data['locked'] = True
+
+    return template('./www/config_page.html',
+                    sensors = sensors_id,
+                    location = user_location,
+                    user_data = user_data)
+
+@app.post('/save_config')
+def save_config():
+    try:
+        data = request.json
+        consumption = data.get('consumption')
+        generation = data.get('generation')
+        name = data.get('name')
+
+        config_dir = forecast.models_filepath + '/config'
+        config_path = os.path.join(config_dir,"user.config")
+
+        os.makedirs(config_dir, exist_ok=True)
+
+        with open(config_path, 'w') as f:
+            json.dump({'consumption': consumption, 'generation': generation, 'name' : name}, f)
+        return "OK"
+
+    except Exception as e:
+        response.status = 500
+        return f"Error! : {str(e)}"
+
+@app.route('/delete_config', method='DELETE')
+def delete_config():
+    user_config_path = forecast.models_filepath + '/config/user.config'
+    if os.path.exists(user_config_path):
+        os.remove(user_config_path)
+        return 'Config file deleted successfully'
+    else:
+        return 'Config file not found'
 
 
 # Ruta dinàmica per a les pàgines HTML

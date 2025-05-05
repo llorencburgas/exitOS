@@ -224,13 +224,14 @@ class sqlDB():
 
         return merged_data
 
-    def get_all_saved_sensors_id(self,):
+    def get_all_saved_sensors_id(self, kw:bool = False):
         """
         Obté el id dels sensors marcats com a "save_sensor" de la base de dades
         """
         connection = self.__open_connection__()
         cur = connection.cursor()
-        cur.execute("SELECT sensor_id FROM sensors WHERE save_sensor = 1")
+        if kw: cur.execute("SELECT sensor_id FROM sensors WHERE units IN ('W', 'kW')")
+        else: cur.execute("SELECT sensor_id FROM sensors WHERE save_sensor = 1")
         sensors_saved = cur.fetchall()
         cur.close()
         self.__close_connection__(connection)
