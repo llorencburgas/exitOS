@@ -356,6 +356,8 @@ def save_config():
 
         with open(config_path, 'w') as f:
             json.dump({'consumption': consumption, 'generation': generation, 'name' : name}, f)
+
+        logger.warning(glob.glob(config_dir + "*"))
         return "OK"
 
     except Exception as e:
