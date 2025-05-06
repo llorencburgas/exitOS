@@ -315,14 +315,12 @@ def get_model_config(model_name):
 
 @app.route('/config_page')
 def config_page():
-    logger.critical("-------------- 1 --------------")
 
     sensors_id = database.get_all_saved_sensors_id(kw=True)
     user_lat = optimalScheduler.latitude
     user_long = optimalScheduler.longitude
     user_location = {'lat': user_lat, 'lon': user_long}
 
-    logger.critical("-------------- 2 --------------")
     config_dir = forecast.models_filepath + 'config/user.config'
     user_data = {
         'name': '',
@@ -331,15 +329,12 @@ def config_page():
         'locked': False,
     }
 
-    logger.critical("-------------- 3 --------------")
     if os.path.exists(config_dir):
-        with open(config_dir, 'r') as f:
-            logger.critical("-------------- 4 --------------")
-            data = json.load(f)
-            user_data['name'] = data['name']
-            user_data['consumption'] = data['consumption']
-            user_data['generation'] = data['generation']
-            user_data['locked'] = True
+        aux = joblib.load(config_dir)
+        user_data['name'] = aux['name']
+        user_data['consumption'] = aux['consumption']
+        user_data['generation'] = aux['generation']
+        user_data['locked'] = True
 
     return template('./www/config_page.html',
                     sensors = sensors_id,

@@ -81,7 +81,7 @@
                   <select name="global-generation" id="global-generation"
                         {{'disabled' if user_data['locked'] else ''}}>
                     %for sensor in sensors:
-                    <option value="{{sensor}}" {{'selected' if sensor == user_data['consumption'] else ''}} >{{sensor}}</option>
+                    <option value="{{sensor}}" {{'selected' if sensor == user_data['generation'] else ''}} >{{sensor}}</option>
                     %end
                   </select>
                 </label>
@@ -148,7 +148,6 @@
     const generation = document.getElementById('global-generation').value;
     const name = document.getElementById('user-name').value;
 
-    console.log("--------------------------------------");
 
     fetch('save_config', {
       method: 'POST',
