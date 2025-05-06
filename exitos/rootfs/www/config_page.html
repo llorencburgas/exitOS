@@ -148,6 +148,8 @@
     const generation = document.getElementById('global-generation').value;
     const name = document.getElementById('user-name').value;
 
+    console.log("--------------------------------------");
+
     fetch('/save_config', {
       method: 'POST',
       headers: {'Content-Type' : 'application/json'},
