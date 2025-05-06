@@ -257,33 +257,45 @@ def submit_model():
 @app.route('/submit-forecast', method='POST')
 def submit_forecast():
     try:
+        action = request.forms.get('action')
         selected_forecast = request.forms.get("models")
-        forecast_df, real_values = ForecatManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data, model_name=selected_forecast)
 
-        start_time = datetime.now().replace(minute=0, second=0, microsecond=0)
-        timestamps = [(start_time + timedelta(hours=i)).strftime("%Y-%m-%d %H:%M") for i in range(len(forecast_df))]
-        predictions = forecast_df['value'].tolist()
+        if action == "forecast":
+            forecast_df, real_values = ForecatManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data, model_name=selected_forecast)
 
-        logger.info(f"Forecast realitzat correctament")
+            start_time = datetime.now().replace(minute=0, second=0, microsecond=0)
+            timestamps = [(start_time + timedelta(hours=i)).strftime("%Y-%m-%d %H:%M") for i in range(len(forecast_df))]
+            predictions = forecast_df['value'].tolist()
 
-        rows = []
+            logger.info(f"Forecast realitzat correctament")
 
-        for i in range(len(timestamps)):
-            forecasted_time = timestamps[i]
-            predicted = predictions[i]
-            actual = real_values[i] if i < len(real_values) else None
+            rows = []
 
-            rows.append((selected_forecast, start_time, forecasted_time, predicted, actual))
+            for i in range(len(timestamps)):
+                forecasted_time = timestamps[i]
+                predicted = predictions[i]
+                actual = real_values[i] if i < len(real_values) else None
 
-        database.save_forecast(rows)
+                rows.append((selected_forecast, start_time, forecasted_time, predicted, actual))
+
+            database.save_forecast(rows)
 
 
-        return template('./www/forecast_results.html',
-                        model=selected_forecast,
-                        timestamps=json.dumps(timestamps),
-                        predictions=json.dumps(predictions),
-                        real_values=json.dumps(real_values.tolist())
-        )
+            return template('./www/forecast_results.html',
+                            model=selected_forecast,
+                            timestamps=json.dumps(timestamps),
+                            predictions=json.dumps(predictions),
+                            real_values=json.dumps(real_values.tolist())
+            )
+        elif action =="delete":
+            model_path = forecast.models_filepath + selected_forecast
+            os.remove(model_path)
+            logger.info(f"Model {selected_forecast} eliminat correctament")
+
+            return create_model_page()
+        else:
+            return create_model_page()
+
     except Exception as e:
         return f"Error! : {str(e)} \n ARGS {e.args}"
 

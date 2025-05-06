@@ -150,7 +150,7 @@
                         <input type="text" name="modelName" id="modelName" placeholder="Nom del Model">
                     </label>
 
-                    <button type="submit">Train</button>
+                    <button type="submit"><i style="font-size: medium" class="fa-solid fa-bolt"></i> Train</button>
 
                 </form>
 
@@ -177,7 +177,8 @@
                     </select>
                     <div id="selectedModel">  </div>
 
-                    <button id="fetch-data" type="submit"> Realitzar Forecast </button>
+                    <button id="fetch-data" name="action" value="forecast" type="submit"><i style="font-size: medium" class="fa-solid fa-chart-line"></i> Realitzar Forecast </button>
+                    <button id="delete-model" name="action" value="delete" type="submit"><i style="font-size: medium" class="fa-solid fa-trash-can"></i> Eliminar Model </button>
 
 
                 </form>
