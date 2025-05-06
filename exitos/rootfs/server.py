@@ -94,39 +94,41 @@ def database_graph_page():
 
 @app.route('/graphsView', method='POST')
 def graphs_view():
+    try:
+        sensors_id = database.get_all_saved_sensors_id()
+        selected_sensors = request.forms.get("sensors_id")
+        selected_sensors_list = [sensor.strip() for sensor in selected_sensors.split(',')] if selected_sensors else []
 
-    sensors_id = database.get_all_saved_sensors_id()
-    selected_sensors = request.forms.get("sensors_id")
-    selected_sensors_list = [sensor.strip() for sensor in selected_sensors.split(',')] if selected_sensors else []
+        date_to_check = request.forms.getall("datetimes")[0].split(' - ')
+        start_date = datetime.strptime(date_to_check[0], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
+        end_date = datetime.strptime(date_to_check[1], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
 
-    date_to_check = request.forms.getall("datetimes")[0].split(' - ')
-    start_date = datetime.strptime(date_to_check[0], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
-    end_date = datetime.strptime(date_to_check[1], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
+        sensors_data = database.get_all_saved_sensors_data(selected_sensors_list, start_date, end_date)
+        graphs_html = {}
 
-    sensors_data = database.get_all_saved_sensors_data(selected_sensors_list, start_date, end_date)
-    graphs_html = {}
+        for sensor_id, data in sensors_data.items():
+            timestamps = [record[0] for record in data]
+            values = [record[1] for record in data]
 
-    for sensor_id, data in sensors_data.items():
-        timestamps = [record[0] for record in data]
-        values = [record[1] for record in data]
-
-        if not values:
-            graphs_html[sensor_id] = f'<div class="no-data">No data available for Sensor {sensor_id}</div>'
-            continue
-
-
-        trace = go.Scatter(x=timestamps, y=values, mode='lines', name=f"Sensor {sensor_id}")
-        layout = go.Layout(title=f"Sensor {sensor_id} Data",
-                           xaxis=dict(title="Timestamp"),
-                           yaxis=dict(title="Value "))
-
-        fig = go.Figure(data=[trace], layout=layout)
-        graph_html = pyo.plot(fig, output_type='div', include_plotlyjs=False)
+            if not values:
+                graphs_html[sensor_id] = f'<div class="no-data">No data available for Sensor {sensor_id}</div>'
+                continue
 
 
-        graphs_html[sensor_id] = graph_html
+            trace = go.Scatter(x=timestamps, y=values, mode='lines', name=f"Sensor {sensor_id}")
+            layout = go.Layout(title=f"Sensor {sensor_id} Data",
+                               xaxis=dict(title="Timestamp"),
+                               yaxis=dict(title="Value "))
 
-    return template('./www/databaseView.html',sensors_id=sensors_id, graphs=graphs_html)
+            fig = go.Figure(data=[trace], layout=layout)
+            graph_html = pyo.plot(fig, output_type='div', include_plotlyjs=False)
+
+
+            graphs_html[sensor_id] = graph_html
+
+        return template('./www/databaseView.html',sensors_id=sensors_id, graphs=graphs_html)
+    except Exception as e:
+        return database_graph_page()
 
 
 @app.route('/update_sensors', method='POST')
