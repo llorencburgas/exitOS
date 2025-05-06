@@ -150,7 +150,7 @@
 
     console.log("--------------------------------------");
 
-    fetch('/save_config', {
+    fetch('save_config', {
       method: 'POST',
       headers: {'Content-Type' : 'application/json'},
       body: JSON.stringify({
@@ -168,7 +168,7 @@
     const elements = form.querySelectorAll('input, select, text, button');
     elements.forEach(el => el.disabled = false);
 
-    fetch('./delete_config', {
+    fetch('delete_config', {
         method: 'DELETE'
     }).then(response => response.text())
     .then(data => console.log('Config deleted:', data))
