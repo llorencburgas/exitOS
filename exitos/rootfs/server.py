@@ -320,7 +320,7 @@ def config_page():
     user_long = optimalScheduler.longitude
     user_location = {'lat': user_lat, 'lon': user_long}
 
-    config_dir = forecast.models_filepath + '/config/user.config'
+    config_dir = forecast.models_filepath + 'config/user.config'
     user_data = {
         'name': '',
         'consumption': '',
@@ -344,23 +344,19 @@ def config_page():
 @app.post('/save_config')
 def save_config():
     try:
-        logger.critical("Iniciant procés de guardar configuració")
 
         data = request.json
         consumption = data.get('consumption')
         generation = data.get('generation')
         name = data.get('name')
 
-        logger.critical("Configurant el path...")
 
         config_dir = forecast.models_filepath + 'config/user.config'
         os.makedirs(forecast.models_filepath + 'config', exist_ok=True)
 
-        logger.critical("guardant! ......")
 
         joblib.dump({'consumption': consumption, 'generation': generation, 'name' : name}, config_dir)
-        logger.warning(glob.glob(config_dir + "*"))
-        logger.critical(f"Model guardat al fitxer {config_dir}")
+        logger.info(f"Model guardat al fitxer {config_dir}")
 
 
         # os.makedirs(config_dir, exist_ok=True)
