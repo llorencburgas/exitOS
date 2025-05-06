@@ -170,7 +170,7 @@
                             onchange="updateSelection('models', 'selectedModel')"
                             style="width: 100%">
 
-                        <option class="formOption" value="none">Escull Un Model</option>
+                        <option class="formOption" value="none" disabled selected hidden>Escull Un Model</option>
                         % for model in models_input:
                           <option class="formOption" value="{{model}}">{{model}}</option>
                         % end
