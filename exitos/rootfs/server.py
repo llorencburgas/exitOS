@@ -344,18 +344,29 @@ def config_page():
 @app.post('/save_config')
 def save_config():
     try:
+        logger.critical("Iniciant procés de guardar configuració")
+
         data = request.json
         consumption = data.get('consumption')
         generation = data.get('generation')
         name = data.get('name')
 
-        config_dir = forecast.models_filepath + '/config'
-        config_path = os.path.join(config_dir,"user.config")
+        logger.critical("Configurant el path...")
 
-        os.makedirs(config_dir, exist_ok=True)
+        config_dir = forecast.models_filepath + 'config/user.config'
+        os.makedirs(forecast.models_filepath + 'config', exist_ok=True)
 
-        with open(config_path, 'w') as f:
-            json.dump({'consumption': consumption, 'generation': generation, 'name' : name}, f)
+        logger.critical("guardant! ......")
+
+        joblib.dump({'consumption': consumption, 'generation': generation, 'name' : name}, config_dir)
+        logger.warning(glob.glob(config_dir + "*"))
+        logger.critical(f"Model guardat al fitxer {config_dir}")
+
+
+        # os.makedirs(config_dir, exist_ok=True)
+        #
+        # with open(config_path, 'w') as f:
+        #     json.dump({'consumption': consumption, 'generation': generation, 'name' : name}, f)
         return "OK"
 
     except Exception as e:
