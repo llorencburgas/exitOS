@@ -3,12 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <title>Control energètic eXIT</title>
-    <link rel="stylesheet" href="resources/mainStyle.css">
+<!--    <link rel="stylesheet" href="resources/mainStyle.css">-->
     <link rel="icon" type="image/x-icon" href="static/favicon.ico">
-<!--    <link rel="stylesheet" href="../images/mainStyle.css">-->
+    <link rel="stylesheet" href="../resources/mainStyle.css">
 
         <!-- llibreria d'icontes per al navbar-->
     <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
+<style>
+    .info-cards{
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap:20px;
+        margin-top: 20px;
+    }
+    .info-card{
+        display: block;
+        text-decoration: none;
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        width: 300px;
+        text-align: center;
+        color: #0f2418;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+
+        i{
+            font-size: 20px;
+            color: #04AA6D;
+            margin-bottom: 10px;
+        }
+        h3{
+            margin-bottom: 10px;
+            font-size:1.2rem;
+        }
+    }
+    .info-card:hover{
+        transform: scale(1.03);
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+        color: #04D984;
+    }
+
+</style>
 </head>
 <body>
     <main>
@@ -29,23 +67,43 @@
 
         <section class="hero-section">
             <div class="hero-content">
-                <h1>Aquesta és la benvinguda a la pàgina</h1>
-                <p>Gestió intel·ligent de l'energia per un futur sostenible</p>
+                <h1>Benvindut/da a eXiT Control Energètic</h1>
+                <p>Gestiona, visualitza i optimitza la teva energia</p>
             </div>
         </section>
 
         <div class="container">
-            <div class="content-section">
-                <h2>Lorem Ipsum</h2>
-                <p> Lorem ipsuuuum</p>
-                <h3>Opcions disponibles:</h3>
-                <ul>
-                    <li><strong>Sensors:</strong> Selecciona de quins sensors desitges guardar informació</li>
-                    <li><strong>Base de Dades:</strong> Visualitza les dades dels sensors guardats en un rang de temps especificat</li>
-                    <li><strong>Inici:</strong> coses coses</li>
-                    <li><strong>Inici:</strong> coses coses</li>
-                </ul>
+            <br>
+            <h2>Què pots fer?</h2>
+            <br>
+            
+            <div class="info-cards">
+                <a href="./sensors.html" class="info-card">
+                    <i class="fa-solid fa-square-check"></i>
+                    <h3>Sensors</h3>
+                    <p>Selecciona els sensors dels quals vols monitoritzar i recollir dades.</p>
+                </a>
+
+                <a href="./databaseView.html" class="info-card">
+                    <i class="fa-solid fa-database"></i>
+                    <h3>Base de Dades</h3>
+                    <p>Visualitza les dades en un rang de temps personalitzat.</p>
+                </a>
+
+                <a href="./model.html" class="info-card">
+                    <i class="fa-solid fa-brain"></i>
+                    <h3>Crear Model</h3>
+                    <p>Entrena models predictius d'ús energètic per sensors específics i realitza les prediccions amb aquests.</p>
+                </a>
+
+                <a href="./config_page.html" class="info-card">
+                    <i class="fa-solid fa-user-gear"></i>
+                    <h3>Configuració</h3>
+                    <p>Ajusta paràmetres d'usuari. Uneix-te o abandona una comunitat.</p>
+                </a>
+
             </div>
+
         </div>
         
         <footer class="footer">

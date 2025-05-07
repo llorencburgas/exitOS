@@ -1,2 +1,3 @@
 *.pkl
 exitos/rootfs/dades.db
+/.idea

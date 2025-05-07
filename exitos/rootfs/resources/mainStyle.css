@@ -67,33 +67,38 @@ main{
 
 /*HERO*/
 .hero-section{
-    background: url('../static/community.webp') no-repeat center center/cover;
-    height: 60vh;
+    background: url('../images/community.webp') no-repeat center center/cover;
+    height: 20vh;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     color: var(--text-color);
     position: relative;
+    overflow: hidden;
 }
-.hero::after{
+.hero::before{
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(44, 110, 73, 0.6);
+    z-index: 1;
 }
 
 .hero-content{
     position: relative;
-    z-index: 1;
+    z-index: 2;
 }
 .hero-content h1{
     font-size: 3rem;
     margin-bottom: 10px;
+    line-height: 50px;
 }
 .hero-content p{
     font-size: 1.2rem;
-}.content-section{
+    font-style: italic;
+}
+.content-section{
     padding: 40px 20px;
     background-color: var(--white-background);
     margin: 20px;
