@@ -28,7 +28,7 @@
             margin-top: 20px;
         }
         .sensor-container{
-            max-width: 400px;
+            max-width: 500px;
         }
         .tag-container{
             display: flex;
@@ -39,6 +39,9 @@
             min-height: 40px;
             border-radius: 5px;
             background-color: #f9f9f9;
+            width: 100%;
+
+            /*align-items: flex-start;*/
         }
         .tag{
             background-color: #04AA6D;
@@ -48,10 +51,15 @@
             display: flex;
             align-items: center;
             gap: 5px;
+
+            max-width: 100%;
+            word-break: break-word;
+            white-space: normal;
         }
         .tag .remove{
             cursor: pointer;
             font-weight: bold;
+            overflow: clip;
         }
         .search-box{
             width: 100%;
@@ -70,7 +78,6 @@
             background: white;
             display: none;
             position: absolute;
-            width: 100%;
             z-index: 1000;
         }
         .sensor-list li {
@@ -78,7 +85,7 @@
             cursor: pointer;
         }
         .sensor-list li:hover {
-            background: #007bff;
+            background: #04AA6D;
             color: white;
         }
         .dropdown {
