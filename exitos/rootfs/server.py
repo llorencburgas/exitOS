@@ -70,7 +70,6 @@ def get_sensors():
     database.clean_sensors_db(connection)
     database.__close_connection__(connection)
 
-    #TODO: SQLWeb marca 340 sensors, dades.db té 340 sensors, però la llista en rep 329
     sensors = database.get_all_sensors()
     sensors_id = sensors['entity_id'].tolist()
     sensors_name = sensors['attributes.friendly_name'].tolist()
@@ -106,18 +105,21 @@ def graphs_view():
         sensors_data = database.get_all_saved_sensors_data(selected_sensors_list, start_date, end_date)
         graphs_html = {}
 
+        if len(sensors_data) == 0:
+            for sensor in selected_sensors_list:
+                graphs_html[sensor] = f'<div class="no-data">No hi ha dades disponibles del sensor {sensor} per a les dates {date_to_check[0]} - {date_to_check[1]}</div>'
+
         for sensor_id, data in sensors_data.items():
             timestamps = [record[0] for record in data]
-            values = [record[1] for record in data]
+            values = [record[1] for record in data if record[1] is not None]
 
             if not values:
-                graphs_html[sensor_id] = f'<div class="no-data">No data available for Sensor {sensor_id}</div>'
+                graphs_html[sensor_id] = f'<div class="no-data">No hi ha dades disponibles del sensor <strong>{sensor_id}</strong> per a les dates {date_to_check[0]} - {date_to_check[1]}</div>'
                 continue
 
 
             trace = go.Scatter(x=timestamps, y=values, mode='lines', name=f"Sensor {sensor_id}")
-            layout = go.Layout(title=f"Sensor {sensor_id} Data",
-                               xaxis=dict(title="Timestamp"),
+            layout = go.Layout(xaxis=dict(title="Timestamp"),
                                yaxis=dict(title="Value "))
 
             fig = go.Figure(data=[trace], layout=layout)
