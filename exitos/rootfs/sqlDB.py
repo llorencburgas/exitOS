@@ -130,12 +130,14 @@ class sqlDB():
         for sensor in aux:
             database_sensors.append(sensor[0])
 
+        all_sensors_list = all_sensors['entity_id'].tolist()
         for sensor in database_sensors:
-            if sensor not in all_sensors:
-                cur.execute("DELETE FROM sensors WHERE sensor_id = '" + sensor + "'")
+            if str(sensor) not in all_sensors_list:
+                cur.execute("DELETE FROM sensors WHERE sensor_id = ?", (sensor,))
                 logger.debug(f"··· Eliminant Sensor {sensor} ···")
                 deleted_sensors += 1
 
+        connection.commit()
         cur.close()
         logger.debug(f"La base de dades de Sensors ha estat netejada. {deleted_sensors} sensors han estat eliminats.")
 
