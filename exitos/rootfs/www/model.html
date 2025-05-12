@@ -9,6 +9,7 @@
 
         <!-- llibreria d'icontes per al navbar-->
     <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
 
     <style>
         h3{
@@ -95,7 +96,7 @@
                 <form action="./submit-model" method="POST" onsubmit="showLoadingSpinner()" >
 
                     <h3> 1. Selecciona el sensor objectiu</h3>
-                    <select class="form-select" id="sensorsId" name="sensorsId" required  style="width: 100%;">
+                    <select class="form-select" id="sensorsId" name="sensorsId" required  style="width: 50%;">
                         % for sensor in sensors_input:
                           <option value="{{sensor}}">{{sensor}}</option>
                         % end
@@ -161,41 +162,81 @@
                 </div>
             </div>
 
-            <!--  FORECAST   -->
-            <div class="content-section">
-                <form action ="./submit-forecast" method="POST" id="forecast-form">
-                    <h1>FORECAST</h1>
 
-                    <h3> 1. Selecciona el model entrenat</h3>
-                    <select class="form-select" id="models" name="models" required
-                            onchange="updateSelection('models', 'selectedModel')"
-                            style="width: 100%">
+            <div class="content-section" style="align-items: flex-start; padding-top: 20px;">
+                <form action ="./submit-forecast" method="POST" id="forecast-form"
+                      style="flex-direction: row; gap: 10px; align-items: flex-start; margin-bottom: 10px;">
+                    <div><!--  FORECAST   -->
+                        <h1>FORECAST</h1>
+                        <h3> 1. Selecciona el model entrenat</h3>
+                        <select class="form-select" id="models" name="models" required
+                                onchange="updateSelection('models', 'selectedModel')">
 
-                        <option class="formOption" value="none" disabled selected hidden>Escull Un Model</option>
-                        % for model in models_input:
-                          <option class="formOption" value="{{model}}">{{model}}</option>
-                        % end
-                    </select>
-                    <div id="selectedModel">  </div>
+                            <option class="formOption" value="none" disabled selected hidden>Escull Un Model</option>
+                            % for model in models_input:
+                              <option class="formOption" value="{{model}}">{{model}} {{'selected' if defined('selected_model') and model == selected_model else ''}}</option>
+                            % end
+                        </select>
+                        <div id="selectedModel">  </div>
 
-                    <button id="fetch-data" name="action" value="forecast" type="submit"><i style="font-size: medium" class="fa-solid fa-chart-line"></i> Realitzar Forecast </button>
-                    <button id="delete-model" name="action" value="delete-model" type="submit"><i style="font-size: medium" class="fa-solid fa-trash-can"></i> Eliminar Model </button>
+                        <button id="fetch-data" name="action" value="forecast" type="submit"><i style="font-size: medium" class="fa-solid fa-chart-line"></i> Realitzar Forecast </button>
+                        <button id="delete-model" name="action" value="delete-model" type="submit"><i style="font-size: medium" class="fa-solid fa-trash-can"></i> Eliminar Model </button>
+                    </div>
 
-            <!-- VISUALITZAR FORECAST  -->
-                    <h1 style="margin-top: 50px;">Visualitzar Forecast</h1>
-                    <h3>1. Selecciona el Forecast a Visualitzar</h3>
+                    <div><!-- VISUALITZAR FORECAST  -->
+                        <h1>Visualitzar Forecast</h1>
+                        <h3>1. Selecciona el Forecast a Visualitzar</h3>
 
-                    <select class ="form-select" id="forecasts" name="forecasts" required >
-                        <option class="formOption" value="none" disabled selected hidden> Escull un Forecast</option>
-                        %for forecast in forecasts_id:
-                        <option class="formOption" value="{{forecast}}">{{forecast}}</option>
-                        %end
-                    </select>
-                    <div id="forecast-dates-div"></div>
-                    <button id="view-forecast" name="action" value="view" type="submit"><i style="font-size: medium" class="fa-solid fa-eye"></i> Visualitzar Forecast </button>
-                    <button id="delete-forecast" name="action" value="delete-forecast" type="submit"><i style="font-size: medium" class="fa-solid fa-trash-can"></i> Eliminar Forecast </button>
-
+                        <select class ="form-select" id="forecasts" name="forecasts" required >
+                            <option class="formOption" value="none" disabled selected hidden> Escull un Forecast</option>
+                            %for forecast in forecasts_id:
+                            <option class="formOption" value="{{forecast}}">{{forecast}} {{'selected' if defined('selected_forecast') and forecast == selected_forecast else ''}} </option>
+                            %end
+                        </select>
+                        <div id="forecast-dates-div"></div>
+                        <button id="view-forecast" name="action" value="view" type="submit"><i style="font-size: medium" class="fa-solid fa-eye"></i> Visualitzar Forecast </button>
+                        <button id="delete-forecast" name="action" value="delete-forecast" type="submit"><i style="font-size: medium" class="fa-solid fa-trash-can"></i> Eliminar Forecast </button>
+                    </div>
                 </form>
+
+
+                %if has_graph:
+                    <h2>Resultats del Forecast per al model: {{model}}</h2>
+                    <div id="chart"></div>
+                    <script>
+                        const timestamps = {{!timestamps}};
+                        const predictions = {{!predictions}};
+                        const realValues = {{!real_values}};
+
+                        const tracePrediction = {
+                            x: timestamps,
+                            y: predictions,
+                            mode: 'lines+markers',
+                            name: 'Predicció',
+                            line: { color: 'green' }
+                        };
+
+                        const traceReal = {
+                            x: timestamps,
+                            y: realValues,
+                            mode: 'lines+markers',
+                            name: 'Dades Reals',
+                            line: {
+                                color: 'red',
+                                dash: 'dot'  // Dotted line
+                            }
+                        };
+
+                        const layout = {
+                            title: 'Predicció vs Dades Reals',
+                            xaxis: { title: 'Temps' },
+                            yaxis: { title: 'Consum (kW)' }
+                        };
+
+                        Plotly.newPlot('chart', [tracePrediction, traceReal], layout);
+                    </script>
+                %end
+
             </div>
         </div>
 
@@ -335,7 +376,6 @@
             .then(data => {
                 const lines = data.split('\n').map(line => line.trim()).filter(line => line !== '');
                 const forecastDiv = document.getElementById('forecast-dates-div');
-                console.log(lines);
 
                 forecastDiv.innerHTML = '';
 
@@ -344,6 +384,7 @@
                 }
                 else{
                     const label = document.createElement('h3');
+                    const selectedTime = "{{selected_time if defined('selected_time') else ''}}";
                     label.textContent = '2. Selecciona la data del Forecast';
 
                     const select = document.createElement('select');
@@ -351,14 +392,13 @@
                     select.name = 'forecasts-time';
                     select.id = 'forecasts-time';
                     select.required = true;
-                    select.style.width = '100%';
 
                     //default option
                     const defaultOption = document.createElement('option');
                     defaultOption.className = 'formOption';
                     defaultOption.value = 'none';
                     defaultOption.disabled = true;
-                    defaultOption.selected = true;
+                    if (!selectedTime){ defaultOption.selected = true; }
                     defaultOption.hidden = true;
                     defaultOption.textContent = 'Escull una Data';
                     select.appendChild(defaultOption);
@@ -369,6 +409,11 @@
                         option.className = 'formOption';
                         option.value = date;
                         option.textContent = date;
+
+                        if (date === selectedTime){
+                            option.selected = true;
+                        }
+
                         select.appendChild(option);
                     });
 

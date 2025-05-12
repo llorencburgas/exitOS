@@ -171,7 +171,8 @@ def create_model_page():
     return template('./www/model.html',
                     sensors_input = sensors_id,
                     models_input = models_saved,
-                    forecasts_id = forecasts_id)
+                    forecasts_id = forecasts_id,
+                    has_graph = False)
 
 @app.route('/submit-model', method='POST')
 def submit_model():
@@ -267,6 +268,15 @@ def submit_forecast():
         action = request.forms.get('action')
 
         if action == "forecast" or action == "view":
+            sensors_id = database.get_all_saved_sensors_id()
+            models_saved = [os.path.basename(f)
+                            for f in glob.glob(forecast.models_filepath + "*.pkl")]
+
+            forecasts_aux = database.get_forecasts_name()
+            forecasts_id = []
+            for f in forecasts_aux:
+                forecasts_id.append(f[0])
+
             if action == "forecast":
                 selected_forecast = request.forms.get("models")
                 forecast_df, real_values = ForecatManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data, model_name=selected_forecast)
@@ -283,6 +293,17 @@ def submit_forecast():
                 logger.info(f"Forecast realitzat correctament")
                 database.save_forecast(rows)
 
+                return template('./www/model.html',
+                                sensors_input=sensors_id,
+                                models_input=models_saved,
+                                forecasts_id=forecasts_id,
+                                has_graph=True,
+                                model=selected_forecast,
+                                timestamps=json.dumps(timestamps),
+                                predictions=json.dumps(predictions),
+                                real_values=json.dumps(real_values.tolist()),
+                                selected_model = selected_forecast)
+
             else:
                 selected_forecast = request.forms.get("forecasts")
                 selected_time = request.forms.get("forecasts-time")
@@ -291,15 +312,22 @@ def submit_forecast():
                 real_values = forecast_data['real_value']
                 timestamps = forecast_data['date'].tolist()
 
+                return template('./www/model.html',
+                                sensors_input=sensors_id,
+                                models_input=models_saved,
+                                forecasts_id=forecasts_id,
+                                has_graph=True,
+                                model=selected_forecast,
+                                timestamps=json.dumps(timestamps),
+                                predictions=json.dumps(forecast_df),
+                                real_values=json.dumps(real_values.tolist()),
+                                selected_forecast = selected_forecast,
+                                selected_time = selected_time)
 
 
 
-            return template('./www/forecast_results.html',
-                            model=selected_forecast,
-                            timestamps=json.dumps(timestamps),
-                            predictions=json.dumps(predictions if action == 'train' else forecast_df),
-                            real_values=json.dumps(real_values.tolist())
-            )
+
+
         elif action =="delete-model":
             selected_forecast = request.forms.get("models")
             model_path = forecast.models_filepath + selected_forecast
