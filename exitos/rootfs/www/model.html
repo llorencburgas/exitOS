@@ -179,8 +179,21 @@
                     <div id="selectedModel">  </div>
 
                     <button id="fetch-data" name="action" value="forecast" type="submit"><i style="font-size: medium" class="fa-solid fa-chart-line"></i> Realitzar Forecast </button>
-                    <button id="delete-model" name="action" value="delete" type="submit"><i style="font-size: medium" class="fa-solid fa-trash-can"></i> Eliminar Model </button>
+                    <button id="delete-model" name="action" value="delete-model" type="submit"><i style="font-size: medium" class="fa-solid fa-trash-can"></i> Eliminar Model </button>
 
+            <!-- VISUALITZAR FORECAST  -->
+                    <h1 style="margin-top: 50px;">Visualitzar Forecast</h1>
+                    <h3>1. Selecciona el Forecast a Visualitzar</h3>
+
+                    <select class ="form-select" id="forecasts" name="forecasts" required >
+                        <option class="formOption" value="none" disabled selected hidden> Escull un Forecast</option>
+                        %for forecast in forecasts_id:
+                        <option class="formOption" value="{{forecast}}">{{forecast}}</option>
+                        %end
+                    </select>
+                    <div id="forecast-dates-div"></div>
+                    <button id="view-forecast" name="action" value="view" type="submit"><i style="font-size: medium" class="fa-solid fa-eye"></i> Visualitzar Forecast </button>
+                    <button id="delete-forecast" name="action" value="delete-forecast" type="submit"><i style="font-size: medium" class="fa-solid fa-trash-can"></i> Eliminar Forecast </button>
 
                 </form>
             </div>
@@ -281,15 +294,11 @@
     }
 
     function updateModelSelection(modelPath){
-        console.log("MODEL NAME: " + modelPath);
      fetch('get_model_config/' + modelPath)
         .then(response => response.text())
         .then(data => {
             const lines = data.split('\n');
             const config = {};
-
-            console.log(config);
-            console.log("DATA INICIAL: \n" + data)
 
             lines.forEach(line => {
                 const [key, value] = line.split("=");
@@ -297,8 +306,6 @@
                     config[key.trim()] = value.trim();
                 }
             });
-
-            console.log(config);
 
             document.getElementById("modelSelect").value = config["algorithm"];
             document.getElementById("scaled").value = config["scaler"];
@@ -319,10 +326,60 @@
                 opt.selected = config["sensorsId"] && config["sensorsId"].includes(opt.value);
             });
             updateSelection("sensorsId", "selectedSensorsId");
-
-
         });
     }
+
+    function updateForecastSelector(forecast_id){
+        fetch('get_forecasts/' + forecast_id)
+            .then(response => response.text())
+            .then(data => {
+                const lines = data.split('\n').map(line => line.trim()).filter(line => line !== '');
+                const forecastDiv = document.getElementById('forecast-dates-div');
+                console.log(lines);
+
+                forecastDiv.innerHTML = '';
+
+                if(lines.length === 0 || (lines.length === 1 && lines[0] === '')){
+                    forecastDiv.innerHTML = '<p> No hi ha dades per aquest forecast. </p>';
+                }
+                else{
+                    const label = document.createElement('h3');
+                    label.textContent = '2. Selecciona la data del Forecast';
+
+                    const select = document.createElement('select');
+                    select.className = 'form-select';
+                    select.name = 'forecasts-time';
+                    select.id = 'forecasts-time';
+                    select.required = true;
+                    select.style.width = '100%';
+
+                    //default option
+                    const defaultOption = document.createElement('option');
+                    defaultOption.className = 'formOption';
+                    defaultOption.value = 'none';
+                    defaultOption.disabled = true;
+                    defaultOption.selected = true;
+                    defaultOption.hidden = true;
+                    defaultOption.textContent = 'Escull una Data';
+                    select.appendChild(defaultOption);
+
+                    //Opcions per a les dates
+                    lines.forEach(date => {
+                        const option = document.createElement('option');
+                        option.className = 'formOption';
+                        option.value = date;
+                        option.textContent = date;
+                        select.appendChild(option);
+                    });
+
+                    forecastDiv.appendChild(label);
+                    forecastDiv.appendChild(select);
+                }
+
+
+            })
+    }
+
     document.getElementById('modelSelect').addEventListener('change', updateModelConfig);
     updateModelConfig();
 
@@ -333,6 +390,13 @@
             updateModelSelection(modelPath)
         }
     })
+
+    document.getElementById('forecasts').addEventListener('change', function(){
+        const selected_forecast_id = this.value;
+        if(selected_forecast_id.value !== 'none'){
+            updateForecastSelector(selected_forecast_id);
+        }
+    });
 
 
 

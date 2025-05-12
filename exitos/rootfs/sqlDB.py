@@ -4,6 +4,7 @@ from multiprocessing import connection
 
 import numpy as np
 import pandas as pd
+from pandas.core.interchange.dataframe_protocol import DataFrame
 from requests import get
 from datetime import datetime, timedelta, timezone
 import logging
@@ -140,7 +141,6 @@ class sqlDB():
         connection.commit()
         cur.close()
         logger.debug(f"La base de dades de Sensors ha estat netejada. {deleted_sensors} sensors han estat eliminats.")
-
 
     def get_sensors_save(self, sensors):
         """
@@ -432,6 +432,45 @@ class sqlDB():
         """, data)
         con.commit()
         self.__close_connection__(con)
+
+    def get_forecasts_name(self):
+        con = self.__open_connection__()
+        cur = con.cursor()
+        cur.execute("SELECT DISTINCT forecast_name FROM forecasts")
+        aux = cur.fetchall()
+        con.close()
+        self.__close_connection__(con)
+        return aux
+
+    def get_dates_from_forecast(self, forecast_id):
+        con = self.__open_connection__()
+        cur = con.cursor()
+        cur.execute("SELECT DISTINCT forecast_run_time FROM forecasts WHERE forecast_name = ?", (forecast_id,))
+        aux = cur.fetchall()
+        con.close()
+        self.__close_connection__(con)
+        return aux
+
+    def get_data_from_forecast(self, forecast_id, forecast_time):
+        con = self.__open_connection__()
+        cur = con.cursor()
+        cur.execute("SELECT forecasted_time, predicted_value, real_value FROM forecasts WHERE forecast_name = ? AND forecast_run_time = ?",
+                    (forecast_id,forecast_time))
+        aux = cur.fetchall()
+        data = pd.DataFrame(aux, columns=('date', 'value', 'real_value'))
+        cur.close()
+        self.__close_connection__(con)
+        return data
+
+    def remove_forecast(self, forecast_id, forecast_time):
+        con = self.__open_connection__()
+        cur = con.cursor()
+        cur.execute("DELETE FROM forecasts WHERE forecast_name = ? AND forecast_run_time = ?",(forecast_id,forecast_time))
+        con.commit()
+        self.__close_connection__(con)
+
+
+
 
 
 
