@@ -34,7 +34,7 @@ PORT = 55023
 #INICIACIÓ DE L'APLICACIÓ I LA BASE DE DADES
 app = Bottle()
 database = db.sqlDB()
-database.update_database("all")
+# database.update_database("all")
 forecast = forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler()
 
@@ -175,95 +175,96 @@ def create_model_page():
                     forecasts_id = forecasts_id,
                     has_graph = False)
 
-@app.route('/submit-model', method='POST')
-def submit_model():
-    try:
-        selected_model = request.forms.get("model")
-        extra_sensors_id = request.forms.getall("extraSensorsId") if request.forms.getall("extraSensorsId") else None
-        config = {}
+def train_model():
+    selected_model = request.forms.get("model")
+    extra_sensors_id = request.forms.get("sensors_id") if request.forms.get("sensors_id") else None
+    config = {}
 
-        keys = request.forms.keys()
-        for key in request.forms.keys():
-            if key != "model" or key != "extraSensorsId" or key != 'extraSensorsId':
-                value = request.forms.get(key)
-                value = value.strip().lower()
+    keys = request.forms.keys()
+    for key in request.forms.keys():
+        if key != "model" or key != "sensors_id" or key != 'action':
+            value = request.forms.get(key)
+            value = value.strip().lower()
 
-                if value in ["true", "false", "null", "none"]:
-                    if value == "true": config[key] = True
-                    elif value == "false": config[key] = False
-                    else: config[key] = None
-                elif value.isdigit(): config[key] = int(value)
+            if value in ["true", "false", "null", "none"]:
+                if value == "true":
+                    config[key] = True
+                elif value == "false":
+                    config[key] = False
                 else:
-                    try:
-                        config[key] = float(value)
-                    except ValueError:
-                        config[key] = value
+                    config[key] = None
+            elif value.isdigit():
+                config[key] = int(value)
+            else:
+                try:
+                    config[key] = float(value)
+                except ValueError:
+                    config[key] = value
+
+    sensors_id = config.get("sensorsId")
+    scaled = config.get("scaled")
+    model_name = config.get("modelName")
+
+    config.pop("sensorsId")
+    config.pop("scaled")
+    config.pop("modelName")
+    config.pop('model')
+    config.pop("models")
+    config.pop("action")
+    if 'sensors_id' in config: config.pop('sensors_id')
+
+    if "meteoData" in config:
+        meteo_data = True
+        config.pop("meteoData")
+    else:
+        meteo_data = False
+
+    if model_name == "":
+        aux = sensors_id.split('.')
+        model_name = aux[1]
+    if scaled == 'None': scaled = None
+
+    if len(extra_sensors_id) == 0:
+        extra_sensors_id = None
+    elif len(extra_sensors_id) == 1 and extra_sensors_id[0] == "None":
+        extra_sensors_id = None
+    else:
+        if "None" in extra_sensors_id: extra_sensors_id.remove('None')
+        extra_sensors_df = {}
+        extra_sensors_list = [s.strip() for s in extra_sensors_id.split(',') if s.strip()]
+        for s in extra_sensors_list:
+            aux = database.get_data_from_sensor(s)
+            extra_sensors_df[s] = aux
 
 
-        sensors_id = config.get("sensorsId")
-        scaled = config.get("scaled")
-        model_name = config.get("modelName")
+    sensors_df = database.get_data_from_sensor(sensors_id)
 
-        config.pop("sensorsId")
-        config.pop("scaled")
-        config.pop("modelName")
-        config.pop('model')
-        if 'extraSensorsId' in config: config.pop('extraSensorsId')
+    logger.info(f"Selected model: {selected_model}, Config: {config}")
 
-        if "meteoData" in config:
-            meteo_data = True
-            config.pop("meteoData")
-        else:
-            meteo_data = False
-
-        if model_name == "":
-            aux = sensors_id.split('.')
-            model_name = aux[1]
-        if scaled == 'None': scaled = None
-
-        if len(extra_sensors_id) == 0: extra_sensors_id = None
-        elif len(extra_sensors_id) == 1 and extra_sensors_id[0] == "None": extra_sensors_id = None
-        else:
-            if "None" in extra_sensors_id: extra_sensors_id.remove('None')
-            extra_sensors_df = {}
-            for s in extra_sensors_id:
-                aux = database.get_data_from_sensor(s)
-                extra_sensors_df[s] = aux
+    if selected_model == "AUTO":
+        forecast.create_model(data=sensors_df,
+                              sensors_id=sensors_id,
+                              y='value',
+                              escalat=scaled,
+                              max_time=config['max_time'],
+                              filename=model_name,
+                              meteo_data=optimalScheduler.meteo_data if meteo_data is True else None,
+                              extra_sensors_df=extra_sensors_df if extra_sensors_id is not None else None)
+    else:
+        forecast.create_model(data=sensors_df,
+                              sensors_id=sensors_id,
+                              y='value',
+                              extra_vars={'variables': ['Dia', 'Hora', 'Mes'], 'festius': ['ES', 'CT']},
+                              colinearity_remove_level=0.9,
+                              feature_selection='Tree',
+                              algorithm=selected_model,
+                              params=config,
+                              escalat=scaled,
+                              filename=model_name,
+                              meteo_data=optimalScheduler.meteo_data if meteo_data is True else None,
+                              extra_sensors_df=extra_sensors_df if extra_sensors_id is not None else None)
 
 
-        sensors_df = database.get_data_from_sensor(sensors_id)
-
-        logger.info(f"Selected model: {selected_model}, Config: {config}")
-
-        if selected_model == "AUTO":
-            forecast.create_model(data=sensors_df,
-                                  sensors_id = sensors_id,
-                                  y = 'value',
-                                  escalat = scaled,
-                                  max_time = config['max_time'],
-                                  filename = model_name,
-                                  meteo_data = optimalScheduler.meteo_data if meteo_data is True else None,
-                                  extra_sensors_df = extra_sensors_df if extra_sensors_id is not None else None)
-        else:
-            forecast.create_model(data=sensors_df,
-                                  sensors_id = sensors_id,
-                                  y='value',
-                                  extra_vars={'variables': ['Dia', 'Hora', 'Mes'], 'festius': ['ES', 'CT']},
-                                  colinearity_remove_level = 0.9,
-                                  feature_selection = 'Tree',
-                                  algorithm = selected_model,
-                                  params = config,
-                                  escalat= scaled,
-                                  filename = model_name,
-                                  meteo_data = optimalScheduler.meteo_data if meteo_data is True else None,
-                                  extra_sensors_df = extra_sensors_df if extra_sensors_id is not None else None)
-
-        return create_model_page()
-    except Exception as e:
-        error_message = traceback.format_exc()
-        return f"Error! : {str(e)}\nFull Traceback:\n{error_message}"
-
-@app.route('/submit-forecast', method='POST')
 def submit_forecast():
     try:
         action = request.forms.get('action')
@@ -325,10 +326,6 @@ def submit_forecast():
                                 selected_forecast = selected_forecast,
                                 selected_time = selected_time)
 
-
-
-
-
         elif action =="delete-model":
             selected_forecast = request.forms.get("models")
             model_path = forecast.models_filepath + selected_forecast
@@ -346,6 +343,24 @@ def submit_forecast():
     except Exception as e:
         return f"Error! : {str(e)} \n ARGS {e.args}"
 
+@app.route('/submit-model', method='POST')
+def submit_model():
+    try:
+        action = request.forms.get('action')
+
+        if action == 'train':
+            train_model()
+            return create_model_page()
+        # elif action == 'forecast':
+
+
+    except Exception as e:
+        error_message = traceback.format_exc()
+        return f"Error! : {str(e)}\nFull Traceback:\n{error_message}"
+
+# @app.route('/submit-forecast', method='POST')
+
+
 @app.route('/get_model_config/<model_name>')
 def get_model_config(model_name):
     try:
@@ -359,6 +374,10 @@ def get_model_config(model_name):
         response_config += f"scaler = {config.get('scaler_name','')}\n"
         response_config += f"sensorsId = {config.get('sensors_id','')}\n"
         response_config += f"meteo_data = {config.get('meteo_data_is_selected', 'false')}\n"
+
+        extra = config.get('extra_sensors', {})
+        extra_sensors_id = ",".join(extra.keys()) if isinstance(extra, dict) else ''
+        response_config += f"extra_sensors = {extra_sensors_id}\n"
 
         if "params" in config:
             for k, v in config["params"].items():

@@ -6,6 +6,9 @@
     --white-background: #fff;
     --text-color: #0f2418;
     --text-hover-color: #04D984;
+    --select-background-color: #eee;
+    --select-background-hover-color: #ddd;
+    --select-border-color: #ddd;
     --text-active-color: #000;
 }
 
@@ -56,7 +59,6 @@ main{
         margin-right: 10px;
     }
 }
-
 .navbar-container{
     display: flex;
     flex-wrap: nowrap;
@@ -107,7 +109,6 @@ main{
     background: rgba(44, 110, 73, 0.6);
     z-index: 1;
 }
-
 .hero-content{
     position: relative;
     z-index: 2;
@@ -130,7 +131,6 @@ main{
  }
 
  /*CONTAINER*/
-
 .container{
     color: var(--text-color);
     padding: 10px;
@@ -146,7 +146,6 @@ main{
         place-items: center;
     }
 }
-
 button{
     border: none;
     color: white;
@@ -164,9 +163,6 @@ button:hover{
     background-color: var(--text-hover-color);
 }
 
-
-
-
  /*FOOTER*/
 .footer{
     background-color: var(--main-bg-color);
@@ -178,13 +174,30 @@ a.mail-text{
     color: var(--text-color);
 }
 
-/* FORMS */
-select option{
-    margin-bottom: 4px;
-    font-family: 'Rubik', Arial, sans-serif;
-    font-size: 14px;
+/* FORM  SELECT */
+.form-select{
+    border: 2px solid var(--select-border-color);
+    border-radius: 5px;
+    background: var(--select-background-color);
+    padding: 3px;
+    transition: 0.4s;
+
+    :hover, :focus{
+        background: var(--select-background-hover-color);
+    }
 }
-select option:checked{
-    background: var(--main-bg-color);
-    color: var(--text-color);
+
+
+.form-option{
+    font-family: 'Rubik', Arial, serif;
+    font-size: small;
+
+    display: flex;
+    justify-content: flex-start;
+    gap: 20px;
+    border: 2px solid var(--select-border-color);
+    background: var(--select-background-color);
+    padding: 10px;
+    transition: 0.4s;
 }
+

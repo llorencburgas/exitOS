@@ -433,15 +433,21 @@ class Forecaster:
         if extra_sensors is not None:
             aux = pd.DataFrame()
             merged_extras = []
-            for i in extra_sensors:
-                extra_sensors[i]['timestamp'] = pd.to_datetime(extra_sensors[i]['timestamp']).dt.tz_localize(None).dt.floor('h')
-                extra_sensors[i] = extra_sensors[i].drop_duplicates(subset=['timestamp'])
-                if aux.empty: aux = extra_sensors[i]
-                else:
-                    merged_extras = pd.merge(aux, extra_sensors[i], on='timestamp', how='inner')
-                    aux = merged_extras
+            if len(extra_sensors) == 1:
+                extra_sensors[0]['timestamp'] = pd.to_datetime(extra_sensors[0]['timestamp']).dt.tz_localize(None).dt.floor('h')
+                extra_sensors[0] = extra_sensors[0].drop_duplicates(subset=['timestamp'])
+                merged_extras.append(extra_sensors[0])
+            else:
+                for i in extra_sensors:
+                    extra_sensors[i]['timestamp'] = pd.to_datetime(extra_sensors[i]['timestamp']).dt.tz_localize(None).dt.floor('h')
+                    extra_sensors[i] = extra_sensors[i].drop_duplicates(subset=['timestamp'])
+                    if aux.empty: aux = extra_sensors[i]
+                    else:
+                        merged_extras = pd.merge(aux, extra_sensors[i], on='timestamp', how='inner')
+                        aux = merged_extras
 
-            merged_data = pd.merge(merged_data, merged_extras, on='timestamp', how='inner')
+            if not merged_extras.empty:
+                merged_data = pd.merge(merged_data, merged_extras, on='timestamp', how='inner')
 
         if merged_data is []: merged_data = sensor
 

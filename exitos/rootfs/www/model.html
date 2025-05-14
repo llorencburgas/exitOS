@@ -65,6 +65,71 @@
             box-sizing: border-box;
         }
 
+        .selection-container{
+            max-width: 500px;
+        }
+        .tag-container{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-height: 40px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            width: 100%;
+
+            /*align-items: flex-start;*/
+        }
+        .tag{
+            background-color: #04AA6D;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+
+            max-width: 100%;
+            word-break: break-word;
+            white-space: normal;
+        }
+        .tag .remove{
+            cursor: pointer;
+            font-weight: bold;
+            overflow: clip;
+        }
+        .search-box{
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .sensor-list{
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            border: 1px solid #ccc;
+            max-height: 150px;
+            overflow-y: auto;
+            background: white;
+            display: none;
+            position: absolute;
+            z-index: 1000;
+        }
+        .sensor-list li {
+            padding: 8px;
+            cursor: pointer;
+        }
+        .sensor-list li:hover {
+            background: #04AA6D;
+            color: white;
+        }
+        .dropdown {
+            position: relative;
+        }
+
     </style>
 </head>
 <body>
@@ -88,36 +153,57 @@
 
 
         <div class="container">
-            <!--  CREAR EL MODEL  -->
+            <!--  CREAR EL MODEL + FORECASTA  -->
             <div class="content-section">
-                <h1> Creació del Model </h1>
-                <p> Instruccions a seguir per l'usuari</p>
+                <h1> Forecast </h1>
 
                 <form action="./submit-model" method="POST" onsubmit="showLoadingSpinner()" >
 
-                    <h3> 1. Selecciona el sensor objectiu</h3>
-                    <select class="form-select" id="sensorsId" name="sensorsId" required  style="width: 50%;">
+                    <!--  MODEL ENTRENAT  -->
+                    <h3 style="margin-bottom:2px;">1. Selecciona el model entrenat</h3>
+                    <p style="font-size: 14px; font-style: italic; margin-bottom: 5px;"> Opcional... </p>
+                    <select class="form-select" id="models" name="models" required style="margin-bottom: 5px;">
+                        <option class="form-option" value="newModel" selected >Model Nou</option>
+                        % for model in models_input:
+                          <option class="form-option" value="{{model}}">{{model}}</option>
+                        % end
+                    </select>
+
+                    <!--  NOM DEL MODEL -->
+                    <label for="modelName">Nom del Model:
+                        <input type="text" name="modelName" id="modelName" placeholder="Escriu el nom...">
+                    </label>
+                    <p style="font-size: 14px; font-style: italic; margin-bottom: 5px;"> En cas de deixar en blanc el nom serà el del sensor objectiu.</p>
+
+                    <!--  SENSOR OBJECTIU  -->
+                    <h3> 2. Selecciona el sensor objectiu</h3>
+                    <select class="form-select" id="sensorsId" name="sensorsId" required>
                         % for sensor in sensors_input:
                           <option value="{{sensor}}">{{sensor}}</option>
                         % end
                     </select>
 
+                    <!--  SENSORS EXTRA  -->
+                    <div id="sensor-data" data-sensors="{{sensors_input}}"></div>
 
-                    <h3> 2. Selecciona variables extra</h3>
-                     <p style="font-size: 14px; font-style: italic; margin-bottom: 5px;"> Opcional... </p>
-                    <select class="form-select" id="extraSensorsId" name="extraSensorsId" multiple style="width: 100%; height:11vh;"
-                            onchange="updateSelection('extraSensorsId','selectedSensorsId')">
-                        <option value="None">None</option>
-                        % for sensor in sensors_input:
-                            <option value="{{sensor}}">{{sensor}}</option>
-                        % end
-                    </select>
-                    <div id="selectedSensorsId" ></div>
+                    <div class="selection-container">
+                        <h3  style="margin-bottom:2px;"> 3. Selecciona variables extra</h3>
+                        <p style="font-size: 14px; font-style: italic; margin-bottom: 5px;"> Opcional... </p>
+                        <div class="tag-container" id="selected-sensors"></div>
 
+                        <div class="dropdown">
+                            <input type="text" class="search-box" id="sensor-search" placeholder="Cerca i selecciona sensors...">
+                            <ul class="sensor-list" id="sensor-list"></ul>
+                        </div>
+                    </div>
+                    <!-- Hidden Input per guardar els sensors seleccionats -->
+                    <input type="hidden" name="sensors_id" id="sensors-input" value="">
+
+
+                    <!-- CONFIGURAR MODEL -->
                     <h3>3. Configura el model</h3>
-
                     <label for="model">Algorisme:
-                        <select name="model" id="modelSelect">
+                        <select class="form-select" name="model" id="modelSelect">
                             <option value="AUTO">Automàtic</option>
                             <option value="SVR">Support Vector Regression (SVR)</option>
                             <option value="KNN">K-Nearest Neighbors (KNN)</option>
@@ -129,30 +215,21 @@
                     </label>
                     <div id="modelConfig"></div>
 
-
                     <label for="scaled">Escalat
-                        <select name="scaled" id="scaled">
+                        <select class="form-select" name="scaled" id="scaled">
                             <option value="None">None</option>
                             <option value="Standard">Standard</option>
                             <option value="Robust">Robust</option>
                             <option value="MINMAX">MINMAX</option>
                         </select>
                     </label>
-
                     <div>
                         <label for="meteoData">Dades Meteorològiques: </label>
                         <input type="checkbox" id="meteoData" name="meteoData" style="margin-left: 3px" value="false">
                     </div>
 
-
-                    <h3 style="margin-bottom: 1px;">4. Introdueix un Nom al model </h3>
-                    <p style="font-size: 14px; font-style: italic; margin-bottom: 5px;"> En cas de deixar en blanc el nom serà el del sensor objectiu.</p>
-
-                    <label for="modelName">Nom del Model
-                        <input type="text" name="modelName" id="modelName" placeholder="Nom del Model">
-                    </label>
-
-                    <button type="submit"><i style="font-size: medium" class="fa-solid fa-bolt"></i> Train</button>
+                    <button id="create-model-button" name="action" value="train" type="submit"><i style="font-size: medium" class="fa-solid fa-bolt"></i> Train</button>
+                    <button id="fetch-data" name="action" value="forecast" type="submit"><i style="font-size: medium" class="fa-solid fa-chart-line"></i> Forecast </button>
 
                 </form>
 
@@ -166,40 +243,35 @@
             <div class="content-section" style="align-items: flex-start; padding-top: 20px;">
                 <form action ="./submit-forecast" method="POST" id="forecast-form"
                       style="flex-direction: row; gap: 10px; align-items: flex-start; margin-bottom: 10px;">
-                    <div><!--  FORECAST   -->
-                        <h1>FORECAST</h1>
-                        <h3> 1. Selecciona el model entrenat</h3>
-                        <select class="form-select" id="models" name="models" required
-                                onchange="updateSelection('models', 'selectedModel')">
+<!--                    <div>&lt;!&ndash;  FORECAST   &ndash;&gt;-->
+<!--                        <h1>FORECAST</h1>-->
+<!--                        <h3> 1. Selecciona el model entrenat</h3>-->
+<!--                        <select class="form-select" id="models" name="models" required-->
+<!--                                onchange="updateSelection('models', 'selectedModel')">-->
 
-                            <option class="formOption" value="none" disabled selected hidden>Escull Un Model</option>
-                            % for model in models_input:
-                              <option class="formOption" value="{{model}}">{{model}} {{'selected' if defined('selected_model') and model == selected_model else ''}}</option>
-                            % end
-                        </select>
-                        <div id="selectedModel">  </div>
+<!--                            <option class="formOption" value="none" disabled selected hidden>Escull Un Model</option>-->
+<!--                            % for model in models_input:-->
+<!--                              <option class="formOption" value="{{model}}">{{model}}</option>-->
+<!--                            % end-->
+<!--                        </select>-->
+<!--                        <div id="selectedModel">  </div>-->
 
-                        <button id="fetch-data" name="action" value="forecast" type="submit"><i style="font-size: medium" class="fa-solid fa-chart-line"></i> Realitzar Forecast </button>
-                        <button id="delete-model" name="action" value="delete-model" type="submit"><i style="font-size: medium" class="fa-solid fa-trash-can"></i> Eliminar Model </button>
-                    </div>
+<!--                        <button id="fetch-data" name="action" value="forecast" type="submit"><i style="font-size: medium" class="fa-solid fa-chart-line"></i> Realitzar Forecast </button>-->
+<!--                        <button id="delete-model" name="action" value="delete-model" type="submit"><i style="font-size: medium" class="fa-solid fa-trash-can"></i> Eliminar Model </button>-->
+<!--                    </div>-->
 
-                    <div><!-- VISUALITZAR FORECAST  -->
+                    <div>
+                        <!-- VISUALITZAR FORECAST  -->
                         <h1>Visualitzar Forecast</h1>
-                        <h3>1. Selecciona el Forecast a Visualitzar</h3>
-
-                        <select class ="form-select" id="forecasts" name="forecasts" required >
-                            <option class="formOption" value="none" disabled selected hidden> Escull un Forecast</option>
-                            %for forecast in forecasts_id:
-                            <option class="formOption" value="{{forecast}}">{{forecast}} {{'selected' if defined('selected_forecast') and forecast == selected_forecast else ''}} </option>
-                            %end
-                        </select>
-                        <div id="forecast-dates-div"></div>
-                        <button id="view-forecast" name="action" value="view" type="submit"><i style="font-size: medium" class="fa-solid fa-eye"></i> Visualitzar Forecast </button>
+<!--                        <button id="view-forecast" name="action" value="view" type="submit"><i style="font-size: medium" class="fa-solid fa-eye"></i> Visualitzar Forecast </button>-->
                         <button id="delete-forecast" name="action" value="delete-forecast" type="submit"><i style="font-size: medium" class="fa-solid fa-trash-can"></i> Eliminar Forecast </button>
                     </div>
+
+
+
                 </form>
 
-
+                <h1 style="color: darkred">NO TOCAR porfiiiiiis! està en procés, de moment foreast no funciona :c </h1>
                 %if has_graph:
                     <h2>Resultats del Forecast per al model: {{model}}</h2>
                     <div id="chart"></div>
@@ -247,11 +319,111 @@
     </main>
 
 <script>
+     //EXTRA SENSORS LOGIC
+    let sensors = document.getElementById("sensor-data").getAttribute("data-sensors").split(",");
+    sensors = sensors.map(sensor => sensor.replace(/['\[\]]/g, ''));
 
+    const selectedSensors = new Set();
+    const sensorSearch = document.getElementById("sensor-search");
+    const sensorList = document.getElementById("sensor-list");
+    const selectedSensorsContainer = document.getElementById("selected-sensors");
+    const sensorsInput = document.getElementById("sensors-input");
+
+    //Funció per a actualitzar el hidden input field
+    function updateSensorsHiddenInput(){
+        sensorsInput.value = Array.from(selectedSensors).join(",");
+    }
+
+    //Funció per actualitzar els sensors del dropdown
+    function updateSensorList(filteredSensors){
+        sensorList.innerHTML = "";
+        if(filteredSensors.length > 0){
+            sensorList.style.display = "block";
+            filteredSensors.forEach(sensor => {
+                const trimmedSensor = sensor.trim();
+                const li = document.createElement("li");
+                li.textContent = trimmedSensor;
+                li.onclick = () => selectSensor(trimmedSensor);
+                sensorList.appendChild(li);
+            });
+        }else{
+            sensorList.style.display = "none";
+        }
+    }
+
+    //Mostra la llista completa de sensors
+    sensorSearch.addEventListener("focus", () =>{
+        updateSensorList(sensors);
+    })
+
+    //Filtra dinamicament mentre escriu
+    sensorSearch.addEventListener("input", () =>{
+        const query = sensorSearch.value.toLowerCase();
+        const filteredSensors = sensors.filter(sensor => sensor.toLowerCase().includes(query));
+        updateSensorList(filteredSensors);
+    });
+
+    //selecciona sensor i afageix com a tag
+    function selectSensor(sensor){
+        if(!selectedSensors.has(sensor)){
+            selectedSensors.add(sensor);
+
+            const tag = document.createElement("div");
+            tag.className = "tag";
+            tag.innerHTML = `${sensor} <span class="remove" onclick="removeSensor(event, '${sensor}')">&times;</span>`;
+            tag.setAttribute("data-sensor", sensor);
+            selectedSensorsContainer.appendChild(tag);
+
+            updateSensorsHiddenInput()
+        }
+
+        sensorSearch.value = "";
+        sensorList.style.display = "none";
+    }
+
+    //Eliminar tag de sensor
+    function removeSensor(event, sensor){
+        selectedSensors.delete(sensor);
+
+        //elimina només el sensor clicat
+        event.target.parentElement.remove();
+        updateSensorsHiddenInput()
+    }
+
+    //Elimina tots els sensors seleccionats
+     function removeAllSensors(){
+        selectedSensors.clear();
+        selectedSensorsContainer.innerHTML = "";
+
+        updateSensorsHiddenInput();
+     }
+
+     //Afageix els sensors del string indicat, separats per comes.
+     function addSensorsFromStirng(sensorString){
+        const sensorIds = sensorString.split(",").map(sensor => sensor.trim());
+
+        sensorIds.forEach(sensor => {
+            if(!selectedSensors.has(sensor)){
+                selectSensor(sensor);
+            }
+        })
+     }
+
+    //amaga la llista al fer clic a fora
+    document.addEventListener("click", (event) => {
+        if(!event.target.closest(".dropdown")){
+            sensorList.style.display = "none";
+        }
+    });
+
+
+    //SPINNER LOGIC
     function showLoadingSpinner(){
         document.getElementById('loadingSpinner').style.display = 'block';
     }
 
+
+    //MODEL CONFIG LOGIC
     function updateSelection(selectId, displayId){
         const selectElement= document.getElementById(selectId);
         if(selectElement.value != "none"){
@@ -311,10 +483,11 @@
             Object.keys(modelConfigs[selectedModel]).forEach(key => {
                 let label = document.createElement('label');
                 label.innerText = key + ": ";
-                configDiv.appendChild(label);
+                // configDiv.appendChild(label);
 
                 let select = document.createElement('select');
                 select.name = key;
+                select.className = "form-select"
 
                 modelConfigs[selectedModel][key].forEach(option => {
                     let optionElement = document.createElement('option');
@@ -328,7 +501,8 @@
                     select.appendChild(optionElement);
                 });
 
-                configDiv.appendChild(select);
+                label.appendChild(select);
+                configDiv.appendChild(label);
                 configDiv.appendChild(document.createElement('br'));
             });
         }
@@ -348,7 +522,8 @@
                 }
             });
 
-            document.getElementById("modelSelect").value = config["algorithm"];
+            if(config['algorithm'] === 'auto') document.getElementById("modelSelect").value = "AUTO";
+            else document.getElementById("modelSelect").value = config["algorithm"];
             document.getElementById("scaled").value = config["scaler"];
             document.getElementById("modelName").value = modelPath;
 
@@ -366,7 +541,12 @@
             sensorOptions.forEach(opt => {
                 opt.selected = config["sensorsId"] && config["sensorsId"].includes(opt.value);
             });
-            updateSelection("sensorsId", "selectedSensorsId");
+
+            if(config['extra_sensors']){
+                //selectedSensorsContainer
+                removeAllSensors();
+                addSensorsFromStirng(config['extra_sensors']);
+            }
         });
     }
 
@@ -430,18 +610,18 @@
 
     document.getElementById('models').addEventListener('change', function() {
         const selectedModel = this.value;
-        if(selectedModel.value !== "none"){
+        if(selectedModel !== "newModel"){
             const modelPath = selectedModel.replace(".pkl", "")
             updateModelSelection(modelPath)
         }
+        else{
+            document.getElementById("modelSelect").value = "AUTO";
+            document.getElementById("scaled").value = "None";
+            document.getElementById("modelName").value = "";
+            updateModelConfig();
+        }
     })
 
-    document.getElementById('forecasts').addEventListener('change', function(){
-        const selected_forecast_id = this.value;
-        if(selected_forecast_id.value !== 'none'){
-            updateForecastSelector(selected_forecast_id);
-        }
-    });
 
 
 
