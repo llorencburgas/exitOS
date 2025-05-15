@@ -11,40 +11,11 @@
     <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
     <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
 
+
     <style>
         h3{
             margin-top: 20px;
             margin-bottom: 10px;
-        }
-        #loadingSpinner{
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 20%;
-            height: 20%;
-            text-align: center;
-            z-index: 1000;
-            background-color: #f1f1f1;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .spinner{
-            border: 8px solid #f3f3f3;
-            border-top: 8px solid #04AA6D;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        #loadingText{
-            margin-top: 10px;
-            font-size: 16px;
-            color: #04AA6D;
         }
         form{
             display: flex;
@@ -64,7 +35,6 @@
             padding: 20px;
             box-sizing: border-box;
         }
-
         .selection-container{
             max-width: 500px;
         }
@@ -128,6 +98,38 @@
         }
         .dropdown {
             position: relative;
+        }
+
+        /* LOADING SPINNER */
+         #loadingSpinner{
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20%;
+            height: 20%;
+            text-align: center;
+            z-index: 1000;
+            background-color: #f1f1f1;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .spinner{
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #04AA6D;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #loadingText{
+            margin-top: 10px;
+            font-size: 16px;
+            color: #04AA6D;
         }
 
     </style>
@@ -202,7 +204,7 @@
 
                     <!-- CONFIGURAR MODEL -->
                     <h3>3. Configura el model</h3>
-                    <label for="model">Algorisme:
+                    <label for="modelSelect">Algorisme:
                         <select class="form-select" name="model" id="modelSelect">
                             <option value="AUTO">Automàtic</option>
                             <option value="SVR">Support Vector Regression (SVR)</option>
@@ -233,83 +235,23 @@
 
                 </form>
 
-                <div id="loadingSpinner" style="display: none;">
-                    <div class="spinner"></div>
-                    <p id="loadingText">Processant Forecast. Això pot tardar uns minuts....</p>
-                </div>
             </div>
 
 
             <div class="content-section" style="align-items: flex-start; padding-top: 20px;">
-                <form action ="./submit-forecast" method="POST" id="forecast-form"
-                      style="flex-direction: row; gap: 10px; align-items: flex-start; margin-bottom: 10px;">
-<!--                    <div>&lt;!&ndash;  FORECAST   &ndash;&gt;-->
-<!--                        <h1>FORECAST</h1>-->
-<!--                        <h3> 1. Selecciona el model entrenat</h3>-->
-<!--                        <select class="form-select" id="models" name="models" required-->
-<!--                                onchange="updateSelection('models', 'selectedModel')">-->
 
-<!--                            <option class="formOption" value="none" disabled selected hidden>Escull Un Model</option>-->
-<!--                            % for model in models_input:-->
-<!--                              <option class="formOption" value="{{model}}">{{model}}</option>-->
-<!--                            % end-->
-<!--                        </select>-->
-<!--                        <div id="selectedModel">  </div>-->
-
-<!--                        <button id="fetch-data" name="action" value="forecast" type="submit"><i style="font-size: medium" class="fa-solid fa-chart-line"></i> Realitzar Forecast </button>-->
-<!--                        <button id="delete-model" name="action" value="delete-model" type="submit"><i style="font-size: medium" class="fa-solid fa-trash-can"></i> Eliminar Model </button>-->
-<!--                    </div>-->
-
-                    <div>
-                        <!-- VISUALITZAR FORECAST  -->
-                        <h1>Visualitzar Forecast</h1>
-<!--                        <button id="view-forecast" name="action" value="view" type="submit"><i style="font-size: medium" class="fa-solid fa-eye"></i> Visualitzar Forecast </button>-->
-                        <button id="delete-forecast" name="action" value="delete-forecast" type="submit"><i style="font-size: medium" class="fa-solid fa-trash-can"></i> Eliminar Forecast </button>
-                    </div>
-
-
-
-                </form>
-
-                <h1 style="color: darkred">NO TOCAR porfiiiiiis! està en procés, de moment foreast no funciona :c </h1>
-                %if has_graph:
-                    <h2>Resultats del Forecast per al model: {{model}}</h2>
-                    <div id="chart"></div>
-                    <script>
-                        const timestamps = {{!timestamps}};
-                        const predictions = {{!predictions}};
-                        const realValues = {{!real_values}};
-
-                        const tracePrediction = {
-                            x: timestamps,
-                            y: predictions,
-                            mode: 'lines+markers',
-                            name: 'Predicció',
-                            line: { color: 'green' }
-                        };
-
-                        const traceReal = {
-                            x: timestamps,
-                            y: realValues,
-                            mode: 'lines+markers',
-                            name: 'Dades Reals',
-                            line: {
-                                color: 'red',
-                                dash: 'dot'  // Dotted line
-                            }
-                        };
-
-                        const layout = {
-                            title: 'Predicció vs Dades Reals',
-                            xaxis: { title: 'Temps' },
-                            yaxis: { title: 'Consum (kW)' }
-                        };
-
-                        Plotly.newPlot('chart', [tracePrediction, traceReal], layout);
-                    </script>
-                %end
-
+                <div id="forecast-chart-container" style="margin-top: 20px;">
+                    <h3 id="forecast-title" style="display:none;"></h3>
+                    <div id="forecast-chart"></div>
+                    <button id="delete-forecast" name="action" value="delete-forecast" type="submit" style="display: none"><i style="font-size: medium;" class="fa-solid fa-trash-can"></i> Eliminar Forecast </button>
+                </div>
             </div>
+
+            <div id="loadingSpinner" style="display: none;">
+                    <div class="spinner"></div>
+                    <p id="loadingText">Processant Forecast. Això pot tardar uns minuts....</p>
+            </div>
+
         </div>
 
         <footer class="footer">
@@ -421,6 +363,9 @@
     function showLoadingSpinner(){
         document.getElementById('loadingSpinner').style.display = 'block';
     }
+    function hideLoadingSpinner(){
+        document.getElementById('loadingSpinner').style.display = 'none';
+    }
 
 
     //MODEL CONFIG LOGIC
@@ -508,7 +453,8 @@
         }
     }
 
-    function updateModelSelection(modelPath){
+    async function updateModelSelection(modelPath){
+        showLoadingSpinner();
      fetch('get_model_config/' + modelPath)
         .then(response => response.text())
         .then(data => {
@@ -548,6 +494,53 @@
                 addSensorsFromStirng(config['extra_sensors']);
             }
         });
+
+     fetch('get_forecast_data/' + modelPath)
+         .then(response => response.json())
+         .then(data => {
+             if(data.status === "ok"){
+                 const timestamps = data.timestamps;
+                 const predictions = data.predictions;
+                 const realValues = data.real_values;
+
+                 document.getElementById("forecast-title").innerText = `Resultats del Forecast per al model: ${modelPath}`;
+                 document.getElementById("forecast-title").style.display = "block";
+                 document.getElementById("delete-forecast").style.display = "block";
+
+                 const tracePrediction = {
+                     x: timestamps,
+                     y: predictions,
+                     mode: "lines",
+                     name: "Predicció",
+                     line: {color: 'green'}
+                 };
+                 const traceReal = {
+                     x: timestamps,
+                     y: realValues,
+                     mode: 'lines',
+                     name: 'Dades Reals',
+                     line: {
+                         color: 'red',
+                         dash: 'dot'
+                     }
+                 };
+                 const layout = {
+                     title: 'Predicció vs Dades Reals',
+                     xaxis: {title: 'Temps'},
+                     yaxis: {title: 'Consum (Kw)'},
+                     width: 800,
+                     height: 500
+                 };
+
+                 Plotly.newPlot('forecast-chart', [tracePrediction, traceReal], layout);
+                 hideLoadingSpinner();
+             }else{
+                document.getElementById("forecast-title").style.display = "none";
+                document.getElementById("forecast-chart").innerHTML = '';
+                document.getElementById("delete-forecast").style.display = "none";
+                hideLoadingSpinner();
+             }
+         })
     }
 
     function updateForecastSelector(forecast_id){

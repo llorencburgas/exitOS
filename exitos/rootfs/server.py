@@ -264,7 +264,6 @@ def train_model():
                               meteo_data=optimalScheduler.meteo_data if meteo_data is True else None,
                               extra_sensors_df=extra_sensors_df if extra_sensors_id is not None else None)
 
-
 def submit_forecast():
     try:
         action = request.forms.get('action')
@@ -351,15 +350,35 @@ def submit_model():
         if action == 'train':
             train_model()
             return create_model_page()
-        # elif action == 'forecast':
+        elif action == 'forecast':
+            sensors_id = database.get_all_saved_sensors_id()
+            models_saved = [os.path.basename(f) for f in glob.glob(forecast.models_filepath + "*.pkl")]
 
+            forecasts_aux = database.get_forecasts_name()
+            forecasts_id = []
+            for f in forecasts_aux:
+                forecasts_id.append(f[0])
+
+            selected_forecast = request.forms.get("models")
+            forecast_df, real_values = ForecatManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data, model_name=selected_forecast)
+            start_time = datetime.now().replace(minute=0, second=0, microsecond=0)
+            timestamps = [(start_time + timedelta(hours=i)).strftime("%Y-%m-%d %H:%M") for i in range(len(forecast_df))]
+            predictions = forecast_df['value'].tolist()
+            rows = []
+            for i in range(len(timestamps)):
+                forecasted_time = timestamps[i]
+                predicted = predictions[i]
+                actual = real_values[i] if i < len(real_values) else None
+
+                rows.append((selected_forecast, start_time, forecasted_time, predicted, actual))
+            logger.info(f"Forecast realitzat correctament")
+
+            database.save_forecast(rows)
+            return create_model_page()
 
     except Exception as e:
         error_message = traceback.format_exc()
         return f"Error! : {str(e)}\nFull Traceback:\n{error_message}"
-
-# @app.route('/submit-forecast', method='POST')
-
 
 @app.route('/get_model_config/<model_name>')
 def get_model_config(model_name):
@@ -388,10 +407,30 @@ def get_model_config(model_name):
                     response_config += f"{k} = {v}\n"
         if "max_time" in config:
             response_config += f"max_time = {config['max_time']}\n"
+
+
+
         return response_config
 
     except Exception as e:
         return f"Error! : {str(e)}"
+
+@app.route('/get_forecast_data/<model_name>')
+def get_forecast_data(model_name):
+    try:
+        forecasts = database.get_data_from_latest_forecast(model_name + ".pkl")
+        if forecasts.empty:
+            return json.dumps({"status":"no_forecasts"})
+        return json.dumps({
+            "status": "ok",
+            "timestamps": forecasts["timestamp"].tolist(),
+            "predictions": forecasts["value"].tolist(),
+            "real_values": forecasts["real_value"].tolist()
+
+        })
+    except Exception as e:
+        logger.error(f"Error getting forecast for model {model_name}: {e}")
+        return json.dumps({"status": "error", "message": str(e)})
 
 @app.route('/config_page')
 def config_page():
@@ -458,20 +497,6 @@ def delete_config():
         return 'Config file deleted successfully'
     else:
         return 'Config file not found'
-
-@app.route('/get_forecasts/<forecast_id>')
-def get_forecasts(forecast_id):
-    try:
-        forecast_dates = database.get_dates_from_forecast(forecast_id)
-
-        response = ""
-        for time in forecast_dates:
-            response += f"{time[0]}\n"
-
-        return response
-
-    except Exception as e:
-        return f"Error! : {str(e)}"
 
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')

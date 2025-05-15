@@ -424,12 +424,18 @@ class sqlDB():
             return f"Error! : {str(e)}"
 
     def save_forecast(self, data):
+
+        # forecast_name = data[0][0]
+
         con = self.__open_connection__()
         cur = con.cursor()
+
+        # cur.execute("DELETE FROM forecasts WHERE forecast_name = ?", (forecast_name,))
         cur.executemany("""
         INSERT INTO forecasts (forecast_name, forecast_run_time, forecasted_time, predicted_value, real_value) 
         VALUES (?,?,?,?,?)
         """, data)
+
         con.commit()
         self.__close_connection__(con)
 
@@ -442,22 +448,21 @@ class sqlDB():
         self.__close_connection__(con)
         return aux
 
-    def get_dates_from_forecast(self, forecast_id):
+    def get_data_from_latest_forecast(self, forecast_id):
         con = self.__open_connection__()
         cur = con.cursor()
-        cur.execute("SELECT DISTINCT forecast_run_time FROM forecasts WHERE forecast_name = ?", (forecast_id,))
+        cur.execute("""
+                SELECT forecast_run_time, forecasted_time, predicted_value, real_value
+                FROM forecasts
+                WHERE forecast_name = ?
+                AND forecast_run_time = (
+                    SELECT MAX(forecast_run_time)
+                    FROM forecasts
+                    WHERE forecast_name = ?
+                )
+            """, (forecast_id, forecast_id))
         aux = cur.fetchall()
-        con.close()
-        self.__close_connection__(con)
-        return aux
-
-    def get_data_from_forecast(self, forecast_id, forecast_time):
-        con = self.__open_connection__()
-        cur = con.cursor()
-        cur.execute("SELECT forecasted_time, predicted_value, real_value FROM forecasts WHERE forecast_name = ? AND forecast_run_time = ?",
-                    (forecast_id,forecast_time))
-        aux = cur.fetchall()
-        data = pd.DataFrame(aux, columns=('date', 'value', 'real_value'))
+        data = pd.DataFrame(aux, columns=('run_date','timestamp', 'value', 'real_value'))
         cur.close()
         self.__close_connection__(con)
         return data
