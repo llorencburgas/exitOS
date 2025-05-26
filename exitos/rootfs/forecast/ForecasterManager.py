@@ -50,7 +50,7 @@ def predict_consumption_production(meteo_data:pd.DataFrame, model_name:str='newM
     data.bfill(inplace=True)
 
 
-    prediction , real_values = forecaster.forecast(data, 'value', forecaster.db['model'])
+    prediction , real_values = forecaster.forecast(data, 'value', forecaster.db['model'], future_steps=48)
 
     return prediction, real_values
 

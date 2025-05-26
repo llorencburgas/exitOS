@@ -119,7 +119,7 @@ def graphs_view():
                 continue
 
 
-            trace = go.Scatter(x=timestamps, y=values, mode='markers', name=f"Sensor {sensor_id}")
+            trace = go.Scatter(x=timestamps, y=values, mode='lines', name=f"Sensor {sensor_id}")
             layout = go.Layout(xaxis=dict(title="Timestamp"),
                                yaxis=dict(title="Value "))
 
@@ -172,8 +172,7 @@ def create_model_page():
     return template('./www/model.html',
                     sensors_input = sensors_id,
                     models_input = models_saved,
-                    forecasts_id = forecasts_id,
-                    has_graph = False)
+                    forecasts_id = forecasts_id)
 
 def train_model():
     selected_model = request.forms.get("model")
@@ -264,83 +263,33 @@ def train_model():
                               meteo_data=optimalScheduler.meteo_data if meteo_data is True else None,
                               extra_sensors_df=extra_sensors_df if extra_sensors_id is not None else None)
 
-def submit_forecast():
-    try:
-        action = request.forms.get('action')
+def forecast_model():
+    forecasts_aux = database.get_forecasts_name()
+    forecasts_id = []
+    for f in forecasts_aux:
+        forecasts_id.append(f[0])
 
-        if action == "forecast" or action == "view":
-            sensors_id = database.get_all_saved_sensors_id()
-            models_saved = [os.path.basename(f)
-                            for f in glob.glob(forecast.models_filepath + "*.pkl")]
+    selected_forecast = request.forms.get("models")
+    forecast_df, real_values = ForecatManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data,
+                                                                             model_name=selected_forecast)
 
-            forecasts_aux = database.get_forecasts_name()
-            forecasts_id = []
-            for f in forecasts_aux:
-                forecasts_id.append(f[0])
+    # start_time = datetime.now().replace(minute=0, second=0, microsecond=0)
+    # timestamps = [(start_time + timedelta(hours=i)).strftime("%Y-%m-%d %H:%M") for i in range(len(forecast_df))]
 
-            if action == "forecast":
-                selected_forecast = request.forms.get("models")
-                forecast_df, real_values = ForecatManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data, model_name=selected_forecast)
-                start_time = datetime.now().replace(minute=0, second=0, microsecond=0)
-                timestamps = [(start_time + timedelta(hours=i)).strftime("%Y-%m-%d %H:%M") for i in range(len(forecast_df))]
-                predictions = forecast_df['value'].tolist()
-                rows = []
-                for i in range(len(timestamps)):
-                    forecasted_time = timestamps[i]
-                    predicted = predictions[i]
-                    actual = real_values[i] if i < len(real_values) else None
+    forecasted_done_time = datetime.now().replace(second=0, microsecond=0)
+    timestamps = forecast_df.index.tolist()
+    predictions = forecast_df['value'].tolist()
+    real_vals = real_values.tolist() if hasattr(real_values, "tolist") else real_values
 
-                    rows.append((selected_forecast, start_time, forecasted_time, predicted, actual))
-                logger.info(f"Forecast realitzat correctament")
-                database.save_forecast(rows)
+    rows = []
+    for i in range(len(timestamps)):
+        forecasted_time = timestamps[i].strftime("%Y-%m-%d %H:%M")
+        predicted = predictions[i]
+        actual = real_vals[i]
 
-                return template('./www/model.html',
-                                sensors_input=sensors_id,
-                                models_input=models_saved,
-                                forecasts_id=forecasts_id,
-                                has_graph=True,
-                                model=selected_forecast,
-                                timestamps=json.dumps(timestamps),
-                                predictions=json.dumps(predictions),
-                                real_values=json.dumps(real_values.tolist()),
-                                selected_model = selected_forecast)
-
-            else:
-                selected_forecast = request.forms.get("forecasts")
-                selected_time = request.forms.get("forecasts-time")
-                forecast_data = database.get_data_from_forecast(selected_forecast, selected_time)
-                forecast_df = forecast_data['value'].tolist()
-                real_values = forecast_data['real_value']
-                timestamps = forecast_data['date'].tolist()
-
-                return template('./www/model.html',
-                                sensors_input=sensors_id,
-                                models_input=models_saved,
-                                forecasts_id=forecasts_id,
-                                has_graph=True,
-                                model=selected_forecast,
-                                timestamps=json.dumps(timestamps),
-                                predictions=json.dumps(forecast_df),
-                                real_values=json.dumps(real_values.tolist()),
-                                selected_forecast = selected_forecast,
-                                selected_time = selected_time)
-
-        elif action =="delete-model":
-            selected_forecast = request.forms.get("models")
-            model_path = forecast.models_filepath + selected_forecast
-            os.remove(model_path)
-            logger.info(f"Model {selected_forecast} eliminat correctament")
-            return create_model_page()
-        elif action == "delete-forecast":
-            selected_forecast = request.forms.get("forecasts")
-            selected_date = request.forms.get("forecasts-time")
-            database.remove_forecast(selected_forecast, selected_date)
-            return create_model_page()
-        else:
-            return create_model_page()
-
-    except Exception as e:
-        return f"Error! : {str(e)} \n ARGS {e.args}"
+        rows.append((selected_forecast, forecasted_done_time, forecasted_time, predicted, actual))
+    logger.info(f"Forecast realitzat correctament")
+    database.save_forecast(rows)
 
 @app.route('/submit-model', method='POST')
 def submit_model():
@@ -351,34 +300,12 @@ def submit_model():
             train_model()
             return create_model_page()
         elif action == 'forecast':
-            sensors_id = database.get_all_saved_sensors_id()
-            models_saved = [os.path.basename(f) for f in glob.glob(forecast.models_filepath + "*.pkl")]
-
-            forecasts_aux = database.get_forecasts_name()
-            forecasts_id = []
-            for f in forecasts_aux:
-                forecasts_id.append(f[0])
-
-            selected_forecast = request.forms.get("models")
-            forecast_df, real_values = ForecatManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data, model_name=selected_forecast)
-            start_time = datetime.now().replace(minute=0, second=0, microsecond=0)
-            timestamps = [(start_time + timedelta(hours=i)).strftime("%Y-%m-%d %H:%M") for i in range(len(forecast_df))]
-            predictions = forecast_df['value'].tolist()
-            rows = []
-            for i in range(len(timestamps)):
-                forecasted_time = timestamps[i]
-                predicted = predictions[i]
-                actual = real_values[i] if i < len(real_values) else None
-
-                rows.append((selected_forecast, start_time, forecasted_time, predicted, actual))
-            logger.info(f"Forecast realitzat correctament")
-
-            database.save_forecast(rows)
+            forecast_model()
             return create_model_page()
 
     except Exception as e:
         error_message = traceback.format_exc()
-        return f"Error! : {str(e)}\nFull Traceback:\n{error_message}"
+        return f"Error! The model could not be processed : {str(e)}\nFull Traceback:\n{error_message}"
 
 @app.route('/get_model_config/<model_name>')
 def get_model_config(model_name):
@@ -421,12 +348,35 @@ def get_forecast_data(model_name):
         forecasts = database.get_data_from_latest_forecast(model_name + ".pkl")
         if forecasts.empty:
             return json.dumps({"status":"no_forecasts"})
+
+        timestamps = forecasts["timestamp"].tolist()
+        predictions = forecasts["value"].tolist()
+        real_values = forecasts["real_value"].tolist()
+
+        #separem dades reals de prediccions futures
+        overlapping_timestamps = []
+        overlapping_predictions = []
+        real_vals = []
+
+        future_timestamps = []
+        future_predictions = []
+
+        for i in range(len(timestamps)):
+            if real_values[i] is not None:
+                overlapping_timestamps.append(timestamps[i])
+                overlapping_predictions.append(predictions[i])
+                real_vals.append(real_values[i])
+            else:
+                future_timestamps.append(timestamps[i])
+                future_predictions.append(predictions[i])
+
         return json.dumps({
             "status": "ok",
-            "timestamps": forecasts["timestamp"].tolist(),
-            "predictions": forecasts["value"].tolist(),
-            "real_values": forecasts["real_value"].tolist()
-
+            "timestamps_overlap": overlapping_timestamps,
+            "predictions_overlap": overlapping_predictions,
+            "real_values": real_vals,
+            "timestamps_future": future_timestamps,
+            "predictions_future": future_predictions
         })
     except Exception as e:
         logger.error(f"Error getting forecast for model {model_name}: {e}")

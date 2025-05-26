@@ -4,9 +4,10 @@ from multiprocessing import connection
 
 import numpy as np
 import pandas as pd
-from pandas.core.interchange.dataframe_protocol import DataFrame
+from fontTools.merge.util import current_time
 from requests import get
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 import logging
 
 logger = logging.getLogger("exitOS")  # Reuse the same logger
@@ -313,7 +314,8 @@ class sqlDB():
                 logger.error("No existeix un sensor amb l'ID indicat")
                 return None
 
-        current_date = datetime.now(timezone.utc) + timedelta(hours=1)
+        utc_time = datetime.now(timezone.utc)
+        current_date = utc_time.astimezone(ZoneInfo("Europe/Madrid"))
 
         for j in sensors_list.index: #per a cada sensor de la llista
             sensor_id = sensors_list.iloc[j]["entity_id"]
@@ -400,7 +402,7 @@ class sqlDB():
                     start_time += timedelta(days = 7)
 
         self.__close_connection__(connection)
-        logger.info(f"[ {datetime.now(timezone.utc).strftime('%d-%b-%Y   %X')} ] TOTS ELS SENSORS HAN ESTAT ACTUALITZATS")
+        logger.info(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] TOTS ELS SENSORS HAN ESTAT ACTUALITZATS")
 
     def get_lat_long(self):
         """

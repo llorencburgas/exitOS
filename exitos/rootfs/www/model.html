@@ -203,7 +203,7 @@
 
 
                     <!-- CONFIGURAR MODEL -->
-                    <h3>3. Configura el model</h3>
+                    <h3>4. Configura el model</h3>
                     <label for="modelSelect">Algorisme:
                         <select class="form-select" name="model" id="modelSelect">
                             <option value="AUTO">Automàtic</option>
@@ -249,7 +249,7 @@
 
             <div id="loadingSpinner" style="display: none;">
                     <div class="spinner"></div>
-                    <p id="loadingText">Processant Forecast. Això pot tardar uns minuts....</p>
+                    <p id="loadingText">Processant... <br> Això pot tardar una mica.</p>
             </div>
 
         </div>
@@ -470,8 +470,13 @@
 
             if(config['algorithm'] === 'auto') document.getElementById("modelSelect").value = "AUTO";
             else document.getElementById("modelSelect").value = config["algorithm"];
-            document.getElementById("scaled").value = config["scaler"];
+
             document.getElementById("modelName").value = modelPath;
+
+            if (config["scaler"] === 'minmax') { document.getElementById("scaled").value = "MINMAX";}
+            else if (config["scaler"] === "robust") { document.getElementById("scaled").value = "Robust";}
+            else if (config["scaler"] === "standard") { document.getElementById("scaled").value = "Standard";}
+            else{ document.getElementById("scaled").value = config["scaler"];}
 
             updateModelConfig(config);
             for (const [key, value] of Object.entries(config)) {
@@ -499,31 +504,37 @@
          .then(response => response.json())
          .then(data => {
              if(data.status === "ok"){
-                 const timestamps = data.timestamps;
-                 const predictions = data.predictions;
+                 const realTimestamps = data.timestamps_overlap;
+                 const realPredictions = data.predictions_overlap;
                  const realValues = data.real_values;
+                 const futureTimestamps = data.timestamps_future;
+                 const futurePredictions = data.predictions_future;
 
                  document.getElementById("forecast-title").innerText = `Resultats del Forecast per al model: ${modelPath}`;
                  document.getElementById("forecast-title").style.display = "block";
                  document.getElementById("delete-forecast").style.display = "block";
 
-                 const tracePrediction = {
-                     x: timestamps,
-                     y: predictions,
-                     mode: "lines",
-                     name: "Predicció",
-                     line: {color: 'green'}
-                 };
                  const traceReal = {
-                     x: timestamps,
+                     x: realTimestamps,
                      y: realValues,
-                     mode: 'lines',
-                     name: 'Dades Reals',
-                     line: {
-                         color: 'red',
-                         dash: 'dot'
-                     }
+                     mode: "lines",
+                     name: "Dades Reals",
+                     line: {color: 'red', dash: 'dot'}
                  };
+                 const tracePredReal = {
+                     x: realTimestamps,
+                     y: realPredictions,
+                     mode: 'lines',
+                     name: 'Predicció (part real)',
+                     line: { color: 'green' }
+                 };
+                 const tracePredFuture = {
+                     x: futureTimestamps,
+                     y: futurePredictions,
+                     mode: 'lines',
+                     name: 'Predicció (futur)',
+                     line: {color: 'orange', dash: 'dash'}
+                 }
                  const layout = {
                      title: 'Predicció vs Dades Reals',
                      xaxis: {title: 'Temps'},
@@ -532,7 +543,7 @@
                      height: 500
                  };
 
-                 Plotly.newPlot('forecast-chart', [tracePrediction, traceReal], layout);
+                 Plotly.newPlot('forecast-chart', [traceReal, tracePredReal, tracePredFuture], layout);
                  hideLoadingSpinner();
              }else{
                 document.getElementById("forecast-title").style.display = "none";
@@ -612,6 +623,11 @@
             document.getElementById("scaled").value = "None";
             document.getElementById("modelName").value = "";
             updateModelConfig();
+
+            document.getElementById("forecast-title").style.display = "none";
+            document.getElementById("forecast-chart").innerHTML = '';
+            document.getElementById("delete-forecast").style.display = "none";
+
         }
     })
 

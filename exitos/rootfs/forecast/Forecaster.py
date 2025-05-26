@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import joblib
 import numpy as np
 import pandas as pd
@@ -185,7 +187,7 @@ class Forecaster:
 
         if 'timestamp' in dad.columns:
             dad.drop(columns=['timestamp'], inplace=True)
-        logger.info(f"DAD HEAD 2 (timestamps_to_attrs()) {dad.head(20)}")
+        logger.info(f"DAD HEAD 2 (timestamps_to_attrs()) {dad.head(10)}")
 
         return dad
 
@@ -432,11 +434,12 @@ class Forecaster:
 
         if extra_sensors is not None:
             aux = pd.DataFrame()
-            merged_extras = []
+            merged_extras = pd.DataFrame()
             if len(extra_sensors) == 1:
-                extra_sensors[0]['timestamp'] = pd.to_datetime(extra_sensors[0]['timestamp']).dt.tz_localize(None).dt.floor('h')
-                extra_sensors[0] = extra_sensors[0].drop_duplicates(subset=['timestamp'])
-                merged_extras.append(extra_sensors[0])
+                first_key = next(iter(extra_sensors))
+                extra_sensors[first_key]['timestamp'] = pd.to_datetime(extra_sensors[first_key]['timestamp']).dt.tz_localize(None).dt.floor('h')
+                extra_sensors[first_key] = extra_sensors[first_key].drop_duplicates(subset=['timestamp'])
+                merged_extras = pd.concat([sensor, extra_sensors[first_key]], ignore_index=True)
             else:
                 for i in extra_sensors:
                     extra_sensors[i]['timestamp'] = pd.to_datetime(extra_sensors[i]['timestamp']).dt.tz_localize(None).dt.floor('h')
@@ -482,6 +485,7 @@ class Forecaster:
         #PREP PAS 0 - preparar els df de meteo-data i dades extra
         merged_data = self.prepare_dataframes(data, meteo_data, extra_sensors_df)
         merged_data.bfill(inplace=True)
+
         if merged_data.empty:
             logger.error(f"\n ************* \n   No hi ha dades per a realitzar el Forecast \n *************")
             return
@@ -503,9 +507,8 @@ class Forecaster:
 
         #PAS 5 - Desfer el dataset i guardar matrius X i y
         nomy = y
-        y = X[nomy]
+        y = pd.to_numeric(X[nomy], errors='raise')
         del X[nomy]
-
 
         #PAS 6 - Escalat
         X, scaler = self.scalate_data(X, escalat)
@@ -543,7 +546,7 @@ class Forecaster:
         if self.debug:
             logger.debug('Model guardat! Score: ' + str(score))
 
-    def forecast(self, data, y, model):
+    def forecast(self, data, y, model, future_steps=48):
         """
 
         :return:
@@ -570,6 +573,7 @@ class Forecaster:
 
         # PAS 5 - Eliminar la y
         if y in df.columns:
+            real_values_column = df[y]
             del df[y]
         else:
             raise ValueError(f"Columna {y} no trobada en el dataset")
@@ -585,14 +589,49 @@ class Forecaster:
 
 
         # PAS 8 - Seleccionar característiques a usar segons el selector del model
+        original_columns = df.columns
         if model_select:
-            df = model_select.transform(df)
+            df_transformed = pd.DataFrame(model_select.transform(df), index = df.index)
 
-        # PAS 9 - Fer la predicció
-        out = pd.DataFrame(model.predict(df), columns=[y])
+        # PAS 9 - Preparar timestamps futurs
+        last_timestamp = data.index[-1]
+        future_index = [last_timestamp + timedelta(hours=i+1) for i in range(future_steps)]
+        future_df = pd.DataFrame(index=future_index)
 
-        real_values_to_return = data['value']
-        return out, real_values_to_return
+        #atributs (hora, dia, festius...)
+        future_df = self.timestamp_to_attrs(future_df, extra_vars)
+
+        #NaN
+        for col in original_columns:
+            if col not in future_df.columns:
+                future_df[col] = df[col].iloc[-1] if col in df.columns else 0
+        # Reorder to match training columns
+        future_df = future_df[original_columns]
+
+        #scale
+        if scaler:
+            future_df = pd.DataFrame(scaler.transform(future_df), index=future_df.index, columns=original_columns)
+
+        #feature selection
+        if model_select:
+            future_df = model_select.transform(future_df)
+
+        #convert to numpy and predict
+        future_array = np.array([[float(x) for x in row] for row in future_df])
+        forecast_output = pd.DataFrame(
+            model.predict(future_array),
+            index=future_index,
+            columns=[y]
+        )
+        out = pd.DataFrame(model.predict(df_transformed), index = df_transformed.index, columns = [y])
+
+
+        final_prediction = pd.concat([out, forecast_output])
+
+        return final_prediction, real_values_column
+
+
+    
 
     def save_model(self, model_filename):
         """
