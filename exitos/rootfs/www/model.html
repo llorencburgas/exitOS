@@ -453,7 +453,7 @@
         }
     }
 
-    async function updateModelSelection(modelPath){
+    function updateModelSelection(modelPath){
         showLoadingSpinner();
      fetch('get_model_config/' + modelPath)
         .then(response => response.text())

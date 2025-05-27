@@ -368,6 +368,7 @@ def get_forecast_data(model_name):
             logger.warning(f"timestamp: {timestamps[i]}")
 
             if real_values[i] is not None:
+                logger.debug(f"real_value: {real_values[i]}")
                 logger.critical(f"REAAAAAL: {timestamps[i]}")
                 overlapping_timestamps.append(timestamps[i])
                 overlapping_predictions.append(predictions[i])
