@@ -1,13 +1,12 @@
 import os
 import sqlite3
-from multiprocessing import connection
 
 import numpy as np
 import pandas as pd
 from requests import get
 from datetime import datetime, timedelta, timezone
-from zoneinfo import ZoneInfo
 import logging
+import tzlocal
 
 logger = logging.getLogger("exitOS")  # Reuse the same logger
 
@@ -313,8 +312,9 @@ class sqlDB():
                 logger.error("No existeix un sensor amb l'ID indicat")
                 return None
 
-        utc_time = datetime.now(timezone.utc)
-        current_date = utc_time.astimezone(ZoneInfo("Europe/Madrid"))
+
+        local_tz = tzlocal.get_localzone()  # Gets system local timezone (e.g., 'Europe/Paris')
+        current_date = datetime.now(local_tz)
 
         for j in sensors_list.index: #per a cada sensor de la llista
             sensor_id = sensors_list.iloc[j]["entity_id"]
