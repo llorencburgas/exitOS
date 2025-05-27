@@ -288,7 +288,7 @@ def forecast_model():
     for i in range(len(timestamps)):
         forecasted_time = timestamps[i].strftime("%Y-%m-%d %H:%M")
         predicted = predictions[i]
-        actual = real_values[i] if i in real_values else None
+        actual = real_values[i] if i in real_values.index else None
 
         rows.append((selected_forecast, forecasted_done_time, forecasted_time, predicted, actual))
     logger.info(f"Forecast realitzat correctament")
