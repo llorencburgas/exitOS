@@ -470,10 +470,12 @@ def daily_task():
 
     sensors_id = database.get_all_sensors()
     sensors_id = sensors_id['entity_id'].tolist()
+    logger.warning(f"Sensors_id to update: {sensors_id}")
 
     connection = database.__open_connection__()
 
     for sensor_id in sensors_id:
+        logger.critical(f"Sensor_id {sensor_id} exists")
         is_active = database.get_sensor_active(sensor_id, connection)
         if is_active:
             database.update_database(sensor_id)

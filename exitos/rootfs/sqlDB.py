@@ -4,7 +4,6 @@ from multiprocessing import connection
 
 import numpy as np
 import pandas as pd
-from fontTools.merge.util import current_time
 from requests import get
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
