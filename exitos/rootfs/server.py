@@ -273,6 +273,9 @@ def forecast_model():
     forecast_df, real_values = ForecatManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data,
                                                                              model_name=selected_forecast)
 
+    logger.warning(f"forecast model: {forecast_df}")
+    logger.critical(f"forecast real: {real_values}")
+
     # start_time = datetime.now().replace(minute=0, second=0, microsecond=0)
     # timestamps = [(start_time + timedelta(hours=i)).strftime("%Y-%m-%d %H:%M") for i in range(len(forecast_df))]
 
