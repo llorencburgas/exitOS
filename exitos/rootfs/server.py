@@ -287,9 +287,11 @@ def forecast_model():
     rows = []
     real_values_index = real_values.index.tolist()
     logger.debug(f"real_values_index: {real_values_index}")
+
     for i in range(len(timestamps)):
         forecasted_time = timestamps[i].strftime("%Y-%m-%d %H:%M")
         predicted = predictions[i]
+        logger.warning(f"Current i: {i}")
         actual = real_values[i] if i in real_values_index else None
 
         rows.append((selected_forecast, forecasted_done_time, forecasted_time, predicted, actual))
