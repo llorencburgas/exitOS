@@ -282,13 +282,11 @@ def forecast_model():
     forecasted_done_time = datetime.now().replace(second=0, microsecond=0)
     timestamps = forecast_df.index.tolist()
     predictions = forecast_df['value'].tolist()
-    # real_vals = real_values.tolist() if hasattr(real_values, "tolist") else real_values
 
     rows = []
     for i in range(len(timestamps)):
         forecasted_time = timestamps[i].strftime("%Y-%m-%d %H:%M")
         predicted = predictions[i]
-        logger.warning(f"Current i: {i}")
         actual = real_values[i] if i < len(real_values) else None
 
         rows.append((selected_forecast, forecasted_done_time, forecasted_time, predicted, actual))
@@ -366,11 +364,16 @@ def get_forecast_data(model_name):
         future_predictions = []
 
         for i in range(len(timestamps)):
+            logger.warning(f" La i és {i}")
+            logger.warning(f"timestamp: {timestamps[i]}")
+
             if real_values[i] is not None:
+                logger.critical(f"REAAAAAL: {timestamps[i]}")
                 overlapping_timestamps.append(timestamps[i])
                 overlapping_predictions.append(predictions[i])
                 real_vals.append(real_values[i])
             else:
+                logger.critical(f"NO ÉS REAL! {timestamps[i]}")
                 future_timestamps.append(timestamps[i])
                 future_predictions.append(predictions[i])
 
