@@ -281,11 +281,13 @@ def forecast_model():
     predictions = forecast_df['value'].tolist()
     real_vals = real_values.tolist() if hasattr(real_values, "tolist") else real_values
 
+
     rows = []
     for i in range(len(timestamps)):
         forecasted_time = timestamps[i].strftime("%Y-%m-%d %H:%M")
         predicted = predictions[i]
-        actual = real_vals[i]
+        if real_vals[i]: actual = real_vals[i]
+        else: actual = None
 
         rows.append((selected_forecast, forecasted_done_time, forecasted_time, predicted, actual))
     logger.info(f"Forecast realitzat correctament")
