@@ -377,6 +377,8 @@ def get_forecast_data(model_name):
                 future_timestamps.append(timestamps[i])
                 future_predictions.append(predictions[i])
 
+        logger.warning("ALA, PUES JA ESTÀ!")
+
         return json.dumps({
             "status": "ok",
             "timestamps_overlap": overlapping_timestamps,
