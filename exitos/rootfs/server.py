@@ -1,4 +1,4 @@
-
+import math
 import os
 import pickle
 import threading
@@ -367,7 +367,7 @@ def get_forecast_data(model_name):
             logger.warning(f" La i és {i}")
             logger.warning(f"timestamp: {timestamps[i]}")
 
-            if real_values[i] != 'nan': #TODO: El programa no detecta els NaN de les prediccions futures, entrant sempre al if!!
+            if not math.isnan(real_values[i]): #TODO: El programa no detecta els NaN de les prediccions futures, entrant sempre al if!!
                 logger.debug(f"real_value: {real_values[i]}")
                 logger.critical(f"REAAAAAL: {timestamps[i]}")
                 overlapping_timestamps.append(timestamps[i])
