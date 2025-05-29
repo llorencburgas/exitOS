@@ -273,9 +273,6 @@ def forecast_model():
     forecast_df, real_values = ForecatManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data,
                                                                              model_name=selected_forecast)
 
-    logger.warning(f"Forecasted Data: {forecast_df}")
-    logger.warning(f"Real Data: {real_values}")
-
     # start_time = datetime.now().replace(minute=0, second=0, microsecond=0)
     # timestamps = [(start_time + timedelta(hours=i)).strftime("%Y-%m-%d %H:%M") for i in range(len(forecast_df))]
 
@@ -293,6 +290,19 @@ def forecast_model():
     logger.info(f"Forecast realitzat correctament")
     database.save_forecast(rows)
 
+def delete_model():
+    selected_model = request.forms.get("model")
+    database.remove_forecast(selected_model)
+
+    model_path = forecast.models_filepath + selected_model
+    if os.path.exists(model_path):
+        os.remove(model_path)
+        logger.info(f"Model deleted: {model_path}")
+    else:
+        logger.error(f"Model {selected_model} not found")
+
+
+
 @app.route('/submit-model', method='POST')
 def submit_model():
     try:
@@ -303,6 +313,9 @@ def submit_model():
             return create_model_page()
         elif action == 'forecast':
             forecast_model()
+            return create_model_page()
+        elif action == 'delete':
+            delete_model()
             return create_model_page()
 
     except Exception as e:
@@ -364,7 +377,7 @@ def get_forecast_data(model_name):
         future_predictions = []
 
         today = datetime.today()
-        first_day = today - timedelta(days=2)
+        first_day = today - timedelta(days=3)
 
         logger.debug(f"Today is {today} and the first day is {first_day}")
 

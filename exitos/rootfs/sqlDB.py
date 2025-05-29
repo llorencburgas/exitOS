@@ -468,10 +468,10 @@ class sqlDB():
         self.__close_connection__(con)
         return data
 
-    def remove_forecast(self, forecast_id, forecast_time):
+    def remove_forecast(self, forecast_id):
         con = self.__open_connection__()
         cur = con.cursor()
-        cur.execute("DELETE FROM forecasts WHERE forecast_name = ? AND forecast_run_time = ?",(forecast_id,forecast_time))
+        cur.execute("DELETE FROM forecasts WHERE forecast_name = ?",(forecast_id,))
         con.commit()
         self.__close_connection__(con)
 
