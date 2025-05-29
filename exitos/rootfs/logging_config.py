@@ -20,6 +20,7 @@ def setup_logger(level=logging.DEBUG):
         "%(log_color)s%(levelname)s: %(message)s",
         log_colors={
             'DEBUG': 'green',
+            'HELP': 'purple',
             'INFO': 'blue',
             'WARNING': 'yellow',
             'ERROR': 'red',
