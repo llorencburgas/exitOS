@@ -379,11 +379,11 @@ def get_forecast_data(model_name):
                 future_predictions.append(predictions[i])
 
         logger.warning("ALA, PUES JA ESTÀ!")
-        logger.help(f"timestamps: {overlapping_timestamps}")
-        logger.help(f"predictions: {overlapping_predictions}")
-        logger.help(f"real_values: {real_vals}")
-        logger.help(f"future_timestamps: {future_timestamps}")
-        logger.help(f"future_predictions: {future_predictions}")
+        logger.critical(f"timestamps: {overlapping_timestamps}")
+        logger.critical(f"predictions: {overlapping_predictions}")
+        logger.critical(f"real_values: {real_vals}")
+        logger.critical(f"future_timestamps: {future_timestamps}")
+        logger.critical(f"future_predictions: {future_predictions}")
 
         return json.dumps({
             "status": "ok",
