@@ -363,27 +363,22 @@ def get_forecast_data(model_name):
         future_timestamps = []
         future_predictions = []
 
+        today = datetime.today()
+        first_day = today - timedelta(days=2)
+
+        logger.debug(f"Today is {today} and the first day is {first_day}")
+
         for i in range(len(timestamps)):
-            logger.warning(f" La i és {i}")
-            logger.warning(f"timestamp: {timestamps[i]}")
-
-            if not math.isnan(real_values[i]): #TODO: El programa no detecta els NaN de les prediccions futures, entrant sempre al if!!
-                logger.debug(f"real_value: {real_values[i]}")
-                logger.critical(f"REAAAAAL: {timestamps[i]}")
-                overlapping_timestamps.append(timestamps[i])
-                overlapping_predictions.append(predictions[i])
-                real_vals.append(real_values[i])
-            else:
-                logger.critical(f"NO ÉS REAL! {timestamps[i]}")
-                future_timestamps.append(timestamps[i])
-                future_predictions.append(predictions[i])
-
-        logger.warning("ALA, PUES JA ESTÀ!")
-        logger.critical(f"timestamps: {overlapping_timestamps}")
-        logger.critical(f"predictions: {overlapping_predictions}")
-        logger.critical(f"real_values: {real_vals}")
-        logger.critical(f"future_timestamps: {future_timestamps}")
-        logger.critical(f"future_predictions: {future_predictions}")
+            if timestamps[i] < first_day:
+                logger.critical(f"el timestamp {timestamps[i]} is less than the first day {first_day}")
+                if not math.isnan(real_values[i]):
+                    logger.debug(f"real_value: {real_values[i]}")
+                    overlapping_timestamps.append(timestamps[i])
+                    overlapping_predictions.append(predictions[i])
+                    real_vals.append(real_values[i])
+                else:
+                    future_timestamps.append(timestamps[i])
+                    future_predictions.append(predictions[i])
 
         return json.dumps({
             "status": "ok",
