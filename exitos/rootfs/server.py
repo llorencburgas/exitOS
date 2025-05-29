@@ -34,7 +34,7 @@ PORT = 55023
 #INICIACIÓ DE L'APLICACIÓ I LA BASE DE DADES
 app = Bottle()
 database = db.sqlDB()
-# database.update_database("all")
+database.update_database("all")
 forecast = forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler()
 
@@ -367,7 +367,7 @@ def get_forecast_data(model_name):
             logger.warning(f" La i és {i}")
             logger.warning(f"timestamp: {timestamps[i]}")
 
-            if real_values[i] is not None:
+            if real_values[i] is not None: #TODO: El programa no detecta els NaN de les prediccions futures, entrant sempre al if!!
                 logger.debug(f"real_value: {real_values[i]}")
                 logger.critical(f"REAAAAAL: {timestamps[i]}")
                 overlapping_timestamps.append(timestamps[i])
@@ -379,6 +379,11 @@ def get_forecast_data(model_name):
                 future_predictions.append(predictions[i])
 
         logger.warning("ALA, PUES JA ESTÀ!")
+        logger.critical(f"timestamps: {overlapping_timestamps}")
+        logger.critical(f"predictions: {overlapping_predictions}")
+        logger.critical(f"real_values: {real_vals}")
+        logger.critical(f"future_timestamps: {future_timestamps}")
+        logger.critical(f"future_predictions: {future_predictions}")
 
         return json.dumps({
             "status": "ok",
@@ -480,12 +485,10 @@ def daily_task():
 
     sensors_id = database.get_all_sensors()
     sensors_id = sensors_id['entity_id'].tolist()
-    logger.warning(f"Sensors_id to update: {sensors_id}")
 
     connection = database.__open_connection__()
 
     for sensor_id in sensors_id:
-        logger.critical(f"Sensor_id {sensor_id} exists")
         is_active = database.get_sensor_active(sensor_id, connection)
         if is_active:
             database.update_database(sensor_id)
