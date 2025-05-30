@@ -515,7 +515,7 @@ def monthly_task():
         database.__close_connection__(connection)
         logger.debug(f"Running monthly task at {datetime.now().strftime('%d-%b-%Y   %X')}" )
 
-schedule.every().day.at("09:25").do(daily_task)
+schedule.every().day.at("09:30").do(daily_task)
 schedule.every().day.at("00:00").do(monthly_task)
 
 def run_scheduled_tasks():
