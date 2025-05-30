@@ -382,7 +382,14 @@ class sqlDB():
 
 
 
-    # def fixDatabase(self):
+    def clean_database_hourly_average(self):
+        con = self.__open_connection__()
+        cur = con.cursor()
+        cur.execute("SELECT DISTINCT sensor_id FROM dades")
+        sensor_ids = [row[0] for row in cur.fetchall()]
+
+        for sensor_id in sensor_ids:
+            logger.info(f"SENSOR: {sensor_id}")
 
 
     def old_update_database(self, sensor_to_update):
