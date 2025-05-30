@@ -289,6 +289,103 @@ class sqlDB():
         connection.commit()
 
     def update_database(self, sensor_to_update):
+        logger.info("INICIANT L'ACTUALITZACIÓ DE LA BASE DE DADES...")
+
+        con = self.__open_connection__()
+
+        # obtenim la llista de sensors de la API
+        if sensor_to_update == "all":
+            sensors_list = pd.json_normalize(
+                get(self.base_url + "states", headers=self.headers).json()
+            )
+        else:
+            sensors_list = pd.json_normalize(
+                get(self.base_url + "states?filter_entity_id=" + sensor_to_update, headers=self.headers).json()
+            )
+            if len(sensors_list) == 0:
+                logger.error("No existeix un sensor amb l'ID indicat")
+                return None
+
+        local_tz = tzlocal.get_localzone()
+        current_date = datetime.now(local_tz)
+
+        for j in sensors_list.index:
+            sensor_id = sensors_list.iloc[j]['entity_id']
+
+            sensor_info = self.query_select(sensor_id, "*", "sensors", con)
+
+            if len(sensor_info) == 0:
+                cur = con.cursor()
+                values_to_insert = (sensor_id,
+                                    sensors_list.iloc[j]["attributes.unit_of_measurement"],
+                                    True,
+                                    False)
+                cur.execute("INSERT INTO sensors (sensor_id, units, update_sensor, save_sensor) VALUES (?,?,?,?)", values_to_insert)
+                cur.close()
+                con.commit()
+                sensor_info = None
+                last_date_saved = None
+                logger.debug(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] Afegit un nou sensor a la base de dades: {sensor_id}")
+
+            save_sensor = self.query_select(sensor_id, "save_sensor", "sensors", con)[0][0]
+            update_sensor = self.query_select(sensor_id, "update_sensor", "sensors", con)[0][0]
+
+            if save_sensor and update_sensor:
+                logger.debug(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] Actualitzant sensor: {sensor_id}")
+
+                last_date_saved = self.query_select(sensor_id, "timestamp, value", "dades", con)
+                if len(last_date_saved) == 0:
+                    start_time = current_date - timedelta(days=21)
+                    last_value = []
+                else:
+                    last_date_saved, last_value = last_date_saved[0]
+                    start_time = datetime.fromisoformat(last_date_saved)
+
+                while start_time <= current_date:
+                    end_time = start_time + timedelta(days = 7)
+
+                    string_start_date = start_time.strftime('%Y-%m-%dT%H:%M:%S')
+                    string_end_date = end_time.strftime('%Y-%m-%dT%H:%M:%S')
+
+                    url = (
+                        self.base_url + "history/period/" + string_start_date +
+                        "?end_time=" + string_end_date +
+                        "&filter_entity_id=" + sensor_id
+                        + "&minimal_response&no_attributes")
+
+                    sensor_data_historic = pd.DataFrame()
+
+                    response = get(url, headers=self.headers)
+
+                    if response.status_code == 200:
+                        try:
+                            sensor_data_historic = pd.json_normalize(response.json())
+                        except ValueError as e:
+                            logger.error(f"Error parsing JSON: {str(e)}")
+                    elif response.status_code == 500:
+                        logger.critical(f"Server error (500): Internal server error at sensor {sensor_id}")
+                        sensor_data_historic = pd.DataFrame()
+                    else:
+                        logger.error(f"Request failed with status code: {response.status_code}")
+                        sensor_data_historic = pd.DataFrame()
+
+                    all_data = []
+                    for column in sensor_data_historic.columns:
+                        data_point = sensor_data_historic[column][0]
+                        logger.critical(f"DATA: {data_point}")
+                        all_data.append({
+                            'timestamp': data_point['last_changed'],
+                            'value': data_point['state']
+                        })
+
+
+
+
+
+    # def fixDatabase(self):
+
+
+    def old_update_database(self, sensor_to_update):
         """
         Actualitza la base de dades amb la API del Home Assistant.
         Aquesta funció sincronitza els sensors existents amb la base de dades i
