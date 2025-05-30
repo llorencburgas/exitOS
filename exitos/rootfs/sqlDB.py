@@ -389,38 +389,35 @@ class sqlDB():
         cur.execute("SELECT DISTINCT sensor_id FROM dades")
         sensor_ids = [row[0] for row in cur.fetchall()]
 
-        # for sensor_id in sensor_ids:
-        sensor_id = sensor_ids[0]
-        #...
-        logger.info(f"Processant sensor: {sensor_id}")
+        for sensor_id in sensor_ids:
+            logger.info(f"Processant sensor: {sensor_id}")
 
-        #obtenim totes les dades del sensor
-        df = pd.read_sql_query(
-            f"SELECT timestamp, value FROM dades WHERE sensor_id = '{sensor_id}'", con
-        )
-
-        # Convertim timestamps i valors
-        df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True, errors='coerce')
-        df['value'] = pd.to_numeric(df['value'], errors='coerce')
-
-        # Agrupem per hora
-        df['hour'] = df['timestamp'].dt.floor('H')
-        df_grouped = df.groupby('hour').mean(numeric_only=True).reset_index()
-
-        # Esborrem dades antigues d’aquest sensor
-        cur.execute("DELETE FROM dades WHERE sensor_id = ?", (sensor_id,))
-        con.commit()
-
-        # Inserim només els valors agrupats
-        for idx, row in df_grouped.iterrows():
-            if pd.isna(row['value']):
-                continue
-            cur.execute(
-                "INSERT INTO dades (sensor_id, timestamp, value) VALUES (?, ?, ?)",
-                (sensor_id, row['hour'].isoformat(), row['value'])
+            #obtenim totes les dades del sensor
+            df = pd.read_sql_query(
+                f"SELECT timestamp, value FROM dades WHERE sensor_id = '{sensor_id}'", con
             )
-        con.commit()
-        #...
+
+            # Convertim timestamps i valors
+            df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True, errors='coerce')
+            df['value'] = pd.to_numeric(df['value'], errors='coerce')
+
+            # Agrupem per hora
+            df['hour'] = df['timestamp'].dt.floor('H')
+            df_grouped = df.groupby('hour').mean(numeric_only=True).reset_index()
+
+            # Esborrem dades antigues d’aquest sensor
+            cur.execute("DELETE FROM dades WHERE sensor_id = ?", (sensor_id,))
+            con.commit()
+
+            # Inserim només els valors agrupats
+            for idx, row in df_grouped.iterrows():
+                if pd.isna(row['value']):
+                    continue
+                cur.execute(
+                    "INSERT INTO dades (sensor_id, timestamp, value) VALUES (?, ?, ?)",
+                    (sensor_id, row['hour'].isoformat(), row['value'])
+                )
+            con.commit()
         cur.close()
         self.__close_connection__(con)
         logger.info("NETEJA COMPLETADA")
