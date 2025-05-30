@@ -360,6 +360,7 @@ class sqlDB():
                     if response.status_code == 200:
                         try:
                             sensor_data_historic = pd.json_normalize(response.json())
+                            logger.critical(f"SENSOR DATA HISTORIC {sensor_data_historic}")
                         except ValueError as e:
                             logger.error(f"Error parsing JSON: {str(e)}")
                     elif response.status_code == 500:
