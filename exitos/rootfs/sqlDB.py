@@ -400,7 +400,7 @@ class sqlDB():
         )
 
         # Convertim timestamps i valors
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True, errors='coerce')
         df['value'] = pd.to_numeric(df['value'], errors='coerce')
 
         # Agrupem per hora
