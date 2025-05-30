@@ -34,7 +34,7 @@ PORT = 55023
 #INICIACIÓ DE L'APLICACIÓ I LA BASE DE DADES
 app = Bottle()
 database = db.sqlDB()
-database.update_database("all")
+# database.update_database("all")
 forecast = forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler()
 
@@ -524,7 +524,7 @@ def monthly_task():
         database.__close_connection__(connection)
         logger.debug(f"Running monthly task at {datetime.now().strftime('%d-%b-%Y   %X')}" )
 
-schedule.every().day.at("09:15").do(daily_task)
+schedule.every().day.at("09:20").do(daily_task)
 schedule.every().day.at("00:00").do(monthly_task)
 
 def run_scheduled_tasks():
