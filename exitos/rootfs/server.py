@@ -488,11 +488,12 @@ def daily_task():
     logger.debug("STARTING DAILY FORECASTING")
 
     forecasts_aux = database.get_forecasts_name()
+    logger.critical(forecasts_aux)
     for f in forecasts_aux:
         logger.debug(f"FORECASTING {f[0]}")
         forecast_model(f[0])
 
-
+    logger.debug("ENDING DAILY TASKS")
 
 
 
