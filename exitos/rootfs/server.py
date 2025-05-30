@@ -483,17 +483,7 @@ def daily_task():
 
     logger.debug("STARTING DAILY SENSOR UPDATE")
 
-    sensors_id = database.get_all_sensors()
-    sensors_id = sensors_id['entity_id'].tolist()
-
-    connection = database.__open_connection__()
-
-    for sensor_id in sensors_id:
-        is_active = database.get_sensor_active(sensor_id, connection)
-        if is_active:
-            database.update_database(sensor_id)
-    database.clean_sensors_db(connection)
-    database.__close_connection__(connection)
+    database.update_database("all")
 
     logger.debug("STARTING DAILY FORECASTING")
 
@@ -524,7 +514,7 @@ def monthly_task():
         database.__close_connection__(connection)
         logger.debug(f"Running monthly task at {datetime.now().strftime('%d-%b-%Y   %X')}" )
 
-schedule.every().day.at("09:20").do(daily_task)
+schedule.every().day.at("09:25").do(daily_task)
 schedule.every().day.at("00:00").do(monthly_task)
 
 def run_scheduled_tasks():
