@@ -291,7 +291,7 @@ def forecast_model():
     database.save_forecast(rows)
 
 def delete_model():
-    selected_model = request.forms.get("model")
+    selected_model = request.forms.get("models")
     database.remove_forecast(selected_model)
 
     model_path = forecast.models_filepath + selected_model
@@ -379,14 +379,10 @@ def get_forecast_data(model_name):
         today = datetime.today()
         first_day = today - timedelta(days=3)
 
-        logger.debug(f"Today is {today} and the first day is {first_day}")
-
         for i in range(len(timestamps)):
             current_timestamp = datetime.strptime(timestamps[i], "%Y-%m-%d %H:%M")
             if current_timestamp > first_day:
-                logger.critical(f"el timestamp {timestamps[i]} convertit a {current_timestamp} is less than the first day {first_day}")
                 if not math.isnan(real_values[i]):
-                    logger.debug(f"real_value: {real_values[i]}")
                     overlapping_timestamps.append(timestamps[i])
                     overlapping_predictions.append(predictions[i])
                     real_vals.append(real_values[i])
