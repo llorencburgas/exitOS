@@ -263,18 +263,10 @@ def train_model():
                               meteo_data=optimalScheduler.meteo_data if meteo_data is True else None,
                               extra_sensors_df=extra_sensors_df if extra_sensors_id is not None else None)
 
-def forecast_model():
-    forecasts_aux = database.get_forecasts_name()
-    forecasts_id = []
-    for f in forecasts_aux:
-        forecasts_id.append(f[0])
+def forecast_model(selected_forecast):
 
-    selected_forecast = request.forms.get("models")
     forecast_df, real_values = ForecatManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data,
                                                                              model_name=selected_forecast)
-
-    # start_time = datetime.now().replace(minute=0, second=0, microsecond=0)
-    # timestamps = [(start_time + timedelta(hours=i)).strftime("%Y-%m-%d %H:%M") for i in range(len(forecast_df))]
 
     forecasted_done_time = datetime.now().replace(second=0, microsecond=0)
     timestamps = forecast_df.index.tolist()
@@ -312,7 +304,8 @@ def submit_model():
             train_model()
             return create_model_page()
         elif action == 'forecast':
-            forecast_model()
+            selected_forecast = request.forms.get("models")
+            forecast_model(selected_forecast)
             return create_model_page()
         elif action == 'delete':
             delete_model()
@@ -488,6 +481,8 @@ def get_page(page):
 def daily_task():
     logger.debug(f"Running daily task at {datetime.now().strftime('%d-%b-%Y   %X')}")
 
+    logger.debug("STARTING DAILY SENSOR UPDATE")
+
     sensors_id = database.get_all_sensors()
     sensors_id = sensors_id['entity_id'].tolist()
 
@@ -499,6 +494,18 @@ def daily_task():
             database.update_database(sensor_id)
     database.clean_sensors_db(connection)
     database.__close_connection__(connection)
+
+    logger.debug("STARTING DAILY FORECASTING")
+
+    forecasts_aux = database.get_forecasts_name()
+    for f in forecasts_aux:
+        logger.debug(f"FORECASTING {f[0]}")
+        forecast_model(f[0])
+
+
+
+
+
 
 def monthly_task():
     today = datetime.today()
@@ -517,7 +524,7 @@ def monthly_task():
         database.__close_connection__(connection)
         logger.debug(f"Running monthly task at {datetime.now().strftime('%d-%b-%Y   %X')}" )
 
-schedule.every().day.at("00:00").do(daily_task)
+schedule.every().day.at("09:15").do(daily_task)
 schedule.every().day.at("00:00").do(monthly_task)
 
 def run_scheduled_tasks():
