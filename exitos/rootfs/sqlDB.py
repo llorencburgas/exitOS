@@ -378,6 +378,7 @@ class sqlDB():
                             'value': data_point['state']
                         })
                     df = pd.DataFrame(all_data)
+                    logger.critical(df.columns)
                     df['value'] = pd.to_numeric(df['value'], errors='coerce')
                     df['timestamp'] = pd.to_datetime(df['timestamp'])
                     df['hour'] = df['timestamp'].dt.floor('H')
