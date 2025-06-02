@@ -34,7 +34,8 @@ PORT = 55023
 #INICIACIÓ DE L'APLICACIÓ I LA BASE DE DADES
 app = Bottle()
 database = db.sqlDB()
-database.update_database("all")
+database.old_update_database("all")
+database.clean_database_hourly_average()
 forecast = forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler()
 
@@ -483,7 +484,8 @@ def daily_task():
 
     logger.debug("STARTING DAILY SENSOR UPDATE")
 
-    database.update_database("all")
+    database.old_update_database("all")
+    database.clean_database_hourly_average()
 
     logger.debug("STARTING DAILY FORECASTING")
 
