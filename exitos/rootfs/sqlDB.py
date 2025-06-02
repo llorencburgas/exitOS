@@ -378,38 +378,39 @@ class sqlDB():
                     logger.info(f"sensor_data_historic {sensor_data_historic}")
 
                     all_data = []
-                    for column in sensor_data_historic.columns:
-                        data_point = sensor_data_historic[column][0]
-                        logger.critical(f"DATA: {data_point}")
-                        all_data.append({
-                            'timestamp': data_point['last_changed'],
-                            'value': data_point['state']
-                        })
+                    if sensor_data_historic is not None:
+                        for column in sensor_data_historic.columns:
+                            data_point = sensor_data_historic[column][0]
+                            logger.critical(f"DATA: {data_point}")
+                            all_data.append({
+                                'timestamp': data_point['last_changed'],
+                                'value': data_point['state']
+                            })
 
-                        #això hauria d'estar dins el FOR??
-                    df = pd.DataFrame(all_data)
-                    logger.critical(df.columns)
-                    df['value'] = pd.to_numeric(df['value'], errors='coerce')
-                    df['timestamp'] = pd.to_datetime(df['timestamp'])
-                    df['hour'] = df['timestamp'].dt.floor('H')
+                            #això hauria d'estar dins el FOR??
+                        df = pd.DataFrame(all_data)
+                        logger.critical(df.columns)
+                        df['value'] = pd.to_numeric(df['value'], errors='coerce')
+                        df['timestamp'] = pd.to_datetime(df['timestamp'])
+                        df['hour'] = df['timestamp'].dt.floor('H')
 
-                    df_grouped = df.groupby('hour').mean(numeric_only=True).reset_index()
+                        df_grouped = df.groupby('hour').mean(numeric_only=True).reset_index()
 
-                    cur = con.cursor()
-                    for idx, row in df_grouped.iterrows():
-                        mean_value = row['value']
-                        time_stamp = row['hour'].isoformat()
+                        cur = con.cursor()
+                        for idx, row in df_grouped.iterrows():
+                            mean_value = row['value']
+                            time_stamp = row['hour'].isoformat()
 
-                        if np.isnan(mean_value):
-                            continue  # saltem valors nuls
+                            if np.isnan(mean_value):
+                                continue  # saltem valors nuls
 
-                        # Només inserim si ha canviat respecte l'últim valor
-                        if last_value != mean_value:
-                            last_value = mean_value
-                            cur.execute(
-                                "INSERT INTO dades (sensor_id, timestamp, value) VALUES (?,?,?)",
-                                (sensor_id, time_stamp, mean_value)
-                            )
+                            # Només inserim si ha canviat respecte l'últim valor
+                            if last_value != mean_value:
+                                last_value = mean_value
+                                cur.execute(
+                                    "INSERT INTO dades (sensor_id, timestamp, value) VALUES (?,?,?)",
+                                    (sensor_id, time_stamp, mean_value)
+                                )
                     cur.close()
                     con.commit()
     def clean_database_hourly_average(self):
