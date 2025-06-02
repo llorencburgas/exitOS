@@ -347,11 +347,17 @@ class sqlDB():
                     string_start_date = start_time.strftime('%Y-%m-%dT%H:%M:%S')
                     string_end_date = end_time.strftime('%Y-%m-%dT%H:%M:%S')
 
+
+
                     url = (
                         self.base_url + "history/period/" + string_start_date +
                         "?end_time=" + string_end_date +
                         "&filter_entity_id=" + sensor_id
                         + "&minimal_response&no_attributes")
+
+                    logger.debug(f"start_date {string_start_date} end_date {string_end_date}")
+                    logger.debug(f"sensor_id {sensor_id}")
+                    logger.info(f"url {url}")
 
                     sensor_data_historic = pd.DataFrame()
 
@@ -378,6 +384,8 @@ class sqlDB():
                             'timestamp': data_point['last_changed'],
                             'value': data_point['state']
                         })
+
+                        #això hauria d'estar dins el FOR??
                     df = pd.DataFrame(all_data)
                     logger.critical(df.columns)
                     df['value'] = pd.to_numeric(df['value'], errors='coerce')
