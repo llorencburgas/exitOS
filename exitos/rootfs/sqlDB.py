@@ -359,7 +359,10 @@ class sqlDB():
                     response = get(url, headers=self.headers)
                     if response.status_code == 200:
                         try:
-                            sensor_data_historic = pd.json_normalize(response.json())
+                            response_data = response.json()
+                            flattened_data = [item for sublist in response_data for item in sublist]
+                            sensor_data_historic = pd.json_normalize(flattened_data)
+
                         except ValueError as e:
                             logger.error(f"Error parsing JSON: {str(e)}")
                     elif response.status_code == 500:
@@ -414,7 +417,7 @@ class sqlDB():
                                 )
                         cur.close()
                         con.commit()
-                        
+
     def clean_database_hourly_average(self):
         logger.warning("INICIANT NETEJA DE LA BASE DE DADES")
         con = self.__open_connection__()
