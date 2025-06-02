@@ -369,13 +369,14 @@ class sqlDB():
                         logger.error(f"Request failed with status code: {response.status_code}")
                         sensor_data_historic = pd.DataFrame()
 
-                        logger.info(response.json())
-                        logger.debug(f"start_date {string_start_date}")
-                        logger.debug(f"end_date {string_end_date}")
-                        logger.debug(f"url {url}")
-                        logger.debug(f"status_code {response.status_code}")
-                        logger.debug(f"response {response.text}")
-                        logger.info(f"sensor_data_historic {sensor_data_historic}")
+                    logger.info(response.json())
+                    logger.debug(f"start_date {string_start_date}")
+                    logger.debug(f"end_date {string_end_date}")
+                    logger.debug(f"url {url}")
+                    logger.debug(f"status_code {response.status_code}")
+                    logger.debug(f"response {response.text}")
+                    logger.info(f"sensor_data_historic {sensor_data_historic}")
+
                     all_data = []
                     for column in sensor_data_historic.columns:
                         data_point = sensor_data_historic[column][0]
