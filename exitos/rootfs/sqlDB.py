@@ -357,7 +357,7 @@ class sqlDB():
                     sensor_data_historic = pd.DataFrame()
 
                     response = get(url, headers=self.headers)
-                    if response.status_code == 200 and len(response.json()) > 0:
+                    if response.status_code == 200:
                         try:
                             sensor_data_historic = pd.json_normalize(response.json())
                         except ValueError as e:
@@ -412,8 +412,9 @@ class sqlDB():
                                     "INSERT INTO dades (sensor_id, timestamp, value) VALUES (?,?,?)",
                                     (sensor_id, time_stamp, mean_value)
                                 )
-                    cur.close()
-                    con.commit()
+                        cur.close()
+                        con.commit()
+                        
     def clean_database_hourly_average(self):
         logger.warning("INICIANT NETEJA DE LA BASE DE DADES")
         con = self.__open_connection__()
