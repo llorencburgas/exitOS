@@ -342,31 +342,24 @@ class sqlDB():
                     start_time = datetime.fromisoformat(last_date_saved)
 
                 while start_time <= current_date:
-                    end_time = start_time + timedelta(days = 7)
+                    end_time = start_time + timedelta(days=7)
 
                     string_start_date = start_time.strftime('%Y-%m-%dT%H:%M:%S')
                     string_end_date = end_time.strftime('%Y-%m-%dT%H:%M:%S')
-
-
 
                     url = (
                         self.base_url + "history/period/" + string_start_date +
                         "?end_time=" + string_end_date +
                         "&filter_entity_id=" + sensor_id
-                        + "&minimal_response&no_attributes")
-
-                    logger.debug(f"start_date {string_start_date} end_date {string_end_date}")
-                    logger.debug(f"sensor_id {sensor_id}")
-                    logger.info(f"url {url}")
+                        + "&minimal_response&no_attributes"
+                    )
 
                     sensor_data_historic = pd.DataFrame()
 
                     response = get(url, headers=self.headers)
-
                     if response.status_code == 200:
                         try:
                             sensor_data_historic = pd.json_normalize(response.json())
-                            logger.critical(f"SENSOR DATA HISTORIC {sensor_data_historic}")
                         except ValueError as e:
                             logger.error(f"Error parsing JSON: {str(e)}")
                     elif response.status_code == 500:
@@ -376,6 +369,13 @@ class sqlDB():
                         logger.error(f"Request failed with status code: {response.status_code}")
                         sensor_data_historic = pd.DataFrame()
 
+                        logger.info(response.json())
+                        logger.debug(f"start_date {string_start_date}")
+                        logger.debug(f"end_date {string_end_date}")
+                        logger.debug(f"url {url}")
+                        logger.debug(f"status_code {response.status_code}")
+                        logger.debug(f"response {response.text}")
+                        logger.info(f"sensor_data_historic {sensor_data_historic}")
                     all_data = []
                     for column in sensor_data_historic.columns:
                         data_point = sensor_data_historic[column][0]
