@@ -381,7 +381,7 @@ class SqlDB():
                         start_time = current_date - timedelta(days=21)
                         last_value = []
                     else:
-                        last_date_saved, last_value = last_date_saved[0]
+                        last_date_saved, last_value = last_date_saved
                         start_time = datetime.fromisoformat(last_date_saved)
 
                     while start_time <= current_date:
