@@ -370,8 +370,8 @@ class SqlDB():
                     con.commit()
                     logger.debug(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] Afegit un nou sensor a la base de dades: {sensor_id}")
 
-                save_sensor = self.query_select("sensors","save_sensor", sensor_id, con)[0][0]
-                update_sensor = self.query_select("sensors","update_sensor", sensor_id, con)[0][0]
+                save_sensor = self.query_select("sensors","save_sensor", sensor_id, con)[0]
+                update_sensor = self.query_select("sensors","update_sensor", sensor_id, con)[0]
 
                 if save_sensor and update_sensor:
                     logger.debug(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] Actualitzant sensor: {sensor_id}")
