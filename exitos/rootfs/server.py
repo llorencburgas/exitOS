@@ -67,22 +67,24 @@ def get_init():
 #Ruta per a configurar quins sensors volem guardar
 @app.get('/sensors')
 def get_sensors():
-
-    database.clean_sensors_db()
-
-    sensors = database.get_all_sensors()
-    sensors_id = sensors['entity_id'].tolist()
-    sensors_name = sensors['attributes.friendly_name'].tolist()
-    sensors_save = database.get_sensors_save(sensors_id)
+    try:
+        sensors = database.get_all_sensors()
+        sensors_id = sensors['entity_id'].tolist()
+        sensors_name = sensors['attributes.friendly_name'].tolist()
+        sensors_save = database.get_sensors_save(sensors_id)
 
 
-    context = {
-        "sensors_id": sensors_id,
-        "sensors_name": sensors_name,
-        "sensors_save": sensors_save
-    }
+        context = {
+            "sensors_id": sensors_id,
+            "sensors_name": sensors_name,
+            "sensors_save": sensors_save
+        }
 
-    return template('./www/sensors.html', sensors = context )
+        return template('./www/sensors.html', sensors = context )
+    except Exception as ex:
+        error_message = traceback.format_exc()
+        return f"Error! Alguna cosa ha anat malament :c : {str(ex)}\nFull Traceback:\n{error_message}"
+
 
 @app.get('/databaseView')
 def database_graph_page():

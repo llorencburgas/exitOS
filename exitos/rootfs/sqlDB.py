@@ -301,7 +301,7 @@ class SqlDB():
     def clean_database_hourly_average(self):
         logger.warning("INICIANT NETEJA DE LA BASE DE DADES")
         with self._get_connection() as con:
-            sensor_ids = [row[0] for row in con.execute("SELECT sensor_id FROM sensors").fetchall()]
+            sensor_ids = [row[0] for row in con.execute("SELECT DISTINCT sensor_id FROM dades").fetchall()]
 
             for sensor_id in sensor_ids:
                 logger.info(f"Processant sensor: {sensor_id}")
