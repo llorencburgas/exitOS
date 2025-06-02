@@ -378,7 +378,8 @@ class sqlDB():
                     logger.info(f"sensor_data_historic {sensor_data_historic}")
 
                     all_data = []
-                    if sensor_data_historic is not None:
+                    if len(sensor_data_historic) > 0:
+                        logger.info("sensor_data_historic has values (?)")
                         for column in sensor_data_historic.columns:
                             data_point = sensor_data_historic[column][0]
                             logger.critical(f"DATA: {data_point}")
