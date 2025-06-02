@@ -114,7 +114,7 @@ class SqlDB():
         with self._get_connection() as con:
             for sensor_id in sensors:
                 res = self.query_select("sensors", "save_sensor", sensor_id, con)
-                results.append(res[0][0] if res else 0)
+                results.append(res[0] if res else 0)
 
         return results
 
