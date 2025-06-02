@@ -6,7 +6,7 @@ import sys
 
 from datetime import datetime, timedelta
 
-database = db.sqlDB()
+database = db.SqlDB()
 ha_url = database.base_url
 bearer_token = database.supervisor_token
 headers = {
