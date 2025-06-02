@@ -64,15 +64,15 @@ class SqlDB():
     def _get_connection(self):
         return sqlite3.connect(self.database_file)
 
-    def query_select(self, table:str, column:str, sensor_id: str) -> List[Any]:
+    def query_select(self, table:str, column:str, sensor_id: str, con) -> List[Any]:
         """
         Executa una query SQL a la base de dades
         """
-
-        with self._get_connection() as con:
-            cur = con.cursor()
-            cur.execute(f"SELECT {column} FROM {table} WHERE sensor_id = ?", (sensor_id,))
-            return cur.fetchall()
+        cur = con.cursor()
+        cur.execute(f"SELECT {column} FROM {table} WHERE sensor_id = ?", (sensor_id,))
+        result = cur.fetchone()
+        cur.close()
+        return result
 
 
         return result
@@ -113,7 +113,7 @@ class SqlDB():
         results = []
         with self._get_connection() as con:
             for sensor_id in sensors:
-                res = self.query_select("sensors", "save_sensor", sensor_id)
+                res = self.query_select("sensors", "save_sensor", sensor_id, con)
                 results.append(res[0][0] if res else 0)
 
         return results
@@ -327,13 +327,8 @@ class SqlDB():
     def old_update_database(self, sensor_to_update):
         """
         Actualitza la base de dades amb la API del Home Assistant.
-        Aquesta funció sincronitza els sensors existents amb la base de dades i
-        actualitza els valors històrics únicament si estan marcats com a
-        "update_sensor" i "save_sensor" TRUE
         """
         logger.info("Iniciant l'actualització de la base de dades...")
-
-        connection = self.__open_connection__()
 
         #obtenim la llista de sensors de la API
         if sensor_to_update == "all":
@@ -352,93 +347,94 @@ class SqlDB():
         local_tz = tzlocal.get_localzone()  # Gets system local timezone (e.g., 'Europe/Paris')
         current_date = datetime.now(local_tz)
 
-        for j in sensors_list.index: #per a cada sensor de la llista
-            sensor_id = sensors_list.iloc[j]["entity_id"]
+        with self._get_connection() as con:
+            for j in sensors_list.index:
+                sensor_id = sensors_list.iloc[j]["entity_id"]
 
-            #obtenim de la nostra BD el sensor amb id igual al obtingut anteriorment
+                sensor_info = self.query_select("sensors", "*", sensor_id, con)
 
-            sensor_info = self.query_select(sensor_id, "*", "sensors", connection)
-
-            #si no hem obtingut cap sensor ( és a dir, no existeix a la nosta BD)
-            if len(sensor_info) == 0:
-                cur = connection.cursor()
-                values_to_insert = (sensor_id,
-                                    sensors_list.iloc[j]["attributes.unit_of_measurement"],
-                                    True,
-                                    False)
-                cur.execute("INSERT INTO sensors (sensor_id, units, update_sensor, save_sensor) VALUES (?,?,?,?)", values_to_insert)
-                cur.close()
-                connection.commit()
-                logger.debug(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] Afegit un nou sensor a la base de dades: {sensor_id}")
-
-                sensor_info = None
-                last_date_saved = None
-
-            save_sensor = self.query_select(sensor_id,"save_sensor", "sensors", connection)[0][0]
-            update_sensor = self.query_select(sensor_id,"update_sensor", "sensors", connection)[0][0]
-            if save_sensor and update_sensor:
-                logger.debug(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] Actualitzant sensor: {sensor_id}")
-
-                last_date_saved = self.query_select(sensor_id,"timestamp, value", "dades", connection)
-                if len(last_date_saved) == 0:
-                    start_time = current_date - timedelta(days=21)
-                    last_value = []
-                else:
-                    last_date_saved, last_value = last_date_saved[0]
-                    start_time = datetime.fromisoformat(last_date_saved)
-
-                while start_time <= current_date:
-                    end_time = start_time + timedelta(days = 7)
-
-                    string_start_date = start_time.strftime('%Y-%m-%dT%H:%M:%S')
-                    string_end_date = end_time.strftime('%Y-%m-%dT%H:%M:%S')
-
-                    url = (
-                        self.base_url + "history/period/" + string_start_date +
-                        "?end_time=" + string_end_date +
-                        "&filter_entity_id=" + sensor_id
-                        + "&minimal_response&no_attributes"
+                #si no hem obtingut cap sensor ( és a dir, no existeix a la nosta BD)
+                if len(sensor_info) == 0:
+                    cur = con.cursor()
+                    values_to_insert = (
+                        sensor_id,
+                        sensors_list.iloc[j]["attributes.unit_of_measurement"],
+                        True,
+                        False
                     )
+                    cur.execute(
+                        "INSERT INTO sensors (sensor_id, units, update_sensor, save_sensor) VALUES (?,?,?,?)",
+                        values_to_insert
+                    )
+                    cur.close()
+                    con.commit()
+                    logger.debug(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] Afegit un nou sensor a la base de dades: {sensor_id}")
 
-                    sensor_data_historic = pd.DataFrame()
+                save_sensor = self.query_select("sensors","save_sensor", sensor_id, con)[0][0]
+                update_sensor = self.query_select("sensors","update_sensor", sensor_id, con)[0][0]
 
-                    response = get(url, headers=self.headers)
-                    if response.status_code == 200:
-                        try:
-                            sensor_data_historic = pd.json_normalize(response.json())
-                        except ValueError as e:
-                            logger.error(f"Error parsing JSON: {str(e)}")
-                    elif response.status_code == 500:
-                        logger.critical(f"Server error (500): Internal server error at sensor {sensor_id}")
-                        sensor_data_historic = pd.DataFrame()
+                if save_sensor and update_sensor:
+                    logger.debug(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] Actualitzant sensor: {sensor_id}")
+
+                    last_date_saved = self.query_select("dades","timestamp, value", sensor_id, con)
+                    if len(last_date_saved) == 0:
+                        start_time = current_date - timedelta(days=21)
+                        last_value = []
                     else:
-                        logger.error(f"Request failed with status code: {response.status_code}")
-                        sensor_data_historic = pd.DataFrame()
+                        last_date_saved, last_value = last_date_saved[0]
+                        start_time = datetime.fromisoformat(last_date_saved)
 
-                    #actualitzem el valor obtingut de l'històric del sensor
-                    cur = connection.cursor()
-                    for column in sensor_data_historic.columns:
-                        value = sensor_data_historic[column][0]['state']
+                    while start_time <= current_date:
+                        end_time = start_time + timedelta(days = 7)
 
-                        #mirem si el valor és vàlid
-                        if value == 'unknown' or value == 'unavailable' or value == '':
-                            value = np.nan
-                        if last_value != value:
-                            last_value = value
-                            time_stamp = sensor_data_historic[column][0]['last_changed']
+                        string_start_date = start_time.strftime('%Y-%m-%dT%H:%M:%S')
+                        string_end_date = end_time.strftime('%Y-%m-%dT%H:%M:%S')
+
+                        url = (
+                            self.base_url + "history/period/" + string_start_date +
+                            "?end_time=" + string_end_date +
+                            "&filter_entity_id=" + sensor_id
+                            + "&minimal_response&no_attributes"
+                        )
 
 
-                            cur.execute("INSERT INTO dades (sensor_id, timestamp, value) VALUES (?,?,?)",
+
+                        response = get(url, headers=self.headers)
+                        if response.status_code == 200:
+                            try:
+                                sensor_data_historic = pd.json_normalize(response.json())
+                            except ValueError as e:
+                                logger.error(f"Error parsing JSON: {str(e)}")
+                                sensor_data_historic = pd.DataFrame()
+                        elif response.status_code == 500:
+                            logger.critical(f"Server error (500): Internal server error at sensor {sensor_id}")
+                            sensor_data_historic = pd.DataFrame()
+                        else:
+                            logger.error(f"Request failed with status code: {response.status_code}")
+                            sensor_data_historic = pd.DataFrame()
+
+                        #actualitzem el valor obtingut de l'històric del sensor
+                        cur = con.cursor()
+                        for column in sensor_data_historic.columns:
+                            value = sensor_data_historic[column][0]['state']
+
+                            #mirem si el valor és vàlid
+                            if value == 'unknown' or value == 'unavailable' or value == '':
+                                value = np.nan
+                            if last_value != value:
+                                last_value = value
+                                time_stamp = sensor_data_historic[column][0]['last_changed']
+
+                                cur.execute(
+                                    "INSERT INTO dades (sensor_id, timestamp, value) VALUES (?,?,?)",
                                         (sensor_id, time_stamp, value))
 
-                    cur.close()
-                    connection.commit()
+                        cur.close()
+                        con.commit()
+                        start_time += timedelta(days = 7)
 
-                    start_time += timedelta(days = 7)
 
-
-        self.vacuum_database(connection)
-        self.__close_connection__(connection)
+            self.vacuum()
         logger.info(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] TOTS ELS SENSORS HAN ESTAT ACTUALITZATS")
 
     def get_lat_long(self):
@@ -463,55 +459,48 @@ class SqlDB():
             return f"Error! : {str(e)}"
 
     def save_forecast(self, data):
+        with self._get_connection() as con:
+            cur = con.cursor()
+            cur.executemany("""
+                INSERT INTO forecasts (forecast_name, forecast_run_time, forecasted_time, predicted_value, real_value) 
+                VALUES (?,?,?,?,?)
+            """, data)
 
-        # forecast_name = data[0][0]
-
-        con = self.__open_connection__()
-        cur = con.cursor()
-
-        # cur.execute("DELETE FROM forecasts WHERE forecast_name = ?", (forecast_name,))
-        cur.executemany("""
-        INSERT INTO forecasts (forecast_name, forecast_run_time, forecasted_time, predicted_value, real_value) 
-        VALUES (?,?,?,?,?)
-        """, data)
-
-        con.commit()
-        self.__close_connection__(con)
+            con.commit()
+            cur.close()
 
     def get_forecasts_name(self):
-        con = self.__open_connection__()
-        cur = con.cursor()
-        cur.execute("SELECT DISTINCT forecast_name FROM forecasts")
-        aux = cur.fetchall()
-        con.close()
-        self.__close_connection__(con)
+        with self._get_connection() as con:
+            cur = con.cursor()
+            cur.execute("SELECT DISTINCT forecast_name FROM forecasts")
+            aux = cur.fetchall()
+            con.close()
         return aux
 
     def get_data_from_latest_forecast(self, forecast_id):
-        con = self.__open_connection__()
-        cur = con.cursor()
-        cur.execute("""
-                SELECT forecast_run_time, forecasted_time, predicted_value, real_value
-                FROM forecasts
-                WHERE forecast_name = ?
-                AND forecast_run_time = (
-                    SELECT MAX(forecast_run_time)
+        with self._get_connection() as con:
+            cur = con.cursor()
+            cur.execute("""
+                    SELECT forecast_run_time, forecasted_time, predicted_value, real_value
                     FROM forecasts
                     WHERE forecast_name = ?
-                )
-            """, (forecast_id, forecast_id))
-        aux = cur.fetchall()
-        data = pd.DataFrame(aux, columns=('run_date','timestamp', 'value', 'real_value'))
-        cur.close()
-        self.__close_connection__(con)
+                    AND forecast_run_time = (
+                        SELECT MAX(forecast_run_time)
+                        FROM forecasts
+                        WHERE forecast_name = ?
+                    )
+                """, (forecast_id, forecast_id))
+            aux = cur.fetchall()
+            cur.close()
+            data = pd.DataFrame(aux, columns=('run_date','timestamp', 'value', 'real_value'))
         return data
 
     def remove_forecast(self, forecast_id):
-        con = self.__open_connection__()
-        cur = con.cursor()
-        cur.execute("DELETE FROM forecasts WHERE forecast_name = ?",(forecast_id,))
-        con.commit()
-        self.__close_connection__(con)
+        with self._get_connection() as con:
+            cur = con.cursor()
+            cur.execute("DELETE FROM forecasts WHERE forecast_name = ?",(forecast_id,))
+            con.commit()
+            cur.close()
 
     def vacuum(self):
         with self._get_connection() as con:
