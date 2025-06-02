@@ -33,7 +33,7 @@ PORT = 55023
 
 #INICIACIÓ DE L'APLICACIÓ I LA BASE DE DADES
 app = Bottle()
-database = db.sqlDB()
+database = db.SqlDB()
 database.old_update_database("all")
 database.clean_database_hourly_average()
 forecast = forecast.Forecaster(debug=True)
@@ -68,9 +68,7 @@ def get_init():
 @app.get('/sensors')
 def get_sensors():
 
-    connection = database.__open_connection__()
-    database.clean_sensors_db(connection)
-    database.__close_connection__(connection)
+    database.clean_sensors_db()
 
     sensors = database.get_all_sensors()
     sensors_id = sensors['entity_id'].tolist()
@@ -507,14 +505,11 @@ def monthly_task():
         sensors_id = database.get_all_sensors()
         sensors_id = sensors_id['entity_id'].tolist()
 
-        connection = database.__open_connection__()
-
         for sensor_id in sensors_id:
-            is_active = database.get_sensor_active(sensor_id, connection)
+            is_active = database.get_sensor_active(sensor_id)
             if not is_active:
-                database.remove_sensor_data(sensor_id, connection)
+                database.remove_sensor_data(sensor_id)
 
-        database.__close_connection__(connection)
         logger.debug(f"Running monthly task at {datetime.now().strftime('%d-%b-%Y   %X')}" )
 
 schedule.every().day.at("00:00").do(daily_task)
