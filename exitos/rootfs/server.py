@@ -161,19 +161,24 @@ def update_sensors():
 
 @app.get('/model')
 def create_model_page():
-    sensors_id = database.get_all_saved_sensors_id()
-    models_saved = [os.path.basename(f)
-                    for f in glob.glob(forecast.models_filepath + "*.pkl")]
+    try:
+        sensors_id = database.get_all_saved_sensors_id()
+        models_saved = [os.path.basename(f)
+                        for f in glob.glob(forecast.models_filepath + "*.pkl")]
 
-    forecasts_aux = database.get_forecasts_name()
-    forecasts_id = []
-    for f in forecasts_aux:
-        forecasts_id.append(f[0])
+        forecasts_aux = database.get_forecasts_name()
+        forecasts_id = []
+        for f in forecasts_aux:
+            forecasts_id.append(f[0])
 
-    return template('./www/model.html',
-                    sensors_input = sensors_id,
-                    models_input = models_saved,
-                    forecasts_id = forecasts_id)
+        return template('./www/model.html',
+                        sensors_input = sensors_id,
+                        models_input = models_saved,
+                        forecasts_id = forecasts_id)
+    except Exception as ex:
+        error_message = traceback.format_exc()
+        return f"Error! Alguna cosa ha anat malament :c : {str(ex)}\nFull Traceback:\n{error_message}"
+
 
 def train_model():
     selected_model = request.forms.get("model")
