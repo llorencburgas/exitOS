@@ -357,7 +357,7 @@ class sqlDB():
                     sensor_data_historic = pd.DataFrame()
 
                     response = get(url, headers=self.headers)
-                    if response.status_code == 200:
+                    if response.status_code == 200 and len(response.json()) > 0:
                         try:
                             sensor_data_historic = pd.json_normalize(response.json())
                         except ValueError as e:
