@@ -523,7 +523,7 @@ def daily_forecast_task():
             config = joblib.load(f)
         aux = config.get('algorithm','')
         if aux != '':
-            logger.debug(f"Running daily forecast for {model}")
+            logger.debug(f"*********** Running daily forecast for {model} **********")
             forecast_model(model)
 
 
