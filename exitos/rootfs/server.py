@@ -528,10 +528,9 @@ def daily_forecast_task():
 
 
 
-
-
 schedule.every().day.at("00:00").do(daily_task)
-schedule.every().day.at("00:00").do(monthly_task)
+schedule.every().day.at("00:30").do(daily_forecast_task)
+schedule.every().day.at("01:00").do(monthly_task)
 
 
 def run_scheduled_tasks():
