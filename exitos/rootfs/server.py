@@ -360,6 +360,7 @@ def get_model_config(model_name):
 def get_forecast_data(model_name):
     try:
         forecasts = database.get_data_from_latest_forecast(model_name + ".pkl")
+        logger.info(f"forecasts: {forecasts}")
         if forecasts.empty:
             return json.dumps({"status":"no_forecasts"})
 
