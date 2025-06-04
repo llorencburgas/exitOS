@@ -317,7 +317,7 @@ class SqlDB():
                 con.executemany(
                     "INSERT INTO dades (sensor_id, timestamp, value) VALUES (?, ?, ?)",
                     [(sensor_id, row['hour'].isoformat(), row['value']) for _,
-                    row in df_grouped.iterrows() if pd.notna(row['value'])]
+                    row in df_grouped.iterrows()]
                 )
                 con.commit()
         logger.info("NETEJA COMPLETADA")
