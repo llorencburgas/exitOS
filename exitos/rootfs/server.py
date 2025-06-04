@@ -85,7 +85,6 @@ def get_sensors():
         error_message = traceback.format_exc()
         return f"Error! Alguna cosa ha anat malament :c : {str(ex)}\nFull Traceback:\n{error_message}"
 
-
 @app.get('/databaseView')
 def database_graph_page():
     sensors_id = database.get_all_saved_sensors_id()
@@ -178,7 +177,6 @@ def create_model_page():
     except Exception as ex:
         error_message = traceback.format_exc()
         return f"Error! Alguna cosa ha anat malament :c : {str(ex)}\nFull Traceback:\n{error_message}"
-
 
 def train_model():
     selected_model = request.forms.get("model")
@@ -299,8 +297,6 @@ def delete_model():
     else:
         logger.error(f"Model {selected_model} not found")
 
-
-
 @app.route('/submit-model', method='POST')
 def submit_model():
     try:
@@ -379,17 +375,9 @@ def get_forecast_data(model_name):
         today = datetime.today()
         first_day = today - timedelta(days=7)
 
-        logger.critical(f"today: {today}")
-        logger.critical(f"first_day: {first_day}")
-
         for i in range(len(timestamps)):
-
-            logger.info(f"valor actual: {i}")
-            logger.info(f"timestamp: {timestamps[i]}")
-            logger.info(f"prediction: {predictions[i]}")
             current_timestamp = datetime.strptime(timestamps[i], "%Y-%m-%d %H:%M")
             if current_timestamp > first_day:
-                logger.error(f"true for {timestamps[i]}")
                 if not math.isnan(real_values[i]):
                     overlapping_timestamps.append(timestamps[i])
                     overlapping_predictions.append(predictions[i])
@@ -398,12 +386,6 @@ def get_forecast_data(model_name):
                     future_timestamps.append(timestamps[i])
                     future_predictions.append(predictions[i])
 
-
-        logger.critical(f"timestamps_overlap {overlapping_timestamps}")
-        logger.warning(f"predictions_overlap {overlapping_predictions}")
-        logger.critical(f"real_values_overlap {real_vals}")
-        logger.warning(f"future_timestamps_overlap {future_timestamps}")
-        logger.critical(f"future_predictions_overlap {future_predictions}")
 
         return json.dumps({
             "status": "ok",
@@ -532,8 +514,16 @@ def monthly_task():
 
         logger.debug(f"Running monthly task at {datetime.now().strftime('%d-%b-%Y   %X')}" )
 
+def daily_forecast_task():
+    models_saved = [os.path.basename(f) for f in glob.glob(forecast.models_filepath + "*.pkl")]
+    logger.warning(f" models saved : {models_saved}")
+
+
+
+daily_forecast_task()
 schedule.every().day.at("00:00").do(daily_task)
 schedule.every().day.at("00:00").do(monthly_task)
+
 
 def run_scheduled_tasks():
     while True:
