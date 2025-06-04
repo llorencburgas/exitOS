@@ -314,11 +314,6 @@ class SqlDB():
                 df['hour'] = df['timestamp'].dt.floor('H')
                 df_grouped = df.groupby('hour').mean(numeric_only=True).reset_index()
 
-                logger.debug(df_grouped)
-                logger.critical(df)
-                logger.info(df['value'])
-                logger.warning(df['hour'])
-
                 con.execute("DELETE FROM dades WHERE sensor_id = ?", (sensor_id,))
                 con.executemany(
                     "INSERT INTO dades (sensor_id, timestamp, value) VALUES (?, ?, ?)",

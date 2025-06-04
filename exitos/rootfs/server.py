@@ -389,6 +389,13 @@ def get_forecast_data(model_name):
                     future_timestamps.append(timestamps[i])
                     future_predictions.append(predictions[i])
 
+
+        logger.critical(f"timestamps_overlap {overlapping_timestamps}")
+        logger.warning(f"predictions_overlap {overlapping_predictions}")
+        logger.critical(f"real_values_overlap {real_vals}")
+        logger.warning(f"future_timestamps_overlap {future_timestamps}")
+        logger.critical(f"future_predictions_overlap {future_predictions}")
+
         return json.dumps({
             "status": "ok",
             "timestamps_overlap": overlapping_timestamps,
