@@ -379,9 +379,17 @@ def get_forecast_data(model_name):
         today = datetime.today()
         first_day = today - timedelta(days=3)
 
+        logger.critical(f"today: {today}")
+        logger.critical(f"first_day: {first_day}")
+
         for i in range(len(timestamps)):
+
+            logger.info(f"valor actual: {i}")
+            logger.info(f"timestamp: {timestamps[i]}")
+            logger.info(f"prediction: {predictions[i]}")
             current_timestamp = datetime.strptime(timestamps[i], "%Y-%m-%d %H:%M")
             if current_timestamp > first_day:
+                logger.error(f"true for {timestamps[i]}")
                 if not math.isnan(real_values[i]):
                     overlapping_timestamps.append(timestamps[i])
                     overlapping_predictions.append(predictions[i])
