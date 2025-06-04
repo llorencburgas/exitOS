@@ -518,7 +518,14 @@ def monthly_task():
 
 def daily_forecast_task():
     models_saved = [os.path.basename(f) for f in glob.glob(forecast.models_filepath + "*.pkl")]
-    logger.warning(f" models saved : {models_saved}")
+    for model in models_saved:
+        model_path = os.path.join(forecast.models_filepath, f"{model}")
+        with open(model_path, 'rb') as f:
+            config = joblib.load(f)
+        aux = config.get('algorithm','')
+        if config != '':
+            logger.warning(f"{aux} exists,  {config['sensors_id']}")
+
 
 
 
