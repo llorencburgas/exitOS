@@ -41,6 +41,7 @@ optimalScheduler = OptimalScheduler.OptimalScheduler()
 
 
 
+
 #Ruta inicial
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')
@@ -58,6 +59,7 @@ def serve_models(filepath):
 # Ruta inicial
 @app.get('/')
 def get_init():
+    daily_forecast_task()
     ip = request.environ.get('REMOTE_ADDR')
     token = database.supervisor_token
     return template('./www/main.html',
@@ -520,7 +522,7 @@ def daily_forecast_task():
 
 
 
-daily_forecast_task()
+
 schedule.every().day.at("00:00").do(daily_task)
 schedule.every().day.at("00:00").do(monthly_task)
 
