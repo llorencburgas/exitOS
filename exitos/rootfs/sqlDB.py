@@ -314,6 +314,7 @@ class SqlDB():
                 df_grouped = df.groupby('hour').mean(numeric_only=True).reset_index()
 
                 logger.debug(df_grouped)
+                logger.critical(df)
                 logger.info(df['value'])
                 logger.warning(df['hour'])
 
