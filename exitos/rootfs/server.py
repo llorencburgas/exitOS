@@ -270,9 +270,6 @@ def train_model():
                               extra_sensors_df=extra_sensors_df if extra_sensors_id is not None else None)
 
 def forecast_model(selected_forecast):
-
-    logger.warning(f"Selected model: {selected_forecast}")
-
     forecast_df, real_values = ForecatManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data,
                                                                              model_name=selected_forecast)
 
@@ -525,8 +522,9 @@ def daily_forecast_task():
         with open(model_path, 'rb') as f:
             config = joblib.load(f)
         aux = config.get('algorithm','')
-        if config != '':
-            logger.warning(f"{aux} exists,  {config['sensors_id']}")
+        if aux != '':
+            logger.debug(f"Running daily forecast for {model}")
+            forecast_model(model)
 
 
 
