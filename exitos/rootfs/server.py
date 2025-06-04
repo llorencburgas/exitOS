@@ -377,7 +377,7 @@ def get_forecast_data(model_name):
         future_predictions = []
 
         today = datetime.today()
-        first_day = today - timedelta(days=3)
+        first_day = today - timedelta(days=7)
 
         logger.critical(f"today: {today}")
         logger.critical(f"first_day: {first_day}")
