@@ -474,7 +474,7 @@ class SqlDB():
             cur = con.cursor()
             cur.execute("SELECT DISTINCT forecast_name FROM forecasts")
             aux = cur.fetchall()
-            con.close()
+            cur.close()
         return aux
 
     def get_data_from_latest_forecast(self, forecast_id):
