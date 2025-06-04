@@ -271,6 +271,8 @@ def train_model():
 
 def forecast_model(selected_forecast):
 
+    logger.warning(f"Selected model: {selected_forecast}")
+
     forecast_df, real_values = ForecatManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data,
                                                                              model_name=selected_forecast)
 
