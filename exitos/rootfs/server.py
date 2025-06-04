@@ -35,7 +35,7 @@ PORT = 55023
 app = Bottle()
 database = db.SqlDB()
 database.old_update_database("all")
-database.clean_database_hourly_average()
+# database.clean_database_hourly_average()
 forecast = forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler()
 
@@ -501,9 +501,6 @@ def daily_task():
         forecast_model(f[0])
 
     logger.debug("ENDING DAILY TASKS")
-
-
-
 
 def monthly_task():
     today = datetime.today()
