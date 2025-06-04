@@ -59,7 +59,6 @@ def serve_models(filepath):
 # Ruta inicial
 @app.get('/')
 def get_init():
-    daily_forecast_task()
     ip = request.environ.get('REMOTE_ADDR')
     token = database.supervisor_token
     return template('./www/main.html',
