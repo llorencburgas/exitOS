@@ -151,7 +151,6 @@ class Forecaster:
 
         if 'timestamp' in dad.columns:
             dad.index = pd.to_datetime(dad['timestamp'])
-        logger.info(f"DAD HEAD 1 (timestamps_to_attrs()){dad.head(20)}")
 
 
         if not extra_vars:
@@ -187,7 +186,6 @@ class Forecaster:
 
         if 'timestamp' in dad.columns:
             dad.drop(columns=['timestamp'], inplace=True)
-        logger.info(f"DAD HEAD 2 (timestamps_to_attrs()) {dad.head(10)}")
 
         return dad
 
