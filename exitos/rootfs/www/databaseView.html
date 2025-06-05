@@ -137,8 +137,8 @@
                     <!-- Hidden Input per guardar els sensors seleccionats -->
                     <input type="hidden" name="sensors_id" id="sensors-input" value="">
 
-                    <button id="fetch-data" type="submit"> Mostrar Gràfiques </button>
                 </form>
+                <button id="fetch-data" onclick="FetchGraph()"> Mostrar Gràfiques </button>
 
                 % for sensor_id, graph_html in graphs.items():
                     <h2>Sensor {{ sensor_id }}</h2>
@@ -233,6 +233,10 @@
         }
     });
 
+
+    function FetchGraph(){
+        console.log("Fetching Graph");
+    }
 
 
 
