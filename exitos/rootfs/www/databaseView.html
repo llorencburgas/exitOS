@@ -235,7 +235,11 @@
 
 
     function FetchGraph(){
-        console.log("Fetching Graph");
+        fetch('get_graph_info')
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+            });
     }
 
 

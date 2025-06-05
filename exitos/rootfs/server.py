@@ -39,10 +39,6 @@ database.clean_database_hourly_average()
 forecast = forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler()
 
-
-
-
-#Ruta inicial
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')
 def serve_static(filepath):
@@ -93,7 +89,7 @@ def database_graph_page():
 
     return template('./www/databaseView.html', sensors_id=sensors_id, graphs=graphs_html)
 
-@app.route('/graphsView', method='POST')
+@app.route('/get_graph_info', method='POST')
 def graphs_view():
     try:
         sensors_id = database.get_all_saved_sensors_id()
@@ -130,7 +126,7 @@ def graphs_view():
 
             graphs_html[sensor_id] = graph_html
 
-        return template('./www/databaseView.html',sensors_id=sensors_id, graphs=graphs_html)
+        return graph_html
     except Exception as e:
         return database_graph_page()
 
