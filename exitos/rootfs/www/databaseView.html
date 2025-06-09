@@ -236,10 +236,10 @@
 
     function FetchGraph(){
         fetch('get_graph_info')
-            .then(response => response.json())
-            .then(data => {
+            .then(response => response.text())
+            .then(html => {
                 console.log("data arrivesd");
-                console.log(data.data);
+                console.log(html);
             });
     }
 
