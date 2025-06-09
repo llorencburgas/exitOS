@@ -140,10 +140,10 @@
                 </form>
                 <button id="fetch-data" onclick="FetchGraph()"> Mostrar Gràfiques </button>
 
-<!--                % for sensor_id, graph_html in graphs.items():-->
-<!--                    <h2>Sensor {{ sensor_id }}</h2>-->
-<!--                    <div>{{!graph_html}}</div>-->
-<!--                % end-->
+                % for sensor_id, graph_html in graphs.items():
+                    <h2>Sensor {{ sensor_id }}</h2>
+                    <div>{{!graph_html}}</div>
+                % end
 
                 <div id="graph-results"></div>
             </div>
