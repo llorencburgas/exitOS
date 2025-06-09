@@ -89,7 +89,7 @@ def database_graph_page():
 
     return template('./www/databaseView.html', sensors_id=sensors_id, graphs=graphs_html)
 
-@app.route('/get_graph_info', method='POST')
+@app.route('/get_graph_info')
 def graphs_view():
     try:
         logger.warning("inside graphs_view")
