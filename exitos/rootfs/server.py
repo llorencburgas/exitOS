@@ -127,11 +127,9 @@ def graphs_view():
 
             graphs_html[sensor_id] = graph_html
 
-            logger.info(f"graph inner html: {graph_html}")
-
         return graph_html
     except Exception as e:
-        return database_graph_page()
+        return "ERROR"
 
 @app.route('/update_sensors', method='POST')
 def update_sensors():
