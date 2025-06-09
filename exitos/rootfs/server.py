@@ -89,7 +89,7 @@ def database_graph_page():
 
     return template('./www/databaseView.html', sensors_id=sensors_id, graphs=graphs_html)
 
-@app.route('/get_graph_info')
+@app.route('/get_graph_info', method='POST')
 def graphs_view():
     try:
         selected_sensors = request.forms.get("sensors_id")
