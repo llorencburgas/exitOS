@@ -92,14 +92,18 @@ def database_graph_page():
 @app.route('/get_graph_info')
 def graphs_view():
     try:
-        logger.warning("inside graphs_view")
-
         selected_sensors = request.forms.get("sensors_id")
+        logger.warning(f"sensor selected: {selected_sensors}")
         selected_sensors_list = [sensor.strip() for sensor in selected_sensors.split(',')] if selected_sensors else []
+        logger.warning(f"selected_sensors fragmented: {selected_sensors_list}")
 
         date_to_check = request.forms.getall("datetimes")[0].split(' - ')
+        logger.warning(f"date_to_check: {date_to_check}")
         start_date = datetime.strptime(date_to_check[0], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
         end_date = datetime.strptime(date_to_check[1], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
+
+        logger.warning(f"start_date: {start_date}")
+        logger.warning(f"end_date: {end_date}")
 
         sensors_data = database.get_all_saved_sensors_data(selected_sensors_list, start_date, end_date)
         graphs_html = {}
