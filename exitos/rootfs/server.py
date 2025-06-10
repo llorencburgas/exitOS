@@ -231,7 +231,7 @@ def train_model():
         model_name = aux[1]
     if scaled == 'None': scaled = None
 
-    if len(extra_sensors_id) == 0:
+    if extra_sensors_id is None:
         extra_sensors_id = None
     elif len(extra_sensors_id) == 1 and extra_sensors_id[0] == "None":
         extra_sensors_id = None
