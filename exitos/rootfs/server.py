@@ -131,7 +131,7 @@ def graphs_view():
 
             graphs_html[sensor_id] = graph_html
 
-        return graph_html
+        return graphs_html
     except Exception as e:
         return "ERROR"
 
