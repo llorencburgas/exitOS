@@ -96,7 +96,6 @@ def graphs_view():
         selected_sensors_list = [sensor.strip() for sensor in selected_sensors.split(',')] if selected_sensors else []
 
         date_to_check_input = request.forms.getall("datetimes")
-        logger.debug(f"date_to_check: {date_to_check_input}")
         if  not date_to_check_input:
             logger.debug("NO HI HA DATA")
             start_date = datetime.today() - timedelta(days=30)
@@ -107,10 +106,6 @@ def graphs_view():
             start_date = datetime.strptime(date_to_check[0], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
             end_date = datetime.strptime(date_to_check[1], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
 
-
-
-        logger.info(start_date)
-        logger.info(end_date)
 
         sensors_data = database.get_all_saved_sensors_data(selected_sensors_list, start_date, end_date)
         graphs_html = {}
