@@ -138,7 +138,7 @@ def graphs_view():
 
             graphs_html[sensor_id] = graph_html
 
-        return json.dumps({"status": "success", "html": graphs_html})
+        return json.dumps({"status": "success", "message": graphs_html})
     except Exception as e:
         return json.dumps({"status": "error", "message": str(e)})
 
