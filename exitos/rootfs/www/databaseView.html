@@ -240,14 +240,14 @@
 
         const sensors = document.getElementById("sensors-input").value;
         const datetimesInput = document.querySelector('input[name="datetimes"]');
-        console.log(datetimesInput);
+        console.log("Datetime input" + datetimesInput);
 
 
         const formData = new URLSearchParams();
         formData.append('sensors_id', sensors);
         if (datetimesInput.value != "") {
             const datetimes = datetimesInput.value.trim();
-            console.log(datetimes);
+            console.log("datetimes trim" + datetimes);
             formData.append('datetimes', datetimes);
         }
 
