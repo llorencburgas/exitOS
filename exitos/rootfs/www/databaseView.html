@@ -145,7 +145,7 @@
                     <div>{{!graph_html}}</div>
                 % end
 
-                <div id="graph-results"></div>
+                <div id="graph-container"></div>
             </div>
         </div>
 
@@ -257,14 +257,25 @@
           console.log(data);
           // Mostrar la resposta a la pàgina
 
-          const graphContainer = document.getElementById("graph-results");
-          graphContainer.innerHTML = data;
+          const graphContainer = document.getElementById("graph-container");
+          const source_script = data.getElementsByTagName("script");
 
-            // Trobar tots els scripts dins de la resposta
-            const scripts = graphContainer.querySelectorAll("script");
-            scripts.forEach(script => {
-                eval(script.textContent); // executa el codi del <script> literalment
-            });
+          data.forEach(element => {
+              //títol
+              const h2 = document.createElement("h2");
+              h2.textContent = element.name;
+              graphContainer.appendChild(h2);
+
+              //div
+              const div = document.createElement("div");
+              div.innerHTML = element[element.name];
+              graphContainer.appendChild(div);
+
+              //script
+              const script = document.createElement("script");
+              script.text = source_script[element.name].text;
+              graphContainer.appendChild(script);
+          });
 
         });
     }
