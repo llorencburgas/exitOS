@@ -258,7 +258,6 @@
           // Mostrar la resposta a la pàgina
 
           const graphContainer = document.getElementById("graph-container");
-          const source_script = data.getElementsByTagName("script");
 
           data.forEach(element => {
               //títol
@@ -270,12 +269,12 @@
               const div = document.createElement("div");
               div.innerHTML = element[element.name];
               graphContainer.appendChild(div);
-
-              //script
-              const script = document.createElement("script");
-              script.text = source_script[element.name].text;
-              graphContainer.appendChild(script);
           });
+
+          const scripts = graphContainer.querySelectorAll("script");
+            scripts.forEach(script => {
+                eval(script.textContent); // executa el codi del <script> literalment
+            });
 
         });
     }
