@@ -263,14 +263,14 @@
             if(data.status === "error") console.error(data.message);
             else{
                 console.log("Data rebuda!");
-                console.log(typeof data);
-                console.log(data);
+                console.log(typeof data.message);
+                console.log(data.message);
                 // Mostrar la resposta a la pàgina
 
                 const graphContainer = document.getElementById("graph-container");
                 graphContainer.innerHTML = "";
 
-                for (const [key, value] of Object.entries(data)) {
+                for (const [key, value] of Object.entries(data.message)) {
                     //titol
                     const h2 = document.createElement("h2");
                     h2.textContent = key;
