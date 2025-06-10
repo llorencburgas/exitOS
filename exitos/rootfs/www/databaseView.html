@@ -239,12 +239,15 @@
     function FetchGraph(){
 
         const sensors = document.getElementById("sensors-input").value;
-        const datetimes = document.querySelector('input[name="datetimes"]').value;
+        const datetimesInput = document.querySelector('input[name="datetimes"]');
+        const datetimes = datetimesInput.value.trim();
         console.log(datetimes);
 
         const formData = new URLSearchParams();
         formData.append('sensors_id', sensors);
-        formData.append('datetimes', datetimes);
+        if (datetimes !== '') {
+          formData.append('datetimes', datetimes);
+        }
 
         fetch('get_graph_info', {
         method: 'POST',
