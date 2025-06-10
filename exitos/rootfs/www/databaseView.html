@@ -272,10 +272,10 @@
               graphContainer.appendChild(div);
           }
 
-          // const scripts = graphContainer.querySelectorAll("script");
-          //   scripts.forEach(script => {
-          //       eval(script.textContent); // executa el codi del <script> literalment
-          //   });
+          const scripts = graphContainer.querySelectorAll("script");
+            scripts.forEach(script => {
+                eval(script.textContent); // executa el codi del <script> literalment
+            });
 
         });
     }
