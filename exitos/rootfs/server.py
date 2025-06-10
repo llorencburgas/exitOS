@@ -92,6 +92,8 @@ def database_graph_page():
 @app.route('/get_graph_info', method='POST')
 def graphs_view():
     try:
+        logger.debug("inside graphs_view")
+
         selected_sensors = request.forms.get("sensors_id")
         selected_sensors_list = [sensor.strip() for sensor in selected_sensors.split(',')] if selected_sensors else []
 
