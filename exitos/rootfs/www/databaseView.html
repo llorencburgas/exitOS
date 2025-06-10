@@ -256,19 +256,15 @@
           console.log("Data rebuda!");
           console.log(data);
           // Mostrar la resposta a la pàgina
-          document.getElementById("graph-results").innerHTML = data;
 
           const graphContainer = document.getElementById("graph-results");
+          graphContainer.innerHTML = data;
 
             // Trobar tots els scripts dins de la resposta
-            const scripts = graphContainer.getElementsByTagName("script");
-            for (let i = 0; i < scripts.length; i++) {
-                const script = scripts[i];
-                const newScript = document.createElement("script");
-                newScript.text = script.text; // assigna el codi del script
-                document.body.appendChild(newScript); // executa el script
-                document.body.removeChild(newScript); // elimina el script afegit
-            }
+            const scripts = graphContainer.querySelectorAll("script");
+            scripts.forEach(script => {
+                eval(script.textContent); // executa el codi del <script> literalment
+            });
 
         });
     }
