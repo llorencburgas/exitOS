@@ -95,7 +95,10 @@ def graphs_view():
         selected_sensors = request.forms.get("sensors_id")
         selected_sensors_list = [sensor.strip() for sensor in selected_sensors.split(',')] if selected_sensors else []
 
-        date_to_check = request.forms.getall("datetimes")[0].split(' - ')
+        date_to_check = request.forms.getall("datetimes")[0]
+        logger.debug(f"date_to_check: {date_to_check}")
+        
+        split_dates_to_check = date_to_check.split(' - ')
 
         if date_to_check is None:
             logger.debug("NO HI HA DATA")
