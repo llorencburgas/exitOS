@@ -261,26 +261,21 @@
           const graphContainer = document.getElementById("graph-container");
 
           for (const [key, value] of Object.entries(data)) {
-              console.log("KEY" + key);
-              console.log("VALUE" + value);
+              //titol
+              const h2 = document.createElement("h2");
+              h2.textContent = key;
+              graphContainer.appendChild(h2);
+
+              //div
+              const div = document.createElement("div");
+              div.innerHTML = `${value}`;
+              graphContainer.appendChild(div);
           }
 
-          // data.forEach(element => {
-          //     //títol
-          //     const h2 = document.createElement("h2");
-          //     h2.textContent = element.name;
-          //     graphContainer.appendChild(h2);
-          //
-          //     //div
-          //     const div = document.createElement("div");
-          //     div.innerHTML = element[element.name];
-          //     graphContainer.appendChild(div);
-          // });
-
-          const scripts = graphContainer.querySelectorAll("script");
-            scripts.forEach(script => {
-                eval(script.textContent); // executa el codi del <script> literalment
-            });
+          // const scripts = graphContainer.querySelectorAll("script");
+          //   scripts.forEach(script => {
+          //       eval(script.textContent); // executa el codi del <script> literalment
+          //   });
 
         });
     }
