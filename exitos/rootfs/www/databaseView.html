@@ -259,8 +259,9 @@
           // Mostrar la resposta a la pàgina
 
           const graphContainer = document.getElementById("graph-container");
+          const parsedData = JSON.parse(data);
 
-          data.forEach(element => {
+          parsedData.forEach(element => {
               //títol
               const h2 = document.createElement("h2");
               h2.textContent = element.name;
