@@ -95,19 +95,19 @@ def graphs_view():
         selected_sensors = request.forms.get("sensors_id")
         selected_sensors_list = [sensor.strip() for sensor in selected_sensors.split(',')] if selected_sensors else []
 
-        date_to_check = request.forms.getall("datetimes")
-        logger.debug(f"date_to_check: {date_to_check}")
-
-        split_dates_to_check = date_to_check[0].split(' - ')
-
-        if date_to_check is None:
+        date_to_check_input = request.forms.getall("datetimes")
+        logger.debug(f"date_to_check: {date_to_check_input}")
+        if  not date_to_check_input:
             logger.debug("NO HI HA DATA")
             start_date = datetime.today() - timedelta(days=30)
             end_date = datetime.today()
         else:
+            logger.debug("HI HA DATA")
+            date_to_check = date_to_check_input[0].split(' - ')
             start_date = datetime.strptime(date_to_check[0], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
             end_date = datetime.strptime(date_to_check[1], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
 
+  
 
         logger.info(start_date)
         logger.info(end_date)
