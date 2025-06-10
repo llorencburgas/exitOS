@@ -92,8 +92,6 @@ def database_graph_page():
 @app.route('/get_graph_info', method='POST')
 def graphs_view():
     try:
-        logger.debug("inside graphs_view")
-
         selected_sensors = request.forms.get("sensors_id")
         selected_sensors_list = [sensor.strip() for sensor in selected_sensors.split(',')] if selected_sensors else []
 
@@ -137,9 +135,9 @@ def graphs_view():
 
             graphs_html[sensor_id] = graph_html
 
-        return graphs_html
+        return json.dumps({"status": "success", "html": graphs_html})
     except Exception as e:
-        return "ERROR"
+        return json.dumps({"status": "error", "message": str(e)})
 
 @app.route('/update_sensors', method='POST')
 def update_sensors():
