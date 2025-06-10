@@ -237,6 +237,7 @@
 
 
     function FetchGraph(){
+
         const sensors = document.getElementById("sensors-input").value;
         const datetimes = document.querySelector('input[name="datetimes"]').value;
 
@@ -259,7 +260,8 @@
           // Mostrar la resposta a la pàgina
 
           const graphContainer = document.getElementById("graph-container");
-
+          graphContainer.innerHTML = "";
+          
           for (const [key, value] of Object.entries(data)) {
               //titol
               const h2 = document.createElement("h2");
