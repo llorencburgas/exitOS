@@ -41,7 +41,6 @@ def predict_consumption_production(meteo_data:pd.DataFrame, model_name:str='newM
     forecaster.load_model(model_filename=model_name)
     initial_data = forecaster.db['initial_data']
 
-    logger.critical(f"Initial data: {initial_data}")
 
     meteo_data_boolean = forecaster.db['meteo_data_is_selected']
     if not meteo_data_boolean: meteo_data = None
@@ -53,7 +52,6 @@ def predict_consumption_production(meteo_data:pd.DataFrame, model_name:str='newM
     data.index = pd.to_datetime(data.index)
     data.bfill(inplace=True)
 
-    logger.critical(f"data: {data}")
 
     prediction , real_values = forecaster.forecast(data, 'value', forecaster.db['model'], future_steps=48)
 
