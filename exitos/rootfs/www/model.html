@@ -231,7 +231,7 @@
                     </div>
 
                     <button id="create-model-button" name="action" value="train" type="submit"><i style="font-size: medium" class="fa-solid fa-bolt"></i> Train</button>
-                    <button id="fetch-data" name="action" value="forecast" type="submit"><i style="font-size: medium" class="fa-solid fa-chart-line"></i> Forecast </button>
+                    <button id="fetch-data" name="action" value="forecast" type="submit" disabled><i style="font-size: medium" class="fa-solid fa-chart-line"></i> Forecast </button>
                     <button id="delete-forecast" name="action" value="delete" type="submit" style="display: none"><i style="font-size: medium;" class="fa-solid fa-trash-can"></i> Eliminar </button>
 
                 </form>
@@ -617,6 +617,8 @@
         if(selectedModel !== "newModel"){
             const modelPath = selectedModel.replace(".pkl", "")
             updateModelSelection(modelPath)
+            document.getElementById("fetch-data").disabled = false;
+
         }
         else{
             document.getElementById("modelSelect").value = "AUTO";
@@ -627,6 +629,7 @@
             document.getElementById("forecast-title").style.display = "none";
             document.getElementById("forecast-chart").innerHTML = '';
             document.getElementById("delete-forecast").style.display = "none";
+            document.getElementById("fetch-data").disabled = true;
 
         }
     })

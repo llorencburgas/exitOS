@@ -493,15 +493,7 @@ def daily_task():
     database.old_update_database("all")
     database.clean_database_hourly_average()
 
-    logger.debug("STARTING DAILY FORECASTING")
-
-    forecasts_aux = database.get_forecasts_name()
-    logger.critical(forecasts_aux)
-    for f in forecasts_aux:
-        logger.debug(f"FORECASTING {f[0]}")
-        forecast_model(f[0])
-
-    logger.debug("ENDING DAILY TASKS")
+    logger.debug("ENDING DAILY SENSOR UPDATE")
 
 def monthly_task():
     today = datetime.today()
@@ -518,6 +510,7 @@ def monthly_task():
         logger.debug(f"Running monthly task at {datetime.now().strftime('%d-%b-%Y   %X')}" )
 
 def daily_forecast_task():
+    logger.debug("STARTING DAILY FORECASTING")
     models_saved = [os.path.basename(f) for f in glob.glob(forecast.models_filepath + "*.pkl")]
     for model in models_saved:
         model_path = os.path.join(forecast.models_filepath, f"{model}")
@@ -527,6 +520,7 @@ def daily_forecast_task():
         if aux != '':
             logger.debug(f"*********** Running daily forecast for {model} **********")
             forecast_model(model)
+    logger.debug("ENDING DAILY TASKS")
 
 
 
