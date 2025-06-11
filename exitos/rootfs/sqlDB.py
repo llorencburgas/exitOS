@@ -437,9 +437,6 @@ class SqlDB():
                                 time_stamp_str = sensor_data_historic[column][0]['last_changed']
                                 time_stamp = datetime.fromisoformat(time_stamp_str.replace('Z', '+00:00'))
 
-                                logger.critical(f"type of timestamp: {type(time_stamp)}")
-                                logger.info(f"timestamp: {time_stamp}")
-
                                 cur.execute(
                                     "INSERT INTO dades (sensor_id, timestamp, value) VALUES (?,?,?)",
                                         (sensor_id, time_stamp, value))
