@@ -163,6 +163,10 @@ button:hover{
     background-color: var(--text-hover-color);
 }
 
+button:disabled{
+   background-color: #94c1af;
+}
+
  /*FOOTER*/
 .footer{
     background-color: var(--main-bg-color);
