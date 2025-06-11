@@ -35,7 +35,7 @@ PORT = 55023
 app = Bottle()
 database = db.SqlDB()
 database.old_update_database("all")
-database.clean_database_hourly_average()
+# database.clean_database_hourly_average()
 forecast = forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler()
 
@@ -65,6 +65,8 @@ def get_init():
 @app.get('/sensors')
 def get_sensors():
     try:
+        database.clean_database_hourly_average()
+
         sensors = database.get_all_sensors()
         sensors_id = sensors['entity_id'].tolist()
         sensors_name = sensors['attributes.friendly_name'].tolist()
