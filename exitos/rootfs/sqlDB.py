@@ -303,7 +303,9 @@ class SqlDB():
         with self._get_connection() as con:
             sensor_ids = [row[0] for row in con.execute("SELECT DISTINCT sensor_id FROM dades").fetchall()]
 
-            limit_date = (datetime.utcnow() - timedelta(days=21)).isoformat()
+            limit_date = (datetime.now() - timedelta(days=21)).isoformat()
+            logger.critical(f"limit date: {limit_date}")
+
             for sensor_id in sensor_ids:
                 logger.info(f"Processant sensor: {sensor_id}")
                 df = pd.read_sql_query(
@@ -312,9 +314,17 @@ class SqlDB():
                 df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True, errors='coerce')
                 df['value'] = pd.to_numeric(df['value'], errors='coerce')
                 df['hour'] = df['timestamp'].dt.floor('H')
+
+                logger.info(f"timestamps {df['timestamp']}")
+                logger.info(f"values {df['value']}")
+                logger.info(f"hours {df['hour']}")
+
+
                 df_grouped = df.groupby('hour').mean(numeric_only=True).reset_index()
 
-                con.execute("DELETE FROM dades WHERE sensor_id = ?", (sensor_id,))
+                logger.debug(df_grouped)
+
+                con.execute("DELETE FROM dades WHERE sensor_id = ? AND timestamp >= ?", (sensor_id, limit_date))
                 con.executemany(
                     "INSERT INTO dades (sensor_id, timestamp, value) VALUES (?, ?, ?)",
                     [(sensor_id, row['hour'].isoformat(), row['value']) for _,
