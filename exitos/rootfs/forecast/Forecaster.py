@@ -546,7 +546,6 @@ class Forecaster:
 
     def forecast(self, data, y, model, future_steps=48):
         """
-
         :return:
         """
         logger.info("Iniciant forecast...")
