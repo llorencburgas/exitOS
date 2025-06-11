@@ -533,7 +533,7 @@
                      y: futurePredictions,
                      mode: 'lines',
                      name: 'Predicció (futur)',
-                     line: {color: 'green'}
+                     line: {color: 'orange', dash: 'dot'}
                  }
                  const layout = {
                      title: 'Predicció vs Dades Reals',
@@ -554,60 +554,60 @@
          })
     }
 
-    function updateForecastSelector(forecast_id){
-        fetch('get_forecasts/' + forecast_id)
-            .then(response => response.text())
-            .then(data => {
-                const lines = data.split('\n').map(line => line.trim()).filter(line => line !== '');
-                const forecastDiv = document.getElementById('forecast-dates-div');
-
-                forecastDiv.innerHTML = '';
-
-                if(lines.length === 0 || (lines.length === 1 && lines[0] === '')){
-                    forecastDiv.innerHTML = '<p> No hi ha dades per aquest forecast. </p>';
-                }
-                else{
-                    const label = document.createElement('h3');
-                    const selectedTime = "{{selected_time if defined('selected_time') else ''}}";
-                    label.textContent = '2. Selecciona la data del Forecast';
-
-                    const select = document.createElement('select');
-                    select.className = 'form-select';
-                    select.name = 'forecasts-time';
-                    select.id = 'forecasts-time';
-                    select.required = true;
-
-                    //default option
-                    const defaultOption = document.createElement('option');
-                    defaultOption.className = 'formOption';
-                    defaultOption.value = 'none';
-                    defaultOption.disabled = true;
-                    if (!selectedTime){ defaultOption.selected = true; }
-                    defaultOption.hidden = true;
-                    defaultOption.textContent = 'Escull una Data';
-                    select.appendChild(defaultOption);
-
-                    //Opcions per a les dates
-                    lines.forEach(date => {
-                        const option = document.createElement('option');
-                        option.className = 'formOption';
-                        option.value = date;
-                        option.textContent = date;
-
-                        if (date === selectedTime){
-                            option.selected = true;
-                        }
-
-                        select.appendChild(option);
-                    });
-
-                    forecastDiv.appendChild(label);
-                    forecastDiv.appendChild(select);
-                }
-
-
-            })
-    }
+    // function updateForecastSelector(forecast_id){
+    //     fetch('get_forecasts/' + forecast_id)
+    //         .then(response => response.text())
+    //         .then(data => {
+    //             const lines = data.split('\n').map(line => line.trim()).filter(line => line !== '');
+    //             const forecastDiv = document.getElementById('forecast-dates-div');
+    //
+    //             forecastDiv.innerHTML = '';
+    //
+    //             if(lines.length === 0 || (lines.length === 1 && lines[0] === '')){
+    //                 forecastDiv.innerHTML = '<p> No hi ha dades per aquest forecast. </p>';
+    //             }
+    //             else{
+    //                 const label = document.createElement('h3');
+    //                 const selectedTime = "{{selected_time if defined('selected_time') else ''}}";
+    //                 label.textContent = '2. Selecciona la data del Forecast';
+    //
+    //                 const select = document.createElement('select');
+    //                 select.className = 'form-select';
+    //                 select.name = 'forecasts-time';
+    //                 select.id = 'forecasts-time';
+    //                 select.required = true;
+    //
+    //                 //default option
+    //                 const defaultOption = document.createElement('option');
+    //                 defaultOption.className = 'formOption';
+    //                 defaultOption.value = 'none';
+    //                 defaultOption.disabled = true;
+    //                 if (!selectedTime){ defaultOption.selected = true; }
+    //                 defaultOption.hidden = true;
+    //                 defaultOption.textContent = 'Escull una Data';
+    //                 select.appendChild(defaultOption);
+    //
+    //                 //Opcions per a les dates
+    //                 lines.forEach(date => {
+    //                     const option = document.createElement('option');
+    //                     option.className = 'formOption';
+    //                     option.value = date;
+    //                     option.textContent = date;
+    //
+    //                     if (date === selectedTime){
+    //                         option.selected = true;
+    //                     }
+    //
+    //                     select.appendChild(option);
+    //                 });
+    //
+    //                 forecastDiv.appendChild(label);
+    //                 forecastDiv.appendChild(select);
+    //             }
+    //
+    //
+    //         })
+    // }
 
     document.getElementById('modelSelect').addEventListener('change', updateModelConfig);
     updateModelConfig();
