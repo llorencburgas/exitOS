@@ -311,7 +311,7 @@ class SqlDB():
                 df = pd.read_sql_query(
                     f"SELECT timestamp, value FROM dades WHERE sensor_id = ? AND timestamp >= ?", con, params=(sensor_id,limit_date)
                 )
-                df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True, errors='coerce')
+                df['timestamp'] = pd.to_datetime(df['timestamp'])
                 df['value'] = pd.to_numeric(df['value'], errors='coerce')
                 df['hour'] = df['timestamp'].dt.floor('H')
 
@@ -434,8 +434,7 @@ class SqlDB():
                                 value = np.nan
                             if last_value != value:
                                 last_value = value
-                                time_stamp_str = sensor_data_historic[column][0]['last_changed']
-                                time_stamp = datetime.fromisoformat(time_stamp_str.replace('Z', '+00:00'))
+                                time_stamp = sensor_data_historic[column][0]['last_changed']
 
                                 logger.critical(f"type of timestamp: {type(time_stamp)}")
                                 logger.info(f"timestamp: {time_stamp}")
