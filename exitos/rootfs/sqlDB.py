@@ -315,14 +315,8 @@ class SqlDB():
                 df['value'] = pd.to_numeric(df['value'], errors='coerce')
                 df['hour'] = df['timestamp'].dt.floor('H')
 
-                logger.info(f"timestamps {df['timestamp']}")
-                logger.info(f"values {df['value']}")
-                logger.info(f"hours {df['hour']}")
-
-
                 df_grouped = df.groupby('hour').mean(numeric_only=True).reset_index()
 
-                logger.debug(df_grouped)
 
                 con.execute("DELETE FROM dades WHERE sensor_id = ? AND timestamp >= ?", (sensor_id, limit_date))
                 con.executemany(
