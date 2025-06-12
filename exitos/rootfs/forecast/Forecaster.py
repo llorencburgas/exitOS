@@ -280,6 +280,14 @@ class Forecaster:
             from sklearn.feature_selection import SelectFromModel
 
             clf = ExtraTreesRegressor(n_estimators=50)
+
+            print("X shape:", X.shape)
+            print("y shape:", y.shape)
+            print("X sample:\n", X.head())
+            print("y sample:\n", y.head())
+            print("Any NaNs in X?", pd.isnull(X).any().any())
+            print("Any NaNs in y?", pd.isnull(y).any())
+
             clf = clf.fit(X, y)
             model_select = SelectFromModel(clf, prefit=True)
             X_new = model_select.transform(X)
