@@ -268,9 +268,9 @@ class Forecaster:
         :return:
         """
         logger.critical("+++++++++++++++++++++++++")
-        logger.warning(X)
+        logger.warning(X.isnull())
         logger.critical("+++++++++++++++++++++++++")
-        logger.warning(y)
+        logger.warning(y.isnull())
 
         if method is None:
             model_select = []
@@ -491,9 +491,6 @@ class Forecaster:
         if merged_data.empty:
             logger.error(f"\n ************* \n   No hi ha dades per a realitzar el Forecast \n *************")
             return
-
-        logger.warning(merged_data.to_string())
-
 
         #PAS 1 - Fer el Windowing
         dad = self.do_windowing(merged_data, look_back)
