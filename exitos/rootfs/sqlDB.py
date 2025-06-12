@@ -304,7 +304,6 @@ class SqlDB():
             sensor_ids = [row[0] for row in con.execute("SELECT DISTINCT sensor_id FROM dades").fetchall()]
 
             limit_date = (datetime.now() - timedelta(days=21)).isoformat()
-            logger.critical(f"limit date: {limit_date}")
 
             for sensor_id in sensor_ids:
                 logger.info(f"Processant sensor: {sensor_id}")
@@ -359,7 +358,8 @@ class SqlDB():
                 sensor_info = self.query_select("sensors", "*", sensor_id, con)
 
                 #si no hem obtingut cap sensor ( és a dir, no existeix a la nosta BD)
-                if len(sensor_info) == 0:
+                logger.debug(f"SENSOR_INFO ÉS DE TIPUS: {type(sensor_info)}")
+                if sensor_info is None:
                     cur = con.cursor()
                     values_to_insert = (
                         sensor_id,

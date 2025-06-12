@@ -509,6 +509,13 @@ def monthly_task():
 
         logger.debug(f"Running monthly task at {datetime.now().strftime('%d-%b-%Y   %X')}" )
 
+def daily_train_model(model_config, model_name):
+    logger.debug(f"****** Running daily train for {model_name} ******")
+    algorithm = model_config.get('algorithm')
+    scaler = model_config.get('scaler_name', '')
+
+
+
 def daily_forecast_task():
     logger.debug("STARTING DAILY FORECASTING")
     models_saved = [os.path.basename(f) for f in glob.glob(forecast.models_filepath + "*.pkl")]
@@ -518,6 +525,7 @@ def daily_forecast_task():
             config = joblib.load(f)
         aux = config.get('algorithm','')
         if aux != '':
+            daily_train_model(config, model)
             logger.debug(f"*********** Running daily forecast for {model} **********")
             forecast_model(model)
     logger.debug("ENDING DAILY TASKS")
@@ -525,8 +533,8 @@ def daily_forecast_task():
 
 
 schedule.every().day.at("00:00").do(daily_task)
-schedule.every().day.at("00:30").do(daily_forecast_task)
-schedule.every().day.at("01:00").do(monthly_task)
+schedule.every().day.at("01:00").do(daily_forecast_task)
+schedule.every().day.at("02:00").do(monthly_task)
 
 
 def run_scheduled_tasks():

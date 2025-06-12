@@ -55,8 +55,6 @@ def predict_consumption_production(meteo_data:pd.DataFrame, model_name:str='newM
 
     prediction , real_values = forecaster.forecast(data, 'value', forecaster.db['model'], future_steps=48)
 
-    logger.info(f"prediction: {prediction}")
-    logger.info(f"real_values: {real_values}")
     return prediction, real_values
 
 
