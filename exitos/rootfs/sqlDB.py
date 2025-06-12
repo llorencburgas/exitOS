@@ -358,7 +358,6 @@ class SqlDB():
                 sensor_info = self.query_select("sensors", "*", sensor_id, con)
 
                 #si no hem obtingut cap sensor ( és a dir, no existeix a la nosta BD)
-                logger.debug(f"SENSOR_INFO ÉS DE TIPUS: {type(sensor_info)}")
                 if sensor_info is None:
                     cur = con.cursor()
                     values_to_insert = (

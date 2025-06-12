@@ -488,7 +488,7 @@ class Forecaster:
             logger.error(f"\n ************* \n   No hi ha dades per a realitzar el Forecast \n *************")
             return
 
-        logger.warning(f"{merged_data}")
+        logging.warning('\t'+ merged_data.to_string().replace('\n', '\n\t'))
 
 
         #PAS 1 - Fer el Windowing
