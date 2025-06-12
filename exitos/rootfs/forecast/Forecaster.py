@@ -284,6 +284,10 @@ class Forecaster:
             logger.warning(f"Any NaNs in X? {pd.isnull(X).any().any()}")
             logger.warning(f"Any NaNs in y? {pd.isnull(y).any()}")
 
+            nan_columns = X.columns[X.isnull().any()].tolist()
+            logger.warning(f"Columns with NaNs: {nan_columns}")
+            logger.warning(f"First few rows of those columns:\n{X[nan_columns].head()}")
+
             clf = ExtraTreesRegressor(n_estimators=50)
             clf = clf.fit(X, y)
             model_select = SelectFromModel(clf, prefit=True)
