@@ -267,6 +267,10 @@ class Forecaster:
             - PCA: aplica un PCA per comprimir el dataset
         :return:
         """
+        logger.critical("+++++++++++++++++++++++++")
+        logger.warning(X)
+        logger.critical("+++++++++++++++++++++++++")
+        logger.warning(y)
 
         if method is None:
             model_select = []
@@ -488,46 +492,39 @@ class Forecaster:
             logger.error(f"\n ************* \n   No hi ha dades per a realitzar el Forecast \n *************")
             return
 
-        logging.warning(merged_data.to_string())
+        logger.warning(merged_data.to_string())
 
 
         #PAS 1 - Fer el Windowing
         dad = self.do_windowing(merged_data, look_back)
 
-        logging.warning("AFTER WINDOW")
-        logging.info(dad)
-
         #PAS 2 - Crear variable dia_setmana, hora, mes i meteoData
         dad = self.timestamp_to_attrs(dad, extra_vars)
-        logging.warning("after timestamp_to_attrs")
 
         #PAS 3 - Treure Colinearitats
         [dad, to_drop] = self.colinearity_remove(dad, y, level=colinearity_remove_level)
         colinearity_remove_level_to_drop = to_drop
-        logging.warning("after colinearity_remove_level_to_drop")
 
         # PAS 4 - Treure NaN
         dad.replace([np.inf, -np.inf], np.nan, inplace=True)
         X = dad.bfill()
-        logging.warning("after NaN")
 
         #PAS 5 - Desfer el dataset i guardar matrius X i y
         nomy = y
         y = pd.to_numeric(X[nomy], errors='raise')
         del X[nomy]
-        logging.warning("after X y")
 
         #PAS 6 - Escalat
         X, scaler = self.scalate_data(X, escalat)
-        logging.warning("after scaler")
+        logger.warning("after scaler")
 
         #PAS 7 - Seleccionar atributs
         [model_select, X_new, y_new] = self.get_attribs(X, y, feature_selection)
-        logging.warning("after select attributes")
+        logger.warning("after select attributes")
 
         #PAS 8 - Crear el model
         [model, score] = self.Model(X_new, y_new.values, algorithm, params, max_time=max_time)
-        logging.warning("after model creation")
+        logger.warning("after model creation")
 
         #PAS 9 - Guardar el model
         if algorithm is None:
