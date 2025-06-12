@@ -139,20 +139,18 @@ def graphs_view():
 
 @app.route('/update_sensors', method='POST')
 def update_sensors():
+
     checked_sensors = request.forms.getall("sensor_id")
     sensors = database.get_all_sensors()
     sensors_id = sensors['entity_id'].tolist()
 
-    connection = database.__open_connection__()
-
     for sensor_id in sensors_id:
         is_active = sensor_id in checked_sensors
-        database.update_sensor_active(sensor_id, is_active, connection)
+        database.update_sensor_active(sensor_id, is_active)
 
     sensors_name = sensors['attributes.friendly_name'].tolist()
     sensors_save = database.get_sensors_save(sensors_id)
 
-    database.__close_connection__(connection)
 
     context = {
         "sensors_id": sensors_id,
