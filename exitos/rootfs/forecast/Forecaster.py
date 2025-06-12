@@ -268,9 +268,6 @@ class Forecaster:
         :return:
         """
         logger.critical("+++++++++++++++++++++++++")
-        logger.warning(X.isnull())
-        logger.critical("+++++++++++++++++++++++++")
-        logger.warning(y.isnull())
 
         if method is None:
             model_select = []
@@ -279,7 +276,6 @@ class Forecaster:
             from sklearn.ensemble import ExtraTreesRegressor
             from sklearn.feature_selection import SelectFromModel
 
-            clf = ExtraTreesRegressor(n_estimators=50)
 
             print("X shape:", X.shape)
             print("y shape:", y.shape)
@@ -287,7 +283,8 @@ class Forecaster:
             print("y sample:\n", y.head())
             print("Any NaNs in X?", pd.isnull(X).any().any())
             print("Any NaNs in y?", pd.isnull(y).any())
-
+            
+            clf = ExtraTreesRegressor(n_estimators=50)
             clf = clf.fit(X, y)
             model_select = SelectFromModel(clf, prefit=True)
             X_new = model_select.transform(X)
