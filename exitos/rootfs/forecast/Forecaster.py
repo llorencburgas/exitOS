@@ -277,13 +277,12 @@ class Forecaster:
             from sklearn.ensemble import ExtraTreesRegressor
             from sklearn.feature_selection import SelectFromModel
 
-
-            print("X shape:", X.shape)
-            print("y shape:", y.shape)
-            print("X sample:\n", X.head())
-            print("y sample:\n", y.head())
-            print("Any NaNs in X?", pd.isnull(X).any().any())
-            print("Any NaNs in y?", pd.isnull(y).any())
+            logger.warning("X shape:", X.shape)
+            logger.warning("y shape:", y.shape)
+            logger.warning("X sample:\n", X.head())
+            logger.warning("y sample:\n", y.head())
+            logger.warning("Any NaNs in X?", pd.isnull(X).any().any())
+            logger.warning("Any NaNs in y?", pd.isnull(y).any())
 
             clf = ExtraTreesRegressor(n_estimators=50)
             clf = clf.fit(X, y)
