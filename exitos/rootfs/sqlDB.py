@@ -312,7 +312,7 @@ class SqlDB():
                 )
                 df['timestamp'] = pd.to_datetime(df['timestamp'], format='ISO8601', errors='coerce')
                 df['value'] = pd.to_numeric(df['value'], errors='coerce')
-                df['hour'] = df['timestamp'].dt.floor('H')
+                df['hour'] = df['timestamp'].dt.floor('h')
 
                 df_grouped = df.groupby('hour').mean(numeric_only=True).reset_index()
 
@@ -381,7 +381,7 @@ class SqlDB():
                     logger.debug(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] Actualitzant sensor: {sensor_id}")
 
                     last_date_saved = self.query_select("dades","timestamp, value", sensor_id, con)
-                    if len(last_date_saved) == 0:
+                    if last_date_saved is None:
                         start_time = current_date - timedelta(days=21)
                         last_value = []
                     else:

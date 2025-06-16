@@ -513,7 +513,8 @@ class Forecaster:
 
         # PAS 4 - Treure NaN
         dad.replace([np.inf, -np.inf], np.nan, inplace=True)
-        X = dad.bfill()
+        dad.dropna(axis = 1, inplace = True)
+        X = dad.bfill().ffill()
 
         #PAS 5 - Desfer el dataset i guardar matrius X i y
         nomy = y
