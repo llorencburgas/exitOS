@@ -277,17 +277,6 @@ class Forecaster:
             from sklearn.ensemble import ExtraTreesRegressor
             from sklearn.feature_selection import SelectFromModel
 
-            logger.warning(f"X shape: {X.shape}")
-            logger.warning(f"y shape: {y.shape}" )
-            logger.warning(f"X sample: {X.head()}")
-            logger.warning(f"y sample: {y.head()}")
-            logger.warning(f"Any NaNs in X? {pd.isnull(X).any().any()}")
-            logger.warning(f"Any NaNs in y? {pd.isnull(y).any()}")
-
-            nan_columns = X.columns[X.isnull().any()].tolist()
-            logger.warning(f"Columns with NaNs: {nan_columns}")
-            logger.warning(f"First few rows of those columns:\n{X[nan_columns].head()}")
-
             clf = ExtraTreesRegressor(n_estimators=50)
             clf = clf.fit(X, y)
             model_select = SelectFromModel(clf, prefit=True)
@@ -514,7 +503,10 @@ class Forecaster:
         # PAS 4 - Treure NaN
         dad.replace([np.inf, -np.inf], np.nan, inplace=True)
         dad.dropna(axis = 1, inplace = True)
-        X = dad.bfill().ffill()
+
+        from sklearn.impute import SimpleImputer
+        imputer = SimpleImputer(strategy='mean')  # or median
+        X = pd.DataFrame(imputer.fit_transform(dad), columns=dad.columns, index=dad.index)
 
         #PAS 5 - Desfer el dataset i guardar matrius X i y
         nomy = y
