@@ -584,8 +584,8 @@ class Forecaster:
             raise ValueError(f"Columna {y} no trobada en el dataset")
 
         # PAS 6 - Elinimar els NaN
-        if df.dropna().any().any():
-            df.bfill(inplace=True)
+        df.dropna(axis = 1, inplace = True)
+
 
         # PAS 7 - Escalar les dades
         if scaler:
