@@ -635,10 +635,8 @@ class Forecaster:
             if missing:
                 raise ValueError(f"Missing features {missing}")
 
+            # Asegurarse de que las columnas estén en el mismo orden que durante el entrenamiento
             df = df[model_select_features]
-            df_transformed = pd.DataFrame(model_select.transform(df), index = df.index)
-        else:
-            df_transformed = df.copy()
 
         # PAS 9 - Preparar timestamps futurs
         last_timestamp = data.index[-1]
@@ -652,12 +650,16 @@ class Forecaster:
         for col in original_columns:
             if col not in future_df.columns:
                 future_df[col] = df[col].iloc[-1] if col in df.columns else 0
-        # Reorder to match training columns
-        future_df = future_df[original_columns]
+
+        # Asegurarse de que las columnas estén en el mismo orden que durante el entrenamiento
+        if model_select:
+            future_df = future_df[model_select_features]
+        else:
+            future_df = future_df[original_columns]
 
         #scale
         if scaler:
-            future_df = pd.DataFrame(scaler.transform(future_df), index=future_df.index, columns=original_columns)
+            future_df = pd.DataFrame(scaler.transform(future_df), index=future_df.index, columns=future_df.columns)
 
         # After scaling future_df
         if model_select:
@@ -666,20 +668,49 @@ class Forecaster:
             missing_future = [col for col in model_select_features if col not in future_df.columns]
             if missing_future:
                 raise ValueError(f"Missing features in future data: {missing_future}")
+            
+            # Asegurarse de que las columnas estén en el mismo orden que durante el entrenamiento
+            future_df = future_df[model_select_features]
+            
+            # Obtener la máscara del selector de características
+            mask = model_select.get_support()
+            
+            # Si la máscara es más larga que las características disponibles, truncarla
+            if len(mask) > len(model_select_features):
+                mask = mask[:len(model_select_features)]
+            # Si la máscara es más corta que las características disponibles, extenderla
+            elif len(mask) < len(model_select_features):
+                mask = np.pad(mask, (0, len(model_select_features) - len(mask)), 'constant', constant_values=False)
+            
+            # Aplicar la transformación manualmente usando la máscara
             future_df_transformed = pd.DataFrame(
-                model_select.transform(future_df[model_select_features]),
+                future_df.values[:, mask],
                 index=future_df.index,
-                columns=model_select_features
+                columns=[col for i, col in enumerate(model_select_features) if mask[i]]
             )
         else:
             future_df_transformed = future_df.copy()
 
         # Transform historical df once and use for prediction
         if model_select:
+            # Asegurarse de que las columnas estén en el mismo orden que durante el entrenamiento
+            df = df[model_select_features]
+            
+            # Obtener la máscara del selector de características
+            mask = model_select.get_support()
+            
+            # Si la máscara es más larga que las características disponibles, truncarla
+            if len(mask) > len(model_select_features):
+                mask = mask[:len(model_select_features)]
+            # Si la máscara es más corta que las características disponibles, extenderla
+            elif len(mask) < len(model_select_features):
+                mask = np.pad(mask, (0, len(model_select_features) - len(mask)), 'constant', constant_values=False)
+            
+            # Aplicar la transformación manualmente usando la máscara
             df_transformed = pd.DataFrame(
-                model_select.transform(df[model_select_features]),
+                df.values[:, mask],
                 index=df.index,
-                columns=model_select_features
+                columns=[col for i, col in enumerate(model_select_features) if mask[i]]
             )
         else:
             df_transformed = df.copy()
