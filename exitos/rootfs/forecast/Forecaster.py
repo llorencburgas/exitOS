@@ -710,7 +710,7 @@ class Forecaster:
             df_transformed = pd.DataFrame(
                 df.values[:, mask],
                 index=df.index,
-                columns=[col for i, col in enumerate(model_select_features) if mask[i]]
+                columns=pd.Index([col for i, col in enumerate(model_select_features) if mask[i]])
             )
         else:
             df_transformed = df.copy()
@@ -719,12 +719,12 @@ class Forecaster:
         forecast_output = pd.DataFrame(
             model.predict(future_df_transformed),
             index=future_df_transformed.index,
-            columns=[y]
+            columns=pd.Index([y])
         )
         out = pd.DataFrame(
             model.predict(df_transformed),
             index=df_transformed.index,
-            columns=[y]
+            columns=pd.Index([y])
         )
 
         final_prediction = pd.concat([out, forecast_output])
