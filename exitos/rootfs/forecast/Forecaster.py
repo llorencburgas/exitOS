@@ -1,4 +1,5 @@
 from datetime import timedelta
+from xml.sax.handler import all_features
 
 import joblib
 import numpy as np
@@ -7,6 +8,8 @@ import holidays
 import logging
 import os
 import glob
+
+import requests
 
 logger = logging.getLogger("exitOS")
 
@@ -267,8 +270,6 @@ class Forecaster:
             - PCA: aplica un PCA per comprimir el dataset
         :return:
         """
-        logger.critical("+++++++++++++++++++++++++")
-        logger.warning(method)
 
         if method is None:
             model_select = []
@@ -281,6 +282,7 @@ class Forecaster:
             clf = clf.fit(X, y)
             model_select = SelectFromModel(clf, prefit=True)
             X_new = model_select.transform(X)
+            model_select_features = X.columns[model_select.get_support()].tolist()
         elif type(method) == int:
             from sklearn.feature_selection import SelectKBest, f_classif
             model_select = SelectKBest(f_classif, k=method)
@@ -288,7 +290,7 @@ class Forecaster:
         else:
             raise ValueError('Atribut de mètode de selecció no definit')
 
-        return [model_select, X_new, y]
+        return [model_select, X_new, y, model_select_features]
 
     def Model(self, X, y, algorithm=None, params=None, max_time=None):
         """
@@ -302,7 +304,6 @@ class Forecaster:
         """
 
         import json
-
         with open(self.search_space_config_file) as json_file:
             d = json.load(json_file)
 
@@ -320,6 +321,7 @@ class Forecaster:
             f.set_params(**params)
             f.fit(X, y)
             score = 'none'
+
             return [f, score]
         elif  params is None: #no tenim paràmetres. Els busquem
             from sklearn.model_selection import train_test_split
@@ -357,7 +359,7 @@ class Forecaster:
 
                 if self.debug:
                     logger.info("  ")
-                    logger.info(f"Començant a optimitzar:  {algorithm_list[i]}  - Algorisme {str(algorithm_list.index(algorithm_list[i]) + 1)}  de  {str(len(algorithm_list))} - Maxim comput aprox (segons): {str(iters)}")
+                    logger.info(f"Començant :  {algorithm_list[i]}  - Algorisme {str(algorithm_list.index(algorithm_list[i]) + 1)}  de  {str(len(algorithm_list))} - Maxim comput aprox (segons): {str(iters)}")
 
 
 
@@ -457,16 +459,15 @@ class Forecaster:
 
         return merged_data
 
-    def create_model(self, data, sensors_id, y, look_back={-1: [25, 48]},
-                     extra_vars={'variables': ['Dia', 'Hora', 'Mes'], 'festius': ['ES', 'CT']},
-                     colinearity_remove_level = 0.9, feature_selection = 'Tree', algorithm = None, params = None, escalat=None,
+    def create_model(self, data, sensors_id, y, lat, lon, algorithm = None, params = None, escalat=None,
                      max_time = None, filename = 'newModel', meteo_data:pd.DataFrame = None, extra_sensors_df = None):
 
         """
         Funció per crear, guardar i configurar el model de forecasting.
 
+        :param lon:
+        :param lat:
         :param extra_sensors_df:
-        :param extra_sensors_id:
         :param data: Dataframe amb datetime com a índex
         :param sensors_id:
         :param y: Nom de la columna amb la variable a predir
@@ -475,13 +476,45 @@ class Forecaster:
         :param escalat:
         :param params:
         :param algorithm:
-        :param feature_selection:
-        :param extra_vars:
-        :param colinearity_remove_level:
         :param meteo_data: Dades meteorològiques de la data
-        :param look_back: #TODO
 
         """
+
+        extra_vars = {'variables': ['Dia', 'Hora', 'Mes'], 'festius': ['ES', 'CT']}
+        feature_selection = 'Tree'
+        colinearity_remove_level = 0.9
+        look_back = {-1: [25, 48]}
+
+        # Descarregar dades meteo si no es proporcionen
+        if meteo_data is not None and not data.empty:
+            start_date = data['timestamp'].min().strftime("%Y-%m-%d")
+            end_date = data['timestamp'].max().strftime("%Y-%m-%d")
+
+            logger.info(f"Descarregant dades meteo històriques de {start_date} a {end_date}")
+
+            url = (
+                f"https://archive-api.open-meteo.com/v1/archive"
+                f"?latitude={lat}&longitude={lon}"
+                f"&start_date={start_date}&end_date={end_date}"
+                f"&hourly=temperature_2m,relativehumidity_2m,dewpoint_2m,apparent_temperature,"
+                f"precipitation,rain,weathercode,pressure_msl,surface_pressure,cloudcover,"
+                f"cloudcover_low,cloudcover_mid,cloudcover_high,et0_fao_evapotranspiration,"
+                f"vapor_pressure_deficit,windspeed_10m,windspeed_100m,winddirection_10m,"
+                f"winddirection_100m,windgusts_10m,shortwave_radiation,direct_radiation,"
+                f"diffuse_radiation,direct_normal_irradiance,terrestrial_radiation"
+            )
+
+            try:
+                response = requests.get(url).json()
+                hourly = response.get("hourly", {})
+                timestamps = pd.to_datetime(hourly["time"])
+                meteo_data = pd.DataFrame(hourly)
+                meteo_data["timestamp"] = timestamps
+                meteo_data.drop(columns=["time"], inplace=True)
+            except Exception as e:
+                logger.error(f"No s'han pogut descarregar les dades meteo històriques: {e}")
+                meteo_data = None
+
         #PREP PAS 0 - preparar els df de meteo-data i dades extra
         merged_data = self.prepare_dataframes(data, meteo_data, extra_sensors_df)
         merged_data.bfill(inplace=True)
@@ -503,10 +536,7 @@ class Forecaster:
         # PAS 4 - Treure NaN
         dad.replace([np.inf, -np.inf], np.nan, inplace=True)
         dad.dropna(axis = 1, inplace = True)
-
-        from sklearn.impute import SimpleImputer
-        imputer = SimpleImputer(strategy='mean')  # or median
-        X = pd.DataFrame(imputer.fit_transform(dad), columns=dad.columns, index=dad.index)
+        X = dad
 
         #PAS 5 - Desfer el dataset i guardar matrius X i y
         nomy = y
@@ -518,7 +548,7 @@ class Forecaster:
         logger.warning("after scaler")
 
         #PAS 7 - Seleccionar atributs
-        [model_select, X_new, y_new] = self.get_attribs(X, y, feature_selection)
+        [model_select, X_new, y_new, model_select_features] = self.get_attribs(X, y, feature_selection)
         logger.warning("after select attributes")
 
         #PAS 8 - Crear el model
@@ -546,6 +576,7 @@ class Forecaster:
         self.db['sensors_id'] = sensors_id
         self.db['extra_sensors'] = extra_sensors_df
         self.db['meteo_data_is_selected'] = (meteo_data if meteo_data is None else True)
+        self.db['model_select_features'] = model_select_features
 
         self.save_model(filename)
 
@@ -560,10 +591,12 @@ class Forecaster:
 
         # PAS 1 - Obtenir els valors del model
         model_select = self.db.get('model_select', []) #intenta obtenir model_select, si no existeix retorna []
+        model_select_features = self.db.get('model_select_features', None)
         scaler = self.db['scaler']
         colinearity_remove_level_to_drop = self.db.get('colinearity_remove_level_to_drop', [])
         extra_vars = self.db.get('extra_vars', {})
         look_back = self.db.get('look_back', {-1:[25,48]})
+
 
         # PAS 2 - Aplicar el windowing
         df = self.do_windowing(data, look_back)
@@ -596,7 +629,16 @@ class Forecaster:
         # PAS 8 - Seleccionar característiques a usar segons el selector del model
         original_columns = df.columns
         if model_select:
+            if model_select_features is None:
+                raise ValueError("model_select_features not defined")
+            missing = [col for col in model_select_features if  col not in df.columns]
+            if missing:
+                raise ValueError(f"Missing features {missing}")
+
+            df = df[model_select_features]
             df_transformed = pd.DataFrame(model_select.transform(df), index = df.index)
+        else:
+            df_transformed = df.copy()
 
         # PAS 9 - Preparar timestamps futurs
         last_timestamp = data.index[-1]
@@ -617,19 +659,42 @@ class Forecaster:
         if scaler:
             future_df = pd.DataFrame(scaler.transform(future_df), index=future_df.index, columns=original_columns)
 
-        #feature selection
+        # After scaling future_df
         if model_select:
-            future_df = model_select.transform(future_df)
+            if model_select_features is None:
+                raise ValueError("model_select_features not defined")
+            missing_future = [col for col in model_select_features if col not in future_df.columns]
+            if missing_future:
+                raise ValueError(f"Missing features in future data: {missing_future}")
+            future_df_transformed = pd.DataFrame(
+                model_select.transform(future_df[model_select_features]),
+                index=future_df.index,
+                columns=model_select_features
+            )
+        else:
+            future_df_transformed = future_df.copy()
 
-        #convert to numpy and predict
-        future_array = np.array([[float(x) for x in row] for row in future_df])
+        # Transform historical df once and use for prediction
+        if model_select:
+            df_transformed = pd.DataFrame(
+                model_select.transform(df[model_select_features]),
+                index=df.index,
+                columns=model_select_features
+            )
+        else:
+            df_transformed = df.copy()
+
+        # Predict
         forecast_output = pd.DataFrame(
-            model.predict(future_array),
-            index=future_index,
+            model.predict(future_df_transformed),
+            index=future_df_transformed.index,
             columns=[y]
         )
-        out = pd.DataFrame(model.predict(df_transformed), index = df_transformed.index, columns = [y])
-
+        out = pd.DataFrame(
+            model.predict(df_transformed),
+            index=df_transformed.index,
+            columns=[y]
+        )
 
         final_prediction = pd.concat([out, forecast_output])
 

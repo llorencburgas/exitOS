@@ -246,6 +246,9 @@ def train_model():
 
     logger.info(f"Selected model: {selected_model}, Config: {config}")
 
+    lat = optimalScheduler.latitude
+    lon = optimalScheduler.longitude
+
     if selected_model == "AUTO":
         forecast.create_model(data=sensors_df,
                               sensors_id=sensors_id,
@@ -253,21 +256,22 @@ def train_model():
                               escalat=scaled,
                               max_time=config['max_time'],
                               filename=model_name,
-                              meteo_data=optimalScheduler.meteo_data if meteo_data is True else None,
-                              extra_sensors_df=extra_sensors_df if extra_sensors_id is not None else None)
+                              meteo_data= meteo_data if meteo_data is True else None,
+                              extra_sensors_df=extra_sensors_df if extra_sensors_id is not None else None,
+                              lat=lat,
+                              lon=lon)
     else:
         forecast.create_model(data=sensors_df,
                               sensors_id=sensors_id,
                               y='value',
-                              extra_vars={'variables': ['Dia', 'Hora', 'Mes'], 'festius': ['ES', 'CT']},
-                              colinearity_remove_level=0.9,
-                              feature_selection='Tree',
                               algorithm=selected_model,
                               params=config,
                               escalat=scaled,
                               filename=model_name,
-                              meteo_data=optimalScheduler.meteo_data if meteo_data is True else None,
-                              extra_sensors_df=extra_sensors_df if extra_sensors_id is not None else None)
+                              meteo_data=meteo_data if meteo_data is True else None,
+                              extra_sensors_df= extra_sensors_df if extra_sensors_id is not None else None,
+                              lat=lat,
+                              lon=lon)
 
 def forecast_model(selected_forecast):
     forecast_df, real_values = ForecatManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data,
