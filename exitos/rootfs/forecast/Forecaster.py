@@ -583,7 +583,7 @@ class Forecaster:
         if self.debug:
             logger.debug('Model guardat! Score: ' + str(score))
 
-    def forecast(self, data, y, model, future_steps=48):
+    def predict_consumption(self, data, meteo_data=None, extra_sensors_df=None, future_steps=48):
         """
         :return:
         """
@@ -595,11 +595,17 @@ class Forecaster:
         scaler = self.db['scaler']
         colinearity_remove_level_to_drop = self.db.get('colinearity_remove_level_to_drop', [])
         extra_vars = self.db.get('extra_vars', {})
-        look_back = self.db.get('look_back', {-1:[25,48]})
+        look_back = self.db.get('look_back', {-1: [25, 48]})
+        y = self.db['objective']
 
+        # PAS 1 - Preparar dades
+        merged_data = self.prepare_dataframes(data, meteo_data, extra_sensors_df)
+        merged_data = merged_data.set_index('timestamp')
+        merged_data.index = pd.to_datetime(merged_data.index)
+        merged_data.bfill(inplace=True)
 
-        # PAS 2 - Aplicar el windowing
-        df = self.do_windowing(data, look_back)
+        # PAS 2 - Aplicar windowing
+        df = self.do_windowing(merged_data, look_back)
 
         # PAS 3 - Afegir variables derivades de l'índex temporal {dia, hora, mes, ...}
         df = self.timestamp_to_attrs(df, extra_vars)
@@ -609,120 +615,66 @@ class Forecaster:
             existing_cols = [col for col in colinearity_remove_level_to_drop if col in df.columns]
             df.drop(existing_cols, axis=1, inplace=True)
 
-        # PAS 5 - Eliminar la y
+        # PASO 5 - Separar variable objetivo
         if y in df.columns:
             real_values_column = df[y]
-            del df[y]
+            df = df.drop(columns=[y])
         else:
-            raise ValueError(f"Columna {y} no trobada en el dataset")
+            raise ValueError(f"Columna {y} no encontrada en el dataset")
 
-        # PAS 6 - Elinimar els NaN
-        df.dropna(axis = 1, inplace = True)
+        # PASO 6 - Eliminar NaN
+        df.dropna(axis=1, inplace=True)
 
-
-        # PAS 7 - Escalar les dades
+        # PASO 7 - Escalar datos
         if scaler:
-            #df.columns = [col.replace('value', 'state') for col in df.columns]
             df = pd.DataFrame(scaler.transform(df), index=df.index, columns=df.columns)
 
-
-        # PAS 8 - Seleccionar característiques a usar segons el selector del model
-        original_columns = df.columns
-        if model_select:
-            if model_select_features is None:
-                raise ValueError("model_select_features not defined")
-            missing = [col for col in model_select_features if  col not in df.columns]
+        # PASO 8 - Seleccionar características
+        if model_select and model_select_features:
+            missing = [col for col in model_select_features if col not in df.columns]
             if missing:
-                raise ValueError(f"Missing features {missing}")
-
-            # Asegurarse de que las columnas estén en el mismo orden que durante el entrenamiento
+                raise ValueError(f"Faltan características: {missing}")
             df = df[model_select_features]
 
-        # PAS 9 - Preparar timestamps futurs
+        # PASO 9 - Preparar datos futuros
         last_timestamp = data.index[-1]
-        future_index = [last_timestamp + timedelta(hours=i+1) for i in range(future_steps)]
+        future_index = pd.date_range(start=last_timestamp + timedelta(hours=1), 
+                                   periods=future_steps, freq='H')
         future_df = pd.DataFrame(index=future_index)
 
-        #atributs (hora, dia, festius...)
+        # Añadir variables temporales a datos futuros
         future_df = self.timestamp_to_attrs(future_df, extra_vars)
 
-        #NaN
-        for col in original_columns:
+        # Rellenar con valores del último registro
+        for col in df.columns:
             if col not in future_df.columns:
                 future_df[col] = df[col].iloc[-1] if col in df.columns else 0
 
-        # Asegurarse de que las columnas estén en el mismo orden que durante el entrenamiento
-        if model_select:
+        # Asegurar orden de columnas
+        if model_select and model_select_features:
             future_df = future_df[model_select_features]
         else:
-            future_df = future_df[original_columns]
+            future_df = future_df[df.columns]
 
-        #scale
+        # Escalar datos futuros
         if scaler:
-            future_df = pd.DataFrame(scaler.transform(future_df), index=future_df.index, columns=future_df.columns)
+            future_df = pd.DataFrame(scaler.transform(future_df), 
+                                   index=future_df.index, columns=future_df.columns)
 
-        # After scaling future_df
-        if model_select:
-            if model_select_features is None:
-                raise ValueError("model_select_features not defined")
-            missing_future = [col for col in model_select_features if col not in future_df.columns]
-            if missing_future:
-                raise ValueError(f"Missing features in future data: {missing_future}")
-            
-            # Asegurarse de que las columnas estén en el mismo orden que durante el entrenamiento
-            future_df = future_df[model_select_features]
-            
-            # Obtener la máscara del selector de características
+        # PASO 10 - Aplicar transformación de características si es necesario
+        if model_select and model_select_features:
+            # Obtener máscara del selector
             mask = model_select.get_support()
             
-            # Si la máscara es más larga que las características disponibles, truncarla
-            if len(mask) > len(model_select_features):
-                mask = mask[:len(model_select_features)]
-            # Si la máscara es más corta que las características disponibles, extenderla
-            elif len(mask) < len(model_select_features):
-                mask = np.pad(mask, (0, len(model_select_features) - len(mask)), 'constant', constant_values=False)
+            # Ajustar máscara si es necesario
+            if len(mask) != len(model_select_features):
+                if len(mask) > len(model_select_features):
+                    mask = mask[:len(model_select_features)]
+                else:
+                    mask = np.pad(mask, (0, len(model_select_features) - len(mask)), 
+                                'constant', constant_values=False)
             
-            # Verificar que al menos una característica esté seleccionada
-            if not np.any(mask):
-                raise ValueError("No hay características seleccionadas por el selector de características")
-            
-            # Aplicar la transformación manualmente usando la máscara
-            selected_features = [col for i, col in enumerate(model_select_features) if mask[i]]
-            if not selected_features:
-                raise ValueError("No hay características seleccionadas")
-            
-            future_df_transformed = pd.DataFrame(
-                future_df.values[:, mask],
-                index=future_df.index,
-                columns=selected_features
-            )
-            
-            # Verificar que el DataFrame transformado no esté vacío
-            if future_df_transformed.empty:
-                raise ValueError("El DataFrame transformado está vacío")
-        else:
-            future_df_transformed = future_df.copy()
-
-        # Transform historical df once and use for prediction
-        if model_select:
-            # Asegurarse de que las columnas estén en el mismo orden que durante el entrenamiento
-            df = df[model_select_features]
-            
-            # Obtener la máscara del selector de características
-            mask = model_select.get_support()
-            
-            # Si la máscara es más larga que las características disponibles, truncarla
-            if len(mask) > len(model_select_features):
-                mask = mask[:len(model_select_features)]
-            # Si la máscara es más corta que las características disponibles, extenderla
-            elif len(mask) < len(model_select_features):
-                mask = np.pad(mask, (0, len(model_select_features) - len(mask)), 'constant', constant_values=False)
-            
-            # Verificar que al menos una característica esté seleccionada
-            if not np.any(mask):
-                raise ValueError("No hay características seleccionadas por el selector de características")
-            
-            # Aplicar la transformación manualmente usando la máscara
+            # Aplicar transformación
             selected_features = [col for i, col in enumerate(model_select_features) if mask[i]]
             if not selected_features:
                 raise ValueError("No hay características seleccionadas")
@@ -733,30 +685,36 @@ class Forecaster:
                 columns=selected_features
             )
             
-            # Verificar que el DataFrame transformado no esté vacío
-            if df_transformed.empty:
-                raise ValueError("El DataFrame transformado está vacío")
+            future_df_transformed = pd.DataFrame(
+                future_df.values[:, mask],
+                index=future_df.index,
+                columns=selected_features
+            )
         else:
             df_transformed = df.copy()
+            future_df_transformed = future_df.copy()
 
-        # Predict
-        forecast_output = pd.DataFrame(
-            model.predict(future_df_transformed),
-            index=future_df_transformed.index,
-            columns=[y]
-        )
-        out = pd.DataFrame(
+        # PASO 11 - Hacer predicciones
+        model = self.db['model']
+        
+        # Predicción para datos históricos
+        historical_pred = pd.DataFrame(
             model.predict(df_transformed),
             index=df_transformed.index,
             columns=[y]
         )
+        
+        # Predicción para datos futuros
+        future_pred = pd.DataFrame(
+            model.predict(future_df_transformed),
+            index=future_df_transformed.index,
+            columns=[y]
+        )
 
-        final_prediction = pd.concat([out, forecast_output])
+        # Combinar predicciones
+        final_prediction = pd.concat([historical_pred, future_pred])
 
         return final_prediction, real_values_column
-
-
-    
 
     def save_model(self, model_filename):
         """
