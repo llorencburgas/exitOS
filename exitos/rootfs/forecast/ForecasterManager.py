@@ -29,7 +29,7 @@ def obtainmeteoData(latitude, longitude):
     return meteo_data
 
 
-def predict_consumption_production(meteo_data=None, model_name='newModel.pkl'):
+def predict_consumption_production(meteo_data:pd.DataFrame, model_name:str='newModel.pkl'):
     """
     Prediu la consumició tenint en compte les hores actives dels assets
     """
@@ -41,21 +41,16 @@ def predict_consumption_production(meteo_data=None, model_name='newModel.pkl'):
     meteo_data_boolean = forecaster.db['meteo_data_is_selected']
     if not meteo_data_boolean: meteo_data = None
     extra_sensors_df = forecaster.db['extra_sensors']
-    
-    # Preparar datos para predicción
+
     data = forecaster.prepare_dataframes(initial_data, meteo_data, extra_sensors_df)
+
     data = data.set_index('timestamp')
     data.index = pd.to_datetime(data.index)
     data.bfill(inplace=True)
-    
-    # Hacer predicción usando la nueva función
-    prediction, real_values = forecaster.predict_consumption(
-        data=data,
-        meteo_data=meteo_data,
-        extra_sensors_df=extra_sensors_df,
-        future_steps=48
-    )
-    
+
+
+    prediction , real_values = forecaster.forecast(data, 'value', forecaster.db['model'], future_steps=48)
+
     return prediction, real_values
 
 
