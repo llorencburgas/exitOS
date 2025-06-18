@@ -682,12 +682,24 @@ class Forecaster:
             elif len(mask) < len(model_select_features):
                 mask = np.pad(mask, (0, len(model_select_features) - len(mask)), 'constant', constant_values=False)
             
+            # Verificar que al menos una característica esté seleccionada
+            if not np.any(mask):
+                raise ValueError("No hay características seleccionadas por el selector de características")
+            
             # Aplicar la transformación manualmente usando la máscara
+            selected_features = [col for i, col in enumerate(model_select_features) if mask[i]]
+            if not selected_features:
+                raise ValueError("No hay características seleccionadas")
+            
             future_df_transformed = pd.DataFrame(
                 future_df.values[:, mask],
                 index=future_df.index,
-                columns=[col for i, col in enumerate(model_select_features) if mask[i]]
+                columns=selected_features
             )
+            
+            # Verificar que el DataFrame transformado no esté vacío
+            if future_df_transformed.empty:
+                raise ValueError("El DataFrame transformado está vacío")
         else:
             future_df_transformed = future_df.copy()
 
@@ -706,12 +718,24 @@ class Forecaster:
             elif len(mask) < len(model_select_features):
                 mask = np.pad(mask, (0, len(model_select_features) - len(mask)), 'constant', constant_values=False)
             
+            # Verificar que al menos una característica esté seleccionada
+            if not np.any(mask):
+                raise ValueError("No hay características seleccionadas por el selector de características")
+            
             # Aplicar la transformación manualmente usando la máscara
+            selected_features = [col for i, col in enumerate(model_select_features) if mask[i]]
+            if not selected_features:
+                raise ValueError("No hay características seleccionadas")
+            
             df_transformed = pd.DataFrame(
                 df.values[:, mask],
                 index=df.index,
-                columns=pd.Index([col for i, col in enumerate(model_select_features) if mask[i]])
+                columns=selected_features
             )
+            
+            # Verificar que el DataFrame transformado no esté vacío
+            if df_transformed.empty:
+                raise ValueError("El DataFrame transformado está vacío")
         else:
             df_transformed = df.copy()
 
@@ -719,12 +743,12 @@ class Forecaster:
         forecast_output = pd.DataFrame(
             model.predict(future_df_transformed),
             index=future_df_transformed.index,
-            columns=pd.Index([y])
+            columns=[y]
         )
         out = pd.DataFrame(
             model.predict(df_transformed),
             index=df_transformed.index,
-            columns=pd.Index([y])
+            columns=[y]
         )
 
         final_prediction = pd.concat([out, forecast_output])
