@@ -14,9 +14,24 @@ import glob
 
 import plotly.graph_objs as go
 import plotly.offline as pyo
-import forecast.Forecaster as ForecasterModule
-import forecast.ForecasterManager as ForecatManager
-import forecast.OptimalScheduler as OptimalScheduler
+import sys
+
+# Importaciones compatibles con ambos entornos (local y Docker)
+try:
+    # Intentar importación para entorno local
+    import forecast.Forecaster as ForecasterModule
+    import forecast.ForecasterManager as ForecatManager
+    import forecast.OptimalScheduler as OptimalSchedulerModule
+    forecast = ForecasterModule.Forecaster(debug=True)
+    optimalScheduler = OptimalSchedulerModule.OptimalScheduler()
+except ImportError:
+    # Importación para entorno Docker
+    sys.path.append('/forecast')
+    from Forecaster import Forecaster
+    from ForecasterManager import *
+    from OptimalScheduler import OptimalScheduler
+    forecast = Forecaster(debug=True)
+    optimalScheduler = OptimalScheduler()
 
 from bottle import Bottle, template, run, static_file, HTTPError, request, response
 from datetime import datetime, timedelta
@@ -36,8 +51,6 @@ app = Bottle()
 database = db.SqlDB()
 database.old_update_database("all")
 database.clean_database_hourly_average()
-forecast = ForecasterModule.Forecaster(debug=True)
-optimalScheduler = OptimalScheduler.OptimalScheduler()
 
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')

@@ -1,8 +1,16 @@
+import sys
+import os
 
-import forecast.ForecasterManager as ForecastManager
+# Importaciones compatibles con ambos entornos
+try:
+    import forecast.ForecasterManager as ForecastManager
+except ImportError:
+    # Para entorno Docker
+    sys.path.append('/forecast')
+    from ForecasterManager import *
+
 import sqlDB as db
 import logging
-import sys
 
 from datetime import datetime, timedelta
 
