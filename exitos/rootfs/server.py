@@ -334,7 +334,7 @@ def get_model_config(model_name):
         response_config += f"algorithm = {config.get('algorithm','')}\n"
         response_config += f"scaler = {config.get('scaler_name','')}\n"
         response_config += f"sensorsId = {config.get('sensors_id','')}\n"
-        response_config += f"meteo_data = {config.get('meteo_data_is_selected', 'false')}\n"
+        response_config += f"meteo_data = {str(config.get('meteo_data_is_selected', False)).lower()}\n"
 
         extra = config.get('extra_sensors', {})
         extra_sensors_id = ",".join(extra.keys()) if isinstance(extra, dict) else ''

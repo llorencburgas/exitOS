@@ -108,11 +108,15 @@
             transform: translate(-50%, -50%);
             width: 20%;
             height: 20%;
-            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             z-index: 1000;
             background-color: #f1f1f1;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
         }
         .spinner{
             border: 8px solid #f3f3f3;
@@ -121,6 +125,7 @@
             width: 50px;
             height: 50px;
             animation: spin 1s linear infinite;
+            margin: 0 auto;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -130,6 +135,7 @@
             margin-top: 10px;
             font-size: 16px;
             color: #04AA6D;
+            text-align: center;
         }
 
     </style>
@@ -232,7 +238,7 @@
 
                     <button id="create-model-button" name="action" value="train" type="submit"><i style="font-size: medium" class="fa-solid fa-bolt"></i> Train</button>
                     <button id="fetch-data" name="action" value="forecast" type="submit" disabled><i style="font-size: medium" class="fa-solid fa-chart-line"></i> Forecast </button>
-                    <button id="delete-forecast" name="action" value="delete" type="submit" style="display: none"><i style="font-size: medium;" class="fa-solid fa-trash-can"></i> Eliminar </button>
+                    <button id="delete-forecast" name="action" value="delete" type="submit" disabled><i style="font-size: medium;" class="fa-solid fa-trash-can"></i> Eliminar </button>
 
                 </form>
 
@@ -455,6 +461,10 @@
 
     function updateModelSelection(modelPath){
         showLoadingSpinner();
+        
+        // Habilitar el botón de eliminar cuando se selecciona un modelo
+        document.getElementById("delete-forecast").disabled = false;
+        
      fetch('get_model_config/' + modelPath)
         .then(response => response.text())
         .then(data => {
@@ -498,6 +508,14 @@
                 removeAllSensors();
                 addSensorsFromStirng(config['extra_sensors']);
             }
+
+            // Marcar el checkbox de meteo_data si està habilitat
+            const meteoDataCheckbox = document.getElementById("meteoData");
+            if (config['meteo_data'] === 'true') {
+                meteoDataCheckbox.checked = true;
+            } else {
+                meteoDataCheckbox.checked = false;
+            }
         });
 
      fetch('get_forecast_data/' + modelPath)
@@ -512,7 +530,6 @@
 
                  document.getElementById("forecast-title").innerText = `Resultats del Forecast per al model: ${modelPath}`;
                  document.getElementById("forecast-title").style.display = "block";
-                 document.getElementById("delete-forecast").style.display = "block";
 
                  const traceReal = {
                      x: realTimestamps,
@@ -548,7 +565,6 @@
              }else{
                 document.getElementById("forecast-title").style.display = "none";
                 document.getElementById("forecast-chart").innerHTML = '';
-                document.getElementById("delete-forecast").style.display = "none";
                 hideLoadingSpinner();
              }
          })
@@ -627,9 +643,12 @@
             removeAllSensors()
             updateModelConfig();
 
+            // Desmarcar el checkbox de meteo_data
+            document.getElementById("meteoData").checked = false;
+
             document.getElementById("forecast-title").style.display = "none";
             document.getElementById("forecast-chart").innerHTML = '';
-            document.getElementById("delete-forecast").style.display = "none";
+            document.getElementById("delete-forecast").disabled = true;
             document.getElementById("fetch-data").disabled = true;
 
         }
