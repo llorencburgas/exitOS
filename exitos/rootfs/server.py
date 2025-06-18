@@ -14,7 +14,7 @@ import glob
 
 import plotly.graph_objs as go
 import plotly.offline as pyo
-import forecast.Forecaster as forecast
+import forecast.Forecaster as ForecasterModule
 import forecast.ForecasterManager as ForecatManager
 import forecast.OptimalScheduler as OptimalScheduler
 
@@ -36,7 +36,7 @@ app = Bottle()
 database = db.SqlDB()
 database.old_update_database("all")
 database.clean_database_hourly_average()
-forecast = forecast.Forecaster(debug=True)
+forecast = ForecasterModule.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler()
 
 # Ruta per servir fitxers estàtics i imatges des de 'www'
