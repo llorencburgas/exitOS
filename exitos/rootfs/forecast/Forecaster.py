@@ -262,8 +262,6 @@ class Forecaster:
             - PCA: aplica un PCA per comprimir el dataset
         :return:
         """
-        logger.critical("+++++++++++++++++++++++++")
-        logger.warning(method)
 
         if method is None:
             model_select = []
@@ -271,13 +269,6 @@ class Forecaster:
         elif method == 'Tree':
             from sklearn.ensemble import ExtraTreesRegressor
             from sklearn.feature_selection import SelectFromModel
-
-            logger.warning(f"X shape: {X.shape}")
-            logger.warning(f"y shape: {y.shape}")
-            logger.warning(f"X sample: {X.head()}")
-            logger.warning(f"y sample: {y.head()}")
-            logger.warning(f"Any NaNs in X? {pd.isnull(X).any().any()}")
-            logger.warning(f"Any NaNs in y? {pd.isnull(y).any()}")
 
             clf = ExtraTreesRegressor(n_estimators=50)
             clf = clf.fit(X, y)
