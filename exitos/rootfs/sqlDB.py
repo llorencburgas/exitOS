@@ -301,6 +301,15 @@ class SqlDB():
     def clean_database_hourly_average(self):
         logger.warning("INICIANT NETEJA DE LA BASE DE DADES")
         with self._get_connection() as con:
+            # Comprovar si la taula 'dades' està buida
+            cur = con.cursor()
+            cur.execute("SELECT COUNT(*) FROM dades")
+            count = cur.fetchone()[0]
+            if count == 0:
+                logger.info("La base de dades està buida. No s'executa la neteja.")
+                return
+            cur.close()
+            
             sensor_ids = [row[0] for row in con.execute("SELECT DISTINCT sensor_id FROM dades").fetchall()]
 
             limit_date = (datetime.now() - timedelta(days=21)).isoformat()
