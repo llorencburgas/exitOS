@@ -1,6 +1,5 @@
 import math
 import os
-import pickle
 import threading
 import traceback
 
@@ -14,7 +13,6 @@ import glob
 
 import plotly.graph_objs as go
 import plotly.offline as pyo
-import sys
 
 from bottle import Bottle, template, run, static_file, HTTPError, request, response
 from datetime import datetime, timedelta
@@ -279,7 +277,7 @@ def train_model():
                               lon=lon)
 
 def forecast_model(selected_forecast):
-    forecast_df, real_values = ForecatManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data,
+    forecast_df, real_values = ForecasterManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data,
                                                                              model_name=selected_forecast)
 
     forecasted_done_time = datetime.now().replace(second=0, microsecond=0)
@@ -480,7 +478,7 @@ def delete_config():
 def get_page(page):
     # Ruta del fitxer HTML
     # file_path = f'./www/{page}.html'
-    # Comprova si el fitxer existeix
+    # Comprova si el fitxer existeix.
     if os.path.exists(f'./www/{page}.html'):
         # Control de dades segons la pàgina
         return static_file(f'{page}.html', root='./www/')
@@ -557,7 +555,7 @@ scheduler_thread.start()
 
 
 #################################################################################
-#   Hem acabat de definir totes les url i què cal fer per cada una d'elles.     #
+#   Hem acabat de definir tots els URL i què cal fer per cada una d'elles.     #
 #   Executem el servidor                                                        #
 #################################################################################
 

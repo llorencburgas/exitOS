@@ -464,6 +464,8 @@ class Forecaster:
         return merged_data
 
 
+    def create_model(self, data, sensors_id, y, lat, lon, algorithm=None, params=None, escalat=None,
+                         max_time=None, filename='newModel', meteo_data: pd.DataFrame = None, extra_sensors_df=None):
         """
         Funció per crear, guardar i configurar el model de forecasting.
 
@@ -528,10 +530,10 @@ class Forecaster:
         # PAS 1 - Fer el Windowing
         dad = self.do_windowing(merged_data, look_back)
 
-        # PAS 2 - Crear variable dia_setmana, hora, mes i meteoData
+        # PAS 2 - Crear variable dia_setmana, hora, més i meteoData
         dad = self.timestamp_to_attrs(dad, extra_vars)
 
-        # PAS 3 - Treure Colinearitats
+        # PAS 3 - Treure Col·linearitats
         [dad, to_drop] = self.colinearity_remove(dad, y, level=colinearity_remove_level)
         colinearity_remove_level_to_drop = to_drop
 
