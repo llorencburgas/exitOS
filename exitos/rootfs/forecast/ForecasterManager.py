@@ -3,7 +3,7 @@ import requests
 import joblib
 import os
 
-import forecast.Forecaster as forecast
+import forecast.Forecaster as Forecast
 from datetime import datetime, timedelta
 from logging_config import setup_logger
 
@@ -43,7 +43,8 @@ def predict_consumption_production(meteo_data=None, model_name:str='newModel.pkl
     """
     Prediu la consumició tenint en compte les hores actives dels assets
     """
-    forecaster = forecast.Forecaster(debug=True)
+
+    forecaster = Forecast.Forecaster(debug=True)
     forecaster.load_model(model_filename=model_name)
     initial_data = forecaster.db['initial_data']
 

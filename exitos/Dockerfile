@@ -16,7 +16,7 @@ ADD ./rootfs/sqlDB.py .
 ADD ./rootfs/logging_config.py .
 
 #Forecast
-COPY ./rootfs/forecast / /forecast/
+COPY ./rootfs/forecast /forecast/
 
 #HTML and images
 COPY ./rootfs/www /www/

@@ -5,7 +5,6 @@ import traceback
 
 import joblib
 
-import sqlDB as db
 import schedule
 import time
 import json
@@ -18,9 +17,11 @@ from bottle import Bottle, template, run, static_file, HTTPError, request, respo
 from datetime import datetime, timedelta
 from logging_config import setup_logger
 
-import forecast.Forecaster as Forecast
+# import forecast.Forecaster as Forecast
+from forecast import Forecaster as Forecast
 import forecast.ForecasterManager as ForecasterManager
 import forecast.OptimalScheduler as OptimalScheduler
+import sqlDB as db
 
 
 # LOGGER COLORS
@@ -246,11 +247,8 @@ def train_model():
 
     logger.info(f"Selected model: {selected_model}, Config: {config}")
 
-    # lat = optimalScheduler.latitude
-    # lon = optimalScheduler.longitude
-
-    lat = 1
-    lon = 1
+    lat = optimalScheduler.latitude
+    lon = optimalScheduler.longitude
 
     if selected_model == "AUTO":
         forecast.create_model(data=sensors_df,

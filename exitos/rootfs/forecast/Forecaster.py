@@ -26,6 +26,8 @@ class Forecaster:
         else:
             self.models_filepath = "./share/exitos/"
 
+        logger.debug("Initializing Forecaster...")
+
     @staticmethod
     def windowing_group(dataset, look_back_start=24, look_back_end=48):
         """
