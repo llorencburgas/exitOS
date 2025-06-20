@@ -259,8 +259,11 @@ def train_model():
 
     logger.info(f"Selected model: {selected_model}, Config: {config}")
 
-    lat = optimalScheduler.latitude
-    lon = optimalScheduler.longitude
+    # lat = optimalScheduler.latitude
+    # lon = optimalScheduler.longitude
+
+    lat = 1
+    lon = 1
 
     if selected_model == "AUTO":
         forecast.create_model(data=sensors_df,
