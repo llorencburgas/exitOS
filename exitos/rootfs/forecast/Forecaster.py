@@ -626,7 +626,7 @@ class Forecaster:
         # PAS 9 - Preparar timestamps futurs
         last_timestamp = data.index[-1]
         tomorrow = pd.Timestamp.today().normalize() + pd.Timedelta(days=2)
-        end_time = demà + pd.Timedelta(days=2)
+        end_time = tomorrow + pd.Timedelta(days=2)
         # future_index = [last_timestamp + timedelta(hours=i + 1) for i in range(future_steps)]
         future_index = pd.date_range(start=last_timestamp + pd.Timedelta(hours=1), end=end_time, freq='H',inclusive="left")
         future_df = pd.DataFrame(index=future_index)
