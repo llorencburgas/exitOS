@@ -336,7 +336,6 @@ class SqlDB():
         logger.info("NETEJA COMPLETADA")
         self.vacuum()
 
-
     def old_update_database(self, sensor_to_update):
         """
         Actualitza la base de dades amb la API del Home Assistant.

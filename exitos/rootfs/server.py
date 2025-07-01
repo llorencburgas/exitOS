@@ -471,6 +471,11 @@ def delete_config():
     else:
         return 'Config file not found'
 
+@app.route('/optimize')
+def optimize():
+
+    return "OK"
+
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')
 def get_page(page):
@@ -516,7 +521,6 @@ def daily_train_model(model_config, model_name):
     logger.debug(f"****** Running daily train for {model_name} ******")
     algorithm = model_config.get('algorithm')
     scaler = model_config.get('scaler_name', '')
-
 
 
 def daily_forecast_task():

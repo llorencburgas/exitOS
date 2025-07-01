@@ -106,6 +106,12 @@
 
             </div>
 
+            <div class="info-cards">
+                <button id="test-optimization" onclick="TestOptimization()" ><i style="font-size: medium" class="fa-solid fa-ghost"></i> Test Optimitzar</button>
+
+            </div>
+
+
         </div>
         
         <footer class="footer">
@@ -114,4 +120,13 @@
         </footer>
     </main>
 </body>
+
+<script>
+    function TestOptimization(){
+        fetch('/optimize')
+            .then(response => response.text())
+            .then(data => console.log(data))
+    }
+</script>
+
 </html>
