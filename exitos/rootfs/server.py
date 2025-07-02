@@ -12,6 +12,7 @@ import glob
 
 import plotly.graph_objs as go
 import plotly.offline as pyo
+import pandas as pd
 
 from bottle import Bottle, template, run, static_file, HTTPError, request, response
 from datetime import datetime, timedelta
@@ -34,7 +35,7 @@ PORT = 55023
 #INICIACIÓ DE L'APLICACIÓ I LA BASE DE DADES
 app = Bottle()
 database = db.SqlDB()
-database.old_update_database("all")
+# database.old_update_database("all")
 # database.clean_database_hourly_average()
 forecast = Forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler()
@@ -66,6 +67,9 @@ def get_init():
 @app.get('/sensors')
 def get_sensors():
     try:
+
+        calling_from = request.query.get("calling_from", "HTML")
+
         sensors = database.get_all_sensors()
         sensors_id = sensors['entity_id'].tolist()
         sensors_name = sensors['attributes.friendly_name'].tolist()
@@ -73,15 +77,20 @@ def get_sensors():
 
 
         context = {
-            "sensors_id": sensors_id,
-            "sensors_name": sensors_name,
+            "sensors_id": [None if pd.isna(v) else v for v in sensors_id],
+            "sensors_name": [None if pd.isna(v) else v for v in sensors_name],
             "sensors_save": sensors_save
         }
 
-        return template('./www/sensors.html', sensors = context )
+        if calling_from == "HTML":
+            return template('./www/sensors.html', sensors = context)
+        else:
+            response.content_type = 'application/json'
+            return json.dumps(context)
     except Exception as ex:
         error_message = traceback.format_exc()
         return f"Error! Alguna cosa ha anat malament :c : {str(ex)}\nFull Traceback:\n{error_message}"
+
 
 @app.get('/databaseView')
 def database_graph_page():
@@ -473,7 +482,8 @@ def delete_config():
 
 @app.route('/optimize')
 def optimize():
-
+    logger.info("preus: ")
+    logger.info(optimalScheduler.electricity_price)
     return "OK"
 
 # Ruta dinàmica per a les pàgines HTML

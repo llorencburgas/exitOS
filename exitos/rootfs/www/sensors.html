@@ -67,6 +67,46 @@
             opacity: 1;
             visibility: visible;
         }
+
+        /* Toggle Switch */
+        .switch{
+            position: relative;
+            display: inline-block;
+            width: 46px;
+            height: 24px;
+            background-color: #04AA6D;
+            border-radius: 22px;
+            transition: all .3s;
+            margin: 0 15px;
+        }
+        .switch::after{
+            content: "";
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            border-radius: 22px;
+            background-color: white;
+            top: 1px;
+            left: 1px;
+            transition: all .3s;
+        }
+        input[type='checkbox']:checked + .switch::after{
+            transform: translateX(22px);
+        }
+        input[type='checkbox']:checked + .switch{
+            background-color: #04D984;
+        }
+        .offscreen{
+            position: absolute;
+            left: -9999px;
+        }
+        .label-text {
+            display: inline-block;
+            vertical-align: middle;
+            margin: 0;
+            font-size: 1rem;
+        }
+
     </style>
 </head>
 
@@ -82,7 +122,7 @@
                         <a href="./" class="nav-link"> <i class="fa-solid fa-house"></i>  Inici</a>
                         <a href="./sensors" class="nav-link"> <i class="fa-solid fa-square-check"></i> Sensors</a>
                         <a href="./databaseView" class="nav-link"> <i class="fa-solid fa-database"></i> Base de Dades</a>
-                        <a href="./model" class="nav-link"> <i class="fa-solid fa-poo"></i> Crear Model</a>
+                        <a href="./model" class="nav-link"> <i class="fa-solid fa-brain"></i> Crear Model</a>
                         <a href="./config_page" class="nav-link"> <i class="fa-solid fa-user-gear"></i> Configuració</a>
                     </div>
                 </div>
@@ -92,6 +132,15 @@
                 <div class="content-section">
                     <h2>Sensors Disponibles</h2>
                     <p> Seleccioni els sensors que vol guardar </p>
+
+                    <div class="button-div">
+                        <span class="label-text"> Tots els Sensors </span>
+                        <input type="checkbox" id="toggle" class="offscreen" onchange="changeVisibleSensors()"/>
+                        <label for="toggle" class="switch"></label>
+                        <span class="label-text"> Sensors Guardats </span>
+
+                    </div>
+
                     <div class="button-div">
                         <button class="save-sensors" type="submit" form="sensors-form"><i style="font-size: medium" class="fa-regular fa-floppy-disk"></i> Guardar Canvis</button>
                         <button class="select-sensors" onclick="selectAll(true)"><i style="font-size: medium" class="fa-regular fa-square-check"></i>  Seleccionar Tots</button>
@@ -109,11 +158,12 @@
                                 <th>Guardar</th>
                                 <th>Nom del sensor</th>
                                 <th>ID del sensor</th>
+                                <th>Tipus de Sensor</th>
                             </tr>
                         </thead>
                         <tbody id="sensors-table-body">
                              % for i, id in enumerate(sensors['sensors_id']):
-                            <tr>
+                            <tr id="sensors-table-row">
                                 <td>{{ i }} </td>
                                 <td>
                                     <label>
@@ -126,6 +176,16 @@
                                 </td>
                                 <td>{{ sensors['sensors_name'][i] }}</td>
                                 <td>{{ id }}</td>
+                                <td>
+                                    <label>
+                                        <select class="form-select" id="sensor-type" name="sensor-type" required style="width: 100%">
+                                            <option class="form-option" value="consum" selected hidden> </option>
+                                            <option class="form-option" value="consum" >Consum</option>
+                                            <option class="form-option" value="generador" >Generador</option>
+                                        </select>
+
+                                    </label>
+                                </td>
                             </tr>
 
                             %end
@@ -146,11 +206,96 @@
 </body>
 
 <script>
+    let onlySaved = false;
     //funció per seleccionar o deseleccionar totes les caselles
     function selectAll(select){
         document.querySelectorAll('.checkboxes').forEach(checkbox => {
             checkbox.checked = select;
         });
+    }
+
+    function createRow(sensorsTableBody, index, name, id, save){
+
+        const row = document.createElement("tr");
+        row.id = "sensors-table-row"
+
+        const tdIndex = document.createElement("td");
+        tdIndex.textContent = index;
+
+        const tdCheckbox = document.createElement("td")
+        const labelCheckbox = document.createElement("label");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.classList.add("checkboxes");
+        checkbox.name = "sensor_id";
+        checkbox.value = id;
+        if(save === 1){
+            checkbox.checked = true;
+        }
+        labelCheckbox.appendChild(checkbox);
+        tdCheckbox.appendChild(labelCheckbox);
+
+        const tdName = document.createElement("td");
+        tdName.textContent = name;
+
+        const tdId = document.createElement("td");
+        tdId.textContent = id;
+
+        const tdSelect = document.createElement("td");
+        const labelSelect = document.createElement("label");
+        const select = document.createElement("select");
+        select.classList.add("form-select");
+        select.id = "sensor-type";
+        select.name = "sensor-type";
+        select.style.width = "100%";
+
+        const optionHidden = new Option(" ", "None", true, true);
+        optionHidden.hidden = true;
+        const optionConsum = new Option("Consum", "consum");
+        const optionGenerator = new Option("Generator", "Generator");
+
+        select.appendChild(optionHidden);
+        select.appendChild(optionConsum);
+        select.appendChild(optionGenerator);
+
+        if (save === 0){select.disabled}
+
+        labelSelect.appendChild(select);
+        tdSelect.appendChild(labelSelect);
+
+
+        row.appendChild(tdIndex);
+        row.appendChild(tdCheckbox);
+        row.appendChild(tdName);
+        row.appendChild(tdId);
+        row.appendChild(tdSelect);
+
+        sensorsTableBody.appendChild(row);
+
+    }
+
+    function changeVisibleSensors() {
+        onlySaved = !onlySaved;
+        const sensorsTableBody = document.getElementById('sensors-table-body');
+        sensorsTableBody.innerHTML = '';
+
+        fetch("/sensors?calling_from=JS")
+            .then(response => response.json())
+            .then(sensors => {
+                sensors.sensors_id.forEach((id,i) =>{
+                    const name = sensors.sensors_name[i];
+                    const save = sensors.sensors_save[i];
+
+                    if (onlySaved === false){createRow(sensorsTableBody, i, name, id, save)}
+                    else{
+                        if (save === 1){createRow(sensorsTableBody, i, name, id, save)}
+                    }
+                })
+
+            })
+            .catch(error => { console.log("Error en la petició:", error.message); });
+
+
     }
 
     window.onscroll = function() {
