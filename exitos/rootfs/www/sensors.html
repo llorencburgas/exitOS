@@ -279,12 +279,9 @@
         const sensorsTableBody = document.getElementById('sensors-table-body');
         sensorsTableBody.innerHTML = '';
 
-        fetch("/sensors?calling_from=JS")
+        fetch("sensors?calling_from=JS")
             .then(response => response.json())
             .then(sensors => {
-                console.log("Raw response:", sensors);
-                const json = JSON.parse(sensors); // I llavors intentem parsejar
-                console.log("Parsed JSON:", json);
                 sensors.sensors_id.forEach((id,i) =>{
                     const name = sensors.sensors_name[i];
                     const save = sensors.sensors_save[i];
