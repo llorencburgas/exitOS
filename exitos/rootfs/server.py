@@ -74,16 +74,18 @@ def get_sensors():
         sensors_id = sensors['entity_id'].tolist()
         sensors_name = sensors['attributes.friendly_name'].tolist()
         sensors_save = database.get_sensors_save(sensors_id)
+        sensors_type = database.get_sensors_type(sensors_id)
 
 
         context = {
             "sensors_id": [None if pd.isna(v) else v for v in sensors_id],
             "sensors_name": [None if pd.isna(v) else v for v in sensors_name],
-            "sensors_save": sensors_save
+            "sensors_save": sensors_save,
+            "sensors_type": sensors_type
         }
 
         if calling_from == "HTML":
-            return template('./www/sensors.html', sensors = context)
+            return template('./www/sensors.html')
         else:
             response.content_type = 'application/json'
             return json.dumps(context)
@@ -151,21 +153,31 @@ def graphs_view():
 def update_sensors():
 
     checked_sensors = request.forms.getall("sensor_id")
+    all_sensor_types = request.forms.getall("sensor-type")
     sensors = database.get_all_sensors()
     sensors_id = sensors['entity_id'].tolist()
 
+
+    i = 0
     for sensor_id in sensors_id:
         is_active = sensor_id in checked_sensors
         database.update_sensor_active(sensor_id, is_active)
+        if is_active:
+            sensor_type = all_sensor_types[i].strip()
+            database.update_sensor_type(sensor_id, sensor_type)
+            i += 1
+
 
     sensors_name = sensors['attributes.friendly_name'].tolist()
     sensors_save = database.get_sensors_save(sensors_id)
+    sensors_type = database.get_sensors_type(sensors_id)
 
 
     context = {
         "sensors_id": sensors_id,
         "sensors_name": sensors_name,
-        "sensors_save": sensors_save
+        "sensors_save": sensors_save,
+        "sensors_type": sensors_type
     }
 
     return template('./www/sensors.html', sensors=context)

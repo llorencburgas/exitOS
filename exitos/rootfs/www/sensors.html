@@ -162,33 +162,6 @@
                             </tr>
                         </thead>
                         <tbody id="sensors-table-body">
-                             % for i, id in enumerate(sensors['sensors_id']):
-                            <tr id="sensors-table-row">
-                                <td>{{ i }} </td>
-                                <td>
-                                    <label>
-                                        <input type="checkbox" class="checkboxes" name="sensor_id" value="{{ id }}"
-                                         % if sensors['sensors_save'][i] == 1:
-                                            checked
-                                         % end
-                                        />
-                                    </label>
-                                </td>
-                                <td>{{ sensors['sensors_name'][i] }}</td>
-                                <td>{{ id }}</td>
-                                <td>
-                                    <label>
-                                        <select class="form-select" id="sensor-type" name="sensor-type" required style="width: 100%">
-                                            <option class="form-option" value="consum" selected hidden> </option>
-                                            <option class="form-option" value="consum" >Consum</option>
-                                            <option class="form-option" value="generador" >Generador</option>
-                                        </select>
-
-                                    </label>
-                                </td>
-                            </tr>
-
-                            %end
                         </tbody>
 
 
@@ -206,7 +179,7 @@
 </body>
 
 <script>
-    let onlySaved = false;
+    let onlySaved = true;
     //funció per seleccionar o deseleccionar totes les caselles
     function selectAll(select){
         document.querySelectorAll('.checkboxes').forEach(checkbox => {
@@ -214,7 +187,7 @@
         });
     }
 
-    function createRow(sensorsTableBody, index, name, id, save){
+    function createRow(sensorsTableBody, index, name, id, save, type){
 
         const row = document.createElement("tr");
         row.id = "sensors-table-row"
@@ -249,16 +222,25 @@
         select.name = "sensor-type";
         select.style.width = "100%";
 
-        const optionHidden = new Option(" ", "None", true, true);
+        const optionHidden = new Option("No Especificat", "None");
         optionHidden.hidden = true;
         const optionConsum = new Option("Consum", "consum");
         const optionGenerator = new Option("Generator", "Generator");
+        const optionNonImportant = new Option("No Important", "No Important");
 
-        select.appendChild(optionHidden);
         select.appendChild(optionConsum);
+        select.appendChild(optionHidden);
         select.appendChild(optionGenerator);
+        select.appendChild(optionNonImportant);
 
-        if (save === 0){select.disabled}
+        if (save === 0){select.disabled = true}
+
+        if (type === "Generator"){optionGenerator.selected = true;}
+        else if (type === "consum"){optionConsum.selected = true;}
+        else if (type === "No Important"){optionNonImportant.selected = true;}
+        else {optionHidden.selected = true;}
+
+
 
         labelSelect.appendChild(select);
         tdSelect.appendChild(labelSelect);
@@ -285,10 +267,11 @@
                 sensors.sensors_id.forEach((id,i) =>{
                     const name = sensors.sensors_name[i];
                     const save = sensors.sensors_save[i];
+                    const type = sensors.sensors_type[i];
 
-                    if (onlySaved === false){createRow(sensorsTableBody, i, name, id, save)}
+                    if (onlySaved === false){createRow(sensorsTableBody, i, name, id, save, type);}
                     else{
-                        if (save === 1){createRow(sensorsTableBody, i, name, id, save)}
+                        if (save === 1){createRow(sensorsTableBody, i, name, id, save, type);}
                     }
                 })
 
@@ -310,6 +293,8 @@
     function scrollToTop() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+    changeVisibleSensors();
 
 </script>
 </html>

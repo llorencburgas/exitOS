@@ -51,7 +51,7 @@ class SqlDB():
 
             #creant les taules
             cur.execute("CREATE TABLE IF NOT EXISTS dades(sensor_id TEXT, timestamp NUMERIC, value)")
-            cur.execute("CREATE TABLE IF NOT EXISTS sensors(sensor_id TEXT, units TEXT, update_sensor BINARY, save_sensor BINARY)")
+            cur.execute("CREATE TABLE IF NOT EXISTS sensors(sensor_id TEXT, units TEXT, update_sensor BINARY, save_sensor BINARY, sensor_type TEXT)")
             cur.execute("CREATE TABLE IF NOT EXISTS forecasts(forecast_name TEXT, forecast_run_time NUMERIC, forecasted_time NUMERIC, predicted_value REAL, real_value REAL)")
 
             cur.execute("CREATE INDEX IF NOT EXISTS idx_dades_sensor_id_timestamp ON dades(sensor_id, timestamp)")
@@ -118,6 +118,14 @@ class SqlDB():
 
         return results
 
+    def get_sensors_type(self, sensors: List[str]) -> List[Any]:
+        results = []
+        with self._get_connection() as con:
+            for sensor_id in sensors:
+                res = self.query_select("sensors", "sensor_type", sensor_id, con)
+                results.append(res[0] if res else 0)
+        return results
+
     def get_all_saved_sensors_data(self, sensors_saved: List[str], start_date: str, end_date: str) -> Dict[str, List[tuple]]:
         data: List[tuple] = []
         with self._get_connection() as con:
@@ -154,6 +162,11 @@ class SqlDB():
     def update_sensor_active(self, sensor: str, active: bool):
         with self._get_connection() as con:
             con.execute("UPDATE sensors SET save_sensor = ? WHERE sensor_id = ?", (int(active), sensor))
+            con.commit()
+
+    def update_sensor_type(self, sensor: str, new_type: str):
+        with self._get_connection() as con:
+            con.execute("UPDATE sensors SET sensor_type = ? WHERE sensor_id = ?", (new_type, sensor))
             con.commit()
 
     def get_sensor_active(self, sensor: str) -> int:
@@ -372,15 +385,25 @@ class SqlDB():
                         sensor_id,
                         sensors_list.iloc[j]["attributes.unit_of_measurement"],
                         True,
-                        False
+                        False,
+                        "None"
                     )
                     cur.execute(
-                        "INSERT INTO sensors (sensor_id, units, update_sensor, save_sensor) VALUES (?,?,?,?)",
+                        "INSERT INTO sensors (sensor_id, units, update_sensor, save_sensor, sensor_type) VALUES (?,?,?,?,?)",
                         values_to_insert
                     )
                     cur.close()
                     con.commit()
                     logger.debug(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] Afegit un nou sensor a la base de dades: {sensor_id}")
+                else : #TODO: ELIMINAR QUAN TOTS ELS USUARIS TINGUIN SENSOR_TYPE
+                    cur = con.cursor()
+                    cur.execute("PRAGMA table_info(sensors)")
+                    columns = [col[1] for col in cur.fetchall()]
+                    if 'sensor_type' not in columns:
+                        cur.execute("ALTER TABLE sensors ADD COLUMN sensor_type TEXT")
+                        logger.debug(f"Columna 'sensor_type' afegida a la base de dades: {sensor_id}")
+                    cur.close()
+                    con.commit()
 
                 save_sensor = self.query_select("sensors","save_sensor", sensor_id, con)[0]
                 update_sensor = self.query_select("sensors","update_sensor", sensor_id, con)[0]
