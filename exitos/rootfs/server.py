@@ -345,7 +345,7 @@ def submit_model():
         elif action == 'forecast':
             selected_forecast = request.forms.get("models")
             forecast_model(selected_forecast)
-            forecast_without_suffix = selected_forecast.removesuffix('.pkl')
+            forecast_without_suffix = selected_forecast.replace('.pkl', '')
             logger.info(forecast_without_suffix)
             return create_model_page(forecast_without_suffix)
         elif action == 'delete':
