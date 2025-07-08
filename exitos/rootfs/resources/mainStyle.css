@@ -25,6 +25,7 @@ html{
     background-color: var(--white-background);
 }
 
+
 main{
 
     display: flex;
@@ -194,7 +195,7 @@ a.mail-text{
 
 .form-option{
     font-family: 'Rubik', Arial, serif;
-    font-size: small;
+    font-size: medium;
 
     display: flex;
     justify-content: flex-start;

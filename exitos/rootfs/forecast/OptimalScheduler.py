@@ -30,7 +30,7 @@ class OptimalScheduler:
         # self.electricity_price = self.__obtainElectricityPrices()
 
 
-    def __obtainElectricityPrices(self):
+    def obtainElectricityPrices(self):
         """
         Fetches the hourly electricity prices for buying from the OMIE API.
         If the next day's data is unavaliable, today's data is fetched.
@@ -65,5 +65,7 @@ class OptimalScheduler:
                 components.pop(-1)  # Remove trailing blank entry
                 hourly_price = float(components[-1])
                 hourly_prices.append(hourly_price)
-
+        #TODO: hauria d'eliminar el document quan acaba de llegir-lo??
         return hourly_prices
+
+    # def __initializeGAModel(self, n_particules, funcio, varbound):

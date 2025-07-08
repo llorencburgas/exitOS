@@ -667,7 +667,13 @@ class Forecaster:
         Guarda el model en un arxiu .pkl i l'elimina de la base de daades interna del forecast (self.db)
         :param model_filename: Nom que es vol donar al fitxer, si és nul serà "savedModel"
         """
-        joblib.dump(self.db, self.models_filepath + model_filename + '.pkl')
+        full_path = os.path.join(self.models_filepath, model_filename + ".pkl")
+
+        if os.path.exists(full_path):
+            logger.warning(f"El fitxer {full_path} ja existeix. S'eliminarà.")
+            os.remove(full_path)
+
+        joblib.dump(self.db, full_path)
         logger.warning(glob.glob(self.models_filepath + "*"))
         logger.info(f"Model guardat al fitxer {model_filename}.pkl")
 

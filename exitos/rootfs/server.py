@@ -183,7 +183,7 @@ def update_sensors():
     return template('./www/sensors.html', sensors=context)
 
 @app.get('/model')
-def create_model_page():
+def create_model_page(active_model = "None"):
     try:
         sensors_id = database.get_all_saved_sensors_id()
         models_saved = [os.path.basename(f)
@@ -194,10 +194,14 @@ def create_model_page():
         for f in forecasts_aux:
             forecasts_id.append(f[0])
 
+        logger.debug(f"Active Model: {active_model}")
+        if active_model == "None": active_model = "newModel"
+
         return template('./www/model.html',
                         sensors_input = sensors_id,
                         models_input = models_saved,
-                        forecasts_id = forecasts_id)
+                        forecasts_id = forecasts_id,
+                        active_model = active_model)
     except Exception as ex:
         error_message = traceback.format_exc()
         return f"Error! Alguna cosa ha anat malament :c : {str(ex)}\nFull Traceback:\n{error_message}"
@@ -295,6 +299,8 @@ def train_model():
                               lat=lat,
                               lon=lon)
 
+    return model_name
+
 def forecast_model(selected_forecast):
     forecast_df, real_values = ForecasterManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data,
                                                                              model_name=selected_forecast)
@@ -324,21 +330,28 @@ def delete_model():
     else:
         logger.error(f"Model {selected_model} not found")
 
-@app.route('/submit-model', method='POST')
+@app.route('/submit-model', method="POST")
 def submit_model():
     try:
+        logger.info('0')
         action = request.forms.get('action')
+        selected_model = request.forms.get("model")
+
+        logger.info('1')
 
         if action == 'train':
-            train_model()
-            return create_model_page()
+            model_name = train_model()
+            return create_model_page(model_name)
         elif action == 'forecast':
             selected_forecast = request.forms.get("models")
             forecast_model(selected_forecast)
-            return create_model_page()
+            forecast_without_suffix = selected_forecast.removesuffix('.pkl')
+            logger.info(forecast_without_suffix)
+            return create_model_page(forecast_without_suffix)
         elif action == 'delete':
             delete_model()
             return create_model_page()
+
 
     except Exception as e:
         error_message = traceback.format_exc()
@@ -367,13 +380,15 @@ def get_model_config(model_name):
                 if k == 'bootstrap':
                     aux = 'true' if v else 'false'
                     response_config += f"{k} = {aux}\n"
+                elif k == 'algorithm':
+                    response_config += f"KNN_algorithm = {v}\n"
                 else:
                     response_config += f"{k} = {v}\n"
         if "max_time" in config:
             response_config += f"max_time = {config['max_time']}\n"
 
 
-
+        logger.warning(response_config)
         return response_config
 
     except Exception as e:
@@ -495,7 +510,8 @@ def delete_config():
 @app.route('/optimize')
 def optimize():
     logger.info("preus: ")
-    logger.info(optimalScheduler.electricity_price)
+    prices = optimalScheduler.obtainElectricityPrices()
+    logger.info(prices)
     return "OK"
 
 # Ruta dinàmica per a les pàgines HTML
