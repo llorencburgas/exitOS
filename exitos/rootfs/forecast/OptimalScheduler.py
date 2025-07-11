@@ -29,6 +29,8 @@ class OptimalScheduler:
         self.meteo_data = ForecastManager.obtainmeteoData(latitude, longitude)
         # self.electricity_price = self.__obtainElectricityPrices()
 
+        self.progress = [] #Array with the best cost value on each step
+
 
     def obtainElectricityPrices(self):
         """
@@ -47,7 +49,7 @@ class OptimalScheduler:
         response  = requests.get(url)
 
         # If tomorrow's prices are unavailable, fallback to today's data
-        if response.status_code != 200:
+        if response.status_code != "200":
             logger.debug(f"Request failed with status code {response.status_code}. Fetching data from today")
             today = datetime.today().strftime('%Y%m%d')
             url = f"https://www.omie.es/es/file-download?parents%5B0%5D=marginalpdbc&filename=marginalpdbc_{today}.1"
@@ -65,7 +67,6 @@ class OptimalScheduler:
                 components.pop(-1)  # Remove trailing blank entry
                 hourly_price = float(components[-1])
                 hourly_prices.append(hourly_price)
-        #TODO: hauria d'eliminar el document quan acaba de llegir-lo??
+        os.remove('omie_price_pred.csv')
         return hourly_prices
 
-    # def __initializeGAModel(self, n_particules, funcio, varbound):
