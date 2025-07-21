@@ -2,9 +2,7 @@ import math
 import os
 import threading
 import traceback
-
 import joblib
-
 import schedule
 import time
 import json
@@ -23,6 +21,7 @@ from forecast import Forecaster as Forecast
 import forecast.ForecasterManager as ForecasterManager
 import forecast.OptimalScheduler as OptimalScheduler
 import sqlDB as db
+import blockchain as Blockchain
 
 
 # LOGGER COLORS
@@ -39,6 +38,7 @@ database.update_database("all")
 # database.clean_database_hourly_average()
 forecast = Forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler()
+blockchain = Blockchain.Blockchain()
 
 
 # Ruta per servir fitxers estàtics i imatges des de 'www'
@@ -485,12 +485,6 @@ def save_config():
 
         joblib.dump({'consumption': consumption, 'generation': generation, 'name' : name}, config_dir)
         logger.info(f"Model guardat al fitxer {config_dir}")
-
-
-        # os.makedirs(config_dir, exist_ok=True)
-        #
-        # with open(config_path, 'w') as f:
-        #     json.dump({'consumption': consumption, 'generation': generation, 'name' : name}, f)
         return "OK"
 
     except Exception as e:
@@ -531,7 +525,7 @@ def get_page(page):
         return HTTPError(404, "La pàgina no existeix")
 
 
-##################################### SCHEDULE --> ACTUALITZACIÓ BASE DE DADES DIARIA I NETEJA MENSUAL
+##################################### SCHEDULE
 
 def daily_task():
     logger.debug(f"Running daily task at {datetime.now().strftime('%d-%b-%Y   %X')}")
@@ -562,7 +556,6 @@ def daily_train_model(model_config, model_name):
     algorithm = model_config.get('algorithm')
     scaler = model_config.get('scaler_name', '')
 
-
 def daily_forecast_task():
     logger.debug("STARTING DAILY FORECASTING")
     models_saved = [os.path.basename(f) for f in glob.glob(forecast.models_filepath + "*.pkl")]
@@ -577,12 +570,9 @@ def daily_forecast_task():
             forecast_model(model)
     logger.debug("ENDING DAILY TASKS")
 
-
-
 schedule.every().day.at("00:00").do(daily_task)
 schedule.every().day.at("01:00").do(daily_forecast_task)
 schedule.every().day.at("02:00").do(monthly_task)
-
 
 def run_scheduled_tasks():
     while True:
@@ -591,6 +581,13 @@ def run_scheduled_tasks():
 
 scheduler_thread = threading.Thread(target=run_scheduled_tasks, daemon=True)
 scheduler_thread.start()
+
+
+#####################################
+
+
+
+
 
 #####################################
 
