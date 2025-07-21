@@ -7,7 +7,7 @@ from eth_keys.main import PrivateKey
 class Blockchain:
     def __init__(self):
         self.running_in_ha = "HASSIO_TOKEN" in os.environ
-        self.base_url = "http://supervisor/core/api/" if self.running_in_ha else "http://margarita.udg.edu:28932/api/"
+        self.base_url = "http://magiinterface.udg.edu:3000"
 
 
     def generar_claves_ethereum(self, semilla_texto: str) -> dict:
