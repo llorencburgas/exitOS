@@ -95,7 +95,6 @@ class OptimalScheduler:
     def costDE(self, config):
         """Funció de cost on s'optimitza totes les variables possibles"""
 
-
     def __runDEModel(self, function):
         result = differential_evolution(
             func = function,
