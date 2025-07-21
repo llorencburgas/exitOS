@@ -7,6 +7,7 @@ import schedule
 import time
 import json
 import glob
+import random
 
 import plotly.graph_objs as go
 import plotly.offline as pyo
@@ -482,9 +483,23 @@ def save_config():
         config_dir = forecast.models_filepath + 'config/user.config'
         os.makedirs(forecast.models_filepath + 'config', exist_ok=True)
 
+        numero_entero = random.randint(0, 9999999999)
+        claves = blockchain.generar_claves_ethereum(f"esta es mi frase secreta para generar claves {numero_entero}")
 
-        joblib.dump({'consumption': consumption, 'generation': generation, 'name' : name}, config_dir)
-        logger.info(f"Model guardat al fitxer {config_dir}")
+        logger.info(f"Clau privada: {claves['private_key']}")
+        logger.info(f"Dirección Ethereum : {claves['public_key']}")
+
+        res_add_user = blockchain.registrar_usuario(claves['public_key'], claves['private_key'])
+
+        logger.debug(f"res_add_user: {res_add_user}")
+
+        joblib.dump({ 'consumption': consumption,
+                            'generation': generation,
+                            'name' : name,
+                            'public_key': claves['public_key'],
+                            'private_key': claves['private_key']}, config_dir)
+
+        logger.info(f"Configuració guardada al fitxer {config_dir}")
         return "OK"
 
     except Exception as e:
