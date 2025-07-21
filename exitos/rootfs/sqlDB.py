@@ -1,8 +1,10 @@
 import os
 import sqlite3
+from collections import defaultdict
 
 import numpy as np
 import pandas as pd
+from narwhals import String
 from requests import get
 from datetime import datetime, timedelta, timezone
 import logging
@@ -10,8 +12,6 @@ from typing import Optional, List, Dict, Any
 import tzlocal
 
 logger = logging.getLogger("exitOS")
-
-
 
 
 class SqlDB():
@@ -181,136 +181,6 @@ class SqlDB():
             con.execute("DELETE FROM dades WHERE sensor_id = ?", (sensor_id,))
             con.commit()
 
-    # def update_database(self, sensor_to_update):
-    #     logger.info("INICIANT L'ACTUALITZACIÓ DE LA BASE DE DADES...")
-    #
-    #     con = self.__open_connection__()
-    #
-    #     # obtenim la llista de sensors de la API
-    #     if sensor_to_update == "all":
-    #         sensors_list = pd.json_normalize(
-    #             get(self.base_url + "states", headers=self.headers).json()
-    #         )
-    #     else:
-    #         sensors_list = pd.json_normalize(
-    #             get(self.base_url + "states?filter_entity_id=" + sensor_to_update, headers=self.headers).json()
-    #         )
-    #         if len(sensors_list) == 0:
-    #             logger.error("No existeix un sensor amb l'ID indicat")
-    #             return None
-    #
-    #     local_tz = tzlocal.get_localzone()
-    #     current_date = datetime.now(local_tz)
-    #
-    #     for j in sensors_list.index:
-    #         sensor_id = sensors_list.iloc[j]['entity_id']
-    #
-    #         sensor_info = self.query_select(sensor_id, "*", "sensors", con)
-    #
-    #         if len(sensor_info) == 0:
-    #             cur = con.cursor()
-    #             values_to_insert = (sensor_id,
-    #                                 sensors_list.iloc[j]["attributes.unit_of_measurement"],
-    #                                 True,
-    #                                 False)
-    #             cur.execute("INSERT INTO sensors (sensor_id, units, update_sensor, save_sensor) VALUES (?,?,?,?)", values_to_insert)
-    #             cur.close()
-    #             con.commit()
-    #             sensor_info = None
-    #             last_date_saved = None
-    #             logger.debug(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] Afegit un nou sensor a la base de dades: {sensor_id}")
-    #
-    #         save_sensor = self.query_select(sensor_id, "save_sensor", "sensors", con)[0][0]
-    #         update_sensor = self.query_select(sensor_id, "update_sensor", "sensors", con)[0][0]
-    #
-    #         if save_sensor and update_sensor:
-    #             logger.debug(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] Actualitzant sensor: {sensor_id}")
-    #
-    #             last_date_saved = self.query_select(sensor_id, "timestamp, value", "dades", con)
-    #             if len(last_date_saved) == 0:
-    #                 start_time = current_date - timedelta(days=21)
-    #                 last_value = []
-    #             else:
-    #                 last_date_saved, last_value = last_date_saved[0]
-    #                 start_time = datetime.fromisoformat(last_date_saved)
-    #
-    #             while start_time <= current_date:
-    #                 end_time = start_time + timedelta(days=7)
-    #
-    #                 string_start_date = start_time.strftime('%Y-%m-%dT%H:%M:%S')
-    #                 string_end_date = end_time.strftime('%Y-%m-%dT%H:%M:%S')
-    #
-    #                 url = (
-    #                     self.base_url + "history/period/" + string_start_date +
-    #                     "?end_time=" + string_end_date +
-    #                     "&filter_entity_id=" + sensor_id
-    #                     + "&minimal_response&no_attributes"
-    #                 )
-    #
-    #                 sensor_data_historic = pd.DataFrame()
-    #
-    #                 response = get(url, headers=self.headers)
-    #                 if response.status_code == 200:
-    #                     try:
-    #                         response_data = response.json()
-    #                         flattened_data = [item for sublist in response_data for item in sublist]
-    #                         sensor_data_historic = pd.json_normalize(flattened_data)
-    #
-    #                     except ValueError as e:
-    #                         logger.error(f"Error parsing JSON: {str(e)}")
-    #                 elif response.status_code == 500:
-    #                     logger.critical(f"Server error (500): Internal server error at sensor {sensor_id}")
-    #                     sensor_data_historic = pd.DataFrame()
-    #                 else:
-    #                     logger.error(f"Request failed with status code: {response.status_code}")
-    #                     sensor_data_historic = pd.DataFrame()
-    #
-    #                 logger.info(response.json())
-    #                 logger.debug(f"start_date {string_start_date}")
-    #                 logger.debug(f"end_date {string_end_date}")
-    #                 logger.debug(f"url {url}")
-    #                 logger.debug(f"status_code {response.status_code}")
-    #                 logger.debug(f"response {response.text}")
-    #                 logger.info(f"sensor_data_historic {sensor_data_historic}")
-    #
-    #                 all_data = []
-    #                 if len(sensor_data_historic) > 0:
-    #                     logger.info("sensor_data_historic has values (?)")
-    #                     for column in sensor_data_historic.columns:
-    #                         data_point = sensor_data_historic[column][0]
-    #                         logger.critical(f"DATA: {data_point}")
-    #                         all_data.append({
-    #                             'timestamp': data_point['last_changed'],
-    #                             'value': data_point['state']
-    #                         })
-    #
-    #                         #això hauria d'estar dins el FOR??
-    #                     df = pd.DataFrame(all_data)
-    #                     logger.critical(df.columns)
-    #                     df['value'] = pd.to_numeric(df['value'], errors='coerce')
-    #                     df['timestamp'] = pd.to_datetime(df['timestamp'])
-    #                     df['hour'] = df['timestamp'].dt.floor('H')
-    #
-    #                     df_grouped = df.groupby('hour').mean(numeric_only=True).reset_index()
-    #
-    #                     cur = con.cursor()
-    #                     for idx, row in df_grouped.iterrows():
-    #                         mean_value = row['value']
-    #                         time_stamp = row['hour'].isoformat()
-    #
-    #                         if np.isnan(mean_value):
-    #                             continue  # saltem valors nuls
-    #
-    #                         # Només inserim si ha canviat respecte l'últim valor
-    #                         if last_value != mean_value:
-    #                             last_value = mean_value
-    #                             cur.execute(
-    #                                 "INSERT INTO dades (sensor_id, timestamp, value) VALUES (?,?,?)",
-    #                                 (sensor_id, time_stamp, mean_value)
-    #                             )
-    #                     cur.close()
-    #                     con.commit()
-
     def clean_database_hourly_average(self):
         logger.warning("INICIANT NETEJA DE LA BASE DE DADES")
         with self._get_connection() as con:
@@ -322,7 +192,7 @@ class SqlDB():
                 logger.info("La base de dades està buida. No s'executa la neteja.")
                 return
             cur.close()
-            
+
             sensor_ids = [row[0] for row in con.execute("SELECT DISTINCT sensor_id FROM dades").fetchall()]
 
             limit_date = (datetime.now() - timedelta(days=21)).isoformat()
@@ -349,7 +219,7 @@ class SqlDB():
         logger.info("NETEJA COMPLETADA")
         self.vacuum()
 
-    def old_update_database(self, sensor_to_update):
+    def update_database(self, sensor_to_update):
         """
         Actualitza la base de dades amb la API del Home Assistant.
         """
@@ -540,6 +410,50 @@ class SqlDB():
             logger.debug("VACUUMING")
             con.execute("VACUUM")
             logger.debug("VACUUM COMPLETE")
+
+    def get_active_sensors_by_type(self, sensor_type: String = 'consum'):
+        #TODO: mirar si posar una booleana per indicar tipus d'unitats del sensor
+        with self._get_connection() as con:
+            cursor = con.cursor()
+
+            cursor.execute("""
+                SELECT sensor_id FROM sensors WHERE save_sensor = 1 AND sensor_type = ?
+                """, (sensor_type,)
+            )
+            sensors = cursor.fetchall()
+
+            resultat = {}
+            for sensor in sensors:
+                cursor.execute("""
+                    SELECT MIN(timestamp), MAX(timestamp), COUNT(*) FROM dades WHERE sensor_id = ?
+                """, (sensor[0],))
+
+                fila = cursor.fetchone()
+                min_ts, max_ts, total_valors = fila
+
+                if min_ts and max_ts:
+                    min_dt = datetime.fromisoformat(min_ts)
+                    max_dt = datetime.fromisoformat(max_ts)
+                    total_hores = int((max_dt - min_dt).total_seconds() //3600) + 1
+
+                    resultat[sensor[0]] = {
+                        "calendar_range": (min_ts, max_ts),
+                        "active_hours": total_hores
+                    }
+                else:
+                    resultat[sensor[0]] = {
+                        "calendar_range": None,
+                        "active_hours": 0
+                    }
+
+                return resultat
+
+
+
+
+
+
+
 
 
 

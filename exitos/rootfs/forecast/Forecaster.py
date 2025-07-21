@@ -7,6 +7,7 @@ import holidays
 import logging
 import os
 import glob
+import requests
 
 logger = logging.getLogger("exitOS")
 
@@ -571,6 +572,7 @@ class Forecaster:
         self.db['initial_data'] = data
         self.db['sensors_id'] = sensors_id
         self.db['extra_sensors'] = extra_sensors_df
+        logger.info(f"METEO DATA IS: {meteo_data}")
         self.db['meteo_data_is_selected'] = (meteo_data if meteo_data is None else True)
 
         self.save_model(filename)

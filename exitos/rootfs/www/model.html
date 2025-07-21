@@ -433,6 +433,7 @@
 
         if(modelConfigs[selectedModel]){
             Object.keys(modelConfigs[selectedModel]).forEach(key => {
+
                 let label = document.createElement('label');
                 label.innerText = key + ": ";
                 // configDiv.appendChild(label);
@@ -446,6 +447,8 @@
                     optionElement.value = option;
                     optionElement.innerText = option === null ? 'Null' : option;
 
+
+                    if(key === 'algorithm') {key = 'KNN_algorithm'}
                     if(savedParams && savedParams[key] === option){
                         optionElement.selected = true;
                     }
@@ -469,7 +472,6 @@
      fetch('get_model_config/' + modelPath)
         .then(response => response.text())
         .then(data => {
-            console.log(data);
             const lines = data.split('\n');
             const config = {};
 
@@ -481,7 +483,6 @@
                 }
             });
 
-            console.log(config);
 
             if(config['algorithm'] === 'auto') document.getElementById("modelSelect").value = "AUTO";
             else document.getElementById("modelSelect").value = config["algorithm"];
@@ -493,14 +494,8 @@
             else if (config["scaler"] === "standard") { document.getElementById("scaled").value = "Standard";}
             else{ document.getElementById("scaled").value = config["scaler"];}
 
-            console.log("CONFIG: ",JSON.stringify(config));
             updateModelConfig(config);
-            for (const [key, value] of Object.entries(config)) {
-                const select = document.querySelector(`select[name="${key}"]`);
-                if (select) {
-                    select.value = value;
-                }
-            }
+
 
             // Fill sensors (if single select, just select it)
             const sensorSelect = document.getElementById("sensorsId");
@@ -517,11 +512,8 @@
 
             // Marcar el checkbox de meteo_data si està habilitat
             const meteoDataCheckbox = document.getElementById("meteoData");
-            if (config['meteo_data'] === 'true') {
-                meteoDataCheckbox.checked = true;
-            } else {
-                meteoDataCheckbox.checked = false;
-            }
+            meteoDataCheckbox.checked = config['meteo_data'] === 'true';
+            console.log("METEO DATA: ", config['meteo_data']);
         });
 
      fetch('get_forecast_data/' + modelPath)

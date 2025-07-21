@@ -17,6 +17,7 @@ ADD ./rootfs/logging_config.py .
 
 #Forecast
 COPY ./rootfs/forecast /forecast/
+COPY rootfs/abstraction /abstraction/
 
 #HTML and images
 COPY ./rootfs/www /www/

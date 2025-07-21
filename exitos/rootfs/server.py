@@ -35,7 +35,7 @@ PORT = 55023
 #INICIACIÓ DE L'APLICACIÓ I LA BASE DE DADES
 app = Bottle()
 database = db.SqlDB()
-database.old_update_database("all")
+database.update_database("all")
 # database.clean_database_hourly_average()
 forecast = Forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler()
@@ -509,9 +509,11 @@ def delete_config():
 
 @app.route('/optimize')
 def optimize():
-    logger.info("preus: ")
-    prices = optimalScheduler.obtainElectricityPrices()
-    logger.info(prices)
+    logger.debug("botó optimitzar")
+    result = optimalScheduler.optimize()
+
+
+
     return "OK"
 
 # Ruta dinàmica per a les pàgines HTML
@@ -536,7 +538,7 @@ def daily_task():
 
     logger.debug("STARTING DAILY SENSOR UPDATE")
 
-    database.old_update_database("all")
+    database.update_database("all")
     database.clean_database_hourly_average()
 
     logger.debug("ENDING DAILY SENSOR UPDATE")
