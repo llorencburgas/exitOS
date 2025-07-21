@@ -15,6 +15,7 @@ ADD ./rootfs/server.py .
 ADD ./rootfs/bottle.py .
 ADD ./rootfs/sqlDB.py .
 ADD ./rootfs/logging_config.py .
+ADD ./rootfs/blockchain.py .
 
 #Forecast
 COPY ./rootfs/forecast /forecast/
