@@ -89,6 +89,7 @@
                 <label for="global-generation"> Generació Global:
                   <select name="global-generation" id="global-generation"
                         {{'disabled' if user_data['locked'] else ''}}>
+                    <option value="None">None</option>
                     %for sensor in sensors:
                     <option value="{{sensor}}" {{'selected' if sensor == user_data['generation'] else ''}} >{{sensor}}</option>
                     %end
@@ -151,7 +152,7 @@
     const elements = form.querySelectorAll('input, select, text, button');
     console.log(elements);
     elements.forEach(el => {
-      if( el.id !== 'unlockBtn') el.disabled = false;
+      if( el.id !== 'unlockBtn') el.disabled = true;
     });
 
     const consumption = document.getElementById('global-consumption').value;

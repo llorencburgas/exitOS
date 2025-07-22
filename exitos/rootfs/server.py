@@ -495,6 +495,8 @@ def save_config():
         logger.debug(f"res_add_user: {res_add_user}")
 
 
+
+
         joblib.dump({ 'consumption': consumption,
                             'generation': generation,
                             'name' : name,
@@ -502,10 +504,12 @@ def save_config():
                             'private_key': claves['private_key']}, config_dir)
 
         logger.info(f"Configuració guardada al fitxer {config_dir}")
+
+        certificate_hourly_task()
         return "OK"
 
     except Exception as e:
-        logger.error(f"Error deleting config file :c : {str(e)}")
+        logger.error(f"Error saving config file :c : {str(e)}")
         logger.error(traceback.format_exc())
         return f"Error! : {str(e)}"
 
@@ -623,14 +627,18 @@ def certificate_hourly_task():
         public_key = aux['public_key']
         private_key = aux['private_key']
 
-        database.update_database(consumption)
-        database.update_database(generation)
-        consumption_data = database.get_latest_data_from_sensor(sensor_id=consumption)
-        generation_data = database.get_latest_data_from_sensor(sensor_id=generation)
-
         now = datetime.now()
 
-        to_send_string = f"Consumption / {consumption_data[0]} / {consumption_data[1]} / Generation / {generation_data[0]} / {generation_data[1]} / {public_key} / {now}"
+        database.update_database(consumption)
+        consumption_data = database.get_latest_data_from_sensor(sensor_id=consumption)
+
+        if generation == 'None':
+            to_send_string = f"Consumption / {consumption_data[0]} / {consumption_data[1]} / Generation / None / None / {public_key} / {now}"
+        else:
+            database.update_database(generation)
+            generation_data = database.get_latest_data_from_sensor(sensor_id=generation)
+            to_send_string = f"Consumption / {consumption_data[0]} / {consumption_data[1]} / Generation / {generation_data[0]} / {generation_data[1]} / {public_key} / {now}"
+
 
         res_certify = blockchain.get_login_hash_and_sign(public_key, private_key, to_send_string)
 
@@ -668,16 +676,6 @@ def run_scheduled_tasks():
 
 scheduler_thread = threading.Thread(target=run_scheduled_tasks, daemon=True)
 scheduler_thread.start()
-
-
-#####################################
-
-
-
-
-
-
-
 
 #####################################
 

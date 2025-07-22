@@ -457,7 +457,6 @@ class Forecaster:
 
         return merged_data
 
-
     def create_model(self, data, sensors_id, y, lat, lon, algorithm=None, params=None, escalat=None,
                          max_time=None, filename='newModel', meteo_data: pd.DataFrame = None, extra_sensors_df=None):
         """

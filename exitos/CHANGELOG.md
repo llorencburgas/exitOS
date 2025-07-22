@@ -1,4 +1,7 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
+## 1.1.5
+- Added blockchain-based logging of community-wide energy consumption and generation data.
+
 ## 1.1
 - Developing new function
 
