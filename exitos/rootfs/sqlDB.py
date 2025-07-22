@@ -222,13 +222,15 @@ class SqlDB():
         """
         Actualitza la base de dades amb la API del Home Assistant.
         """
-        logger.info("Iniciant l'actualització de la base de dades...")
+        all_sensors_debug = False
+
 
         #obtenim la llista de sensors de la API
         if sensor_to_update == "all":
             sensors_list = pd.json_normalize(
                 get(self.base_url + "states", headers=self.headers).json()
             )
+            all_sensors_debug = True
         else:
             sensors_list = pd.json_normalize(
                 get(self.base_url + "states/" + sensor_to_update, headers=self.headers).json()
@@ -237,6 +239,8 @@ class SqlDB():
                 logger.error("No existeix un sensor amb l'ID indicat")
                 return None
 
+        if all_sensors_debug:
+            logger.info("Iniciant l'actualització de la base de dades...")
 
         local_tz = tzlocal.get_localzone()  # Gets system local timezone (e.g., 'Europe/Paris')
         current_date = datetime.now(local_tz)
@@ -336,8 +340,8 @@ class SqlDB():
                         cur.close()
                         con.commit()
                         start_time += timedelta(days = 7)
-
-        logger.info(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] TOTS ELS SENSORS HAN ESTAT ACTUALITZATS")
+        if all_sensors_debug:
+            logger.info(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] TOTS ELS SENSORS HAN ESTAT ACTUALITZATS")
 
     def get_lat_long(self):
         """

@@ -614,6 +614,7 @@ def daily_forecast_task():
     logger.debug("ENDING DAILY TASKS")
 
 def certificate_hourly_task():
+    logger.info(f"Running certificate hourly task")
     config_dir = forecast.models_filepath + 'config/user.config'
     if os.path.exists(config_dir):
         aux = joblib.load(config_dir)
@@ -647,6 +648,7 @@ def certificate_hourly_task():
             data_to_save = dict(OrderedDict(sorted(data_to_save.items())[-10:]))
 
             joblib.dump(data_to_save, full_path)
+        logger.info("CERTIFICAT HORARI COMPLETAT")
 
         return consumption_data
 
@@ -657,7 +659,7 @@ def certificate_hourly_task():
 schedule.every().day.at("00:00").do(daily_task)
 schedule.every().day.at("01:00").do(daily_forecast_task)
 schedule.every().day.at("02:00").do(monthly_task)
-schedule.every().hour.at(":30").do(certificate_hourly_task)
+schedule.every().hour.at(":00").do(certificate_hourly_task)
 
 def run_scheduled_tasks():
     while True:

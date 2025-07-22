@@ -151,8 +151,7 @@
     const elements = form.querySelectorAll('input, select, text, button');
     console.log(elements);
     elements.forEach(el => {
-      if( el.id !== 'unlockBtn') el.disabled = true;
-      if( el.id !== 'blockchaintest') el.disabled = true;
+      if( el.id !== 'unlockBtn') el.disabled = false;
     });
 
     const consumption = document.getElementById('global-consumption').value;
