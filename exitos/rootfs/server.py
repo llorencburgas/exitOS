@@ -16,6 +16,7 @@ import pandas as pd
 from bottle import Bottle, template, run, static_file, HTTPError, request, response
 from datetime import datetime, timedelta
 from logging_config import setup_logger
+from collections import OrderedDict
 
 # import forecast.Forecaster as Forecast
 from forecast import Forecaster as Forecast
@@ -35,7 +36,7 @@ PORT = 55023
 #INICIACIÓ DE L'APLICACIÓ I LA BASE DE DADES
 app = Bottle()
 database = db.SqlDB()
-database.update_database("all")
+# database.update_database("all")
 # database.clean_database_hourly_average()
 forecast = Forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler()
@@ -483,15 +484,16 @@ def save_config():
         config_dir = forecast.models_filepath + 'config/user.config'
         os.makedirs(forecast.models_filepath + 'config', exist_ok=True)
 
+        database.update_sensor_active(sensor=consumption, active=True)
+        database.update_sensor_active(sensor=generation, active=True)
+
         numero_entero = random.randint(0, 9999999999)
         claves = blockchain.generar_claves_ethereum(f"esta es mi frase secreta para generar claves {numero_entero}")
-
         logger.info(f"Clau privada: {claves['private_key']}")
         logger.info(f"Dirección Ethereum : {claves['public_key']}")
-
         res_add_user = blockchain.registrar_usuario(claves['public_key'], claves['private_key'])
-
         logger.debug(f"res_add_user: {res_add_user}")
+
 
         joblib.dump({ 'consumption': consumption,
                             'generation': generation,
@@ -511,10 +513,36 @@ def save_config():
 def delete_config():
     user_config_path = forecast.models_filepath + '/config/user.config'
     if os.path.exists(user_config_path):
+        aux = joblib.load(user_config_path)
+        consumption = aux['consumption']
+        generation = aux['generation']
+        database.update_sensor_active(sensor=consumption, active=False)
+        database.update_sensor_active(sensor=generation, active=False)
+
         os.remove(user_config_path)
         return 'Config file deleted successfully'
     else:
         return 'Config file not found'
+
+@app.route('/get_res_certify_data')
+def get_res_certify_data():
+    try:
+        full_path = os.path.join(forecast.models_filepath, "config", "res_certify.pkl")
+        status = "ERROR"
+        data = {}
+
+        if os.path.exists(full_path):
+            data = joblib.load(full_path)
+            status = "OK"
+
+        return json.dumps({
+            "status": status,
+            "data": data
+        })
+
+    except Exception as e:
+        logger.error(traceback.format_exc())
+        return f"Error! : {str(e)}"
 
 @app.route('/optimize')
 def optimize():
@@ -585,9 +613,51 @@ def daily_forecast_task():
             forecast_model(model)
     logger.debug("ENDING DAILY TASKS")
 
+def certificate_hourly_task():
+    config_dir = forecast.models_filepath + 'config/user.config'
+    if os.path.exists(config_dir):
+        aux = joblib.load(config_dir)
+        consumption = aux['consumption']
+        generation = aux['generation']
+        public_key = aux['public_key']
+        private_key = aux['private_key']
+
+        database.update_database(consumption)
+        database.update_database(generation)
+        consumption_data = database.get_latest_data_from_sensor(sensor_id=consumption)
+        generation_data = database.get_latest_data_from_sensor(sensor_id=generation)
+
+        now = datetime.now()
+
+        to_send_string = f"Consumption / {consumption_data[0]} / {consumption_data[1]} / Generation / {generation_data[0]} / {generation_data[1]} / {public_key} / {now}"
+
+        res_certify = blockchain.get_login_hash_and_sign(public_key, private_key, to_send_string)
+
+        if res_certify:
+            full_path = os.path.join(forecast.models_filepath, "config", "res_certify.pkl")
+
+            if os.path.exists(full_path):
+                data_to_save = joblib.load(full_path)
+            else:
+                data_to_save = {}
+
+            now = now.strftime("%Y-%m-%d %H:%M")
+
+            data_to_save[now] = res_certify['firma_hex']
+            data_to_save = dict(OrderedDict(sorted(data_to_save.items())[-10:]))
+
+            joblib.dump(data_to_save, full_path)
+
+        return consumption_data
+
+    else:
+        logger.warning(f"Encara no t'has unit a cap comunitat! \n"
+                       f"Recorda completar la teva configuració d'usuari des de l'apartat 'configuració' de la pàgina")
+
 schedule.every().day.at("00:00").do(daily_task)
 schedule.every().day.at("01:00").do(daily_forecast_task)
 schedule.every().day.at("02:00").do(monthly_task)
+schedule.every().hour.at(":30").do(certificate_hourly_task)
 
 def run_scheduled_tasks():
     while True:
@@ -599,6 +669,9 @@ scheduler_thread.start()
 
 
 #####################################
+
+
+
 
 
 

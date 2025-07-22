@@ -64,17 +64,16 @@ class SqlDB():
     def _get_connection(self):
         return sqlite3.connect(self.database_file)
 
-    def query_select(self, table:str, column:str, sensor_id: str, con) -> List[Any]:
+    def query_select(self, table:str, column:str, sensor_id: str, con = None) -> List[Any]:
         """
         Executa una query SQL a la base de dades
         """
+        if con is None: con = self._get_connection()
+
         cur = con.cursor()
         cur.execute(f"SELECT {column} FROM {table} WHERE sensor_id = ?", (sensor_id,))
         result = cur.fetchone()
         cur.close()
-        return result
-
-
         return result
 
     def get_all_sensors(self) -> Optional[pd.DataFrame]:
@@ -232,7 +231,7 @@ class SqlDB():
             )
         else:
             sensors_list = pd.json_normalize(
-                get(self.base_url + "states?filter_entity_id=" + sensor_to_update, headers=self.headers).json()
+                get(self.base_url + "states/" + sensor_to_update, headers=self.headers).json()
             )
             if len(sensors_list) == 0:
                 logger.error("No existeix un sensor amb l'ID indicat")
@@ -448,7 +447,17 @@ class SqlDB():
 
                 return resultat
 
-
+    def get_latest_data_from_sensor(self, sensor_id):
+        with self._get_connection() as con:
+            cursor = con.cursor()
+            cursor.execute(""" SELECT timestamp, value 
+                               FROM dades 
+                               WHERE sensor_id = ? 
+                               ORDER BY timestamp DESC
+                                LIMIT 1""", (sensor_id,))
+            aux = cursor.fetchone()
+            cursor.close()
+            return aux
 
 
 

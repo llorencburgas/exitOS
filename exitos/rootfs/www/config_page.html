@@ -28,6 +28,14 @@
       border: 1px solid #ccc;
       display: none;
     }
+    #last-link-div{
+        max-height: 200px;
+        overflow: auto;
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        display: none;
+    }
     .map-container{
       display: flex;
       flex-direction: row;
@@ -64,7 +72,6 @@
             <div class="content-section">
               <h1>Configuració d'usuari</h1>
 
-<!--              <form action="" method="POST">-->
                 <label for="user-name">Nom:
                     <input type="text" name="user-name" id="user-name" placeholder="Entra el teu nom"
                            value ="{{user_data['name']}}" {{'disabled' if user_data['locked'] else ''}} >
@@ -94,16 +101,17 @@
                   <div id="info" style="display:none;">
                     <p><strong>Direcció actual:</strong> <span id="address"></span></p>
                     <p style="margin-top: 11px; font-size: 10px; font-style: italic; margin-bottom: 0;line-height: 1;">Aquesta ubicació s'obté a partir de les dades de Home Assistant.
-                    En cas de ser incorrectes modificar-les des de la configuració del programa Home Assistant.</p>
+                    En cas de ser incorrectes modifica-les des de la configuració del programa Home Assistant.</p>
                   </div>
                 </div>
 
-              <div>
-                <button type="button" id="lockBtn" onclick="lockForm()"><i style="font-size: medium" class="fa-solid fa-arrow-right-to-bracket"></i> Unir Comunitat </button>
-                <button type="button" id="unlockBtn" onclick="unlockForm()"><i style="font-size: medium" class="fa-solid fa-arrow-right-from-bracket"></i> Abandonar Comunitat </button>
-              </div>
-<!--              </form>-->
-
+                <div>
+                    <button type="button" id="lockBtn" onclick="lockForm()"><i style="font-size: medium" class="fa-solid fa-arrow-right-to-bracket"></i> Unir Comunitat </button>
+                    <button type="button" id="unlockBtn" onclick="unlockForm()"><i style="font-size: medium" class="fa-solid fa-arrow-right-from-bracket"></i> Abandonar Comunitat </button>
+                </div>
+                <div id="last-link-div">
+                    <h3 style="margin-bottom:3px">Últims links certificats: </h3>
+                </div>
             </div>
         </div>
 
@@ -144,6 +152,7 @@
     console.log(elements);
     elements.forEach(el => {
       if( el.id !== 'unlockBtn') el.disabled = true;
+      if( el.id !== 'blockchaintest') el.disabled = true;
     });
 
     const consumption = document.getElementById('global-consumption').value;
@@ -175,6 +184,47 @@
     .then(data => console.log('Config deleted:', data))
     .catch(err => console.error('Error deleting config:', err));
   }
+
+  function lockButtons(){
+      const button = document.getElementById('lockBtn');
+
+      if ({{ 'true' if user_data['locked'] else 'false' }}) {
+            button.disabled = true;
+        }
+  }
+
+  function get_res_certify_data(){
+      fetch('get_res_certify_data')
+          .then(response => response.json())
+          .then(data => {
+              const info_box = document.getElementById('last-link-div');
+              if(data.status === "OK"){
+                  info_box.style.display = 'block';
+                  info_box.style.width = '80%';
+
+                  console.log(data.data);
+
+                  Object.entries(data.data).reverse().forEach(([timestamp, value]) => {
+                      const line = document.createElement('p');
+                      const date = document.createElement('strong');
+                      const link = document.createElement('span');
+
+                      date.innerHTML = timestamp + ": ";
+                      link.innerHTML = value;
+
+                      line.appendChild(date);
+                      line.appendChild(link);
+                      info_box.appendChild(line);
+                  });
+              }
+              else{
+                  info_box.disabled = 'None';
+              }
+          })
+  }
+
+  get_res_certify_data();
+  lockButtons()
 
 </script>
 
