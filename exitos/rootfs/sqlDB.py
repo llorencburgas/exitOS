@@ -201,18 +201,25 @@ class SqlDB():
                 df = pd.read_sql_query(
                     f"SELECT timestamp, value FROM dades WHERE sensor_id = ? AND timestamp >= ?", con, params=(sensor_id,limit_date)
                 )
+                if df.empty:
+                    logger.info(f"No hi ha dades per al sensor {sensor_id} dins el període. S'omet.")
+                    continue
+
                 df['timestamp'] = pd.to_datetime(df['timestamp'], format='ISO8601', errors='coerce')
                 df['value'] = pd.to_numeric(df['value'], errors='coerce')
                 df['hour'] = df['timestamp'].dt.floor('h')
 
-                df_grouped = df.groupby('hour').mean(numeric_only=True).reset_index()
-
+                #Agrupem horariament, mantenint NaN si no hi ha valors vàlids
+                df_grouped = df.groupby('hour', as_index=False)['value'].mean()
 
                 con.execute("DELETE FROM dades WHERE sensor_id = ? AND timestamp >= ?", (sensor_id, limit_date))
+
+                rows_to_insert = [
+                    (sensor_id, row['hour'].isoformat(), None if pd.isna(row['value']) else row['value'])
+                    for _, row in df_grouped.iterrows()
+                ]
                 con.executemany(
-                    "INSERT INTO dades (sensor_id, timestamp, value) VALUES (?, ?, ?)",
-                    [(sensor_id, row['hour'].isoformat(), row['value']) for _,
-                    row in df_grouped.iterrows()]
+                    "INSERT INTO dades (sensor_id, timestamp, value) VALUES (?, ?, ?)", rows_to_insert
                 )
                 con.commit()
         logger.info("NETEJA COMPLETADA")

@@ -552,8 +552,8 @@ def get_res_certify_data():
 def optimize():
     logger.debug("botó optimitzar")
 
-    database.clean_database_hourly_average() 
-    result = optimalScheduler.optimize()
+    database.clean_database_hourly_average()
+    //result = optimalScheduler.optimize()
 
 
 
