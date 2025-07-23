@@ -553,9 +553,7 @@ def get_res_certify_data():
 @app.route('/optimize')
 def optimize():
     logger.debug("botó optimitzar")
-    #result = optimalScheduler.optimize()
-
-
+    result = optimalScheduler.optimize()
 
     return "OK"
 
@@ -636,11 +634,24 @@ def certificate_hourly_task():
         consumption_timestamp = to_datetime(consumption_data[0]).strftime("%Y-%m-%d %H:%M")
 
         if generation == 'None':
-            to_send_string = f"Consumption_{consumption_timestamp}_{consumption_data[1]}_Generation_None_None_{public_key}_{now}"
+            generation_timestamp = None
+            generation_value = None
         else:
             database.update_database(generation)
             generation_data = database.get_latest_data_from_sensor(sensor_id=generation)
-            to_send_string = f"Consumption_{consumption_timestamp}_{consumption_data[1]}_Generation_{generation_data[0]}_{generation_data[1]}_{public_key}_{now}"
+            generation_timestamp = to_datetime(generation_data[0]).strftime("%Y-%m-%d %H:%M")
+            generation_value = generation_data[1]
+
+        if consumption == 'None':
+            consumption_timestamp = None
+            consumption_value = None
+        else:
+            database.update_database(consumption)
+            consumption_data = database.get_latest_data_from_sensor(sensor_id=consumption)
+            consumption_timestamp = to_datetime(consumption_data[0]).strftime("%Y-%m-%d %H:%M")
+            consumption_value = consumption_data[1]
+
+        to_send_string = f"Consumption_{consumption_timestamp}_{consumption_value}_Generation_{generation_timestamp}_{generation_value}_{public_key}_{now}"
 
         res_certify = blockchain.certify_string(public_key, private_key, to_send_string)
 

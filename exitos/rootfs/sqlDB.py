@@ -422,7 +422,7 @@ class SqlDB():
             logger.debug("VACUUM COMPLETE")
 
     def get_active_sensors_by_type(self, sensor_type: String = 'consum'):
-        #TODO: mirar si posar una booleana per indicar tipus d'unitats del sensor
+        #TODO: mirar si posar una booleana per indicar tipus d'unitats (Kw) del sensor
         with self._get_connection() as con:
             cursor = con.cursor()
 
@@ -456,7 +456,7 @@ class SqlDB():
                         "active_hours": 0
                     }
 
-                return resultat
+            return resultat
 
     def get_latest_data_from_sensor(self, sensor_id):
         with self._get_connection() as con:

@@ -80,6 +80,7 @@
                 <label for="global-consumption"> Consum Global:
                   <select name="global-consumption" id="global-consumption"
                             {{'disabled' if user_data['locked'] else ''}}>
+                    <option value="None">None</option>
                     %for sensor in sensors:
                         <option value="{{sensor}}" {{'selected' if sensor == user_data['consumption'] else ''}}> {{sensor}} </option>
                     %end
