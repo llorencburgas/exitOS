@@ -553,7 +553,7 @@ def optimize():
     logger.debug("botó optimitzar")
 
     database.clean_database_hourly_average()
-    //result = optimalScheduler.optimize()
+    #result = optimalScheduler.optimize()
 
 
 
