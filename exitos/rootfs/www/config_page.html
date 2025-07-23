@@ -205,12 +205,22 @@
                   console.log(data.data);
 
                   Object.entries(data.data).reverse().forEach(([timestamp, value]) => {
+                      const link_header = "http://magiinterface.udg.edu:3000/certificationVerified/getCertificate/"
                       const line = document.createElement('p');
                       const date = document.createElement('strong');
-                      const link = document.createElement('span');
+                      const link = document.createElement('a');
 
                       date.innerHTML = timestamp + ": ";
-                      link.innerHTML = value;
+
+                      if(value === "Error"){
+                        link.innerHTML = "  Error en el certificat";
+                      }
+                      else{
+                        link.innerHTML = "  Rebut Correctament";
+                        link.href = link_header + value;
+                      }
+                      link.style.textDecoration = 'none';
+                      link.style.color = "#0f2418"
 
                       line.appendChild(date);
                       line.appendChild(link);
@@ -218,7 +228,7 @@
                   });
               }
               else{
-                  info_box.disabled = 'None';
+                  info_box.style.display = 'None';
               }
           })
   }

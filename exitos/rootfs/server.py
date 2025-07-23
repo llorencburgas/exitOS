@@ -12,6 +12,7 @@ import random
 import plotly.graph_objs as go
 import plotly.offline as pyo
 import pandas as pd
+from pandas import to_datetime
 
 from bottle import Bottle, template, run, static_file, HTTPError, request, response
 from datetime import datetime, timedelta
@@ -446,6 +447,8 @@ def get_forecast_data(model_name):
 @app.route('/config_page')
 def config_page():
 
+    certificate_hourly_task()
+
     sensors_id = database.get_all_saved_sensors_id(kw=True)
     user_lat = optimalScheduler.latitude
     user_long = optimalScheduler.longitude
@@ -465,6 +468,7 @@ def config_page():
         user_data['consumption'] = aux['consumption']
         user_data['generation'] = aux['generation']
         user_data['locked'] = True
+
 
     return template('./www/config_page.html',
                     sensors = sensors_id,
@@ -538,6 +542,7 @@ def get_res_certify_data():
         if os.path.exists(full_path):
             data = joblib.load(full_path)
             status = "OK"
+            logger.warning(data)
 
         return json.dumps({
             "status": status,
@@ -551,8 +556,6 @@ def get_res_certify_data():
 @app.route('/optimize')
 def optimize():
     logger.debug("botó optimitzar")
-
-    database.clean_database_hourly_average()
     #result = optimalScheduler.optimize()
 
 
@@ -633,16 +636,16 @@ def certificate_hourly_task():
 
         database.update_database(consumption)
         consumption_data = database.get_latest_data_from_sensor(sensor_id=consumption)
+        consumption_timestamp = to_datetime(consumption_data[0]).strftime("%Y-%m-%d %H:%M")
 
         if generation == 'None':
-            to_send_string = f"Consumption / {consumption_data[0]} / {consumption_data[1]} / Generation / None / None / {public_key} / {now}"
+            to_send_string = f"Consumption_{consumption_timestamp}_{consumption_data[1]}_Generation_None_None_{public_key}_{now}"
         else:
             database.update_database(generation)
             generation_data = database.get_latest_data_from_sensor(sensor_id=generation)
-            to_send_string = f"Consumption / {consumption_data[0]} / {consumption_data[1]} / Generation / {generation_data[0]} / {generation_data[1]} / {public_key} / {now}"
+            to_send_string = f"Consumption_{consumption_timestamp}_{consumption_data[1]}_Generation_{generation_data[0]}_{generation_data[1]}_{public_key}_{now}"
 
-
-        res_certify = blockchain.get_login_hash_and_sign(public_key, private_key, to_send_string)
+        res_certify = blockchain.certify_string(public_key, private_key, to_send_string)
 
         if res_certify:
             full_path = os.path.join(forecast.models_filepath, "config", "res_certify.pkl")
@@ -654,7 +657,12 @@ def certificate_hourly_task():
 
             now = now.strftime("%Y-%m-%d %H:%M")
 
-            data_to_save[now] = res_certify['firma_hex']
+            is_success = res_certify['success']
+            if is_success:
+                data_to_save[now] = res_certify['response']['transactionHash']
+            else:
+                data_to_save[now] = "Error"
+
             data_to_save = dict(OrderedDict(sorted(data_to_save.items())[-10:]))
 
             joblib.dump(data_to_save, full_path)
