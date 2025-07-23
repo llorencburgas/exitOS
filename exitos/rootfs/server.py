@@ -551,6 +551,8 @@ def get_res_certify_data():
 @app.route('/optimize')
 def optimize():
     logger.debug("botó optimitzar")
+
+    database.clean_database_hourly_average() 
     result = optimalScheduler.optimize()
 
 
