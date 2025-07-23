@@ -197,16 +197,16 @@
 
         const tdCheckbox = document.createElement("td")
         const labelCheckbox = document.createElement("label");
+
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
         checkbox.classList.add("checkboxes");
         checkbox.name = "sensor_id";
         checkbox.value = id;
+
         if(save === 1){
             checkbox.checked = true;
         }
-        labelCheckbox.appendChild(checkbox);
-        tdCheckbox.appendChild(labelCheckbox);
 
         const tdName = document.createElement("td");
         tdName.textContent = name;
@@ -228,11 +228,6 @@
         const optionGenerator = new Option("Generator", "Generator");
         const optionNonImportant = new Option("No Important", "No Important");
 
-        select.appendChild(optionConsum);
-        select.appendChild(optionHidden);
-        select.appendChild(optionGenerator);
-        select.appendChild(optionNonImportant);
-
         if (save === 0){select.disabled = true}
 
         if (type === "Generator"){optionGenerator.selected = true;}
@@ -240,7 +235,17 @@
         else if (type === "No Important"){optionNonImportant.selected = true;}
         else {optionHidden.selected = true;}
 
+        checkbox.addEventListener("change", function(){
+            select.disabled = !checkbox.checked;
+        })
 
+        labelCheckbox.appendChild(checkbox);
+        tdCheckbox.appendChild(labelCheckbox);
+
+        select.appendChild(optionConsum);
+        select.appendChild(optionHidden);
+        select.appendChild(optionGenerator);
+        select.appendChild(optionNonImportant);
 
         labelSelect.appendChild(select);
         tdSelect.appendChild(labelSelect);

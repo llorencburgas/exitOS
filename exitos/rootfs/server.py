@@ -96,7 +96,6 @@ def get_sensors():
         error_message = traceback.format_exc()
         return f"Error! Alguna cosa ha anat malament :c : {str(ex)}\nFull Traceback:\n{error_message}"
 
-
 @app.get('/databaseView')
 def database_graph_page():
     sensors_id = database.get_all_saved_sensors_id()
@@ -446,8 +445,6 @@ def get_forecast_data(model_name):
 
 @app.route('/config_page')
 def config_page():
-
-    certificate_hourly_task()
 
     sensors_id = database.get_all_saved_sensors_id(kw=True)
     user_lat = optimalScheduler.latitude
