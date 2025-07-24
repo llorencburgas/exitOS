@@ -672,8 +672,6 @@ def certificate_hourly_task():
             joblib.dump(data_to_save, full_path)
         logger.info("CERTIFICAT HORARI COMPLETAT")
 
-        return consumption_data
-
     else:
         logger.warning(f"Encara no t'has unit a cap comunitat! \n"
                        f"Recorda completar la teva configuració d'usuari des de l'apartat 'configuració' de la pàgina")
