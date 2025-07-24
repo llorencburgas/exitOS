@@ -629,10 +629,6 @@ def certificate_hourly_task():
 
         now = datetime.now()
 
-        database.update_database(consumption)
-        consumption_data = database.get_latest_data_from_sensor(sensor_id=consumption)
-        consumption_timestamp = to_datetime(consumption_data[0]).strftime("%Y-%m-%d %H:%M")
-
         if generation == 'None':
             generation_timestamp = None
             generation_value = None
