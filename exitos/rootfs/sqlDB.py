@@ -446,14 +446,28 @@ class SqlDB():
                     max_dt = datetime.fromisoformat(max_ts)
                     total_hores = int((max_dt - min_dt).total_seconds() //3600) + 1
 
+                    # Obtenim dies actius (format YYYY-MM-DD)
+                    cursor.execute("""
+                                   SELECT DISTINCT DATE (timestamp)
+                                   FROM dades
+                                   WHERE sensor_id = ?
+                                   """, (sensor[0],))
+                    days_with_data = [row[0] for row in cursor.fetchall()]
+
                     resultat[sensor[0]] = {
                         "calendar_range": (min_ts, max_ts),
-                        "active_hours": total_hores
+                        "active_hours": total_hores,
+                        "active_calendar": set(days_with_data),
+                        "vbound_start": None,
+                        "vbound_end": None
                     }
                 else:
                     resultat[sensor[0]] = {
                         "calendar_range": None,
-                        "active_hours": 0
+                        "active_hours": 0,
+                        "active_calendar": set(),
+                        "vbound_start": None,
+                        "vbound_end": None
                     }
 
             return resultat

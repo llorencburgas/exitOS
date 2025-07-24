@@ -37,7 +37,7 @@ PORT = 55023
 #INICIACIÓ DE L'APLICACIÓ I LA BASE DE DADES
 app = Bottle()
 database = db.SqlDB()
-# database.update_database("all")
+database.update_database("all")
 # database.clean_database_hourly_average()
 forecast = Forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler()
@@ -618,7 +618,7 @@ def daily_forecast_task():
     logger.debug("ENDING DAILY TASKS")
 
 def certificate_hourly_task():
-    logger.info(f"Running certificate hourly task")
+    logger.info(f"Running certificate hourly task at {datetime.now().strftime('%H:%M')}")
     config_dir = forecast.models_filepath + 'config/user.config'
     if os.path.exists(config_dir):
         aux = joblib.load(config_dir)

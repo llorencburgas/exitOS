@@ -1,12 +1,9 @@
-import sys
 import os
-import logging
 import requests
 
 
 import forecast.ForecasterManager as ForecastManager
 from forecast.Solution import Solution as Solution
-import abstraction.AbsConsumer as AbsConsumer
 import numpy as np
 import sqlDB as db
 from datetime import datetime, timedelta
@@ -32,6 +29,7 @@ class OptimalScheduler:
         self.meteo_data = ForecastManager.obtainmeteoData(latitude, longitude)
         self.varbound = None
         self.maxiter = 30
+        self.hores_simular = 24
         self.solucio_final = None
         self.solucio_run = None
         # self.electricity_price = self.__obtainElectricityPrices()
@@ -40,6 +38,10 @@ class OptimalScheduler:
         self.generation_sensors = database.get_active_sensors_by_type(sensor_type = 'Generator')
 
         self.progress = [] #Array with the best cost value on each step
+
+        self.kwargs_for_simulating = {}
+        # key arguments for those assets that share a common restriction and
+        # one execution effects the others assets execution
 
     def optimize(self):
         logger.info("--------------------------RUNNING COST OPTIMIZATION ALGORITHM--------------------------")
@@ -92,25 +94,50 @@ class OptimalScheduler:
         os.remove('omie_price_pred.csv')
         return hourly_prices
 
+    def __calcConsumersBalance(self, config):
+        self.kwargs_for_simulating.clear()
+
+        consumers_total_profile = [0] * self.hores_simular #perfil total de comsum hora a hora
+        consumers_individual_profile = {} # diccionari amb key = nom del consumer i valor = consumption profile
+        consumers_total_kwh = 0 # total de kwh gastats
+
+        cost_aproxmacio = 0
+        numero_de_consumer = 0 #variable per dir que com a mínim alguna configuració dels assets era bona ( com més gran, millor solució)
+
+
+        for consumer in self.solucio_run.consumers.values():
+            start = consumer['active_calendar'][0]
+            end = consumer['active_calendar'][1] + 1
+
+
+
+    def __calcBalanc(self, config):
+        # cost de tots els consumers
+        consumers_total_profile, consumers_individual_profile, consumers_total_kwh, valid_ones, \
+            cost_aproximacio, total_hidrogen_kg = self.__calcConsumersBalance(config)
+
     def costDE(self, config):
         """Funció de cost on s'optimitza totes les variables possibles"""
+        balanc_energetic_per_hores, cost, total_hidrogen_kg, numero_assets_ok, \
+            consumers_individual_profile, generators_individual_profile, es_states = self.__calcBalanc(config)
 
     def __runDEModel(self, function):
-        result = differential_evolution(
-            func = function,
-            popsize = 150,
-            bounds = self.varbound,
-            integrality = [True] * len(self.varbound),
-            maxiter = self.maxiter,
-            mutation = (0.15, 0.25),
-            recombination = 0.7,
-            tol = 0.0001,
-            strategy = 'best1bin',
-            init = 'halton',
-            disp = True,
-            callback = self.__updateDEStep,
-            workers = -1
-        )
+        self.costDE("")
+        # result = differential_evolution(
+        #     func = function,
+        #     popsize = 150,
+        #     bounds = self.varbound,
+        #     integrality = [True] * len(self.varbound),
+        #     maxiter = self.maxiter,
+        #     mutation = (0.15, 0.25),
+        #     recombination = 0.7,
+        #     tol = 0.0001,
+        #     strategy = 'best1bin',
+        #     init = 'halton',
+        #     disp = True,
+        #     callback = self.__updateDEStep,
+        #     workers = -1
+        # )
 
         logger.debug(f"Status: {result['message']}")
         logger.debug(f"Total Evaluations: {result['nfev']}")
@@ -123,14 +150,13 @@ class OptimalScheduler:
         varbound = []
         index = 0
 
-        consumer : AbsConsumer
-        for consumer in self.solucio_run.consumers:
-            consumer.vbound_start = index
+        for consumer in self.solucio_run.consumers.values():
+            consumer["vbound_start"] = index
 
-            for hour in range(0, consumer.active_hours):
-                varbound.append([consumer.calendar_range[0], consumer.calendar_range[1]])
+            for hour in range(0, consumer["active_hours"]):
+                varbound.append([consumer["calendar_range"][0], consumer["calendar_range"][1]])
                 index += 1
-            consumer.vbound_end = index
+            consumer["vbound_end"] = index
 
         return np.array(varbound)
 
