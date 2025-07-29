@@ -556,9 +556,9 @@ def optimize():
     template_result = database.build_devices_info()
 
     try:
-        devices = json.loads(template_result)
         logger.debug("📤 Template result rebut:")
         logger.debug(template_result)
+        devices = json.loads(template_result)
 
         logger.info("🔎 Informació detallada dels dispositius i entitats:")
         for device in devices:
