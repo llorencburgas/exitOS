@@ -578,7 +578,7 @@ class SqlDB():
             {{ ns.devices | tojson }}
             """
 
-        response = requests.post(url, headers=self.headers, data=template2)
+        response = requests.post(url, headers=self.headers, json = {"template": template2})
         logger.debug(f"🔎 Informació del response: {response}")
         logger.debug(f"🔎 Response Text: {response.text}")
         full_devices = response.text
