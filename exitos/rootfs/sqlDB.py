@@ -554,7 +554,11 @@ class SqlDB():
         
         {{ ns.devices | tojson }}"""
 
-        response = requests.post(url, headers=self.headers, data=template)
+        template2 = """
+        {{ [{'device_id': 'abc123', 'device_name': 'Test Device', 'entities': []}] | tojson }}
+        """
+
+        response = requests.post(url, headers=self.headers, data=template2)
         full_devices = response.text
         # # Map de device_id → llista d'entitats
         # device_map = {}

@@ -558,20 +558,17 @@ def optimize():
     try:
         logger.debug("📤 Template result rebut:")
         logger.debug(template_result)
-        devices = json.loads(template_result)
+        result = json.loads(template_result)
 
         logger.info("🔎 Informació detallada dels dispositius i entitats:")
-        for device in devices:
-            logger.info(f"📦 Device: {device['device_name']} ({device['device_id']})")
-            for entity in device["entities"]:
-                logger.info(
-                    f"  🔧 {entity['entity_id']} → "
-                    f"{entity.get('friendly_name', 'N/A')} | "
-                    f"{entity.get('state', 'N/A')} {entity.get('unit_of_measurement', '')}"
-                )
 
-    except json.JSONDecodeError as e:
-        logger.critical("❌ Error decodificant JSON del template: %s", e)
+        if isinstance(result, dict) and "message" in result:
+            logger.error(f"⚠️ Error a la resposta del template: {result['message']}")
+        else:
+            for device in result:
+                logger.info(f"📦 Device: {device['device_name']} ({device['device_id']})")
+    except Exception as e:
+        logger.exception(f"❌ Error processant la resposta JSON: {e}")
 
     # for device_id, info in devices_info.items():
     #     logger.info(f"\n📦 Dispositiu: {info['name']}")
