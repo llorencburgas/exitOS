@@ -12,7 +12,6 @@ import random
 import plotly.graph_objs as go
 import plotly.offline as pyo
 import pandas as pd
-from numpy.testing.overrides import allows_array_ufunc_override
 from pandas import to_datetime
 
 from bottle import Bottle, template, run, static_file, HTTPError, request, response
