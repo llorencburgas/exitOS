@@ -555,8 +555,28 @@ class SqlDB():
         {{ ns.devices | tojson }}"""
 
         template2 = """
-        {{ [{'device_id': 'abc123', 'device_name': 'Test Device', 'entities': []}] | tojson }}
-        """
+            {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq', None) | list %}
+            {% set ns = namespace(devices = []) %}
+            {% for device in devices %}
+              {% set name = device_attr(device, 'name') %}
+              {% set ents = device_entities(device) %}
+              {% set info = [] %}
+              {% for e in ents %}
+                {% set info = info + [ {
+                  "entity_id": e,
+                  "name": state_attr(e, 'friendly_name'),
+                  "state": states(e),
+                  "attributes": state_attr(e, '')
+                } ] %}
+              {% endfor %}
+              {% set ns.devices = ns.devices + [ {
+                "device_id": device,
+                "device_name": name,
+                "entities": info
+              } ] %}
+            {% endfor %}
+            {{ ns.devices | tojson }}
+            """
 
         response = requests.post(url, headers=self.headers, data=template2)
         logger.debug(f"🔎 Informació del response: {response}")
