@@ -553,20 +553,36 @@ def get_res_certify_data():
 @app.route('/optimize')
 def optimize():
     # result = optimalScheduler.optimize()
-    devices_info = database.build_devices_info()
+    template_result = database.build_devices_info()
 
-    for device_id, info in devices_info.items():
-        logger.info(f"\n📦 Dispositiu: {info['name']}")
-        logger.debug(f"   🏷️  Fabricant: {info['manufacturer']}")
-        logger.debug(f"   🔧 Model: {info['model']}")
-        logger.debug(f"   🧩 Entitats:")
-        for ent in info["entities"]:
-            logger.warning(f"     - 🆔 {ent['entity_id']}")
-            logger.debug(f"       🔤 Nom: {ent['name']}")
-            logger.debug(f"       📏 Unitat: {ent['unit']}")
-            logger.debug(f"       📊 Classe d'estat: {ent['state_class']}")
-            logger.debug(f"       🏷️ Classe de dispositiu: {ent['device_class']}")
-            logger.debug(f"       📈 Últim estat: {ent['last_state']}")
+    try:
+        devices = json.loads(template_result)
+
+        logger.info("🔎 Informació detallada dels dispositius i entitats:")
+        for device in devices:
+            logger.info(f"📦 Device: {device['device_name']} ({device['device_id']})")
+            for entity in device["entities"]:
+                logger.info(
+                    f"  🔧 {entity['entity_id']} → "
+                    f"{entity.get('friendly_name', 'N/A')} | "
+                    f"{entity.get('state', 'N/A')} {entity.get('unit_of_measurement', '')}"
+                )
+
+    except json.JSONDecodeError as e:
+        logger.critical("❌ Error decodificant JSON del template: %s", e)
+
+    # for device_id, info in devices_info.items():
+    #     logger.info(f"\n📦 Dispositiu: {info['name']}")
+    #     logger.debug(f"   🏷️  Fabricant: {info['manufacturer']}")
+    #     logger.debug(f"   🔧 Model: {info['model']}")
+    #     logger.debug(f"   🧩 Entitats:")
+    #     for ent in info["entities"]:
+    #         logger.warning(f"     - 🆔 {ent['entity_id']}")
+    #         logger.debug(f"       🔤 Nom: {ent['name']}")
+    #         logger.debug(f"       📏 Unitat: {ent['unit']}")
+    #         logger.debug(f"       📊 Classe d'estat: {ent['state_class']}")
+    #         logger.debug(f"       🏷️ Classe de dispositiu: {ent['device_class']}")
+    #         logger.debug(f"       📈 Últim estat: {ent['last_state']}")
 
     return "OK"
 
