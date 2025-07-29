@@ -518,7 +518,7 @@ class SqlDB():
         # devices = self.get_device_registry()
         # states = self.get_states()
 
-        url = f"{self.base_url}/template"
+        url = f"{self.base_url}template"
 
         template = """
         {% set devices = states 
