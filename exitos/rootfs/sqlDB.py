@@ -554,7 +554,8 @@ class SqlDB():
         
         {{ ns.devices | tojson }}"""
 
-        full_devices = requests.post(url, headers=self.headers, data=template)
+        response = requests.post(url, headers=self.headers, data=template)
+    full:
         # # Map de device_id → llista d'entitats
         # device_map = {}
         # entity_info_map = {e["entity_id"]: e for e in entities}
