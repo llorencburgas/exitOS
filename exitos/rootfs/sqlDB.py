@@ -559,6 +559,8 @@ class SqlDB():
         """
 
         response = requests.post(url, headers=self.headers, data=template2)
+        logger.debug(f"🔎 Informació del response: {response}")
+        logger.debug(f"🔎 Response Text: {response.text}")
         full_devices = response.text
         # # Map de device_id → llista d'entitats
         # device_map = {}
