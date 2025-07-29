@@ -97,17 +97,18 @@ class OptimalScheduler:
     def __calcConsumersBalance(self, config):
         self.kwargs_for_simulating.clear()
 
-        consumers_total_profile = [0] * self.hores_simular #perfil total de comsum hora a hora
-        consumers_individual_profile = {} # diccionari amb key = nom del consumer i valor = consumption profile
-        consumers_total_kwh = 0 # total de kwh gastats
-
-        cost_aproxmacio = 0
-        numero_de_consumer = 0 #variable per dir que com a mínim alguna configuració dels assets era bona ( com més gran, millor solució)
-
+        total_profile = [0] * self.hores_simular #perfil total de comsum hora a hora
+        individual_profile = {} # diccionari amb key = nom del consumer i valor = consumption profile
+        total_kwh = 0 # total de kwh gastats
+        total_hidrogen_kg = 0
+        total_cost = 0
+        valid_consumers = 0
 
         for consumer in self.solucio_run.consumers.values():
-            start = consumer['active_calendar'][0]
-            end = consumer['active_calendar'][1] + 1
+            start = consumer['active_calendar']
+
+
+            logger.debug("DEBUG POINT")
 
 
 
@@ -123,21 +124,21 @@ class OptimalScheduler:
 
     def __runDEModel(self, function):
         self.costDE("")
-        # result = differential_evolution(
-        #     func = function,
-        #     popsize = 150,
-        #     bounds = self.varbound,
-        #     integrality = [True] * len(self.varbound),
-        #     maxiter = self.maxiter,
-        #     mutation = (0.15, 0.25),
-        #     recombination = 0.7,
-        #     tol = 0.0001,
-        #     strategy = 'best1bin',
-        #     init = 'halton',
-        #     disp = True,
-        #     callback = self.__updateDEStep,
-        #     workers = -1
-        # )
+        result = differential_evolution(
+            func = function,
+            popsize = 150,
+            bounds = self.varbound,
+            integrality = [True] * len(self.varbound),
+            maxiter = self.maxiter,
+            mutation = (0.15, 0.25),
+            recombination = 0.7,
+            tol = 0.0001,
+            strategy = 'best1bin',
+            init = 'halton',
+            disp = True,
+            callback = self.__updateDEStep,
+            workers = -1
+        )
 
         logger.debug(f"Status: {result['message']}")
         logger.debug(f"Total Evaluations: {result['nfev']}")

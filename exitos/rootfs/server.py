@@ -12,6 +12,7 @@ import random
 import plotly.graph_objs as go
 import plotly.offline as pyo
 import pandas as pd
+from numpy.testing.overrides import allows_array_ufunc_override
 from pandas import to_datetime
 
 from bottle import Bottle, template, run, static_file, HTTPError, request, response
@@ -37,7 +38,7 @@ PORT = 55023
 #INICIACIÓ DE L'APLICACIÓ I LA BASE DE DADES
 app = Bottle()
 database = db.SqlDB()
-database.update_database("all")
+# database.update_database("all")
 # database.clean_database_hourly_average()
 forecast = Forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler()
@@ -552,8 +553,21 @@ def get_res_certify_data():
 
 @app.route('/optimize')
 def optimize():
-    logger.debug("botó optimitzar")
-    result = optimalScheduler.optimize()
+    # result = optimalScheduler.optimize()
+    devices_info = database.build_devices_info()
+
+    for device_id, info in devices_info.items():
+        logger.info(f"\n📦 Dispositiu: {info['name']}")
+        logger.debug(f"   🏷️  Fabricant: {info['manufacturer']}")
+        logger.debug(f"   🔧 Model: {info['model']}")
+        logger.debug(f"   🧩 Entitats:")
+        for ent in info["entities"]:
+            logger.warning(f"     - 🆔 {ent['entity_id']}")
+            logger.debug(f"       🔤 Nom: {ent['name']}")
+            logger.debug(f"       📏 Unitat: {ent['unit']}")
+            logger.debug(f"       📊 Classe d'estat: {ent['state_class']}")
+            logger.debug(f"       🏷️ Classe de dispositiu: {ent['device_class']}")
+            logger.debug(f"       📈 Últim estat: {ent['last_state']}")
 
     return "OK"
 
@@ -689,14 +703,8 @@ def run_scheduled_tasks():
 scheduler_thread = threading.Thread(target=run_scheduled_tasks, daemon=True)
 scheduler_thread.start()
 
-#####################################
+##################################### MAIN
 
-
-
-#################################################################################
-#   Hem acabat de definir tots els URL i què cal fer per cada una d'elles.     #
-#   Executem el servidor                                                        #
-#################################################################################
 
 # Funció main que encén el servidor web.
 def main():

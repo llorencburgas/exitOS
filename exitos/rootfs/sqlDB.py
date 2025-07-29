@@ -4,12 +4,15 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
+import requests
 from narwhals import String
 from requests import get
 from datetime import datetime, timedelta, timezone
 import logging
 from typing import Optional, List, Dict, Any
 import tzlocal
+
+
 
 logger = logging.getLogger("exitOS")
 
@@ -484,9 +487,78 @@ class SqlDB():
             cursor.close()
             return aux
 
+    # 1. Obtenir entitats (amb mapping a dispositius)
+    def get_entity_registry(self):
+        url = self.base_url + "entity_registry/entities"
+        response = requests.get(url, headers=self.headers)
 
+        logger.warning(f"🔍 RESPONSE STATUS:, {response.status_code}")
+        logger.warning(f"🔍 RESPONSE TEXT: {response.text[:200]}")  # Primeres línies per veure si és HTML, JSON o error
 
+        try:
+            return response.json()
+        except Exception as e:
+            logger.critical(f"❌ ERROR DECODIFICANT JSON: {e}", )
+            return None
 
+    # 2. Obtenir dispositius
+    def get_device_registry(self):
+        url = f"{self.base_url}device_registry/devices"
+        response = requests.get(url, headers=self.headers)
+        return response.json()
+
+    # 3. Obtenir estats (per tenir valors actuals i atributs extra)
+    def get_states(self):
+        url = f"{self.base_url}/states"
+        response = requests.get(url, headers=self.headers)
+        return response.json()
+
+    def build_devices_info(self):
+        entities = self.get_entity_registry()
+        devices = self.get_device_registry()
+        states = self.get_states()
+
+        # Map de device_id → llista d'entitats
+        device_map = {}
+        entity_info_map = {e["entity_id"]: e for e in entities}
+        state_map = {s["entity_id"]: s for s in states}
+
+        for entity in entities:
+            device_id = entity.get("device_id")
+            if not device_id:
+                continue
+            device_map.setdefault(device_id, []).append(entity["entity_id"])
+
+        full_devices = []
+
+        for device in devices:
+            device_id = device["id"]
+            device_name = device.get("name_by_user") or device.get("name")
+
+            entity_ids = device_map.get(device_id, [])
+            detailed_entities = []
+
+            for eid in entity_ids:
+                entity_entry = entity_info_map.get(eid, {})
+                state_obj = state_map.get(eid, {})
+
+                detailed_entities.append({
+                    "entity_id": eid,
+                    "friendly_name": state_obj.get("attributes", {}).get("friendly_name"),
+                    "state": state_obj.get("state"),
+                    "unit_of_measurement": state_obj.get("attributes", {}).get("unit_of_measurement"),
+                    "attributes": state_obj.get("attributes", {}),
+                })
+
+            full_devices.append({
+                "device_id": device_id,
+                "device_name": device_name,
+                "manufacturer": device.get("manufacturer"),
+                "model": device.get("model"),
+                "entities": detailed_entities,
+            })
+
+        return full_devices
 
 
 

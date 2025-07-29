@@ -12,12 +12,11 @@ def setup_logger(level=logging.DEBUG):
 
     logger.setLevel(level)
 
-
     handler = logging.StreamHandler()  # Important! Sends logs to stdout for HA
     handler.setLevel(level)
 
     formatter = colorlog.ColoredFormatter(
-        "%(log_color)s%(levelname)s: %(message)s",
+        "%(log_color)s%(message)s",
         log_colors={
             'DEBUG': 'green',
             'INFO': 'blue',
