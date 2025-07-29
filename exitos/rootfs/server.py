@@ -557,6 +557,8 @@ def optimize():
 
     try:
         devices = json.loads(template_result)
+        logger.debug("📤 Template result rebut:")
+        logger.debug(template_result)
 
         logger.info("🔎 Informació detallada dels dispositius i entitats:")
         for device in devices:
