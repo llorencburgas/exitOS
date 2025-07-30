@@ -554,6 +554,8 @@ def get_res_certify_data():
 def optimize():
     # result = optimalScheduler.optimize()
     template_result = database.get_devices_info()
+    if template_result == -1:
+        return "ERROR"
 
     try:
         dades = json.loads(template_result)  # primer decode

@@ -527,13 +527,16 @@ class SqlDB():
         response = requests.post(url, headers=self.headers, json = {"template": template})
 
         logger.warning(f"❗RESPONSE ha retornat: {response}")
+        logger.warning(f"❗RAW RESPONSE: {response.text}")
         logger.warning(f"❗URL: {url}")
+        if response.status_code == 200:
+            json_response = response.json()
+            full_devices = json_response.text
 
-        json_response = response.json()
-        full_devices = json_response.text
-
-        logger.warning(f"❗TEXT: {full_devices}")
-        return full_devices
+            logger.warning(f"❗TEXT: {full_devices}")
+            return full_devices
+        else:
+            return -1
 
 
 
