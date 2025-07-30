@@ -553,7 +553,7 @@ def get_res_certify_data():
 @app.route('/optimize')
 def optimize():
     # result = optimalScheduler.optimize()
-    template_result = database.build_devices_info()
+    template_result = database.get_devices_info()
 
     try:
         dades = json.loads(template_result)  # primer decode

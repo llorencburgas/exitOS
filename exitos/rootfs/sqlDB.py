@@ -487,39 +487,12 @@ class SqlDB():
             cursor.close()
             return aux
 
-    # 1. Obtenir entitats (amb mapping a dispositius)
-    def get_entity_registry(self):
-        url = self.base_url + "entity_registry/entities"
-        response = requests.get(url, headers=self.headers)
 
-        logger.warning(f"🔍 RESPONSE STATUS:, {response.status_code}")
-        logger.warning(f"🔍 RESPONSE TEXT: {response.text[:200]}")  # Primeres línies per veure si és HTML, JSON o error
-
-        try:
-            return response.json()
-        except Exception as e:
-            logger.critical(f"❌ ERROR DECODIFICANT JSON: {e}", )
-            return None
-
-    # 2. Obtenir dispositius
-    def get_device_registry(self):
-        url = f"{self.base_url}device_registry/devices"
-        response = requests.get(url, headers=self.headers)
-        return response.json()
-
-    # 3. Obtenir estats (per tenir valors actuals i atributs extra)
-    def get_states(self):
-        url = f"{self.base_url}/states"
-        response = requests.get(url, headers=self.headers)
-        return response.json()
-
-    def build_devices_info(self):
-        # entities = self.get_entity_registry()
-        # devices = self.get_device_registry()
-        # states = self.get_states()
-
+    def get_devices_info(self):
+        """
+        Obté tots els dispositius, juntament amb les seves entitats i atributs d'aquestes a partir d'un template.
+        """
         url = f"{self.base_url}template"
-
         template = """
             {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq', None) | list %}
             {% set ns = namespace(devices = []) %}
@@ -552,9 +525,10 @@ class SqlDB():
             """
 
         response = requests.post(url, headers=self.headers, json = {"template": template})
+
+        logger.warning(f"❗RESPONSE ha retornat: {response}")
+
         full_devices = response.text
-
-
         return full_devices
 
 
