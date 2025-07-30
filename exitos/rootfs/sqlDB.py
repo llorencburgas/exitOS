@@ -528,9 +528,9 @@ class SqlDB():
 
         logger.warning(f"❗RESPONSE ha retornat: {response}")
         logger.warning(f"❗URL: {url}")
-        logger.warning(f"❗TEMPLATE: {template}")
 
-        full_devices = response.text
+        json_response = response.json()
+        full_devices = json_response.text
 
         logger.warning(f"❗TEXT: {full_devices}")
         return full_devices
