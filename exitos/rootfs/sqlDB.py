@@ -521,106 +521,42 @@ class SqlDB():
         url = f"{self.base_url}template"
 
         template = """
-        {% set devices = states 
-        | map(attribute='entity_id')       # Tots els entity_ids
-        | map('device_id')                 # Obtenim el device_id de cada entitat
-        | unique                          # Eliminem duplicats
-        | reject('eq', None)              # Excloem els que no tenen device_id
-        | list %}
-    
-        {% set ns = namespace(devices = []) %}
-        
-        {% for device in devices %}
-          {% set entities = device_entities(device) | list %}
-          {% if entities %}
-            {% set detailed_entities = [] %}
-            {% for entity in entities %}
-              {% set entity_state = states[entity] %}
-              {% set detailed_entities = detailed_entities + [{
-                  'entity_id': entity,
-                  'friendly_name': entity_state.attributes.friendly_name if entity_state else None,
-                  'unit_of_measurement': entity_state.attributes.unit_of_measurement if entity_state else None,
-                  'state': entity_state.state if entity_state else None,
-                  'other_attributes': entity_state.attributes | dict(exclude=['friendly_name', 'unit_of_measurement']) if entity_state else {}
-              }] %}
-            {% endfor %}
-            {% set ns.devices = ns.devices + [{
-                'device_id': device,
-                'device_name': device_attr(device, 'name'),
-                'entities': detailed_entities
-            }] %}
-          {% endif %}
-        {% endfor %}
-        
-        {{ ns.devices | tojson }}"""
-
-        template2 = """
             {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq', None) | list %}
             {% set ns = namespace(devices = []) %}
+            
             {% for device in devices %}
-              {% set name = device_attr(device, 'name') %}
-              {% set ents = device_entities(device) %}
-              {% set info = [] %}
-              {% for e in ents %}
-                {% set info = info + [ {
-                  "entity_id": e,
-                  "name": state_attr(e, 'friendly_name'),
-                  "state": states(e),
-                  "attributes": state_attr(e, '')
-                } ] %}
-              {% endfor %}
-              {% set ns.devices = ns.devices + [ {
+                {% set name = device_attr(device, 'name') %}
+                {% set ents = device_entities(device) %}
+                
+                {% set info = namespace(entities = []) %}
+                {% for entity in ents %}
+                    {% set entity_name = entity %}
+                    {% set entity_state = states[entity] %}
+                    {% set attrs = entity_state.attributes if entity_state else {} %}
+                
+                    {% set info.entities = info.entities + [ {
+                      "entity_name": entity_name,
+                      "entity_state": entity_state.state if entity_state else None,
+                      "entity_attrs": attrs,
+                    } ] %}
+                {%endfor %}
+                
+                {% set ns.devices = ns.devices + [ {
                 "device_id": device,
                 "device_name": name,
-                "entities": info
-              } ] %}
+                "entities": info.entities
+                } ] %}
             {% endfor %}
+            
             {{ ns.devices | tojson }}
             """
 
-        response = requests.post(url, headers=self.headers, json = {"template": template2})
+
+        response = requests.post(url, headers=self.headers, json = {"template": template})
         logger.debug(f"🔎 Informació del response: {response}")
         logger.debug(f"🔎 Response Text: {response.text}")
         full_devices = response.text
-        # # Map de device_id → llista d'entitats
-        # device_map = {}
-        # entity_info_map = {e["entity_id"]: e for e in entities}
-        # state_map = {s["entity_id"]: s for s in states}
-        #
-        # for entity in entities:
-        #     device_id = entity.get("device_id")
-        #     if not device_id:
-        #         continue
-        #     device_map.setdefault(device_id, []).append(entity["entity_id"])
-        #
-        # full_devices = []
-        #
-        # for device in devices:
-        #     device_id = device["id"]
-        #     device_name = device.get("name_by_user") or device.get("name")
-        #
-        #     entity_ids = device_map.get(device_id, [])
-        #     detailed_entities = []
-        #
-        #     for eid in entity_ids:
-        #         entity_entry = entity_info_map.get(eid, {})
-        #         state_obj = state_map.get(eid, {})
-        #
-        #         detailed_entities.append({
-        #             "entity_id": eid,
-        #             "friendly_name": state_obj.get("attributes", {}).get("friendly_name"),
-        #             "state": state_obj.get("state"),
-        #             "unit_of_measurement": state_obj.get("attributes", {}).get("unit_of_measurement"),
-        #             "attributes": state_obj.get("attributes", {}),
-        #         })
-        #
-        #     full_devices.append({
-        #         "device_id": device_id,
-        #         "device_name": device_name,
-        #         "manufacturer": device.get("manufacturer"),
-        #         "model": device.get("model"),
-        #         "entities": detailed_entities,
-        #     })
+
 
         return full_devices
 

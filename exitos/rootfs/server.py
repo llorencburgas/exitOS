@@ -556,32 +556,36 @@ def optimize():
     template_result = database.build_devices_info()
 
     try:
-        logger.debug("📤 Template result rebut:")
-        logger.debug(template_result)
-        result = json.loads(template_result)
+        dades = json.loads(template_result)  # primer decode
+        # if isinstance(devices, str):
+            # devices = json.loads(devices)  # segon decode si és string encara
 
-        logger.info("🔎 Informació detallada dels dispositius i entitats:")
+        for dispositiu in dades:
+            logger.warning(f"\n📟 Dispositiu: {dispositiu['device_name']}")
+            logger.debug(f"    🔗 ID: {dispositiu['device_id']}")
 
-        if isinstance(result, dict) and "message" in result:
-            logger.error(f"⚠️ Error a la resposta del template: {result['message']}")
-        else:
-            for device in result:
-                logger.info(f"📦 Device: {device['device_name']} ({device['device_id']})")
+            for entitat in dispositiu["entities"]:
+                logger.info(f"\n  🔘 Entitat: {entitat['entity_name']} (estat: {entitat['entity_state']})")
+
+                attrs = entitat.get("entity_attrs", {})
+                if not attrs:
+                    logger.debug("    ⚠️ No hi ha atributs disponibles.")
+                    continue
+
+                for clau, valor in attrs.items():
+                    if isinstance(valor, (list, dict)):
+                        # Mostrem el valor com a JSON "one-line", però compacte
+                        valor_str = json.dumps(valor, ensure_ascii=False)
+                    else:
+                        valor_str = str(valor)
+                    logger.debug(f"    🔸 {clau}: {valor_str}")
+
+
+
+
+
     except Exception as e:
         logger.exception(f"❌ Error processant la resposta JSON: {e}")
-
-    # for device_id, info in devices_info.items():
-    #     logger.info(f"\n📦 Dispositiu: {info['name']}")
-    #     logger.debug(f"   🏷️  Fabricant: {info['manufacturer']}")
-    #     logger.debug(f"   🔧 Model: {info['model']}")
-    #     logger.debug(f"   🧩 Entitats:")
-    #     for ent in info["entities"]:
-    #         logger.warning(f"     - 🆔 {ent['entity_id']}")
-    #         logger.debug(f"       🔤 Nom: {ent['name']}")
-    #         logger.debug(f"       📏 Unitat: {ent['unit']}")
-    #         logger.debug(f"       📊 Classe d'estat: {ent['state_class']}")
-    #         logger.debug(f"       🏷️ Classe de dispositiu: {ent['device_class']}")
-    #         logger.debug(f"       📈 Últim estat: {ent['last_state']}")
 
     return "OK"
 
