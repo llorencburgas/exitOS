@@ -530,8 +530,8 @@ class SqlDB():
         logger.warning(f"❗RAW RESPONSE: {response.text}")
         logger.warning(f"❗URL: {url}")
         if response.status_code == 200:
-            json_response = response.json()
-            full_devices = json_response.text
+            # json_response = response.json()
+            full_devices = response.text
 
             logger.warning(f"❗TEXT: {full_devices}")
             return full_devices
