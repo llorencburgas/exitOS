@@ -557,9 +557,6 @@ def optimize():
 
     try:
         dades = json.loads(template_result)  # primer decode
-        # if isinstance(devices, str):
-            # devices = json.loads(devices)  # segon decode si és string encara
-
         for dispositiu in dades:
             logger.warning(f"\n📟 Dispositiu: {dispositiu['device_name']}")
             logger.debug(f"    🔗 ID: {dispositiu['device_id']}")
@@ -579,9 +576,6 @@ def optimize():
                     else:
                         valor_str = str(valor)
                     logger.debug(f"    🔸 {clau}: {valor_str}")
-
-
-
 
 
     except Exception as e:
