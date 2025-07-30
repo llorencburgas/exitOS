@@ -531,6 +531,8 @@ class SqlDB():
         logger.warning(f"❗TEMPLATE: {template}")
 
         full_devices = response.text
+
+        logger.warning(f"❗TEXT: {full_devices}")
         return full_devices
 
 
