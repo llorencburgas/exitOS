@@ -527,6 +527,8 @@ class SqlDB():
         response = requests.post(url, headers=self.headers, json = {"template": template})
 
         logger.warning(f"❗RESPONSE ha retornat: {response}")
+        logger.warning(f"❗URL: {url}")
+        logger.warning(f"❗TEMPLATE: {template}")
 
         full_devices = response.text
         return full_devices
