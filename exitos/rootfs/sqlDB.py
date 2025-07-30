@@ -521,7 +521,7 @@ class SqlDB():
                 } ] %}
             {% endfor %}
             
-            {{ ns.devices | tojson }}
+            {{ ns.devices }}
             """
 
         response = requests.post(url, headers=self.headers, json = {"template": template})
