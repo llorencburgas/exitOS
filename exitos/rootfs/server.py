@@ -558,8 +558,7 @@ def optimize():
         return "ERROR"
 
     try:
-        # dades = json.loads(template_result)  # primer decode
-        dades = template_result
+        dades = json.loads(template_result)  # primer decode
         for dispositiu in dades:
             logger.warning(f"\n📟 Dispositiu: {dispositiu['device_name']}")
             logger.debug(f"    🔗 ID: {dispositiu['device_id']}")
