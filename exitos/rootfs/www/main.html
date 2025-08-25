@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>Control energètic eXIT</title>
-    <link rel="stylesheet" href="resources/mainStyle.css">
+<!--    <link rel="stylesheet" href="resources/mainStyle.css">-->
     <link rel="icon" type="image/x-icon" href="static/favicon.ico">
-<!--    <link rel="stylesheet" href="../resources/mainStyle.css">-->
+    <link rel="stylesheet" href="../resources/mainStyle.css">
 
         <!-- llibreria d'icontes per al navbar-->
     <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
 <style>
     .info-cards{
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         justify-content: center;
         gap:20px;
         margin-top: 20px;
@@ -110,6 +110,17 @@
                 <button id="test-optimization" onclick="TestOptimization()" ><i style="font-size: medium" class="fa-solid fa-ghost"></i> Test Optimitzar</button>
 
             </div>
+            <div class="info-cards"><h1>Sensors Actius:</h1></div>
+            <div class="info-cards">
+
+                <div class="info-card">
+                    <h3 id="forecast-title" style="display:none;"></h3>
+                    <div id="forecast-chart"></div>
+                </div>
+                <div class="info-card">
+
+                </div>
+            </div>
 
 
         </div>
@@ -127,6 +138,17 @@
             .then(response => response.text())
             .then(data => console.log("Optimization pressed"))
     }
+
+    function onLoadPage(){
+        sensors_list = {{!active_sensors_id}};
+        sensors_id.forEach((sensor_id) =>{
+            console.log(sensor_id);
+        });
+    }
+
+
+    onLoadPage();
+
 </script>
 
 </html>

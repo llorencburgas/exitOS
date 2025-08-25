@@ -61,9 +61,13 @@ def serve_models(filepath):
 def get_init():
     ip = request.environ.get('REMOTE_ADDR')
     token = database.supervisor_token
+
+
+    active_sensors = database.get_all_saved_sensors_id()
     return template('./www/main.html',
                     ip = ip,
-                    token = token)
+                    token = token,
+                    active_sensors_list = active_sensors)
 
 #Ruta per a configurar quins sensors volem guardar
 @app.get('/sensors')
