@@ -537,7 +537,7 @@ class SqlDB():
             return full_devices
         else:
             logger.error(f"❌ Error en la resposta: {response.status_code}")
-            logger.debug(f"📄 Cos resposta:\n{response.text}")
+            logger.debug(f"📄 Cos resposta:\n     {response.text}")
             return -1
 
 
