@@ -150,6 +150,9 @@
             sensor_info.innerHTML = "Encara no s'ha realitzat cap Forecast per aquest sensor";
             sensor_info.id = "forecast_cart_"+ sensor_id;
 
+            parent_div.appendChild(sensor_name);
+            parent_div.appendChild(sensor_info);
+
             fetch('get_forecast_data/' + sensor_id+'.pkl')
                 .then(response => response.json())
                 .then(data =>{
@@ -195,9 +198,13 @@
 
 
 
-
                     }
-                })
+                    else{
+                        console.log("no data for ", sensor_id);
+                    }
+                });
+
+
         });
     }
 
