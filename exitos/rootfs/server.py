@@ -19,7 +19,6 @@ from datetime import datetime, timedelta
 from logging_config import setup_logger
 from collections import OrderedDict
 
-# import forecast.Forecaster as Forecast
 from forecast import Forecaster as Forecast
 import forecast.ForecasterManager as ForecasterManager
 import forecast.OptimalScheduler as OptimalScheduler
@@ -640,7 +639,7 @@ def daily_forecast_task():
             config = joblib.load(f)
         aux = config.get('algorithm','')
         if aux != '':
-            daily_train_model(config, model)
+            # daily_train_model(config, model)
             logger.debug(f"*********** Running daily forecast for {model} **********")
             forecast_model(model)
     logger.debug("ENDING DAILY TASKS")
@@ -662,6 +661,7 @@ def certificate_hourly_task():
             generation_value = None
         else:
             database.update_database(generation)
+            database.clean_database_hourly_average()
             generation_data = database.get_latest_data_from_sensor(sensor_id=generation)
             generation_timestamp = to_datetime(generation_data[0]).strftime("%Y-%m-%d %H:%M")
             generation_value = generation_data[1]
@@ -671,6 +671,7 @@ def certificate_hourly_task():
             consumption_value = None
         else:
             database.update_database(consumption)
+            database.clean_database_hourly_average()
             consumption_data = database.get_latest_data_from_sensor(sensor_id=consumption)
             consumption_timestamp = to_datetime(consumption_data[0]).strftime("%Y-%m-%d %H:%M")
             consumption_value = consumption_data[1]
