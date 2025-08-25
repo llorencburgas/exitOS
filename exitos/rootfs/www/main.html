@@ -115,10 +115,6 @@
             <div class="info-cards"><h1>Sensors Actius:</h1></div>
             <div class="info-cards" id="info-sensors-actius">
 
-                <div class="info-card">
-                    <h3 id="forecast-title" style="display:none;"></h3>
-                    <div id="forecast-chart"></div>
-                </div>
             </div>
 
 
@@ -156,7 +152,7 @@
             container.appendChild(sensor_info);
             parent_div.appendChild(container);
 
-            fetch('get_forecast_data/' + sensor_id+'.pkl')
+            fetch('get_forecast_data/' + sensor_id)
                 .then(response => response.json())
                 .then(data =>{
                     if(data.status ==="ok"){
