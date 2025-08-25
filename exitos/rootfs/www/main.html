@@ -106,12 +106,13 @@
         const parent_div_forecast = document.getElementById("info-sensors-actius");
         const parent_div_no_forecast = document.getElementById("info-sensors-actius-no-forecast");
         sensors_list.forEach((sensor_id) =>{
+            const fixed_name = sensor_id.replace("sensor.", '')
 
             fetch('get_forecast_data/' + fixed_name)
                 .then(response => response.json())
                 .then(data =>{
                     if(data.status ==="ok"){
-                        const fixed_name = sensor_id.replace("sensor.", '')
+
                         const container = document.createElement("div");
                         const sensor_name = document.createElement("h3");
                         const sensor_info = document.createElement("div")
