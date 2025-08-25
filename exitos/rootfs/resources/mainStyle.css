@@ -260,7 +260,8 @@ a.mail-text{
     h3{
         font-size: 1.1rem;
         margin-bottom: 10px;
-        word-wrap: break-word;
+        word-break: break-word;
         text-align: center;
+        white-space: normal;
     }
 }
