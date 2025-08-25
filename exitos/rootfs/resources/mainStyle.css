@@ -256,12 +256,11 @@ a.mail-text{
     text-align: center;
     color: var(--text-color);
     overflow: hidden;
+}
 
-    h3{
-        font-size: 1.1rem;
-        margin-bottom: 10px;
-        word-break: break-word;
-        text-align: center;
-        white-space: normal;
-    }
+.sensor-card h3{
+     font-size: 1.1rem;
+    margin-bottom: 10px;
+    word-break: break-word;
+    text-align: center;
 }
