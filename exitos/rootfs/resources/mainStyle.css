@@ -245,6 +245,8 @@ a.mail-text{
 #info-sensors-actius{
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
 }
 .sensor-card{
     background-color: var(--white-background);
@@ -259,7 +261,6 @@ a.mail-text{
         font-size: 1.1rem;
         margin-bottom: 10px;
         word-wrap: break-word;
-        text-overflow: ellipsis;
-        overflow: hidden;
+        text-align: center;
     }
 }
