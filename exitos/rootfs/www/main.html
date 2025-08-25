@@ -146,9 +146,9 @@
             const sensor_info = document.createElement("div")
 
             container.className = "info-card";
-            sensor_name.innerHTML = sensor_id;
+            sensor_name.innerHTML = fixed_name;
             sensor_info.innerHTML = "Encara no s'ha realitzat cap Forecast per aquest sensor";
-            sensor_info.id = "forecast_cart_"+ sensor_id;
+            sensor_info.id = "forecast_cart_"+ fixed_name;
 
             container.appendChild(sensor_name);
             container.appendChild(sensor_info);
