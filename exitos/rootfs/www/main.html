@@ -136,9 +136,11 @@
 
     function onLoadPage(){
         console.log("onLoadPage");
-        sensors_list = {{!active_sensors_list}};
-        parent_div = document.getElementById("info-sensors-actius");
+        const sensors_list = {{!active_sensors_list}};
+        const parent_div = document.getElementById("info-sensors-actius");
         sensors_list.forEach((sensor_id) =>{
+
+            const fixed_name = sensor_id.replace("sensor.", '')
             const container = document.createElement("div");
             const sensor_name = document.createElement("h3");
             const sensor_info = document.createElement("div")
@@ -152,7 +154,7 @@
             container.appendChild(sensor_info);
             parent_div.appendChild(container);
 
-            fetch('get_forecast_data/' + sensor_id)
+            fetch('get_forecast_data/' + fixed_name)
                 .then(response => response.json())
                 .then(data =>{
                     if(data.status ==="ok"){
@@ -193,7 +195,7 @@
                         height: 500
                         };
 
-                        Plotly.newPlot('forecast-chart_'+sensor_id, [traceReal, tracePredReal, tracePredFuture], layout);
+                        Plotly.newPlot('forecast-chart_'+fixed_name, [traceReal, tracePredReal, tracePredFuture], layout);
 
 
 
