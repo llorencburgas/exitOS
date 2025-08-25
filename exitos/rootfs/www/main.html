@@ -11,45 +11,8 @@
     <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
     <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
 
-    <style>
-    .info-cards{
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap:20px;
-        margin-top: 20px;
-    }
-    .info-card{
-        display: block;
-        text-decoration: none;
-        background-color: #fff;
-        border-radius: 12px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        padding: 10px;
-        width: 250px;
-        text-align: center;
-        color: #0f2418;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-        i{
-            font-size: 20px;
-            color: #04AA6D;
-            margin-bottom: 5px;
-        }
-        h3{
-            margin-bottom: 5px;
-            font-size:1.2rem;
-        }
-    }
-    .info-card:hover{
-        transform: scale(1.03);
-        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
-        color: #04D984;
-    }
-
-
-</style>
 </head>
+
 <body>
     <main>
         <header>
@@ -158,7 +121,7 @@
                 .then(response => response.json())
                 .then(data =>{
                     if(data.status ==="ok"){
-                        console.log("this is the data :", data);
+                        sensor_info.innerHTML = '';
 
                         const realTimestamps = data.timestamps_overlap;
                         const realPredictions = data.predictions_overlap;
@@ -188,20 +151,16 @@
                         line: {color: 'orange', dash: 'dot'}
                         }
                         const layout = {
-                        title: 'Predicció vs Dades Reals',
-                        xaxis: {title: 'Temps'},
-                        yaxis: {title: 'Consum (Kw)'},
-                        width: 800,
-                        height: 500
+                            title: 'Predicció vs Dades Reals',
+                            xaxis: {title: 'Temps'},
+                            yaxis: {title: 'Consum (Kw)'},
+                            autosize: true
                         };
 
-                        Plotly.newPlot(sensor_info , [traceReal, tracePredReal, tracePredFuture], layout);
+                        const config = {responsive: true};
 
+                        Plotly.newPlot(sensor_info , [traceReal, tracePredReal, tracePredFuture], layout, config);
 
-
-                    }
-                    else{
-                        console.log("no data for ", sensor_id);
                     }
                 });
 
