@@ -184,7 +184,7 @@ class SqlDB():
             con.commit()
 
     def clean_database_hourly_average(self):
-        logger.warning("INICIANT NETEJA DE LA BASE DE DADES")
+        logger.warning("🧹 INICIANT NETEJA DE LA BASE DE DADES")
         with self._get_connection() as con:
             # Comprovar si la taula 'dades' està buida
             cur = con.cursor()
