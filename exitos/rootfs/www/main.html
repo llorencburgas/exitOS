@@ -150,11 +150,11 @@
             sensor_info.innerHTML = "Encara no s'ha realitzat cap Forecast per aquest sensor";
             sensor_info.id = "forecast_cart_"+ sensor_id;
 
-            fetch('get_forecast_data/' + sensor_id)
+            fetch('get_forecast_data/' + sensor_id+'.pkl')
                 .then(response => response.json())
                 .then(data =>{
                     if(data.status ==="ok"){
-                        console.log(data);
+                        console.log("this is the data :", data);
 
                         const realTimestamps = data.timestamps_overlap;
                         const realPredictions = data.predictions_overlap;
