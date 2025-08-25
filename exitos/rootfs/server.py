@@ -37,7 +37,7 @@ PORT = 55023
 app = Bottle()
 database = db.SqlDB()
 # database.update_database("all")
-# database.clean_database_hourly_average()
+database.clean_database_hourly_average()
 forecast = Forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler()
 blockchain = Blockchain.Blockchain()
