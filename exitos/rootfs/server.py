@@ -114,11 +114,9 @@ def graphs_view():
 
         date_to_check_input = request.forms.getall("datetimes")
         if  not date_to_check_input:
-            logger.debug("NO HI HA DATA")
             start_date = datetime.today() - timedelta(days=30)
             end_date = datetime.today()
         else:
-            logger.debug("HI HA DATA")
             date_to_check = date_to_check_input[0].split(' - ')
             start_date = datetime.strptime(date_to_check[0], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
             end_date = datetime.strptime(date_to_check[1], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
