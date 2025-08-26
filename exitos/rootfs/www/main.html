@@ -5,102 +5,116 @@
     <title>Control energètic eXIT</title>
     <link rel="stylesheet" href="resources/mainStyle.css">
     <link rel="icon" type="image/x-icon" href="static/favicon.ico">
-<!--    <link rel="stylesheet" href="../resources/mainStyle.css">-->
+    <!--    <link rel="stylesheet" href="../resources/mainStyle.css">-->
 
-        <!-- llibreria d'icontes per al navbar-->
+    <!-- llibreria d'icontes per al navbar-->
     <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
     <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
 
 </head>
 
 <body>
-    <!--    NAVBAR     -->
-    % rebase('./www/base.html', title='Exitos')
+<!--    NAVBAR     -->
+% rebase('./www/base.html', title='Exitos')
 
-    <!--    HERO    -->
-    <div class="hero">
-        <h1>Benvingut/da a eXiT Control Energètic</h1>
-        <p>Gestiona, visualitza i optimitza la teva energia</p>
+<!--    HERO    -->
+<div class="hero">
+    <h1>Benvingut/da a eXiT Control Energètic</h1>
+    <p>Gestiona, visualitza i optimitza la teva energia</p>
+</div>
+
+
+<!--    INFO CARDS    -->
+<div class="container">
+    <div class="info-cards-container">
+        <div class="info-card">
+            <i class="fa-solid fa-square-check"></i>
+            <h3>Sensors</h3>
+            <p>Selecciona els sensors dels quals vols monitoritzar i recollir dades.</p>
+        </div>
+        <a href="./databaseView" class="info-card">
+            <i class="fa-solid fa-database"></i>
+            <h3>Base de Dades</h3>
+            <p>Visualitza les dades en un rang de temps personalitzat.</p>
+        </a>
     </div>
-<!--    <section class="hero-section">-->
-<!--        <div class="hero-content">-->
-<!--            <h1>Benvindut/da a eXiT Control Energètic</h1>-->
-<!--            <p>Gestiona, visualitza i optimitza la teva energia</p>-->
-<!--        </div>-->
-<!--    </section>-->
-
-    <!--    INFO CARDS    -->
-    <div class="container">
-        <br>
-        <h2>Què pots fer?</h2>
-        <br>
-
-        <div class="info-cards">
-            <a href="./sensors" class="info-card">
-                <i class="fa-solid fa-square-check"></i>
-                <h3>Sensors</h3>
-                <p>Selecciona els sensors dels quals vols monitoritzar i recollir dades.</p>
-            </a>
-
-            <a href="./databaseView" class="info-card">
-                <i class="fa-solid fa-database"></i>
-                <h3>Base de Dades</h3>
-                <p>Visualitza les dades en un rang de temps personalitzat.</p>
-            </a>
-
-            <a href="./model" class="info-card">
-                <i class="fa-solid fa-brain"></i>
-                <h3>Crear Model</h3>
-                <p>Entrena models predictius d'ús energètic per sensors específics i realitza les prediccions amb aquests.</p>
-            </a>
-
-            <a href="./config_page" class="info-card">
-                <i class="fa-solid fa-user-gear"></i>
-                <h3>Configuració</h3>
-                <p>Ajusta paràmetres d'usuari. Uneix-te o abandona una comunitat.</p>
-            </a>
-
-        </div>
-
-        <div class="info-cards">
-            <button id="test-optimization" onclick="TestOptimization()" ><i style="font-size: medium" class="fa-solid fa-ghost"></i> Test Optimitzar</button>
-        </div>
 
 
-       <h1 class="info-cards">Sensors Actius:</h1>
 
-        <h2 class="info-cards">Sensors Amb Forecast:</h2>
-        <div class="info-cards" id="info-sensors-actius"></div>
+<!--    <div class="info-cards">-->
+<!--        <a href="./sensors" class="info-card">-->
+<!--            <i class="fa-solid fa-square-check"></i>-->
+<!--            <h3>Sensors</h3>-->
+<!--            <p>Selecciona els sensors dels quals vols monitoritzar i recollir dades.</p>-->
+<!--        </a>-->
 
-       <h2 class="info-cards">Sensors Sense Forecast:</h2>
-        <div class="info-cards">
-            <div class="info-card" id="info-sensors-actius-no-forecast"></div>
-        </div>
+<!--        <a href="./databaseView" class="info-card">-->
+<!--            <i class="fa-solid fa-database"></i>-->
+<!--            <h3>Base de Dades</h3>-->
+<!--            <p>Visualitza les dades en un rang de temps personalitzat.</p>-->
+<!--        </a>-->
+
+<!--        <a href="./model" class="info-card">-->
+<!--            <i class="fa-solid fa-brain"></i>-->
+<!--            <h3>Crear Model</h3>-->
+<!--            <p>Entrena models predictius d'ús energètic per sensors específics i realitza les prediccions amb-->
+<!--                aquests.</p>-->
+<!--        </a>-->
+
+<!--        <a href="./config_page" class="info-card">-->
+<!--            <i class="fa-solid fa-user-gear"></i>-->
+<!--            <h3>Configuració</h3>-->
+<!--            <p>Ajusta paràmetres d'usuari. Uneix-te o abandona una comunitat.</p>-->
+<!--        </a>-->
+
+<!--    </div>-->
+
+<!--    <div class="info-cards">-->
+<!--        <button id="test-optimization" onclick="TestOptimization()"><i style="font-size: medium"-->
+<!--                                                                       class="fa-solid fa-ghost"></i> Test Optimitzar-->
+<!--        </button>-->
+<!--    </div>-->
 
 
-    </div>
+<!--    <h1 class="info-cards">Sensors Actius:</h1>-->
+
+<!--    <h2 class="info-cards">Sensors Amb Forecast:</h2>-->
+<!--    <div class="info-cards" id="info-sensors-actius"></div>-->
+
+<!--    <h2 class="info-cards">Sensors Sense Forecast:</h2>-->
+<!--    <div class="info-cards">-->
+<!--        <div class="info-card" id="info-sensors-actius-no-forecast"></div>-->
+<!--    </div>-->
+
+
+</div>
 
 </body>
 
 <script>
-    function TestOptimization(){
+    function TestOptimization() {
         fetch('optimize')
             .then(response => response.text())
             .then(data => console.log("Optimization pressed"))
     }
 
-    function onLoadPage(){
+    function onLoadPage() {
         console.log("onLoadPage");
-        const sensors_list = {{!active_sensors_list}};
+        const sensors_list = {
+        {
+            !active_sensors_list
+        }
+    }
+        ;
         const parent_div_forecast = document.getElementById("info-sensors-actius");
         const parent_div_no_forecast = document.getElementById("info-sensors-actius-no-forecast");
-        sensors_list.forEach((sensor_id) =>{
+        sensors_list.forEach((sensor_id) => {
             const fixed_name = sensor_id.replace("sensor.", '')
 
             fetch('get_forecast_data/' + fixed_name)
                 .then(response => response.json())
-                .then(data =>{
-                    if(data.status ==="ok"){
+                .then(data => {
+                    if (data.status === "ok") {
 
                         const container = document.createElement("div");
                         const sensor_name = document.createElement("h3");
@@ -108,7 +122,7 @@
 
                         container.className = "sensor-card";
                         sensor_name.innerHTML = fixed_name;
-                        sensor_info.id = "forecast_cart_"+ fixed_name;
+                        sensor_info.id = "forecast_cart_" + fixed_name;
 
                         container.appendChild(sensor_name);
                         container.appendChild(sensor_info);
@@ -122,25 +136,25 @@
                         const futurePredictions = data.predictions_future;
 
                         const traceReal = {
-                        x: realTimestamps,
-                        y: realValues,
-                        mode: "lines",
-                        name: "Dades Reals",
-                        line: {color: 'red', dash: 'dot'}
+                            x: realTimestamps,
+                            y: realValues,
+                            mode: "lines",
+                            name: "Dades Reals",
+                            line: {color: 'red', dash: 'dot'}
                         };
                         const tracePredReal = {
-                        x: realTimestamps,
-                        y: realPredictions,
-                        mode: 'lines',
-                        name: 'Predicció (part real)',
-                        line: { color: 'green' }
+                            x: realTimestamps,
+                            y: realPredictions,
+                            mode: 'lines',
+                            name: 'Predicció (part real)',
+                            line: {color: 'green'}
                         };
                         const tracePredFuture = {
-                        x: futureTimestamps,
-                        y: futurePredictions,
-                        mode: 'lines',
-                        name: 'Predicció (futur)',
-                        line: {color: 'orange', dash: 'dot'}
+                            x: futureTimestamps,
+                            y: futurePredictions,
+                            mode: 'lines',
+                            name: 'Predicció (futur)',
+                            line: {color: 'orange', dash: 'dot'}
                         }
                         const layout = {
                             title: 'Predicció vs Dades Reals',
@@ -153,10 +167,9 @@
 
                         const config = {responsive: true};
 
-                        Plotly.newPlot(sensor_info , [traceReal, tracePredReal, tracePredFuture], layout, config);
+                        Plotly.newPlot(sensor_info, [traceReal, tracePredReal, tracePredFuture], layout, config);
 
-                    }
-                    else{
+                    } else {
                         const text = document.createElement("p");
                         text.innerHTML = "· " + sensor_id;
                         parent_div_no_forecast.appendChild(text);
