@@ -666,7 +666,6 @@ def certificate_hourly_task():
             generation_value = None
         else:
             database.update_database(generation)
-            database.clean_database_hourly_average()
             generation_data = database.get_latest_data_from_sensor(sensor_id=generation)
             generation_timestamp = to_datetime(generation_data[0]).strftime("%Y-%m-%d %H:%M")
             generation_value = generation_data[1]
@@ -676,7 +675,6 @@ def certificate_hourly_task():
             consumption_value = None
         else:
             database.update_database(consumption)
-            database.clean_database_hourly_average()
             consumption_data = database.get_latest_data_from_sensor(sensor_id=consumption)
             consumption_timestamp = to_datetime(consumption_data[0]).strftime("%Y-%m-%d %H:%M")
             consumption_value = consumption_data[1]
@@ -704,7 +702,9 @@ def certificate_hourly_task():
             data_to_save = dict(OrderedDict(sorted(data_to_save.items())[-10:]))
 
             joblib.dump(data_to_save, full_path)
-        logger.info("CERTIFICAT HORARI COMPLETAT")
+
+        logger.info("🕒 CERTIFICAT HORARI COMPLETAT")
+        database.clean_database_hourly_average()
 
     else:
         logger.warning(f"Encara no t'has unit a cap comunitat! \n"
