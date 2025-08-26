@@ -265,3 +265,10 @@ a.mail-text{
     word-break: break-word;
     text-align: center;
 }
+
+.sensor-card p{
+    font-size: 0.5rem;
+    margin-bottom: 3px;
+    word-break: break-word;
+    text-align: center;
+}
