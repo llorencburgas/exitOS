@@ -255,11 +255,12 @@ a.mail-text{
     padding: 15px;
     text-align: center;
     color: var(--text-color);
+    text-overflow: clip;
     overflow: hidden;
 }
 
 .sensor-card h3{
-     font-size: 1.1rem;
+    font-size: 1.1rem;
     margin-bottom: 10px;
     word-break: break-word;
     text-align: center;
