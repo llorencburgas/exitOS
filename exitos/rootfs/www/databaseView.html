@@ -255,6 +255,7 @@
                 else {
                     const graphContainer = document.getElementById("graph-container");
                     graphContainer.innerHTML = "";
+                    graphContainer.style.width = "100%";
 
                     for (const [key, value] of Object.entries(data.message)) {
                         //titol
@@ -264,6 +265,7 @@
 
                         //div
                         const div = document.createElement("div");
+                        div.style.width = "100%";
                         div.innerHTML = `${value}`;
                         graphContainer.appendChild(div);
                     }
