@@ -54,11 +54,20 @@ main{
 
 .navbar ul{
     list-style: none;
-    text-decoration: none;
     display: flex;
     gap: 24px;
     margin: 0;
     padding: 0;
+}
+
+.navbar ul li a{
+    text-decoration: none;
+    color: var(--select-background-color);
+    font-weight: 500;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .navbar ul li{
@@ -67,7 +76,13 @@ main{
     transition: 0.2s;
 }
 .navbar ul li:hover{
+    color: var(--text-color);
     text-decoration: underline;
+}
+
+.navbar .logo img{
+    height: 40px;
+    width: auto;
 }
 
 
