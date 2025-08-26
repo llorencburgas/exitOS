@@ -222,9 +222,33 @@ a.mail-text{
     color: var(--main-bg-color);
     margin-bottom: 5px;
 }
+
 .info-card h3{
     margin: 12px 0 6px;
     color: var(--main-bg-color);
+}
+
+/* === FORECAST CARDS === */
+
+.forecasts-container{
+    padding: 40px;
+}
+
+.forecasts-container h2{
+    margin-bottom: 20px;
+    font-size: 24px
+}
+
+.forecast-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px,1fr));
+    gap: 20px;
+}
+.forecast-card{
+    background: var(--white-background);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
 
 /*.info-cards{*/
