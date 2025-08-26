@@ -51,22 +51,8 @@
 </head>
 <body>
     <main>
-        <header>
-            <nav class="nav">
-                <div class="navbar-container">
-                    <a href="https://exit.udg.edu/ca/" class="nav-image-link" target="_blank">
-                        <img src="./static/exitlogo.png" alt="Exit research group logo">
-                    </a>
-                    <div class="nav-items">
-                        <a href="./" class="nav-link"> <i class="fa-solid fa-house"></i>  Inici</a>
-                        <a href="./sensors" class="nav-link"> <i class="fa-solid fa-square-check"></i> Sensors</a>
-                        <a href="./databaseView" class="nav-link"> <i class="fa-solid fa-database"></i> Base de Dades</a>
-                        <a href="./model" class="nav-link"> <i class="fa-solid fa-brain"></i> Crear Model</a>
-                        <a href="./config_page" class="nav-link"> <i class="fa-solid fa-user-gear"></i> Configuració</a>
-                    </div>
-                </div>
-            </nav>
-        </header>
+        <!--    NAVBAR     -->
+        % rebase('./www/base.html', title='Exitos')
 
         <div class="container">
             <div class="content-section">
@@ -117,10 +103,6 @@
             </div>
         </div>
 
-        <footer class="footer">
-            <p>Created by: Grup Exit | Copyright &copy; 2024</p>
-            <p><a href="mailto:comunitatenergeticaexit@gmail.com" class="mail-text">comunitatenergeticaexit@gmail.com</a></p>
-        </footer>
     </main>
 </body>
 

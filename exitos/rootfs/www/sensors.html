@@ -2,11 +2,11 @@
 <html lang="ca">
 <head>
     <meta charset="UTF-8">
-     <title>Control energètic eXIT</title>
+    <title>Control energètic eXIT</title>
     <link rel="stylesheet" href="resources/mainStyle.css">
     <link rel="icon" type="image/x-icon" href="static/favicon.ico">
 
-        <!-- llibreria d'icontes per al navbar-->
+    <!-- llibreria d'icontes per al navbar-->
     <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
     <style>
 
@@ -14,7 +14,8 @@
             text-align: center;
             margin-bottom: 20px;
         }
-        #sensors-table{
+
+        #sensors-table {
             margin: 0 auto;
             font-size: large;
             border-collapse: collapse;
@@ -22,16 +23,20 @@
             word-break: break-all;
             word-wrap: break-word;
         }
-        #sensors-table td, #sensors-table th{
+
+        #sensors-table td, #sensors-table th {
             border: 1px solid #ddd;
             padding: 8px;
         }
-        #sensors-table tr:nth-child(even){
+
+        #sensors-table tr:nth-child(even) {
             background-color: #f2f2f2;
         }
-        #sensors-table tr:hover{
+
+        #sensors-table tr:hover {
             background-color: #ddd;
         }
+
         #sensors-table th {
             padding-top: 12px;
             padding-bottom: 12px;
@@ -39,15 +44,17 @@
             background-color: #04AA6D;
             color: white;
         }
-        .button-div{
+
+        .button-div {
             display: flex;
             justify-content: center;
             align-items: center;
         }
-        #backToTop{
+
+        #backToTop {
             position: fixed;
             bottom: 30px;
-            right:30px;
+            right: 30px;
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
@@ -60,16 +67,18 @@
             font-size: 20px;
             box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
         }
-        #backToTop:hover{
+
+        #backToTop:hover {
             background-color: #04D984;
         }
-        #backToTop.show{
+
+        #backToTop.show {
             opacity: 1;
             visibility: visible;
         }
 
         /* Toggle Switch */
-        .switch{
+        .switch {
             position: relative;
             display: inline-block;
             width: 46px;
@@ -79,7 +88,8 @@
             transition: all .3s;
             margin: 0 15px;
         }
-        .switch::after{
+
+        .switch::after {
             content: "";
             position: absolute;
             width: 22px;
@@ -90,16 +100,20 @@
             left: 1px;
             transition: all .3s;
         }
-        input[type='checkbox']:checked + .switch::after{
+
+        input[type='checkbox']:checked + .switch::after {
             transform: translateX(22px);
         }
-        input[type='checkbox']:checked + .switch{
+
+        input[type='checkbox']:checked + .switch {
             background-color: #04D984;
         }
-        .offscreen{
+
+        .offscreen {
             position: absolute;
             left: -9999px;
         }
+
         .label-text {
             display: inline-block;
             vertical-align: middle;
@@ -111,83 +125,77 @@
 </head>
 
 <body>
-    <main>
-        <header>
-                <nav class="nav">
-                <div class="navbar-container">
-                    <a href="https://exit.udg.edu/ca/" class="nav-image-link" target="_blank">
-                        <img src="./static/exitlogo.png" alt="Exit research group logo">
-                    </a>
-                    <div class="nav-items">
-                        <a href="./" class="nav-link"> <i class="fa-solid fa-house"></i>  Inici</a>
-                        <a href="./sensors" class="nav-link"> <i class="fa-solid fa-square-check"></i> Sensors</a>
-                        <a href="./databaseView" class="nav-link"> <i class="fa-solid fa-database"></i> Base de Dades</a>
-                        <a href="./model" class="nav-link"> <i class="fa-solid fa-brain"></i> Crear Model</a>
-                        <a href="./config_page" class="nav-link"> <i class="fa-solid fa-user-gear"></i> Configuració</a>
-                    </div>
-                </div>
-            </nav>
-            </header>
-            <div class="container">
-                <div class="content-section">
-                    <h2>Sensors Disponibles</h2>
-                    <p> Seleccioni els sensors que vol guardar </p>
+<main>
+    <!--    NAVBAR     -->
+    % rebase('./www/base.html', title='Exitos')
 
-                    <div class="button-div">
-                        <span class="label-text"> Tots els Sensors </span>
-                        <input type="checkbox" id="toggle" class="offscreen" onchange="changeVisibleSensors()"/>
-                        <label for="toggle" class="switch"></label>
-                        <span class="label-text"> Sensors Guardats </span>
+    <div class="container">
+        <div class="content-section">
+            <h2>Sensors Disponibles</h2>
+            <p> Seleccioni els sensors que vol guardar </p>
 
-                    </div>
+            <div class="button-div">
+                <span class="label-text"> Tots els Sensors </span>
+                <input type="checkbox" id="toggle" class="offscreen" onchange="changeVisibleSensors()"/>
+                <label for="toggle" class="switch"></label>
+                <span class="label-text"> Sensors Guardats </span>
 
-                    <div class="button-div">
-                        <button class="save-sensors" type="submit" form="sensors-form"><i style="font-size: medium" class="fa-regular fa-floppy-disk"></i> Guardar Canvis</button>
-                        <button class="select-sensors" onclick="selectAll(true)"><i style="font-size: medium" class="fa-regular fa-square-check"></i>  Seleccionar Tots</button>
-                        <button class="select-sensors" onclick="selectAll(false)"><i  style="font-size: medium" class="fa-regular fa-square-minus"></i>  Desseleccionar Tots</button>
-                    </div>
-                </div>
-
-
-                <form action="./update_sensors" method="POST" id="sensors-form">
-                    <!-- TABLE -->
-                    <table id="sensors-table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Guardar</th>
-                                <th>Nom del sensor</th>
-                                <th>ID del sensor</th>
-                                <th>Tipus de Sensor</th>
-                            </tr>
-                        </thead>
-                        <tbody id="sensors-table-body">
-                        </tbody>
-
-
-                    </table>
-                </form>
-
-                <button id="backToTop" onclick="scrollToTop()" class="fa-solid fa-circle-up"></button>
             </div>
 
-        <footer class="footer">
-            <p>Created by: Grup Exit | Copyright &copy; 2024</p>
-            <p><a href="mailto:comunitatenergeticaexit@gmail.com" class="mail-text">comunitatenergeticaexit@gmail.com</a></p>
-        </footer>
-    </main>
+            <div class="button-div">
+                <button class="save-sensors" type="submit" form="sensors-form"><i style="font-size: medium"
+                                                                                  class="fa-regular fa-floppy-disk"></i>
+                    Guardar Canvis
+                </button>
+                <button class="select-sensors" onclick="selectAll(true)"><i style="font-size: medium"
+                                                                            class="fa-regular fa-square-check"></i>
+                    Seleccionar Tots
+                </button>
+                <button class="select-sensors" onclick="selectAll(false)"><i style="font-size: medium"
+                                                                             class="fa-regular fa-square-minus"></i>
+                    Desseleccionar Tots
+                </button>
+            </div>
+        </div>
+
+
+        <form action="./update_sensors" method="POST" id="sensors-form">
+            <!-- TABLE -->
+            <table id="sensors-table">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Guardar</th>
+                    <th>Nom del sensor</th>
+                    <th>ID del sensor</th>
+                    <th>Tipus de Sensor</th>
+                </tr>
+                </thead>
+                <tbody id="sensors-table-body">
+                </tbody>
+
+
+            </table>
+        </form>
+
+        <button id="backToTop" onclick="scrollToTop()" class="fa-solid fa-circle-up"></button>
+    </div>
+
+
+</main>
 </body>
 
 <script>
     let onlySaved = true;
+
     //funció per seleccionar o deseleccionar totes les caselles
-    function selectAll(select){
+    function selectAll(select) {
         document.querySelectorAll('.checkboxes').forEach(checkbox => {
             checkbox.checked = select;
         });
     }
 
-    function createRow(sensorsTableBody, index, name, id, save, type){
+    function createRow(sensorsTableBody, index, name, id, save, type) {
 
         const row = document.createElement("tr");
         row.id = "sensors-table-row"
@@ -204,7 +212,7 @@
         checkbox.name = "sensor_id";
         checkbox.value = id;
 
-        if(save === 1){
+        if (save === 1) {
             checkbox.checked = true;
         }
 
@@ -228,14 +236,21 @@
         const optionGenerator = new Option("Generator", "Generator");
         const optionNonImportant = new Option("No Important", "No Important");
 
-        if (save === 0){select.disabled = true}
+        if (save === 0) {
+            select.disabled = true
+        }
 
-        if (type === "Generator"){optionGenerator.selected = true;}
-        else if (type === "consum"){optionConsum.selected = true;}
-        else if (type === "No Important"){optionNonImportant.selected = true;}
-        else {optionHidden.selected = true;}
+        if (type === "Generator") {
+            optionGenerator.selected = true;
+        } else if (type === "consum") {
+            optionConsum.selected = true;
+        } else if (type === "No Important") {
+            optionNonImportant.selected = true;
+        } else {
+            optionHidden.selected = true;
+        }
 
-        checkbox.addEventListener("change", function(){
+        checkbox.addEventListener("change", function () {
             select.disabled = !checkbox.checked;
         })
 
@@ -269,24 +284,29 @@
         fetch("sensors?calling_from=JS")
             .then(response => response.json())
             .then(sensors => {
-                sensors.sensors_id.forEach((id,i) =>{
+                sensors.sensors_id.forEach((id, i) => {
                     const name = sensors.sensors_name[i];
                     const save = sensors.sensors_save[i];
                     const type = sensors.sensors_type[i];
 
-                    if (onlySaved === false){createRow(sensorsTableBody, i, name, id, save, type);}
-                    else{
-                        if (save === 1){createRow(sensorsTableBody, i, name, id, save, type);}
+                    if (onlySaved === false) {
+                        createRow(sensorsTableBody, i, name, id, save, type);
+                    } else {
+                        if (save === 1) {
+                            createRow(sensorsTableBody, i, name, id, save, type);
+                        }
                     }
                 })
 
             })
-            .catch(error => { console.log("Error en la petició:", error.message); });
+            .catch(error => {
+                console.log("Error en la petició:", error.message);
+            });
 
 
     }
 
-    window.onscroll = function() {
+    window.onscroll = function () {
         let button = document.getElementById("backToTop");
         if (document.documentElement.scrollTop > 300) {
             button.classList.add("show");
@@ -296,7 +316,7 @@
     };
 
     function scrollToTop() {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
     changeVisibleSensors();
