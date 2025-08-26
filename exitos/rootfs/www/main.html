@@ -63,9 +63,7 @@
 <div class="forecasts-container">
     <h2>Forecastings Guardats</h2>
     <div class="forecast-grid">
-        <div class="forecast-card">📊 Gràfica Sensor 1</div>
-        <div class="forecast-card">📊 Gràfica Sensor 2</div>
-        <div class="forecast-card">📊 Gràfica Sensor 3</div>
+
     </div>
 </div>
 
@@ -104,8 +102,8 @@
                     if (data.status === "ok") {
 
                         const container = document.createElement("div");
-
                         container.className = "forecast-card";
+                        container.innerText = fixed_name;
                         container.innerHTML = fixed_name;
 
                         parent_div_forecast.appendChild(container);
