@@ -57,9 +57,7 @@
 
 
 <!--    PROVISIONAL TEST BUTTON    -->
-<button id="test-optimization" onclick="TestOptimization()"><i style="font-size: medium"
-                                                               class="fa-solid fa-ghost"></i> Test Optimitzar
-</button>
+<button id="test-optimization" onclick="TestOptimization()"><i style="font-size: medium" class="fa-solid fa-ghost"></i> Test Optimitzar</button>
 
 <!--    FORECASTS     -->
 <div class="forecasts-container">
@@ -94,14 +92,8 @@
     }
 
     function onLoadPage() {
-        console.log("onLoadPage");
-        const sensors_list = {
-        {
-            !active_sensors_list
-        }
-    }
-        ;
-        const parent_div_forecast = document.getElementById("info-sensors-actius");
+        const sensors_list = {{!active_sensors_list}};
+        const parent_div_forecast = document.getElementById("forecast-grid");
         const parent_div_no_forecast = document.getElementById("info-sensors-actius-no-forecast");
         sensors_list.forEach((sensor_id) => {
             const fixed_name = sensor_id.replace("sensor.", '')
@@ -112,15 +104,10 @@
                     if (data.status === "ok") {
 
                         const container = document.createElement("div");
-                        const sensor_name = document.createElement("h3");
-                        const sensor_info = document.createElement("div")
 
-                        container.className = "sensor-card";
-                        sensor_name.innerHTML = fixed_name;
-                        sensor_info.id = "forecast_cart_" + fixed_name;
+                        container.className = "forecast-card";
+                        container.innerHTML = fixed_name;
 
-                        container.appendChild(sensor_name);
-                        container.appendChild(sensor_info);
                         parent_div_forecast.appendChild(container);
 
 
@@ -162,12 +149,12 @@
 
                         const config = {responsive: true};
 
-                        Plotly.newPlot(sensor_info, [traceReal, tracePredReal, tracePredFuture], layout, config);
+                        Plotly.newPlot(container, [traceReal, tracePredReal, tracePredFuture], layout, config);
 
                     } else {
-                        const text = document.createElement("p");
-                        text.innerHTML = "· " + sensor_id;
-                        parent_div_no_forecast.appendChild(text);
+                        // const text = document.createElement("p");
+                        // text.innerHTML = "· " + sensor_id;
+                        // parent_div_no_forecast.appendChild(text);
 
                     }
                 });
