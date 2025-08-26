@@ -14,87 +14,68 @@
 </head>
 
 <body>
-    <main>
-        % rebase('./www/base.html', title='Exitos')
-<!--        <header>-->
-<!--            <nav class="nav">-->
-<!--                <div class="navbar-container">-->
-<!--                    <a href="https://exit.udg.edu/ca/" class="nav-image-link" target="_blank">-->
-<!--                        <img src="./static/exitlogo.png" alt="Exit research group logo">-->
-<!--                    </a>-->
-<!--                    <div class="nav-items">-->
-<!--                        <a href="./" class="nav-link"> <i class="fa-solid fa-house"></i>  Inici</a>-->
-<!--                        <a href="./sensors" class="nav-link"> <i class="fa-solid fa-square-check"></i> Sensors</a>-->
-<!--                        <a href="./databaseView" class="nav-link"> <i class="fa-solid fa-database"></i> Base de Dades</a>-->
-<!--                        <a href="./model" class="nav-link"> <i class="fa-solid fa-brain"></i> Crear Model</a>-->
-<!--                        <a href="./config_page" class="nav-link"> <i class="fa-solid fa-user-gear"></i> Configuració</a>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </nav>-->
-<!--        </header>-->
+    <!--    NAVBAR     -->
+    % rebase('./www/base.html', title='Exitos')
 
-        <section class="hero-section">
-            <div class="hero-content">
-                <h1>Benvindut/da a eXiT Control Energètic</h1>
-                <p>Gestiona, visualitza i optimitza la teva energia</p>
-            </div>
-        </section>
+    <!--    HERO    -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1>Benvindut/da a eXiT Control Energètic</h1>
+            <p>Gestiona, visualitza i optimitza la teva energia</p>
+        </div>
+    </section>
 
-        <div class="container">
-            <br>
-            <h2>Què pots fer?</h2>
-            <br>
+    <!--    INFO CARDS    -->
+    <div class="container">
+        <br>
+        <h2>Què pots fer?</h2>
+        <br>
 
-            <div class="info-cards">
-                <a href="./sensors" class="info-card">
-                    <i class="fa-solid fa-square-check"></i>
-                    <h3>Sensors</h3>
-                    <p>Selecciona els sensors dels quals vols monitoritzar i recollir dades.</p>
-                </a>
+        <div class="info-cards">
+            <a href="./sensors" class="info-card">
+                <i class="fa-solid fa-square-check"></i>
+                <h3>Sensors</h3>
+                <p>Selecciona els sensors dels quals vols monitoritzar i recollir dades.</p>
+            </a>
 
-                <a href="./databaseView" class="info-card">
-                    <i class="fa-solid fa-database"></i>
-                    <h3>Base de Dades</h3>
-                    <p>Visualitza les dades en un rang de temps personalitzat.</p>
-                </a>
+            <a href="./databaseView" class="info-card">
+                <i class="fa-solid fa-database"></i>
+                <h3>Base de Dades</h3>
+                <p>Visualitza les dades en un rang de temps personalitzat.</p>
+            </a>
 
-                <a href="./model" class="info-card">
-                    <i class="fa-solid fa-brain"></i>
-                    <h3>Crear Model</h3>
-                    <p>Entrena models predictius d'ús energètic per sensors específics i realitza les prediccions amb aquests.</p>
-                </a>
+            <a href="./model" class="info-card">
+                <i class="fa-solid fa-brain"></i>
+                <h3>Crear Model</h3>
+                <p>Entrena models predictius d'ús energètic per sensors específics i realitza les prediccions amb aquests.</p>
+            </a>
 
-                <a href="./config_page" class="info-card">
-                    <i class="fa-solid fa-user-gear"></i>
-                    <h3>Configuració</h3>
-                    <p>Ajusta paràmetres d'usuari. Uneix-te o abandona una comunitat.</p>
-                </a>
-
-            </div>
-
-            <div class="info-cards">
-                <button id="test-optimization" onclick="TestOptimization()" ><i style="font-size: medium" class="fa-solid fa-ghost"></i> Test Optimitzar</button>
-            </div>
-
-
-           <h1 class="info-cards">Sensors Actius:</h1>
-
-            <h2 class="info-cards">Sensors Amb Forecast:</h2>
-            <div class="info-cards" id="info-sensors-actius"></div>
-
-           <h2 class="info-cards">Sensors Sense Forecast:</h2>
-            <div class="info-cards">
-                <div class="info-card" id="info-sensors-actius-no-forecast"></div>
-            </div>
-
+            <a href="./config_page" class="info-card">
+                <i class="fa-solid fa-user-gear"></i>
+                <h3>Configuració</h3>
+                <p>Ajusta paràmetres d'usuari. Uneix-te o abandona una comunitat.</p>
+            </a>
 
         </div>
-        
-        <footer class="footer">
-            <p>Created by: Grup Exit | Copyright &copy; 2024</p>
-            <p><a href="mailto:comunitatenergeticaexit@gmail.com" class="mail-text">comunitatenergeticaexit@gmail.com</a></p>
-        </footer>
-    </main>
+
+        <div class="info-cards">
+            <button id="test-optimization" onclick="TestOptimization()" ><i style="font-size: medium" class="fa-solid fa-ghost"></i> Test Optimitzar</button>
+        </div>
+
+
+       <h1 class="info-cards">Sensors Actius:</h1>
+
+        <h2 class="info-cards">Sensors Amb Forecast:</h2>
+        <div class="info-cards" id="info-sensors-actius"></div>
+
+       <h2 class="info-cards">Sensors Sense Forecast:</h2>
+        <div class="info-cards">
+            <div class="info-card" id="info-sensors-actius-no-forecast"></div>
+        </div>
+
+
+    </div>
+
 </body>
 
 <script>
@@ -182,7 +163,6 @@
 
         });
     }
-
 
     onLoadPage();
 
