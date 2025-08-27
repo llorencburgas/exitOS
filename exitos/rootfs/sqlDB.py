@@ -23,8 +23,6 @@ class SqlDB():
         Constructor de la classe. \n
         Crea la connexió a la base de dades
         """
-        logger.info("INICIANT LA BASE DE DADES...")
-
         self.running_in_ha = "HASSIO_TOKEN" in os.environ
         self.database_file = "share/exitos/dades.db" if self.running_in_ha else "dades.db"
         self.config_path = "share/exitos/user_info.conf" if self.running_in_ha else "user_info.config"

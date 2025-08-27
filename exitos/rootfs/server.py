@@ -40,6 +40,8 @@ forecast = Forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler()
 blockchain = Blockchain.Blockchain()
 
+logger.info("🌳 eXiT OS INICIAT. OBRE LA UIWEB PER COMENÇAR A USAR-LO.")
+
 
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')
