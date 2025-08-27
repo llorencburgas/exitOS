@@ -517,7 +517,7 @@ class Forecaster:
         merged_data.bfill(inplace=True)
 
         if merged_data.empty:
-            logger.error(f"\n ************* \n   No hi ha dades per a realitzar el Forecast \n *************")
+            logger.error(f"\n ************* \n ❌ No hi ha dades per a realitzar el Forecast \n *************")
             return
 
         # PAS 1 - Fer el Windowing

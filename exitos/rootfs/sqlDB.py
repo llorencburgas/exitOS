@@ -184,14 +184,14 @@ class SqlDB():
             con.commit()
 
     def clean_database_hourly_average(self):
-        logger.warning("🧹 INICIANT NETEJA DE LA BASE DE DADES")
+        logger.info("🧹 INICIANT NETEJA DE LA BASE DE DADES")
         with self._get_connection() as con:
             # Comprovar si la taula 'dades' està buida
             cur = con.cursor()
             cur.execute("SELECT COUNT(*) FROM dades")
             count = cur.fetchone()[0]
             if count == 0:
-                logger.info("La base de dades està buida. No s'executa la neteja.")
+                logger.info("❗La base de dades està buida. No s'executa la neteja.")
                 return
             cur.close()
 
@@ -200,12 +200,12 @@ class SqlDB():
             limit_date = (datetime.now() - timedelta(days=21)).isoformat()
 
             for sensor_id in sensor_ids:
-                logger.info(f"Processant sensor: {sensor_id}")
+                logger.debug(f"      Processant sensor: {sensor_id}")
                 df = pd.read_sql_query(
                     f"SELECT timestamp, value FROM dades WHERE sensor_id = ? AND timestamp >= ?", con, params=(sensor_id,limit_date)
                 )
                 if df.empty:
-                    logger.info(f"No hi ha dades per al sensor {sensor_id} dins el període. S'omet.")
+                    logger.info(f"           ❌ No hi ha dades per al sensor {sensor_id} dins el període. S'omet.")
                     continue
 
                 df['timestamp'] = pd.to_datetime(df['timestamp'], format='ISO8601', errors='coerce')
@@ -225,7 +225,7 @@ class SqlDB():
                     "INSERT INTO dades (sensor_id, timestamp, value) VALUES (?, ?, ?)", rows_to_insert
                 )
                 con.commit()
-        logger.info("NETEJA COMPLETADA")
+        logger.info("🧹 NETEJA COMPLETADA")
         self.vacuum()
 
     def update_database(self, sensor_to_update):
@@ -246,11 +246,11 @@ class SqlDB():
                 get(self.base_url + "states/" + sensor_to_update, headers=self.headers).json()
             )
             if len(sensors_list) == 0:
-                logger.error("No existeix un sensor amb l'ID indicat")
+                logger.error("❌ No existeix un sensor amb l'ID indicat")
                 return None
 
         if all_sensors_debug:
-            logger.info("Iniciant l'actualització de la base de dades...")
+            logger.info("🗃️ Iniciant l'actualització de la base de dades...")
 
         local_tz = tzlocal.get_localzone()  # Gets system local timezone (e.g., 'Europe/Paris')
         current_date = datetime.now(local_tz)
@@ -277,7 +277,7 @@ class SqlDB():
                     )
                     cur.close()
                     con.commit()
-                    logger.debug(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] Afegit un nou sensor a la base de dades: {sensor_id}")
+                    logger.debug(f"     [ {current_date.strftime('%d-%b-%Y   %X')} ] Afegit un nou sensor a la base de dades: {sensor_id}")
                 else : #TODO: ELIMINAR QUAN TOTS ELS USUARIS TINGUIN SENSOR_TYPE
                     cur = con.cursor()
                     cur.execute("PRAGMA table_info(sensors)")
@@ -292,7 +292,7 @@ class SqlDB():
                 update_sensor = self.query_select("sensors","update_sensor", sensor_id, con)[0]
 
                 if save_sensor and update_sensor:
-                    logger.debug(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] Actualitzant sensor: {sensor_id}")
+                    logger.debug(f"     [ {current_date.strftime('%d-%b-%Y   %X')} ] Actualitzant sensor: {sensor_id}")
 
                     last_date_saved = self.query_select("dades","timestamp, value", sensor_id, con)
                     if last_date_saved is None:
@@ -322,13 +322,13 @@ class SqlDB():
                             try:
                                 sensor_data_historic = pd.json_normalize(response.json())
                             except ValueError as e:
-                                logger.error(f"Error parsing JSON: {str(e)}")
+                                logger.error(f"     Error parsing JSON: {str(e)}")
                                 sensor_data_historic = pd.DataFrame()
                         elif response.status_code == 500:
-                            logger.critical(f"Server error (500): Internal server error at sensor {sensor_id}")
+                            logger.critical(f"     Server error (500): Internal server error at sensor {sensor_id}")
                             sensor_data_historic = pd.DataFrame()
                         else:
-                            logger.error(f"Request failed with status code: {response.status_code}")
+                            logger.error(f"     Request failed with status code: {response.status_code}")
                             sensor_data_historic = pd.DataFrame()
 
                         #actualitzem el valor obtingut de l'històric del sensor
@@ -351,7 +351,7 @@ class SqlDB():
                         con.commit()
                         start_time += timedelta(days = 7)
         if all_sensors_debug:
-            logger.info(f"[ {current_date.strftime('%d-%b-%Y   %X')} ] TOTS ELS SENSORS HAN ESTAT ACTUALITZATS")
+            logger.info(f"🗃️ [ {current_date.strftime('%d-%b-%Y   %X')} ] TOTS ELS SENSORS HAN ESTAT ACTUALITZATS")
 
     def get_lat_long(self):
         """
@@ -420,9 +420,7 @@ class SqlDB():
 
     def vacuum(self):
         with self._get_connection() as con:
-            logger.debug("VACUUMING")
             con.execute("VACUUM")
-            logger.debug("VACUUM COMPLETE")
 
     def get_active_sensors_by_type(self, sensor_type: String = 'consum'):
         #TODO: mirar si posar una booleana per indicar tipus d'unitats (Kw) del sensor

@@ -134,6 +134,7 @@
 
             </form>
             <button id="fetch-data" onclick="FetchGraph()"> Mostrar Gràfiques</button>
+            <button id="update-database" onclick="UpdateDatabase()"> Actualitzar Base de Dades</button>
 
             % for sensor_id, graph_html in graphs.items():
             <h2>Sensor {{ sensor_id }}</h2>
@@ -277,6 +278,14 @@
                 }
             });
     }
+
+
+    function UpdateDatabase(){
+        fetch('force_update_database')
+            .then(response => response.text())
+            .then(data => console.log("Database updated"))
+    }
+
 
 
     $(function () {
