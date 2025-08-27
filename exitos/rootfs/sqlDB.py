@@ -318,13 +318,13 @@ class SqlDB():
                             try:
                                 sensor_data_historic = pd.json_normalize(response.json())
                             except ValueError as e:
-                                logger.error(f"     Error parsing JSON: {str(e)}")
+                                logger.error(f"          Error parsing JSON: {str(e)}")
                                 sensor_data_historic = pd.DataFrame()
                         elif response.status_code == 500:
-                            logger.critical(f"     Server error (500): Internal server error at sensor {sensor_id}")
+                            logger.critical(f"          Server error (500): Internal server error at sensor {sensor_id}")
                             sensor_data_historic = pd.DataFrame()
                         else:
-                            logger.error(f"     Request failed with status code: {response.status_code}")
+                            logger.error(f"          Request failed with status code: {response.status_code}")
                             sensor_data_historic = pd.DataFrame()
 
                         #actualitzem el valor obtingut de l'històric del sensor
