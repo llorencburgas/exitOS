@@ -398,9 +398,7 @@ def get_model_config(model_name):
 @app.route('/get_forecast_data/<model_name>')
 def get_forecast_data(model_name):
     try:
-        logger.info(f"Searching forecasts for: {model_name}")
         forecasts = database.get_data_from_latest_forecast(model_name + ".pkl")
-        logger.info(f"forecasts: {forecasts}")
         if forecasts.empty:
             return json.dumps({"status":"no_forecasts"})
 
