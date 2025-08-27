@@ -452,6 +452,7 @@ class Forecaster:
 
             if not merged_extras.empty:
                 merged_data = pd.merge(merged_data, merged_extras, on='timestamp', how='inner')
+                merged_data.rename(columns={'value_x': 'value'}, inplace=True)
 
         if merged_data is []: merged_data = sensor
 
@@ -487,7 +488,7 @@ class Forecaster:
             start_date = data['timestamp'].min().strftime("%Y-%m-%d")
             end_date = data['timestamp'].max().strftime("%Y-%m-%d")
 
-            logger.info(f"Descarregant dades meteo històriques de {start_date} a {end_date}")
+            logger.info(f"⛅ Descarregant dades meteo històriques de {start_date} a {end_date}")
 
             url = (
                 f"https://archive-api.open-meteo.com/v1/archive"
@@ -509,7 +510,7 @@ class Forecaster:
                 meteo_data["timestamp"] = timestamps
                 meteo_data.drop(columns=["time"], inplace=True)
             except Exception as e:
-                logger.error(f"No s'han pogut descarregar les dades meteo històriques: {e}")
+                logger.error(f"❌ No s'han pogut descarregar les dades meteo històriques: {e}")
                 meteo_data = None
 
         #PREP PAS 0 - preparar els df de meteo-data i dades extra
@@ -533,7 +534,7 @@ class Forecaster:
         # PAS 4 - Treure NaN
         dad.replace([np.inf, -np.inf], np.nan, inplace=True)
         X = dad.bfill()
-
+        X = X.dropna()
         # PAS 5 - Desfer el dataset i guardar matrius X i y
         nomy = y
         y = pd.to_numeric(X[nomy], errors='raise')
@@ -541,15 +542,12 @@ class Forecaster:
 
         # PAS 6 - Escalat
         X, scaler = self.scalate_data(X, escalat)
-        logger.warning("after scaler")
 
         # PAS 7 - Seleccionar atributs
         [model_select, X_new, y_new] = self.get_attribs(X, y, feature_selection)
-        logger.warning("after select attributes")
 
         # PAS 8 - Crear el model
         [model, score] = self.Model(X_new, y_new.values, algorithm, params, max_time=max_time)
-        logger.warning("after model creation")
 
         # PAS 9 - Guardar el model
         if algorithm is None:

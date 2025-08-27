@@ -158,14 +158,19 @@ def update_sensors():
     sensors = database.get_all_sensors()
     sensors_id = sensors['entity_id'].tolist()
 
-
     i = 0
     for sensor_id in sensors_id:
         is_active = sensor_id in checked_sensors
-        database.update_sensor_active(sensor_id, is_active)
-        if is_active:
+        was_active = database.get_sensor_active(sensor_id)
+        if was_active == 0 and is_active:
+            database.update_sensor_active(sensor_id, is_active)
             sensor_type = all_sensor_types[i].strip()
             database.update_sensor_type(sensor_id, sensor_type)
+        if was_active == 1 and not is_active:
+            database.update_sensor_active(sensor_id, is_active)
+            database.remove_sensor_data(sensor_id)
+
+        if is_active:
             i += 1
 
 
@@ -219,12 +224,9 @@ def train_model():
             value = value.strip().lower()
 
             if value in ["true", "false", "null", "none"]:
-                if value == "true":
-                    config[key] = True
-                elif value == "false":
-                    config[key] = False
-                else:
-                    config[key] = None
+                if value == "true": config[key] = True
+                elif value == "false": config[key] = False
+                else: config[key] = None
             elif value.isdigit():
                 config[key] = int(value)
             else:
@@ -334,11 +336,7 @@ def delete_model():
 @app.route('/submit-model', method="POST")
 def submit_model():
     try:
-        logger.info('0')
         action = request.forms.get('action')
-        selected_model = request.forms.get("model")
-
-        logger.info('1')
 
         if action == 'train':
             model_name = train_model()

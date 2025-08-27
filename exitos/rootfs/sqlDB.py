@@ -233,8 +233,6 @@ class SqlDB():
         Actualitza la base de dades amb la API del Home Assistant.
         """
         all_sensors_debug = False
-
-
         #obtenim la llista de sensors de la API
         if sensor_to_update == "all":
             sensors_list = pd.json_normalize(
