@@ -424,7 +424,7 @@ class Forecaster:
         if meteo is not None:
             meteo['timestamp'] = pd.to_datetime(meteo['timestamp']).dt.tz_localize(None).dt.floor('h')
             meteo = meteo.drop_duplicates(subset=['timestamp'])
-            merged_data = pd.merge(sensor, meteo, on='timestamp', how='inner')
+            merged_data = pd.merge(sensor, meteo, on='timestamp', how='outer')
         else:
             merged_data = sensor
 
@@ -445,12 +445,13 @@ class Forecaster:
                     if aux.empty:
                         aux = extra_sensors[i]
                     else:
-                        merged_extras = pd.merge(aux, extra_sensors[i], on='timestamp', how='inner')
+                        merged_extras = pd.merge(aux, extra_sensors[i], on='timestamp', how='outer')
                         aux = merged_extras
 
             if not merged_extras.empty:
-                merged_data = pd.merge(merged_data, merged_extras, on='timestamp', how='inner')
-                merged_data.rename(columns={'value_x': 'value'}, inplace=True)
+                merged_data = pd.merge(merged_data, merged_extras, on='timestamp', how='outer')
+                if merged_data.get("value") is None:
+                    merged_data.rename(columns={'value_x': 'value'}, inplace=True)
 
         if merged_data is []: merged_data = sensor
 
@@ -555,6 +556,13 @@ class Forecaster:
             self.db['params'] = params
             self.db['algorithm'] = algorithm
 
+        if meteo_data is not None:
+            self.db['meteo_data'] = meteo_data
+            self.db['meteo_data_is_selected'] = True
+        else:
+            self.db['meteo_data'] = None
+            self.db['meteo_data_is_selected'] = False
+
         self.db['model'] = model
         self.db['scaler'] = scaler
         self.db['scaler_name'] = escalat
@@ -567,8 +575,8 @@ class Forecaster:
         self.db['initial_data'] = data
         self.db['sensors_id'] = sensors_id
         self.db['extra_sensors'] = extra_sensors_df
-        logger.info(f"METEO DATA IS: {meteo_data}")
-        self.db['meteo_data_is_selected'] = (meteo_data if meteo_data is None else True)
+        self.db['lat'] = lat
+        self.db['lon'] = lon
 
         self.save_model(filename)
 
@@ -619,6 +627,7 @@ class Forecaster:
         original_columns = df.columns
         if model_select:
             df_transformed = pd.DataFrame(model_select.transform(df), index=df.index)
+            df_transformed = df_transformed.fillna(0)
 
         # PAS 9 - Preparar timestamps futurs
         last_timestamp = data.index[-1]
@@ -635,6 +644,7 @@ class Forecaster:
         for col in original_columns:
             if col not in future_df.columns:
                 future_df[col] = df[col].iloc[-1] if col in df.columns else 0
+        future_df = future_df.fillna(0)
         # Reorder to match training columns
         future_df = future_df[original_columns]
 

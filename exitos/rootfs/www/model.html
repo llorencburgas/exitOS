@@ -507,6 +507,8 @@
                  const realValues = data.real_values;
                  const futureTimestamps = data.timestamps_future;
                  const futurePredictions = data.predictions_future;
+                 const last7DaysStart = data.last7daysStart;
+                 const last7DaysEnd = data.last7daysEnd;
 
                  document.getElementById("forecast-title").innerText = `Resultats del Forecast per al model: ${modelPath}`;
                  document.getElementById("forecast-title").style.display = "block";
@@ -534,10 +536,11 @@
                  }
                  const layout = {
                      title: 'Predicció vs Dades Reals',
-                     xaxis: {title: 'Temps'},
+                     xaxis: {title: 'Temps', range:[last7DaysStart, last7DaysEnd]},
                      yaxis: {title: 'Consum (Kw)'},
                      width: 800,
-                     height: 500
+                     height: 500,
+                     dragmode: 'pan'
                  };
 
                  Plotly.newPlot('forecast-chart', [traceReal, tracePredReal, tracePredFuture], layout);
@@ -583,7 +586,6 @@
 
     document.getElementById('models').addEventListener('change', updateModels);
 
-     console.log("Active Model JS: ", "{{active_model}}")
      if("{{active_model}}" === "newModel"){
          document.getElementById("models").value = "{{active_model}}";
          updateModels("{{active_model}}");

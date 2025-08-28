@@ -202,7 +202,6 @@ def create_model_page(active_model = "None"):
         for f in forecasts_aux:
             forecasts_id.append(f[0])
 
-        logger.debug(f"Active Model: {active_model}")
         if active_model == "None": active_model = "newModel"
 
         return template('./www/model.html',
@@ -307,8 +306,7 @@ def train_model():
     return model_name
 
 def forecast_model(selected_forecast):
-    forecast_df, real_values = ForecasterManager.predict_consumption_production(meteo_data=optimalScheduler.meteo_data,
-                                                                             model_name=selected_forecast)
+    forecast_df, real_values = ForecasterManager.predict_consumption_production(model_name=selected_forecast)
 
     forecasted_done_time = datetime.now().replace(second=0, microsecond=0)
     timestamps = forecast_df.index.tolist()
@@ -321,7 +319,7 @@ def forecast_model(selected_forecast):
         actual = real_values[i] if i < len(real_values) else None
 
         rows.append((selected_forecast, forecasted_done_time, forecasted_time, predicted, actual))
-    logger.info(f"Forecast realitzat correctament")
+    logger.info(f"📈 Forecast realitzat correctament")
     database.save_forecast(rows)
 
 def delete_model():
@@ -347,7 +345,6 @@ def submit_model():
             selected_forecast = request.forms.get("models")
             forecast_model(selected_forecast)
             forecast_without_suffix = selected_forecast.replace('.pkl', '')
-            logger.info(forecast_without_suffix)
             return create_model_page(forecast_without_suffix)
         elif action == 'delete':
             delete_model()
@@ -388,8 +385,6 @@ def get_model_config(model_name):
         if "max_time" in config:
             response_config += f"max_time = {config['max_time']}\n"
 
-
-        logger.warning(response_config)
         return response_config
 
     except Exception as e:
@@ -418,15 +413,25 @@ def get_forecast_data(model_name):
         first_day = today - timedelta(days=7)
 
         for i in range(len(timestamps)):
-            current_timestamp = datetime.strptime(timestamps[i], "%Y-%m-%d %H:%M")
-            if current_timestamp > first_day:
-                if not math.isnan(real_values[i]):
-                    overlapping_timestamps.append(timestamps[i])
-                    overlapping_predictions.append(predictions[i])
-                    real_vals.append(real_values[i])
-                else:
-                    future_timestamps.append(timestamps[i])
-                    future_predictions.append(predictions[i])
+            if not math.isnan(real_values[i]):
+                overlapping_timestamps.append(timestamps[i])
+                overlapping_predictions.append(predictions[i])
+                real_vals.append(real_values[i])
+            else:
+                future_timestamps.append(timestamps[i])
+                future_predictions.append(predictions[i])
+
+        #Calculem timestamps pel Plotly
+        last_timestamp = None
+        if future_timestamps:
+            last_timestamp = datetime.strptime(future_timestamps[-1], "%Y-%m-%d %H:%M")
+        elif overlapping_timestamps:
+            last_timestamp = datetime.strptime(overlapping_timestamps[-1], "%Y-%m-%d %H:%M")
+        if last_timestamp:
+            start_timestamp = last_timestamp - timedelta(days=7)
+        else:
+            start_timestamp = datetime.today() - timedelta(days=7)
+            last_timestamp = datetime.today()
 
 
         return json.dumps({
@@ -435,10 +440,12 @@ def get_forecast_data(model_name):
             "predictions_overlap": overlapping_predictions,
             "real_values": real_vals,
             "timestamps_future": future_timestamps,
-            "predictions_future": future_predictions
+            "predictions_future": future_predictions,
+            "last7daysStart": start_timestamp.strftime("%Y-%m-%d %H:%M"),
+            "last7daysEnd": last_timestamp.strftime("%Y-%m-%d %H:%M"),
         })
     except Exception as e:
-        logger.error(f"Error getting forecast for model {model_name}: {e}")
+        logger.error(f"❌ Error getting forecast for model {model_name}: {e}")
         return json.dumps({"status": "error", "message": str(e)})
 
 @app.route('/force_update_database')

@@ -26,7 +26,7 @@ class OptimalScheduler:
         latitude, longitude = database.get_lat_long()
         self.latitude = latitude
         self.longitude = longitude
-        self.meteo_data = ForecastManager.obtainmeteoData(latitude, longitude)
+        # self.meteo_data = ForecastManager.obtainmeteoData(latitude, longitude)
         self.varbound = None
         self.maxiter = 30
         self.hores_simular = 24
