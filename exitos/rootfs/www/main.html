@@ -81,7 +81,8 @@
         const sensors_list = {{!active_sensors_list}};
         const parent_div_forecast = document.getElementById("forecast-grid");
         sensors_list.forEach((sensor_id) => {
-            const fixed_name = sensor_id.replace("sensor.", '')
+            // const fixed_name = sensor_id.replace("sensor.", '')
+            const fixed_name = sensor_id.replace(".pkl", "")
 
             fetch('get_forecast_data/' + fixed_name)
                 .then(response => response.json())

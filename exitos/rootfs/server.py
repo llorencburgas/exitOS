@@ -63,7 +63,9 @@ def get_init():
     token = database.supervisor_token
 
 
-    active_sensors = database.get_all_saved_sensors_id()
+    aux = database.get_forecasts_name()
+    active_sensors = [x[0] for x in aux]
+
     return template('./www/main.html',
                     ip = ip,
                     token = token,
