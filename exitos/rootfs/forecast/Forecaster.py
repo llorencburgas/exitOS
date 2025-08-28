@@ -626,8 +626,9 @@ class Forecaster:
         # PAS 8 - Seleccionar característiques a usar segons el selector del model
         original_columns = df.columns
         if model_select:
+            df = df.fillna(0)
             df_transformed = pd.DataFrame(model_select.transform(df), index=df.index)
-            df_transformed = df_transformed.fillna(0)
+            # df_transformed = df_transformed.fillna(0)
 
         # PAS 9 - Preparar timestamps futurs
         last_timestamp = data.index[-1]
