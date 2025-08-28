@@ -64,7 +64,6 @@ def get_init():
 
 
     active_sensors = database.get_all_saved_sensors_id()
-    logger.info(f"saved sensors: {active_sensors}")
     return template('./www/main.html',
                     ip = ip,
                     token = token,

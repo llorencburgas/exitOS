@@ -80,7 +80,6 @@
     function onLoadPage() {
         const sensors_list = {{!active_sensors_list}};
         const parent_div_forecast = document.getElementById("forecast-grid");
-        const parent_div_no_forecast = document.getElementById("info-sensors-actius-no-forecast");
         sensors_list.forEach((sensor_id) => {
             const fixed_name = sensor_id.replace("sensor.", '')
 
@@ -88,6 +87,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === "ok") {
+                        console.log("OKKKK -> ", fixed_name);
 
                         const container = document.createElement("div");
                         container.className = "forecast-card";
@@ -143,6 +143,7 @@
                         Plotly.newPlot(container, [traceReal, tracePredReal, tracePredFuture], layout, config);
 
                     } else {
+                        console.log("NOOOOO -> ", fixed_name);
                         // const text = document.createElement("p");
                         // text.innerHTML = "· " + sensor_id;
                         // parent_div_no_forecast.appendChild(text);
