@@ -140,7 +140,8 @@ def graphs_view():
 
             trace = go.Scatter(x=timestamps, y=values, mode='lines', name=f"Sensor {sensor_id}")
             layout = go.Layout(xaxis=dict(title="Timestamp"),
-                               yaxis=dict(title="Value "))
+                               yaxis=dict(title="Value "),
+                               dragmode="pan")
 
             fig = go.Figure(data=[trace], layout=layout)
             graph_html = pyo.plot(fig, output_type='div', include_plotlyjs=False)
