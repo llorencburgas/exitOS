@@ -102,6 +102,9 @@
                         const realValues = data.real_values;
                         const futureTimestamps = data.timestamps_future;
                         const futurePredictions = data.predictions_future;
+                        const last7DaysStart = data.last7daysStart;
+                        const last7DaysEnd = data.last7daysEnd;
+
 
                         const traceReal = {
                             x: realTimestamps,
@@ -126,11 +129,12 @@
                         }
                         const layout = {
                             title: 'Predicció vs Dades Reals',
-                            xaxis: {title: 'Temps'},
+                            xaxis: {title: 'Temps', range:[last7DaysStart, last7DaysEnd]},
                             yaxis: {title: 'Consum (Kw)'},
                             autosize: true,
                             margin: {t: 40, r: 20, b: 50, l: 50},
-                            height: 300
+                            height: 300,
+                            dragmode: 'pan',
                         };
 
                         const config = {responsive: true};
