@@ -661,23 +661,27 @@ def certificate_hourly_task():
 
         now = datetime.now()
 
-        if generation == 'None':
-            generation_timestamp = None
-            generation_value = None
-        else:
+
+        if  database.get_sensor_active(generation) == 1 and generation != "None":
             database.update_database(generation)
             generation_data = database.get_latest_data_from_sensor(sensor_id=generation)
             generation_timestamp = to_datetime(generation_data[0]).strftime("%Y-%m-%d %H:%M")
             generation_value = generation_data[1]
-
-        if consumption == 'None':
-            consumption_timestamp = None
-            consumption_value = None
         else:
+            logger.warning(f"⚠️ Recorda seleccionar el sensor de Generació i marcar-lo a l'apartat 'Sensors' per a guardar.")
+            generation_timestamp = None
+            generation_value = None
+
+        if database.get_sensor_active(consumption) == 1 and consumption != 'None':
             database.update_database(consumption)
             consumption_data = database.get_latest_data_from_sensor(sensor_id=consumption)
             consumption_timestamp = to_datetime(consumption_data[0]).strftime("%Y-%m-%d %H:%M")
             consumption_value = consumption_data[1]
+        else:
+            logger.warning(f"⚠️ Recorda seleccionar el sensor de Consum i marcar-lo a l'apartat 'Sensors' per a guardar.")
+            consumption_timestamp = None
+            consumption_value = None
+
 
         to_send_string = f"Consumption_{consumption_timestamp}_{consumption_value}_Generation_{generation_timestamp}_{generation_value}_{public_key}_{now}"
 
