@@ -642,11 +642,18 @@ class Forecaster:
         future_df = self.timestamp_to_attrs(future_df, extra_vars)
 
         # NaN
-        for col in original_columns:
-            if col not in future_df.columns:
-                future_df[col] = df[col].iloc[-1] if col in df.columns else 0
+
+        missing_cols = [col for col in original_columns if col not in future_df.columns]
+
+        if missing_cols:
+            new_cols_df = pd.DataFrame({
+                col: [df[col].iloc[-1] if col in df.columns else 0 for _ in range(len(future_df))]
+                for col in missing_cols
+            }, index = future_df.index)
+
+            future_df = pd.concat([future_df, new_cols_df], axis=1)
+
         future_df = future_df.fillna(0)
-        # Reorder to match training columns
         future_df = future_df[original_columns]
 
         # scale
