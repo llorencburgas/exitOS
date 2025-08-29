@@ -570,7 +570,6 @@ def optimize():
     template_result = database.get_devices_info()
     if template_result == -1:
         return "ERROR"
-
     try:
         dades = json.loads(template_result)  # primer decode
         for dispositiu in dades:
