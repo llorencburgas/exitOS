@@ -5,10 +5,11 @@ class Solution:
     Classe per representnar una possible solució de configuració
     """
 
-    def __init__(self, consumers = {}, generators = {}):
+    def __init__(self, consumers = {}, generators = {}, energy_sources = {}):
 
         self.consumers = consumers
         self.generators = generators
+        self.energy_sources = energy_sources
 
         #Inicialitzar atributs per fer seguiment del balanç d'energia, costs i capacitat
         self.balanc_energetic_per_hores = [] # balanç energia per hora

@@ -572,25 +572,34 @@ def optimize():
         return "ERROR"
     try:
         dades = json.loads(template_result)  # primer decode
-        for dispositiu in dades:
-            logger.warning(f"\n📟 Dispositiu: {dispositiu['device_name']}")
-            logger.debug(f"    🔗 ID: {dispositiu['device_id']}")
+        optimalScheduler.prepare_data(dades)
 
-            for entitat in dispositiu["entities"]:
-                logger.info(f"\n  🔘 Entitat: {entitat['entity_name']} (estat: {entitat['entity_state']})")
 
-                attrs = entitat.get("entity_attrs", {})
-                if not attrs:
-                    logger.debug("    ⚠️ No hi ha atributs disponibles.")
-                    continue
 
-                for clau, valor in attrs.items():
-                    if isinstance(valor, (list, dict)):
-                        # Mostrem el valor com a JSON "one-line", però compacte
-                        valor_str = json.dumps(valor, ensure_ascii=False)
-                    else:
-                        valor_str = str(valor)
-                    logger.debug(f"    🔸 {clau}: {valor_str}")
+        # DEBUG FOR PER VEURE ELS DISPOSITIUS
+        debug_entities = False
+        if debug_entities:
+            for dispositiu in dades:
+                logger.warning(f"\n📟 Dispositiu: {dispositiu['device_name']}")
+                logger.debug(f"    🔗 ID: {dispositiu['device_id']}")
+
+                for entitat in dispositiu["entities"]:
+                    logger.info(f"\n  🔘 Entitat: {entitat['entity_name']} (estat: {entitat['entity_state']})")
+
+                    attrs = entitat.get("entity_attrs", {})
+                    if not attrs:
+                        logger.debug("    ⚠️ No hi ha atributs disponibles.")
+                        continue
+
+                    for clau, valor in attrs.items():
+                        if isinstance(valor, (list, dict)):
+                            # Mostrem el valor com a JSON "one-line", però compacte
+                            valor_str = json.dumps(valor, ensure_ascii=False)
+                        else:
+                            valor_str = str(valor)
+                        logger.debug(f"    🔸 {clau}: {valor_str}")
+
+
 
 
     except Exception as e:

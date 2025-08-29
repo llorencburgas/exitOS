@@ -232,8 +232,9 @@
 
         const optionHidden = new Option("No Especificat", "None");
         optionHidden.hidden = true;
-        const optionConsum = new Option("Consum", "consum");
+        const optionConsum = new Option("Consum", "Consum");
         const optionGenerator = new Option("Generator", "Generator");
+        const optionEnergySource = new Option("Energy Source", "EnergySource");
         const optionNonImportant = new Option("No Important", "No Important");
 
         if (save === 0) {
@@ -246,6 +247,9 @@
             optionConsum.selected = true;
         } else if (type === "No Important") {
             optionNonImportant.selected = true;
+        }else if(type === "EnergySource"){
+            optionEnergySource.selected = true;
+
         } else {
             optionHidden.selected = true;
         }
@@ -260,6 +264,7 @@
         select.appendChild(optionConsum);
         select.appendChild(optionHidden);
         select.appendChild(optionGenerator);
+        select.appendChild(optionEnergySource);
         select.appendChild(optionNonImportant);
 
         labelSelect.appendChild(select);

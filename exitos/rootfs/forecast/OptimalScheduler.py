@@ -1,9 +1,10 @@
+import json
 import os
 import requests
 
 
 import forecast.ForecasterManager as ForecastManager
-from forecast.Solution import Solution as Solution
+import forecast.Solution as Solution
 import numpy as np
 import sqlDB as db
 from datetime import datetime, timedelta
@@ -34,14 +35,52 @@ class OptimalScheduler:
         self.solucio_run = None
         # self.electricity_price = self.__obtainElectricityPrices()
 
-        self.consumption_sensors = database.get_active_sensors_by_type(sensor_type = 'consum')
-        self.generation_sensors = database.get_active_sensors_by_type(sensor_type = 'Generator')
+        # self.consumption_sensors = database.get_active_sensors_by_type(sensor_type = 'Consum')
+        # self.generation_sensors = database.get_active_sensors_by_type(sensor_type = 'Generator')
+        # self.energy_source_sensors = database.get_active_sensors_by_type(sensor_type = 'EnergySource')
+        self.consumption_sensors = None
+        self.generation_sensors = None
+        self.energy_source_sensors = None
 
         self.progress = [] #Array with the best cost value on each step
 
         self.kwargs_for_simulating = {}
         # key arguments for those assets that share a common restriction and
         # one execution effects the others assets execution
+
+    def prepare_data(self, data):
+        logger.debug("Preparing data")
+        logger.info(data)
+
+        all_saved_sensors = database.get_all_saved_sensors_id()
+        all_saved_data = []
+        for dispositiu in data:
+            for entitat in dispositiu["entities"]:
+                if entitat['entity_name'] in all_saved_sensors:
+                    all_saved_data.append(dispositiu)
+                    break
+        logger.warning(all_saved_data)
+        for dispositiu in all_saved_data:
+            logger.warning(f"\n📟 Dispositiu: {dispositiu['device_name']}")
+            logger.debug(f"    🔗 ID: {dispositiu['device_id']}")
+
+            for entitat in dispositiu["entities"]:
+                logger.info(f"\n  🔘 Entitat: {entitat['entity_name']} (estat: {entitat['entity_state']})")
+
+                attrs = entitat.get("entity_attrs", {})
+                if not attrs:
+                    logger.debug("    ⚠️ No hi ha atributs disponibles.")
+                    continue
+
+                for clau, valor in attrs.items():
+                    if isinstance(valor, (list, dict)):
+                        # Mostrem el valor com a JSON "one-line", però compacte
+                        valor_str = json.dumps(valor, ensure_ascii=False)
+                    else:
+                        valor_str = str(valor)
+                    logger.debug(f"    🔸 {clau}: {valor_str}")
+
+
 
     def optimize(self):
         logger.info("--------------------------RUNNING COST OPTIMIZATION ALGORITHM--------------------------")
