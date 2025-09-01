@@ -499,12 +499,16 @@ class SqlDB():
                 {% for entity in ents %}
                     {% set entity_name = entity %}
                     {% set entity_state = states[entity] %}
-                    {% set attrs = entity_state.attributes if entity_state else {} %}
+                    {% set raw_attrs = entity_state.attributes if entity_state else {} %}
+                    {% set save_attrs = dict() %}
+                    {% for key, val in raw_attrs.items() %}
+                        {% set _ = safe_attrs.update({key: val|string}) %}
+                    {% endfor %}
                 
                     {% set info.entities = info.entities + [ {
                       "entity_name": entity_name,
                       "entity_state": entity_state.state if entity_state else None,
-                      "entity_attrs": attrs,
+                      "entity_attrs": safe_attrs,
                     } ] %}
                 {%endfor %}
                 
