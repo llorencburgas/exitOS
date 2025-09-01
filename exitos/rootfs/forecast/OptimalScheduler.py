@@ -42,15 +42,21 @@ class OptimalScheduler:
         self.generators = None
         self.energy_sources = None
 
-        self.consumption_sensors = None
-        self.generation_sensors = None
-        self.energy_source_sensors = None
-
         self.progress = [] #Array with the best cost value on each step
 
         self.kwargs_for_simulating = {}
         # key arguments for those assets that share a common restriction and
         # one execution effects the others assets execution
+
+
+        # !!!! CANVIAR PER FUNCIÓ QUE OBTÉ ELS PREUS REALS MÉS ENDAVANT !!!!
+
+        self.electricity_prices = [0.133, 0.126, 0.128, 0.141, 0.147, 0.148, 0.155, 0.156, 0.158, 0.152, 0.147, 0.148,
+                                   0.144, 0.141, 0.139, 0.136, 0.134, 0.137, 0.143, 0.152, 0.157, 0.164, 0.159, 0.156]
+
+        self.electricity_sell_prices = [0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054,
+                                        0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054,
+                                        0.054, 0.054]
 
     def prepare_data(self, data):
         horizon_hours = 24
@@ -122,8 +128,8 @@ class OptimalScheduler:
 
         self.consumers, self.generators, self.energy_sources = self.prepare_data(data)
 
-        self.solucio_run = Solution.Solution(consumers = self.consumption_sensors, generators = self.generation_sensors, energy_sources = self.energy_sources)
-        self.solucio_final = Solution.Solution(consumers = self.consumption_sensors, generators = self.generation_sensors, energy_sources = self.energy_sources)
+        self.solucio_run = Solution.Solution(consumers = self.consumers, generators = self.generators, energy_sources = self.energy_sources)
+        self.solucio_final = Solution.Solution(consumers = self.consumers, generators = self.generators, energy_sources = self.energy_sources)
         self.varbound = self.__configureBounds()
 
         start_time = datetime.now()
@@ -177,16 +183,26 @@ class OptimalScheduler:
         individual_profile = {} # diccionari amb key = nom del consumer i valor = consumption profile
         total_kwh = 0 # total de kwh gastats
         total_hidrogen_kg = 0
+
         total_cost = 0
         valid_consumers = 0
 
+
+        consumer_sensor: AbsConsumer
         for consumer in self.solucio_run.consumers.values():
-            start = consumer['active_calendar']
+            for consumer_sensor in consumer.values():
+                start = consumer_sensor.active_calendar[0]
+                end = consumer_sensor.active_calendar[1] + 1
+
+                self.kwargs_for_simulating['electricity_prices'] = self.electricity_prices[start:end]
+
+                res_dictionary = consumer_sensor.doSimula(calendar = config[consumer_sensor.vbound_start:consumer_sensor.vbound_end],
+                                                          kwargs_simulation = self.kwargs_for_simulating)
+
+                consumption_profile, consumed_Kwh, total_hidrogen_kg, cost = self.__unpackSimulationResults(res_dictionary)
 
 
             logger.debug("DEBUG POINT")
-
-
 
     def __calcBalanc(self, config):
         # cost de tots els consumers
@@ -227,13 +243,28 @@ class OptimalScheduler:
         varbound = []
         index = 0
 
-        for consumer in self.solucio_run.consumers.values():
-            consumer["vbound_start"] = index
+        if self.solucio_run.consumers:
+            for consumer in self.solucio_run.consumers.values():
+                for consumer_sensor in consumer.values():
+                    consumer_sensor.vbound_start = index
 
-            for hour in range(0, consumer["active_hours"]):
-                varbound.append([consumer["calendar_range"][0], consumer["calendar_range"][1]])
-                index += 1
-            consumer["vbound_end"] = index
+                    for hour in range(0, consumer_sensor.active_hours):
+                        varbound.append([consumer_sensor.calendar_range[0], consumer_sensor.calendar_range[1]])
+                        index += 1
+                    consumer_sensor.vbound_end = index
+
+        if self.solucio_run.energy_sources:
+            for energy_source in self.solucio_run.energy_sources.values():
+                for energy_source_sensor in energy_source.values():
+                    energy_source_sensor.vbound_start = index
+
+                    max_discharge = energy_source_sensor.min
+                    max_charge = energy_source_sensor.max
+
+                    for hour in range(0, energy_source_sensor.active_hours):
+                        varbound.append([max_discharge, max_charge])
+                        index += 1
+                    energy_source_sensor.vbound_end = index
 
         return np.array(varbound)
 
