@@ -53,9 +53,6 @@ class OptimalScheduler:
         # one execution effects the others assets execution
 
     def prepare_data(self, data):
-        logger.debug("Preparing data")
-        logger.info(data)
-
         horizon_hours = 24
 
         all_saved_sensors = database.get_all_saved_sensors_id()
