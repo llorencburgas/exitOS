@@ -164,6 +164,11 @@ def update_sensors():
     sensors_id = sensors['entity_id'].tolist()
 
     i = 0
+    for sensor in checked_sensors:
+        database.update_sensor_type(sensor, all_sensor_types[i])
+        i+=1
+
+    i = 0
     for sensor_id in sensors_id:
         is_active = sensor_id in checked_sensors
         was_active = database.get_sensor_active(sensor_id)
@@ -572,7 +577,7 @@ def optimize():
         return "ERROR"
     try:
         dades = json.loads(template_result)  # primer decode
-        optimalScheduler.prepare_data(dades)
+        optimalScheduler.optimize(dades)
 
 
 

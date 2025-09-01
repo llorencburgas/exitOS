@@ -11,6 +11,9 @@ from datetime import datetime, timedelta
 from logging_config import setup_logger
 from scipy.optimize import differential_evolution
 
+from exitos.rootfs.abstraction.AbsConsumer import AbsConsumer
+from exitos.rootfs.abstraction.AbsEnergySource import AbsEnergySource
+from exitos.rootfs.abstraction.AbsGenerator import AbsGenerator
 
 logger = setup_logger()
 database = db.SqlDB()
@@ -35,9 +38,10 @@ class OptimalScheduler:
         self.solucio_run = None
         # self.electricity_price = self.__obtainElectricityPrices()
 
-        # self.consumption_sensors = database.get_active_sensors_by_type(sensor_type = 'Consum')
-        # self.generation_sensors = database.get_active_sensors_by_type(sensor_type = 'Generator')
-        # self.energy_source_sensors = database.get_active_sensors_by_type(sensor_type = 'EnergySource')
+        self.consumers = None
+        self.generators = None
+        self.energy_sources = None
+
         self.consumption_sensors = None
         self.generation_sensors = None
         self.energy_source_sensors = None
@@ -52,41 +56,77 @@ class OptimalScheduler:
         logger.debug("Preparing data")
         logger.info(data)
 
+        horizon_hours = 24
+
         all_saved_sensors = database.get_all_saved_sensors_id()
-        all_saved_data = []
+        all_sensors = []
+        consumers = {}
+        generators = {}
+        energy_sources = {}
+
         for dispositiu in data:
             for entitat in dispositiu["entities"]:
                 if entitat['entity_name'] in all_saved_sensors:
-                    all_saved_data.append(dispositiu)
-                    break
-        logger.warning(all_saved_data)
-        for dispositiu in all_saved_data:
-            logger.warning(f"\n📟 Dispositiu: {dispositiu['device_name']}")
-            logger.debug(f"    🔗 ID: {dispositiu['device_id']}")
+                    current_sensor = {'sensor_id': entitat['entity_name'],
+                                      'device_id': dispositiu['device_name'],
+                                      'sensor_type': database.get_sensors_type([entitat['entity_name'],])[0],
+                                      'sensor_state': entitat.get("entity_state", 0) }
+                    all_sensors.append(current_sensor)
 
-            for entitat in dispositiu["entities"]:
-                logger.info(f"\n  🔘 Entitat: {entitat['entity_name']} (estat: {entitat['entity_state']})")
+        for sensor in all_sensors:
+            sensor_id = sensor['sensor_id']
+            device_id = sensor['device_id']
+            sensor_type = sensor['sensor_type']
+            state_val = sensor['sensor_state']
 
-                attrs = entitat.get("entity_attrs", {})
-                if not attrs:
-                    logger.debug("    ⚠️ No hi ha atributs disponibles.")
-                    continue
+            estimated_max_power = state_val #es pot substituir pel forecast si el tinc.
 
-                for clau, valor in attrs.items():
-                    if isinstance(valor, (list, dict)):
-                        # Mostrem el valor com a JSON "one-line", però compacte
-                        valor_str = json.dumps(valor, ensure_ascii=False)
-                    else:
-                        valor_str = str(valor)
-                    logger.debug(f"    🔸 {clau}: {valor_str}")
+            if sensor_type == "Consum":
+                consumer_obj = AbsConsumer(sensor_id)
+                consumer_obj.calendar_range = (0, estimated_max_power)
+                consumer_obj.active_hours = horizon_hours
+                if device_id not in consumers:
+                    consumers[device_id] = {}
+                consumers[device_id][sensor_id] = consumer_obj
 
+            elif sensor_type == "Generator":
+                generator_obj = AbsGenerator(device_id)
+                generator_obj.calendar_range = (0, estimated_max_power)
+                generator_obj.active_hours = horizon_hours
+                if device_id not in generators:
+                    generators[device_id] = {}
+                generators[device_id][sensor_id] = generator_obj
 
+            elif sensor_type == "EnergySource":
+                energy_obj = AbsEnergySource(sensor_id)
+                device_ents = [ent for ent  in data if ent['device_name'] == device_id][0]
+                min_val = None
+                max_val = None
+                for ent in device_ents['entities']:
+                    if ent['entity_name'].startswith("number"):
+                        min_val = ent['entity_attrs']['min']
+                        max_val = ent['entity_attrs']['max']
+                if min_val is None:
+                    min_val = estimated_max_power
+                    max_val = estimated_max_power
+                # energy_obj.calendar_range = (max_charge, max_discharge)
+                energy_obj.min = min_val
+                energy_obj.max = max_val
 
-    def optimize(self):
+                energy_obj.active_hours = horizon_hours
+                if device_id not in energy_sources:
+                    energy_sources[device_id] = {}
+                energy_sources[device_id][sensor_id] = energy_obj
+
+        return consumers, generators, energy_sources
+
+    def optimize(self, data):
         logger.info("--------------------------RUNNING COST OPTIMIZATION ALGORITHM--------------------------")
 
-        self.solucio_run = Solution(consumers = self.consumption_sensors, generators = self.generation_sensors)
-        self.solucio_final = Solution(consumers = self.consumption_sensors, generators = self.generation_sensors)
+        self.consumers, self.generators, self.energy_sources = self.prepare_data(data)
+
+        self.solucio_run = Solution(consumers = self.consumption_sensors, generators = self.generation_sensors, energy_sources = self.energy_sources)
+        self.solucio_final = Solution(consumers = self.consumption_sensors, generators = self.generation_sensors, energy_sources = self.energy_sources)
         self.varbound = self.__configureBounds()
 
         start_time = datetime.now()

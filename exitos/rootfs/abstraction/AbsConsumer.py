@@ -7,14 +7,14 @@ class AbsConsumer:
     """
     Class that is the parent for the different energy consumers
     """
-    def __init__(self, configuration, name):
+    def __init__(self, name):
         # Initialize the consumer with the given configuration and name
-        self.config = configuration
+        self.config = None
         self.name = name
         #self.max_power = configuration['max_power']
-        self.calendar_range = configuration['calendar_range']
-        self.active_hours = configuration['active_hours']
-        self.active_calendar = configuration['active_calendar']
+        self.calendar_range = None
+        self.active_hours = None
+        self.active_calendar = None
 
         self.vbound_start = 0
         self.vbound_end = 0
