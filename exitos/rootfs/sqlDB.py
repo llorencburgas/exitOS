@@ -490,36 +490,31 @@ class SqlDB():
         template = """
             {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq', None) | list %}
             {% set ns = namespace(devices = []) %}
-            
+
             {% for device in devices %}
                 {% set name = device_attr(device, 'name') %}
                 {% set ents = device_entities(device) %}
-                
+
                 {% set info = namespace(entities = []) %}
                 {% for entity in ents %}
                     {% set entity_name = entity %}
                     {% set entity_state = states[entity] %}
-                    {% set raw_attrs = entity_state.attributes if entity_state else {} %}
-                    
-                    {% set attr_list = [] %}
-                    {% for key, val in raw_attrs.items() %}
-                        {% set attr_list = attr_list + [ {"key": key, "value": val|string} ] %}
-                    {% endfor %}
-                
+                    {% set attrs = entity_state.attributes if entity_state else {} %}
+
                     {% set info.entities = info.entities + [ {
                       "entity_name": entity_name,
                       "entity_state": entity_state.state if entity_state else None,
-                      "entity_attrs": safe_attrs,
+                      "entity_attrs": attrs,
                     } ] %}
                 {%endfor %}
-                
+
                 {% set ns.devices = ns.devices + [ {
                 "device_id": device,
                 "device_name": name,
                 "entities": info.entities
                 } ] %}
             {% endfor %}
-            
+
             {{ ns.devices | tojson}}
             """
 
