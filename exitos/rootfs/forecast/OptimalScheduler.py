@@ -125,8 +125,8 @@ class OptimalScheduler:
 
         self.consumers, self.generators, self.energy_sources = self.prepare_data(data)
 
-        self.solucio_run = Solution(consumers = self.consumption_sensors, generators = self.generation_sensors, energy_sources = self.energy_sources)
-        self.solucio_final = Solution(consumers = self.consumption_sensors, generators = self.generation_sensors, energy_sources = self.energy_sources)
+        self.solucio_run = Solution.Solution(consumers = self.consumption_sensors, generators = self.generation_sensors, energy_sources = self.energy_sources)
+        self.solucio_final = Solution.Solution(consumers = self.consumption_sensors, generators = self.generation_sensors, energy_sources = self.energy_sources)
         self.varbound = self.__configureBounds()
 
         start_time = datetime.now()
