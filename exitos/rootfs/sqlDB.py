@@ -500,9 +500,10 @@ class SqlDB():
                     {% set entity_name = entity %}
                     {% set entity_state = states[entity] %}
                     {% set raw_attrs = entity_state.attributes if entity_state else {} %}
-                    {% set safe_attrs = {} %}
+                    
+                    {% set attr_list = [] %}
                     {% for key, val in raw_attrs.items() %}
-                        {% set safe_attrs = safe_attrs | merge({ (key): (val|string) }) %}
+                        {% set attr_list = attr_list + [ {"key": key, "value": val|string} ] %}
                     {% endfor %}
                 
                     {% set info.entities = info.entities + [ {
