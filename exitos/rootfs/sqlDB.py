@@ -500,7 +500,7 @@ class SqlDB():
                     {% set entity_name = entity %}
                     {% set entity_state = states[entity] %}
                     {% set raw_attrs = entity_state.attributes if entity_state else {} %}
-                    {% set save_attrs = dict() %}
+                    {% set safe_attrs = dict() %}
                     {% for key, val in raw_attrs.items() %}
                         {% set _ = safe_attrs.update({key: val|string}) %}
                     {% endfor %}
