@@ -11,9 +11,9 @@ from datetime import datetime, timedelta
 from logging_config import setup_logger
 from scipy.optimize import differential_evolution
 
-from exitos.rootfs.abstraction.AbsConsumer import AbsConsumer
-from exitos.rootfs.abstraction.AbsEnergySource import AbsEnergySource
-from exitos.rootfs.abstraction.AbsGenerator import AbsGenerator
+from abstraction.AbsConsumer import AbsConsumer
+from abstraction.AbsEnergySource import AbsEnergySource
+from abstraction.AbsGenerator import AbsGenerator
 
 logger = setup_logger()
 database = db.SqlDB()
