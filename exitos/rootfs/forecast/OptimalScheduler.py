@@ -86,8 +86,15 @@ class OptimalScheduler:
 
             if sensor_type == "Consum":
                 consumer_obj = AbsConsumer(sensor_id)
+
+                sensor_forecast = database.get_data_from_latest_forecast(sensor_id+".pkl")
+
+                logger.warning("forecast obtingut")
+                logger.debug(sensor_forecast)
+
                 consumer_obj.calendar_range = (0, estimated_max_power)
                 consumer_obj.active_hours = horizon_hours
+                consumer_obj.active_calendar = [0, horizon_hours-1]
                 if device_id not in consumers:
                     consumers[device_id] = {}
                 consumers[device_id][sensor_id] = consumer_obj
@@ -96,6 +103,7 @@ class OptimalScheduler:
                 generator_obj = AbsGenerator(device_id)
                 generator_obj.calendar_range = (0, estimated_max_power)
                 generator_obj.active_hours = horizon_hours
+                generator_obj.active_calendar = [0, horizon_hours-1]
                 if device_id not in generators:
                     generators[device_id] = {}
                 generators[device_id][sensor_id] = generator_obj
@@ -117,6 +125,8 @@ class OptimalScheduler:
                 energy_obj.max = max_val
 
                 energy_obj.active_hours = horizon_hours
+                energy_obj.active_calendar = [0, horizon_hours-1]
+
                 if device_id not in energy_sources:
                     energy_sources[device_id] = {}
                 energy_sources[device_id][sensor_id] = energy_obj
@@ -133,6 +143,10 @@ class OptimalScheduler:
         self.varbound = self.__configureBounds()
 
         start_time = datetime.now()
+
+        #debug
+        self.costDE(config={})
+
         result = self.__runDEModel(self.costDE)
         end_time = datetime.now()
 

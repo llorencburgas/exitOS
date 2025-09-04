@@ -577,12 +577,12 @@ def optimize():
         return "ERROR"
     try:
         dades = json.loads(template_result)  # primer decode
-        # optimalScheduler.optimize(dades)
+        optimalScheduler.optimize(dades)
 
 
 
         # DEBUG FOR PER VEURE ELS DISPOSITIUS
-        debug_entities = True
+        debug_entities = False
         if debug_entities:
             for dispositiu in dades:
                 logger.warning(f"\n📟 Dispositiu: {dispositiu['device_name']}")
@@ -603,9 +603,6 @@ def optimize():
                         else:
                             valor_str = str(valor)
                         logger.debug(f"    🔸 {clau}: {valor_str}")
-
-
-
 
     except Exception as e:
         logger.exception(f"❌ Error processant la resposta JSON: {e}")
