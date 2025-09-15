@@ -6,6 +6,7 @@ import requests
 import forecast.ForecasterManager as ForecastManager
 import forecast.Solution as Solution
 import numpy as np
+import pandas as pd
 import sqlDB as db
 from datetime import datetime, timedelta
 from logging_config import setup_logger
@@ -14,6 +15,9 @@ from scipy.optimize import differential_evolution
 from abstraction.AbsConsumer import AbsConsumer
 from abstraction.AbsEnergySource import AbsEnergySource
 from abstraction.AbsGenerator import AbsGenerator
+from scipy.signal import freqs
+
+from exitos.rootfs.abstraction.assets.Battery import Battery
 
 logger = setup_logger()
 database = db.SqlDB()
@@ -30,17 +34,20 @@ class OptimalScheduler:
         latitude, longitude = database.get_lat_long()
         self.latitude = latitude
         self.longitude = longitude
-        # self.meteo_data = ForecastManager.obtainmeteoData(latitude, longitude)
         self.varbound = None
+
         self.maxiter = 30
         self.hores_simular = 24
+        self.minuts = 1
+        self.timestamps = None
         self.solucio_final = None
         self.solucio_run = None
-        # self.electricity_price = self.__obtainElectricityPrices()
 
         self.consumers = None
         self.generators = None
         self.energy_sources = None
+
+        self.preu_llum_horari = self.get_hourly_electric_prices()
 
         self.progress = [] #Array with the best cost value on each step
 
@@ -50,13 +57,6 @@ class OptimalScheduler:
 
 
         # !!!! CANVIAR PER FUNCIÓ QUE OBTÉ ELS PREUS REALS MÉS ENDAVANT !!!!
-
-        self.electricity_prices = [0.133, 0.126, 0.128, 0.141, 0.147, 0.148, 0.155, 0.156, 0.158, 0.152, 0.147, 0.148,
-                                   0.144, 0.141, 0.139, 0.136, 0.134, 0.137, 0.143, 0.152, 0.157, 0.164, 0.159, 0.156]
-
-        self.electricity_sell_prices = [0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054,
-                                        0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054, 0.054,
-                                        0.054, 0.054]
 
     def prepare_data(self, data):
         horizon_hours = 24
@@ -133,157 +133,198 @@ class OptimalScheduler:
 
         return consumers, generators, energy_sources
 
-    def optimize(self, data):
-        logger.info("--------------------------RUNNING COST OPTIMIZATION ALGORITHM--------------------------")
+    def optimize(self, consumer, generator, energy_source:Battery, hores_simular, minuts, timestamps):
+        logger.info("🦖 - Començant optimització")
 
-        self.consumers, self.generators, self.energy_sources = self.prepare_data(data)
-
-        self.solucio_run = Solution.Solution(consumers = self.consumers, generators = self.generators, energy_sources = self.energy_sources)
-        self.solucio_final = Solution.Solution(consumers = self.consumers, generators = self.generators, energy_sources = self.energy_sources)
-        self.varbound = self.__configureBounds()
-
-        start_time = datetime.now()
-
-        #debug
-        self.costDE(config={})
-
-        result = self.__runDEModel(self.costDE)
-        end_time = datetime.now()
-
-        return result
-
-    def obtainElectricityPrices(self):
-        """
-        Fetches the hourly electricity prices for buying from the OMIE API.
-        If the next day's data is unavaliable, today's data is fetched.
-
-        Returns
-        -----------
-        hourly_prices : list
-            List of hourly electricity prices for buying.
-        """
-        tomorrow = datetime.today() + timedelta(days=1)
-        tomorrow_str = tomorrow.strftime('%Y%m%d')
-
-        url = f"https://www.omie.es/es/file-download?parents%5B0%5D=marginalpdbc&filename=marginalpdbc_{tomorrow_str}.1"
-        response  = requests.get(url)
-
-        # If tomorrow's prices are unavailable, fallback to today's data
-        if response.status_code != "200":
-            logger.debug(f"Request failed with status code {response.status_code}. Fetching data from today")
-            today = datetime.today().strftime('%Y%m%d')
-            url = f"https://www.omie.es/es/file-download?parents%5B0%5D=marginalpdbc&filename=marginalpdbc_{today}.1"
-            response = requests.get(url)
-
-        #Save the retrieved data into a CSV file
-        with open("omie_price_pred.csv", 'wb') as f:
-            f.write(response.content)
-
-        # Parse the CSV to extract hourly prices
-        hourly_prices = []
-        with open('omie_price_pred.csv', 'r') as file:
-            for line in file.readlines()[1:-1]:
-                components = line.strip().split(';')
-                components.pop(-1)  # Remove trailing blank entry
-                hourly_price = float(components[-1])
-                hourly_prices.append(hourly_price)
-        os.remove('omie_price_pred.csv')
-        return hourly_prices
-
-    def __calcConsumersBalance(self, config):
-        self.kwargs_for_simulating.clear()
-
-        total_profile = [0] * self.hores_simular #perfil total de comsum hora a hora
-        individual_profile = {} # diccionari amb key = nom del consumer i valor = consumption profile
-        total_kwh = 0 # total de kwh gastats
-        total_hidrogen_kg = 0
-
-        total_cost = 0
-        valid_consumers = 0
-
-
-        consumer_sensor: AbsConsumer
-        for consumer in self.solucio_run.consumers.values():
-            for consumer_sensor in consumer.values():
-                start = consumer_sensor.active_calendar[0]
-                end = consumer_sensor.active_calendar[1] + 1
-
-                self.kwargs_for_simulating['electricity_prices'] = self.electricity_prices[start:end]
-
-                res_dictionary = consumer_sensor.doSimula(calendar = config[consumer_sensor.vbound_start:consumer_sensor.vbound_end],
-                                                          kwargs_simulation = self.kwargs_for_simulating)
-
-                consumption_profile, consumed_Kwh, total_hidrogen_kg, cost = self.__unpackSimulationResults(res_dictionary)
-
-
-            logger.debug("DEBUG POINT")
-
-    def __calcBalanc(self, config):
-        # cost de tots els consumers
-        consumers_total_profile, consumers_individual_profile, consumers_total_kwh, valid_ones, \
-            cost_aproximacio, total_hidrogen_kg = self.__calcConsumersBalance(config)
-
-    def costDE(self, config):
-        """Funció de cost on s'optimitza totes les variables possibles"""
-        balanc_energetic_per_hores, cost, total_hidrogen_kg, numero_assets_ok, \
-            consumers_individual_profile, generators_individual_profile, es_states = self.__calcBalanc(config)
-
-    def __runDEModel(self, function):
-        self.costDE("")
-        result = differential_evolution(
-            func = function,
-            popsize = 150,
-            bounds = self.varbound,
-            integrality = [True] * len(self.varbound),
-            maxiter = self.maxiter,
-            mutation = (0.15, 0.25),
-            recombination = 0.7,
-            tol = 0.0001,
-            strategy = 'best1bin',
-            init = 'halton',
-            disp = True,
-            callback = self.__updateDEStep,
-            workers = -1
+        self.consumers = consumer
+        self.generators = generator
+        self.energy_sources = energy_source
+        self.hores_simular = hores_simular
+        self.minuts = minuts
+        self.timestamps = timestamps
+        consum_bateria = self.energy_sources.simula()
+        self.varbound = (
+                # [(min(consum_bateria['perfil_consum']), max(consum_bateria['perfil_consum']))] * 24   # 24 hores per a l’energy source
+            [(0,100)] * 24
         )
 
-        logger.debug(f"Status: {result['message']}")
-        logger.debug(f"Total Evaluations: {result['nfev']}")
-        logger.debug(f"Solution: {result['x']}")
-        logger.debug(f"Cost: {result['fun']}")
+        result = self.__runDEModel(self.costDE)
+        return result
+
+    def __runDEModel(self, function):
+        result = differential_evolution(func = function,
+                                        popsize = 150,
+                                        bounds = self.varbound,
+                                        integrality = [True] * len(self.varbound),
+                                        maxiter = self.maxiter,
+                                        mutation = (0.15, 0.25),
+                                        recombination = 0.7,
+                                        tol = 0.0001,
+                                        strategy = 'best1bin',
+                                        init = 'halton',
+                                        disp = True,
+                                        updating = 'deferred',
+                                        # callback = self.__updateDEStep,
+                                        workers = -1
+                                        )
+
+        logger.debug(f"     ▫️ Status: {result['message']}")
+        logger.debug(f"     ▫️ Total evaluations: {result['nfev']}")
+        logger.debug(f"     ▫️ Solution: {result['x']}")
+        logger.debug(f"     ▫️ Cost: {result['fun']}")
 
         return result
 
-    def __configureBounds(self):
-        varbound = []
-        index = 0
+    def costDE(self, config):
+        preu_llum_horari = self.preu_llum_horari
+        self.energy_sources.simula(config)
 
-        if self.solucio_run.consumers:
-            for consumer in self.solucio_run.consumers.values():
-                for consumer_sensor in consumer.values():
-                    consumer_sensor.vbound_start = index
+        resultat_total = 0
+        # logger.warning(f"{'HORA':<20} {'CARREGA':<13} {'CAPACITAT': <13} {'PV':<8} {'CONSUM_LAB':<15} {'CONSUM_TOTAL':<15} {'PREU_LLUM':<12} {'PREU_VENTA':<12}")
+        for i in range(0, self.hores_simular * self.minuts):
+            consum_total_hora = self.consumers[i] + self.energy_sources.perfil_consum[i] - self.generators[i]  # W
 
-                    for hour in range(0, consumer_sensor.active_hours):
-                        varbound.append([consumer_sensor.calendar_range[0], consumer_sensor.calendar_range[1]])
-                        index += 1
-                    consumer_sensor.vbound_end = index
+            preu_venta = (preu_llum_horari[i] / 1000) * consum_total_hora  # W
+            resultat_total += preu_venta
 
-        if self.solucio_run.energy_sources:
-            for energy_source in self.solucio_run.energy_sources.values():
-                for energy_source_sensor in energy_source.values():
-                    energy_source_sensor.vbound_start = index
+            # if i % 2 == 0:
+            #     logger.debug(
+            #         f"{self.timestamps[i]:<20} {self.energy_sources.perfil_consum[i]:<13.4f} {self.energy_sources.capacitat_actual[i]:<13.2f} {self.generators[i]:<8.2f} {self.consumers[i]:<15.2f} {consum_total_hora:<15.2f} {preu_llum_horari[i]:<12.2f} {preu_venta:<12.2f}")
+            # else:
+            #     logger.info(
+                    # f"{self.timestamps[i]:<20} {self.energy_sources.perfil_consum[i]:<13.4f} {self.energy_sources.capacitat_actual[i]:<13.2f} {self.generators[i]:<8.2f} {self.consumers[i]:<15.2f} {consum_total_hora:<15.2f} {preu_llum_horari[i]:<12.2f} {preu_venta:<12.2f}")
+        # logger.critical(f"Preu final: {round(resultat_total, 3)} €")
+        return resultat_total
 
-                    max_discharge = energy_source_sensor.min
-                    max_charge = energy_source_sensor.max
 
-                    for hour in range(0, energy_source_sensor.active_hours):
-                        varbound.append([max_discharge, max_charge])
-                        index += 1
-                    energy_source_sensor.vbound_end = index
+    def get_hourly_electric_prices(self, hores_simular: int = 24, minuts: int = 1):
+        today = datetime.today().strftime('%Y%m%d')
+        url = f"https://www.omie.es/es/file-download?parents%5B0%5D=marginalpdbc&filename=marginalpdbc_{today}.1"
+        response = requests.get(url)
 
-        return np.array(varbound)
+        if response.status_code != 200:
+            logger.error(f"❌ No s'ha pogut obtenir el preu de la llum de OMIE: {response.status_code}.")
+            return -1
 
-    def __updateDEStep(self, bounds, convergence):
-        pass
+        with open('omie_price_pred.csv', "wb") as file:
+            file.write(response.content)
+
+        hourly_prices = []
+        with open('omie_price_pred.csv', "r") as file:
+            for line in file.readlines()[1:-1]:
+                components = line.strip().split(';')
+                components.pop(-1)
+                hourly_price = float(components[-1])
+                hourly_prices.append(hourly_price)
+        # os.remove('omie_price_pred.csv')
+
+        return_prices = []
+        aux = 0
+        for i in range(hores_simular):
+            for j in range(minuts):
+                return_prices.append(hourly_prices[aux])
+            aux += 1
+            if aux == 24: aux = 0
+
+        return return_prices
+
+
+
+    #
+    # def __calcConsumersBalance(self, config):
+    #     self.kwargs_for_simulating.clear()
+    #
+    #     total_profile = [0] * self.hores_simular #perfil total de comsum hora a hora
+    #     individual_profile = {} # diccionari amb key = nom del consumer i valor = consumption profile
+    #     total_kwh = 0 # total de kwh gastats
+    #     total_hidrogen_kg = 0
+    #
+    #     total_cost = 0
+    #     valid_consumers = 0
+    #
+    #
+    #     consumer_sensor: AbsConsumer
+    #     for consumer in self.solucio_run.consumers.values():
+    #         for consumer_sensor in consumer.values():
+    #             start = consumer_sensor.active_calendar[0]
+    #             end = consumer_sensor.active_calendar[1] + 1
+    #
+    #             self.kwargs_for_simulating['electricity_prices'] = self.electricity_prices[start:end]
+    #
+    #             res_dictionary = consumer_sensor.doSimula(calendar = config[consumer_sensor.vbound_start:consumer_sensor.vbound_end],
+    #                                                       kwargs_simulation = self.kwargs_for_simulating)
+    #
+    #             consumption_profile, consumed_Kwh, total_hidrogen_kg, cost = self.__unpackSimulationResults(res_dictionary)
+    #
+    #
+    #         logger.debug("DEBUG POINT")
+    #
+    # def __calcBalanc(self, config):
+    #     # cost de tots els consumers
+    #     consumers_total_profile, consumers_individual_profile, consumers_total_kwh, valid_ones, \
+    #         cost_aproximacio, total_hidrogen_kg = self.__calcConsumersBalance(config)
+    #
+    # def costDE(self, config):
+    #     """Funció de cost on s'optimitza totes les variables possibles"""
+    #     balanc_energetic_per_hores, cost, total_hidrogen_kg, numero_assets_ok, \
+    #         consumers_individual_profile, generators_individual_profile, es_states = self.__calcBalanc(config)
+    #
+    # def __runDEModel(self, function):
+    #     self.costDE("")
+    #     result = differential_evolution(
+    #         func = function,
+    #         popsize = 150,
+    #         bounds = self.varbound,
+    #         integrality = [True] * len(self.varbound),
+    #         maxiter = self.maxiter,
+    #         mutation = (0.15, 0.25),
+    #         recombination = 0.7,
+    #         tol = 0.0001,
+    #         strategy = 'best1bin',
+    #         init = 'halton',
+    #         disp = True,
+    #         callback = self.__updateDEStep,
+    #         workers = -1
+    #     )
+    #
+    #     logger.debug(f"Status: {result['message']}")
+    #     logger.debug(f"Total Evaluations: {result['nfev']}")
+    #     logger.debug(f"Solution: {result['x']}")
+    #     logger.debug(f"Cost: {result['fun']}")
+    #
+    #     return result
+    #
+    # def __configureBounds(self):
+    #     varbound = []
+    #     index = 0
+    #
+    #     if self.solucio_run.consumers:
+    #         for consumer in self.solucio_run.consumers.values():
+    #             for consumer_sensor in consumer.values():
+    #                 consumer_sensor.vbound_start = index
+    #
+    #                 for hour in range(0, consumer_sensor.active_hours):
+    #                     varbound.append([consumer_sensor.calendar_range[0], consumer_sensor.calendar_range[1]])
+    #                     index += 1
+    #                 consumer_sensor.vbound_end = index
+    #
+    #     if self.solucio_run.energy_sources:
+    #         for energy_source in self.solucio_run.energy_sources.values():
+    #             for energy_source_sensor in energy_source.values():
+    #                 energy_source_sensor.vbound_start = index
+    #
+    #                 max_discharge = energy_source_sensor.min
+    #                 max_charge = energy_source_sensor.max
+    #
+    #                 for hour in range(0, energy_source_sensor.active_hours):
+    #                     varbound.append([max_discharge, max_charge])
+    #                     index += 1
+    #                 energy_source_sensor.vbound_end = index
+    #
+    #     return np.array(varbound)
+    #
+    # def __updateDEStep(self, bounds, convergence):
+    #     pass
 
 
 

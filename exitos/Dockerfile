@@ -19,7 +19,8 @@ ADD ./rootfs/blockchain.py .
 
 #Forecast
 COPY ./rootfs/forecast /forecast/
-COPY rootfs/abstraction /abstraction/
+COPY ./rootfs/abstraction /abstraction/
+COPY ./rootfs/abstraction/assets /assets/
 
 #HTML and images
 COPY ./rootfs/www /www/

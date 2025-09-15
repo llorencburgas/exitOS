@@ -675,7 +675,7 @@ class Forecaster:
 
         final_prediction = pd.concat([out, forecast_output])
 
-        return final_prediction, real_values_column
+        return final_prediction, real_values_column,  self.db['sensors_id']
 
     def save_model(self, model_filename):
         """

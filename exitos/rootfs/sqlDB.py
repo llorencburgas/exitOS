@@ -53,7 +53,7 @@ class SqlDB():
             #creant les taules
             cur.execute("CREATE TABLE IF NOT EXISTS dades(sensor_id TEXT, timestamp NUMERIC, value)")
             cur.execute("CREATE TABLE IF NOT EXISTS sensors(sensor_id TEXT, units TEXT, update_sensor BINARY, save_sensor BINARY, sensor_type TEXT)")
-            cur.execute("CREATE TABLE IF NOT EXISTS forecasts(forecast_name TEXT, forecast_run_time NUMERIC, forecasted_time NUMERIC, predicted_value REAL, real_value REAL)")
+            cur.execute("CREATE TABLE IF NOT EXISTS forecasts(forecast_name TEXT, sensor_forecasted TEXT, forecast_run_time NUMERIC, forecasted_time NUMERIC, predicted_value REAL, real_value REAL)")
 
             cur.execute("CREATE INDEX IF NOT EXISTS idx_dades_sensor_id_timestamp ON dades(sensor_id, timestamp)")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_sensors_sensor_id ON sensors(sensor_id)")
@@ -61,6 +61,9 @@ class SqlDB():
 
             con.commit()
         logger.info("Base de dades creada correctament.")
+
+        self.update_database("all")
+        self.clean_database_hourly_average()
 
     def _get_connection(self):
         return sqlite3.connect(self.database_file)
@@ -374,8 +377,8 @@ class SqlDB():
         with self._get_connection() as con:
             cur = con.cursor()
             cur.executemany("""
-                INSERT INTO forecasts (forecast_name, forecast_run_time, forecasted_time, predicted_value, real_value) 
-                VALUES (?,?,?,?,?)
+                INSERT INTO forecasts (forecast_name, sensor_forecasted, forecast_run_time, forecasted_time, predicted_value, real_value) 
+                VALUES (?,?,?,?,?,?)
             """, data)
 
             con.commit()
@@ -405,6 +408,24 @@ class SqlDB():
             aux = cur.fetchall()
             cur.close()
             data = pd.DataFrame(aux, columns=('run_date','timestamp', 'value', 'real_value'))
+        return data
+
+    def get_data_from_latest_forecast_from_sensorid(self, sensor_id):
+        with self._get_connection() as con:
+            cur = con.cursor()
+            cur.execute("""
+                    SELECT forecasted_time, predicted_value, real_value
+                    FROM forecasts
+                    WHERE sensor_forecasted = ?
+                    AND forecast_run_time = (
+                        SELECT MAX(forecast_run_time)
+                        FROM forecasts
+                        WHERE sensor_forecasted = ?
+                    )
+                """, (sensor_id, sensor_id))
+            aux = cur.fetchall()
+            cur.close()
+            data = pd.DataFrame(aux, columns=('timestamp', 'value', 'real_value'))
         return data
 
     def remove_forecast(self, forecast_id):

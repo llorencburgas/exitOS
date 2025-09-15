@@ -98,9 +98,9 @@ def predict_consumption_production(model_name:str='newModel.pkl'):
     data.bfill(inplace=True)
 
 
-    prediction , real_values = forecaster.forecast(data, 'value', forecaster.db['model'], future_steps=48)
+    prediction , real_values , sensor_id = forecaster.forecast(data, 'value', forecaster.db['model'], future_steps=48)
 
-    return prediction, real_values
+    return prediction, real_values, sensor_id
 
 
 

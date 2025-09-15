@@ -16,12 +16,14 @@ from pandas import to_datetime
 
 from bottle import Bottle, template, run, static_file, HTTPError, request, response
 from datetime import datetime, timedelta
+
 from logging_config import setup_logger
 from collections import OrderedDict
 
 from forecast import Forecaster as Forecast
 import forecast.ForecasterManager as ForecasterManager
 import forecast.OptimalScheduler as OptimalScheduler
+import abstraction.assets.Battery as Battery
 import sqlDB as db
 import blockchain as Blockchain
 
@@ -39,8 +41,6 @@ database = db.SqlDB()
 forecast = Forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler()
 blockchain = Blockchain.Blockchain()
-
-logger.info("🌳 eXiT OS INICIAT. OBRE LA UIWEB PER COMENÇAR A USAR-LO.")
 
 
 # Ruta per servir fitxers estàtics i imatges des de 'www'
@@ -188,6 +188,8 @@ def update_sensors():
     sensors_save = database.get_sensors_save(sensors_id)
     sensors_type = database.get_sensors_type(sensors_id)
 
+    database.update_database("all")
+    database.clean_database_hourly_average()
 
     context = {
         "sensors_id": sensors_id,
@@ -314,7 +316,7 @@ def train_model():
     return model_name
 
 def forecast_model(selected_forecast):
-    forecast_df, real_values = ForecasterManager.predict_consumption_production(model_name=selected_forecast)
+    forecast_df, real_values, sensor_id = ForecasterManager.predict_consumption_production(model_name=selected_forecast)
 
     forecasted_done_time = datetime.now().replace(second=0, microsecond=0)
     timestamps = forecast_df.index.tolist()
@@ -326,7 +328,7 @@ def forecast_model(selected_forecast):
         predicted = predictions[i]
         actual = real_values[i] if i < len(real_values) else None
 
-        rows.append((selected_forecast, forecasted_done_time, forecasted_time, predicted, actual))
+        rows.append((selected_forecast, sensor_id, forecasted_done_time, forecasted_time, predicted, actual))
     logger.info(f"📈 Forecast realitzat correctament")
     database.save_forecast(rows)
 
@@ -571,41 +573,47 @@ def get_res_certify_data():
 
 @app.route('/optimize')
 def optimize():
-    # result = optimalScheduler.optimize()
-    template_result = database.get_devices_info()
-    if template_result == -1:
-        return "ERROR"
+
     try:
-        dades = json.loads(template_result)  # primer decode
-        optimalScheduler.optimize(dades)
+
+        hores_simular = 24
+        minuts_simular = 1 # 1 = 60 minuts  | 2 = 30 minuts | 4 = 15 minuts
+
+        consumer = database.get_data_from_latest_forecast_from_sensorid("sensor.consum_placa_c_ct9")
+        generator = database.get_data_from_latest_forecast_from_sensorid("sensor.solarnet_potencia_fotovoltaica")
+
+        today = datetime.now()
+        start_date = datetime(today.year, today.month, today.day, 0, 0)
+        end_date = start_date + timedelta(hours=hores_simular - 1)
+
+        timestamps = pd.date_range(start=start_date, end=end_date, freq='h')
+        hores = []
+        for i in range(len(timestamps)): hores.append(timestamps[i].strftime("%Y-%m-%d %H:%M"))
+
+        consumer_data = []
+        generator_data = []
+        for hora in hores:
+            # dt = datetime.strptime(hora, "%Y-%m-%d %H:%M")
+            if hora in consumer['timestamp'].values:
+                fila = consumer[consumer['timestamp'] == hora]
+                consumer_data.append(fila['value'].values[0])
+            else:
+                consumer_data.append(0)
+
+            if hora in generator['timestamp'].values:
+                fila = generator[generator['timestamp'] == hora]
+                generator_data.append(fila['value'].values[0])
+            else:
+                generator_data.append(0)
 
 
+        energy_source = Battery.Battery(hores_simular = hores_simular, minuts = minuts_simular)
 
-        # DEBUG FOR PER VEURE ELS DISPOSITIUS
-        debug_entities = False
-        if debug_entities:
-            for dispositiu in dades:
-                logger.warning(f"\n📟 Dispositiu: {dispositiu['device_name']}")
-                logger.debug(f"    🔗 ID: {dispositiu['device_id']}")
+        result = optimalScheduler.optimize(consumer_data, generator_data, energy_source, hores_simular, minuts_simular, hores)
 
-                for entitat in dispositiu["entities"]:
-                    logger.info(f"\n  🔘 Entitat: {entitat['entity_name']} (estat: {entitat['entity_state']})")
-
-                    attrs = entitat.get("entity_attrs", {})
-                    if not attrs:
-                        logger.debug("    ⚠️ No hi ha atributs disponibles.")
-                        continue
-
-                    for clau, valor in attrs.items():
-                        if isinstance(valor, (list, dict)):
-                            # Mostrem el valor com a JSON "one-line", però compacte
-                            valor_str = json.dumps(valor, ensure_ascii=False)
-                        else:
-                            valor_str = str(valor)
-                        logger.debug(f"    🔸 {clau}: {valor_str}")
 
     except Exception as e:
-        logger.exception(f"❌ Error processant la resposta JSON: {e}")
+        logger.exception(f"❌ Error processant l'optimitzacio': {e}")
 
     return "OK"
 
