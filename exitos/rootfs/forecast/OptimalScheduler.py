@@ -1,5 +1,3 @@
-import json
-import os
 import requests
 
 
@@ -15,9 +13,8 @@ from scipy.optimize import differential_evolution
 from abstraction.AbsConsumer import AbsConsumer
 from abstraction.AbsEnergySource import AbsEnergySource
 from abstraction.AbsGenerator import AbsGenerator
-from scipy.signal import freqs
+from assets.Battery import Battery
 
-from exitos.rootfs.abstraction.assets.Battery import Battery
 
 logger = setup_logger()
 database = db.SqlDB()
