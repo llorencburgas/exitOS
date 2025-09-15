@@ -277,13 +277,13 @@ class SqlDB():
                     cur.close()
                     con.commit()
                     logger.debug(f"     [ {current_date.strftime('%d-%b-%Y   %X')} ] Afegit un nou sensor a la base de dades: {sensor_id}")
-                else : #TODO: ELIMINAR QUAN TOTS ELS USUARIS TINGUIN SENSOR_TYPE
+                else : #TODO: ELIMINAR QUAN TOTS ELS USUARIS TINGUIN LA TAULA FORECAST ACTUALITZADA
                     cur = con.cursor()
-                    cur.execute("PRAGMA table_info(sensors)")
+                    cur.execute("PRAGMA table_info(forecasts)")
                     columns = [col[1] for col in cur.fetchall()]
-                    if 'sensor_type' not in columns:
-                        cur.execute("ALTER TABLE sensors ADD COLUMN sensor_type TEXT")
-                        logger.debug(f"Columna 'sensor_type' afegida a la base de dades: {sensor_id}")
+                    if 'sensor_forecasted' not in columns:
+                        cur.execute("ALTER TABLE forecasts ADD COLUMN sensor_forecasted TEXT")
+                        logger.debug(f"Columna 'sensor_forecasted' afegida a la base de dades: {sensor_id}")
                     cur.close()
                     con.commit()
 
