@@ -1,5 +1,5 @@
+import copy
 import requests
-
 
 import forecast.ForecasterManager as ForecastManager
 import forecast.Solution as Solution
@@ -13,7 +13,7 @@ from scipy.optimize import differential_evolution
 from abstraction.AbsConsumer import AbsConsumer
 from abstraction.AbsEnergySource import AbsEnergySource
 from abstraction.AbsGenerator import AbsGenerator
-from assets.Battery import Battery
+from abstraction.assets.Battery import Battery
 
 
 logger = setup_logger()
@@ -33,12 +33,12 @@ class OptimalScheduler:
         self.longitude = longitude
         self.varbound = None
 
-        self.maxiter = 30
+        self.maxiter = 300
         self.hores_simular = 24
         self.minuts = 1
         self.timestamps = None
-        self.solucio_final = None
-        self.solucio_run = None
+        self.solucio_final = Solution.Solution()
+        self.solucio_run = Solution.Solution()
 
         self.consumers = None
         self.generators = None
@@ -49,6 +49,9 @@ class OptimalScheduler:
         self.progress = [] #Array with the best cost value on each step
 
         self.kwargs_for_simulating = {}
+
+
+
         # key arguments for those assets that share a common restriction and
         # one execution effects the others assets execution
 
@@ -140,6 +143,8 @@ class OptimalScheduler:
         self.minuts = minuts
         self.timestamps = timestamps
         consum_bateria = self.energy_sources.simula()
+        self.solucio_run.consumidors = consumer
+        self.solucio_run.generadors = generator
         self.varbound = (
                 # [(min(consum_bateria['perfil_consum']), max(consum_bateria['perfil_consum']))] * 24   # 24 hores per a l’energy source
             [(0,100)] * 24
@@ -161,8 +166,8 @@ class OptimalScheduler:
                                         init = 'halton',
                                         disp = True,
                                         updating = 'deferred',
-                                        # callback = self.__updateDEStep,
-                                        workers = -1
+                                        callback = self.__updateDEStep,
+                                        workers = 1
                                         )
 
         logger.debug(f"     ▫️ Status: {result['message']}")
@@ -174,25 +179,30 @@ class OptimalScheduler:
 
     def costDE(self, config):
         preu_llum_horari = self.preu_llum_horari
-        self.energy_sources.simula(config)
+        aux = self.energy_sources.simula(config)
+        self.solucio_run.consum_hora = []
+        self.solucio_run.preu_venta_hora = []
 
         resultat_total = 0
-        # logger.warning(f"{'HORA':<20} {'CARREGA':<13} {'CAPACITAT': <13} {'PV':<8} {'CONSUM_LAB':<15} {'CONSUM_TOTAL':<15} {'PREU_LLUM':<12} {'PREU_VENTA':<12}")
         for i in range(0, self.hores_simular * self.minuts):
-            consum_total_hora = self.consumers[i] + self.energy_sources.perfil_consum[i] - self.generators[i]  # W
+            consum_total_hora = self.consumers[i] + aux['perfil_consum'][i] - self.generators[i]  # W
 
             preu_venta = (preu_llum_horari[i] / 1000) * consum_total_hora  # W
             resultat_total += preu_venta
 
-            # if i % 2 == 0:
-            #     logger.debug(
-            #         f"{self.timestamps[i]:<20} {self.energy_sources.perfil_consum[i]:<13.4f} {self.energy_sources.capacitat_actual[i]:<13.2f} {self.generators[i]:<8.2f} {self.consumers[i]:<15.2f} {consum_total_hora:<15.2f} {preu_llum_horari[i]:<12.2f} {preu_venta:<12.2f}")
-            # else:
-            #     logger.info(
-                    # f"{self.timestamps[i]:<20} {self.energy_sources.perfil_consum[i]:<13.4f} {self.energy_sources.capacitat_actual[i]:<13.2f} {self.generators[i]:<8.2f} {self.consumers[i]:<15.2f} {consum_total_hora:<15.2f} {preu_llum_horari[i]:<12.2f} {preu_venta:<12.2f}")
-        # logger.critical(f"Preu final: {round(resultat_total, 3)} €")
+            self.solucio_run.consum_hora.append(consum_total_hora)
+            self.solucio_run.preu_venta_hora.append(preu_venta)
+
+        self.solucio_run.preu_llum_horari = preu_llum_horari
+        self.solucio_run.preu_total = resultat_total
+        self.solucio_run.timestamps = self.timestamps
+        self.solucio_run.perfil_consum_energy_source = aux['perfil_consum']
+        self.solucio_run.capacitat_actual_energy_source = aux['capacitat_actual']
         return resultat_total
 
+    def __updateDEStep(self, bounds, convergence):
+        self.solucio_final = copy.deepcopy(self.solucio_run)
+        logger.debug(f"     Cost aproximacio {self.solucio_run.preu_total}")
 
     def get_hourly_electric_prices(self, hores_simular: int = 24, minuts: int = 1):
         today = datetime.today().strftime('%Y%m%d')

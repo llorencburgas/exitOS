@@ -610,6 +610,29 @@ def optimize():
         energy_source = Battery.Battery(hores_simular = hores_simular, minuts = minuts_simular)
 
         result = optimalScheduler.optimize(consumer_data, generator_data, energy_source, hores_simular, minuts_simular, hores)
+        logger.warning(
+        f"{'HORA':<20} "
+        f"{'CARREGA':<13} "
+        f"{'CAPACITAT': <13} "
+        f"{'PV':<8} "
+        f"{'CONSUM_LAB':<15} "
+        f"{'CONSUM_TOTAL':<15} "
+        f"{'PREU_LLUM':<12} "
+        f"{'PREU_VENTA':<12}"
+        )
+
+        for i in range(len(result['x'])) :
+            logger.debug(
+              f"{optimalScheduler.solucio_final.timestamps[i]:<20} "
+              f"{optimalScheduler.solucio_final.perfil_consum_energy_source[i]:<13.4f} "
+              f"{optimalScheduler.solucio_final.capacitat_actual_energy_source[i]:<13.2f} "
+              f"{optimalScheduler.solucio_final.generadors[i]:<8.2f} "
+              f"{optimalScheduler.solucio_final.consumidors[i]:<15.2f} "
+              f"{optimalScheduler.solucio_final.consum_hora[i]:<15.2f} "
+              f"{optimalScheduler.solucio_final.preu_llum_horari[i]:<12.2f} "
+              f"{optimalScheduler.solucio_final.preu_venta_hora[i]:<12.2f}"
+            )
+        logger.error(optimalScheduler.solucio_final.preu_total)
 
 
     except Exception as e:
