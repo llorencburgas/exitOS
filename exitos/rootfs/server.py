@@ -573,70 +573,106 @@ def get_res_certify_data():
 
 @app.route('/optimize')
 def optimize():
+    # OPTIMITZACIÓ
+    debug_optimization = False
+    if debug_optimization:
+        try:
 
-    try:
+            hores_simular = 24
+            minuts_simular = 1 # 1 = 60 minuts  | 2 = 30 minuts | 4 = 15 minuts
 
-        hores_simular = 24
-        minuts_simular = 1 # 1 = 60 minuts  | 2 = 30 minuts | 4 = 15 minuts
+            consumer = database.get_data_from_latest_forecast_from_sensorid("sensor.consum_placa_c_ct9")
+            generator = database.get_data_from_latest_forecast_from_sensorid("sensor.solarnet_potencia_fotovoltaica")
 
-        consumer = database.get_data_from_latest_forecast_from_sensorid("sensor.consum_placa_c_ct9")
-        generator = database.get_data_from_latest_forecast_from_sensorid("sensor.solarnet_potencia_fotovoltaica")
+            today = datetime.now()
+            start_date = datetime(today.year, today.month, today.day, 0, 0)
+            end_date = start_date + timedelta(hours=hores_simular - 1)
 
-        today = datetime.now()
-        start_date = datetime(today.year, today.month, today.day, 0, 0)
-        end_date = start_date + timedelta(hours=hores_simular - 1)
+            timestamps = pd.date_range(start=start_date, end=end_date, freq='h')
+            hores = []
+            for i in range(len(timestamps)): hores.append(timestamps[i].strftime("%Y-%m-%d %H:%M"))
 
-        timestamps = pd.date_range(start=start_date, end=end_date, freq='h')
-        hores = []
-        for i in range(len(timestamps)): hores.append(timestamps[i].strftime("%Y-%m-%d %H:%M"))
+            consumer_data = []
+            generator_data = []
+            for hora in hores:
+                # dt = datetime.strptime(hora, "%Y-%m-%d %H:%M")
+                if hora in consumer['timestamp'].values:
+                    fila = consumer[consumer['timestamp'] == hora]
+                    consumer_data.append(fila['value'].values[0])
+                else:
+                    consumer_data.append(0)
 
-        consumer_data = []
-        generator_data = []
-        for hora in hores:
-            # dt = datetime.strptime(hora, "%Y-%m-%d %H:%M")
-            if hora in consumer['timestamp'].values:
-                fila = consumer[consumer['timestamp'] == hora]
-                consumer_data.append(fila['value'].values[0])
-            else:
-                consumer_data.append(0)
-
-            if hora in generator['timestamp'].values:
-                fila = generator[generator['timestamp'] == hora]
-                generator_data.append(fila['value'].values[0])
-            else:
-                generator_data.append(0)
+                if hora in generator['timestamp'].values:
+                    fila = generator[generator['timestamp'] == hora]
+                    generator_data.append(fila['value'].values[0])
+                else:
+                    generator_data.append(0)
 
 
-        energy_source = Battery.Battery(hores_simular = hores_simular, minuts = minuts_simular)
+            energy_source = Battery.Battery(hores_simular = hores_simular, minuts = minuts_simular)
 
-        result = optimalScheduler.optimize(consumer_data, generator_data, energy_source, hores_simular, minuts_simular, hores)
-        logger.warning(
-        f"{'HORA':<20} "
-        f"{'CARREGA':<13} "
-        f"{'CAPACITAT': <13} "
-        f"{'PV':<8} "
-        f"{'CONSUM_LAB':<15} "
-        f"{'CONSUM_TOTAL':<15} "
-        f"{'PREU_LLUM':<12} "
-        f"{'PREU_VENTA':<12}"
-        )
-
-        for i in range(len(result['x'])) :
-            logger.debug(
-              f"{optimalScheduler.solucio_final.timestamps[i]:<20} "
-              f"{optimalScheduler.solucio_final.perfil_consum_energy_source[i]:<13.4f} "
-              f"{optimalScheduler.solucio_final.capacitat_actual_energy_source[i]:<13.2f} "
-              f"{optimalScheduler.solucio_final.generadors[i]:<8.2f} "
-              f"{optimalScheduler.solucio_final.consumidors[i]:<15.2f} "
-              f"{optimalScheduler.solucio_final.consum_hora[i]:<15.2f} "
-              f"{optimalScheduler.solucio_final.preu_llum_horari[i]:<12.2f} "
-              f"{optimalScheduler.solucio_final.preu_venta_hora[i]:<12.2f}"
+            result = optimalScheduler.optimize(consumer_data, generator_data, energy_source, hores_simular, minuts_simular, hores)
+            logger.warning(
+            f"{'HORA':<20} "
+            f"{'CARREGA':<13} "
+            f"{'CAPACITAT': <13} "
+            f"{'PV':<8} "
+            f"{'CONSUM_LAB':<15} "
+            f"{'CONSUM_TOTAL':<15} "
+            f"{'PREU_LLUM':<12} "
+            f"{'PREU_VENTA':<12}"
             )
-        logger.error(optimalScheduler.solucio_final.preu_total)
+
+            for i in range(len(result['x'])) :
+                logger.debug(
+                  f"{optimalScheduler.solucio_final.timestamps[i]:<20} "
+                  f"{optimalScheduler.solucio_final.perfil_consum_energy_source[i]:<13.4f} "
+                  f"{optimalScheduler.solucio_final.capacitat_actual_energy_source[i]:<13.2f} "
+                  f"{optimalScheduler.solucio_final.generadors[i]:<8.2f} "
+                  f"{optimalScheduler.solucio_final.consumidors[i]:<15.2f} "
+                  f"{optimalScheduler.solucio_final.consum_hora[i]:<15.2f} "
+                  f"{optimalScheduler.solucio_final.preu_llum_horari[i]:<12.2f} "
+                  f"{optimalScheduler.solucio_final.preu_venta_hora[i]:<12.2f}"
+                )
+            logger.error(optimalScheduler.solucio_final.preu_total)
+
+        except Exception as e:
+            logger.exception(f"❌ Error processant l'optimitzacio': {e}")
+
+    #configurar la bateria amb l'optimització
+
+    energy_source_id = "sensor.sonnenbatterie_79259_state_sonnenbatterie"
+
+    parent_device = database.query_select(table='sensors', column='parent_device', sensor_id=energy_source_id)[0]
+    all_entities = database.get_all_sensors_from_parent('Envoy 122308110967')
+
+    logger.warning(f"◽ Parent device: {parent_device}")
+    for entity in all_entities:
+        logger.info(f"   ▫️ Entity: {entity}")
 
 
-    except Exception as e:
-        logger.exception(f"❌ Error processant l'optimitzacio': {e}")
+    for device in database.devices_info:
+        if device['device_name'] == parent_device:
+            logger.warning(f"\n📟 Dispositiu: {device['device_name']}")
+            logger.debug(f"    🔗 ID: {device['device_id']}")
+            for entitat in device["entities"]:
+                logger.info(f"\n  🔘 Entitat: {entitat['entity_name']} (estat: {entitat['entity_state']})")
+
+                attrs = entitat.get("entity_attrs", {})
+                if not attrs:
+                    logger.debug("    ⚠️ No hi ha atributs disponibles.")
+                    continue
+
+                for clau, valor in attrs.items():
+                    if isinstance(valor, (list, dict)):
+                        # Mostrem el valor com a JSON "one-line", però compacte
+                        valor_str = json.dumps(valor, ensure_ascii=False)
+                    else:
+                        valor_str = str(valor)
+                    logger.debug(f"    🔸 {clau}: {valor_str}")
+
+
+
 
     return "OK"
 
@@ -768,7 +804,7 @@ def certificate_hourly_task():
 schedule.every().day.at("00:00").do(daily_task)
 schedule.every().day.at("01:00").do(daily_forecast_task)
 schedule.every().day.at("02:00").do(monthly_task)
-schedule.every().hour.at(":00").do(certificate_hourly_task)
+# schedule.every().hour.at(":00").do(certificate_hourly_task)
 
 def run_scheduled_tasks():
     while True:

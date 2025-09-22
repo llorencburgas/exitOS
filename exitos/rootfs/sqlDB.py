@@ -9,6 +9,7 @@ from narwhals import String
 from requests import get
 from datetime import datetime, timedelta, timezone
 import logging
+import json
 from typing import Optional, List, Dict, Any
 import tzlocal
 
@@ -32,6 +33,7 @@ class SqlDB():
             "Authorization": f"Bearer {self.supervisor_token}",
             "Content-Type": "application/json"
         }
+        self.devices_info = self.get_devices_info()
 
         #comprovem si la Base de Dades existeix
         if not os.path.isfile(self.database_file):
@@ -52,7 +54,7 @@ class SqlDB():
 
             #creant les taules
             cur.execute("CREATE TABLE IF NOT EXISTS dades(sensor_id TEXT, timestamp NUMERIC, value)")
-            cur.execute("CREATE TABLE IF NOT EXISTS sensors(sensor_id TEXT, units TEXT, update_sensor BINARY, save_sensor BINARY, sensor_type TEXT)")
+            cur.execute("CREATE TABLE IF NOT EXISTS sensors(sensor_id TEXT, units TEXT, parent_device TEXT, update_sensor BINARY, save_sensor BINARY, sensor_type TEXT)")
             cur.execute("CREATE TABLE IF NOT EXISTS forecasts(forecast_name TEXT, sensor_forecasted TEXT, forecast_run_time NUMERIC, forecasted_time NUMERIC, predicted_value REAL, real_value REAL)")
 
             cur.execute("CREATE INDEX IF NOT EXISTS idx_dades_sensor_id_timestamp ON dades(sensor_id, timestamp)")
@@ -229,6 +231,16 @@ class SqlDB():
         logger.info("🧹 NETEJA COMPLETADA")
         self.vacuum()
 
+    def get_parent_device_from_sensor_id(self, sensor_id: str) -> str:
+        if self.devices_info == -1: return "None"
+
+        for device in self.devices_info:
+            for entity in device['entities']:
+                if entity['entity_name'] == sensor_id:
+                    return device['device_name']
+
+        return "None"
+
     def update_database(self, sensor_to_update):
         """
         Actualitza la base de dades amb la API del Home Assistant.
@@ -263,27 +275,38 @@ class SqlDB():
                 #si no hem obtingut cap sensor ( és a dir, no existeix a la nosta BD)
                 if sensor_info is None:
                     cur = con.cursor()
+
                     values_to_insert = (
                         sensor_id,
                         sensors_list.iloc[j]["attributes.unit_of_measurement"],
                         True,
                         False,
-                        "None"
+                        "None",
+                        self.get_parent_device_from_sensor_id(sensor_id)
                     )
                     cur.execute(
-                        "INSERT INTO sensors (sensor_id, units, update_sensor, save_sensor, sensor_type) VALUES (?,?,?,?,?)",
+                        "INSERT INTO sensors (sensor_id, units, update_sensor, save_sensor, sensor_type, parent_device) VALUES (?,?,?,?,?,?)",
                         values_to_insert
                     )
                     cur.close()
                     con.commit()
                     logger.debug(f"     [ {current_date.strftime('%d-%b-%Y   %X')} ] Afegit un nou sensor a la base de dades: {sensor_id}")
-                else : #TODO: ELIMINAR QUAN TOTS ELS USUARIS TINGUIN LA TAULA FORECAST ACTUALITZADA
+                else : #TODO: ELIMINAR QUAN TOTS ELS USUARIS TINGUIN LA TAULA FORECAST I SENSORS ACTUALITZADA
                     cur = con.cursor()
+
                     cur.execute("PRAGMA table_info(forecasts)")
                     columns = [col[1] for col in cur.fetchall()]
                     if 'sensor_forecasted' not in columns:
                         cur.execute("ALTER TABLE forecasts ADD COLUMN sensor_forecasted TEXT")
                         logger.debug(f"Columna 'sensor_forecasted' afegida a la base de dades: {sensor_id}")
+
+                    cur.execute("PRAGMA table_info(sensors)")
+                    columns = [col[1] for col in cur.fetchall()]
+                    if 'parent_device' not in columns:
+                        cur.execute("ALTER TABLE sensors ADD COLUMN parent_device TEXT")
+                        logger.debug(f"Columna 'parent_device' afegida a la base de dades: {sensor_id}")
+                        cur.execute("UPDATE sensors SET parent_device = ? WHERE sensor_id = ? ", (self.get_parent_device_from_sensor_id(sensor_id), sensor_id))
+
                     cur.close()
                     con.commit()
 
@@ -502,7 +525,6 @@ class SqlDB():
             cursor.close()
             return aux
 
-
     def get_devices_info(self):
         """
         Obté tots els dispositius, juntament amb les seves entitats i atributs d'aquestes a partir d'un template.
@@ -544,31 +566,17 @@ class SqlDB():
         if response.status_code == 200:
             # json_response = response.json()
             full_devices = response.text
-            return full_devices
+            result = json.loads(full_devices)
+            return result
         else:
             logger.error(f"❌ Error en la resposta: {response.status_code}")
             logger.debug(f"📄 Cos resposta:\n     {response.text}")
-            return -1
+            return {}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    def get_all_sensors_from_parent(self,parent_device):
+        with self._get_connection() as con:
+            cur = con.cursor()
+            cur.execute("SELECT sensor_id FROM sensors WHERE parent_device = ?",(parent_device,))
+            result = cur.fetchall()
+            return [val[0] for val in result]
 
