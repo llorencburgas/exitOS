@@ -586,7 +586,7 @@ class SqlDB():
         if sensor_mode == 'select':
             url = f"{self.base_url}services/select/select_option"
             data = {'entity_id': sensor_id,
-                    variable: value}
+                    'option': value}
         elif sensor_mode == 'number':
             url = f"{self.base_url}services/number/set_value"
             data = {'entity_id': sensor_id, "value": value}
