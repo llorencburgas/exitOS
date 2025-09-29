@@ -574,7 +574,7 @@ def get_res_certify_data():
 @app.route('/optimize')
 def optimize():
     # OPTIMITZACIÓ
-    debug_optimization = True
+    debug_optimization = False
     if debug_optimization:
         try:
 
@@ -644,32 +644,32 @@ def optimize():
 
     sonnen = 'sonnenbatterie 79259'
 
-    database.set_sensor_value_HA(parent_id = sonnen,
+    database.set_sensor_value_HA(sensor_mode = 'select',
                                  sensor_id = 'select.sonnenbatterie_79259_select_operating_mode',
                                  variable = 'options',
                                  value = "manual")
 
 
-    # for device in database.devices_info:
-    #     if device['device_name'] == sonnen:
-    #         logger.warning(f"\n📟 Dispositiu: {device['device_name']}")
-    #         logger.debug(f"    🔗 ID: {device['device_id']}")
-    #         for entitat in device["entities"]:
-    #             logger.info(f"\n  🔘 Entitat: {entitat['entity_name']}")
-    #             logger.debug(f"    🔸 Estat: {entitat['entity_state']}")
-    #
-    #             attrs = entitat.get("entity_attrs", {})
-    #             if not attrs:
-    #                 logger.debug("    ⚠️ No hi ha atributs disponibles.")
-    #                 continue
-    #
-    #             for clau, valor in attrs.items():
-    #                 if isinstance(valor, (list, dict)):
-    #                     # Mostrem el valor com a JSON "one-line", però compacte
-    #                     valor_str = json.dumps(valor, ensure_ascii=False)
-    #                 else:
-    #                     valor_str = str(valor)
-    #                 logger.debug(f"    🔸 {clau}: {valor_str}")
+    for device in database.devices_info:
+        if device['device_name'] == sonnen:
+            logger.warning(f"\n📟 Dispositiu: {device['device_name']}")
+            logger.debug(f"    🔗 ID: {device['device_id']}")
+            for entitat in device["entities"]:
+                logger.info(f"\n  🔘 Entitat: {entitat['entity_name']}")
+                logger.debug(f"    🔸 Estat: {entitat['entity_state']}")
+
+                attrs = entitat.get("entity_attrs", {})
+                if not attrs:
+                    logger.debug("    ⚠️ No hi ha atributs disponibles.")
+                    continue
+
+                for clau, valor in attrs.items():
+                    if isinstance(valor, (list, dict)):
+                        # Mostrem el valor com a JSON "one-line", però compacte
+                        valor_str = json.dumps(valor, ensure_ascii=False)
+                    else:
+                        valor_str = str(valor)
+                    logger.debug(f"    🔸 {clau}: {valor_str}")
 
     return "OK"
 

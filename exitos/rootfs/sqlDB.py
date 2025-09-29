@@ -580,11 +580,16 @@ class SqlDB():
             result = cur.fetchall()
             return [val[0] for val in result]
 
-    def set_sensor_value_HA(self, parent_id, sensor_id, variable, value):
+    def set_sensor_value_HA(self, sensor_mode, sensor_id, variable, value):
         logger.debug(f"----- Setting sensor value {sensor_id} to {value} -----")
 
-        url = f"{self.base_url}services/{parent_id}/{sensor_id}"
-        data = {variable: value}
+        if sensor_mode == 'select':
+            url = f"{self.base_url}services/select/select_option"
+            data = {'entity_id': sensor_id,
+                    variable: value}
+        elif sensor_mode == 'number':
+            url = f"{self.base_url}services/number/set_value"
+            data = {'entity_id': sensor_id, "value": value}
 
         response = requests.post(url, headers=self.headers, json=data)
 
