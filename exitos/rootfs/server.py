@@ -574,7 +574,7 @@ def get_res_certify_data():
 @app.route('/optimize')
 def optimize():
     # OPTIMITZACIÓ
-    debug_optimization = False
+    debug_optimization = True
     if debug_optimization:
         try:
 
@@ -625,6 +625,7 @@ def optimize():
             )
 
             for i in range(len(result['x'])) :
+
                 logger.debug(
                   f"{optimalScheduler.solucio_final.timestamps[i]:<20} "
                   f"{optimalScheduler.solucio_final.perfil_consum_energy_source[i]:<13.4f} "
@@ -641,18 +642,14 @@ def optimize():
         except Exception as e:
             logger.exception(f"❌ Error processant l'optimitzacio': {e}")
 
+    # sonnen = 'sonnenbatterie 79259'
 
-    sonnen = 'sonnenbatterie 79259'
+    # database.set_sensor_value_HA(sensor_mode = 'select',
+    #                              sensor_id = 'select.sonnenbatterie_79259_select_operating_mode',
+    #                              variable = 'options',
+    #                              value = "manual")
+    #
 
-    database.set_sensor_value_HA(sensor_mode = 'select',
-                                 sensor_id = 'select.sonnenbatterie_79259_select_operating_mode',
-                                 variable = 'options',
-                                 value = "manual")
-
-    database.set_sensor_value_HA(sensor_mode = 'number',
-                                 sensor_id= 'number.sonnenbatterie_79259_number_discharge',
-                                 variable = 'value',
-                                 value = 200)
 
     # for device in database.devices_info:
     #     if device['device_name'] == sonnen:
@@ -703,6 +700,11 @@ def daily_task():
     database.clean_database_hourly_average()
 
     logger.debug("ENDING DAILY SENSOR UPDATE")
+
+    logger.warning(f"INICIANT PROCÉS D'OPTIMITZACIÓ DE LA SONNEN")
+    optimize()
+
+    schedule.every().hour.at(":00").do(sonnen_config_hourly())
 
 def monthly_task():
     today = datetime.today()
@@ -801,6 +803,31 @@ def certificate_hourly_task():
     else:
         logger.warning(f"Encara no t'has unit a cap comunitat! \n"
                        f"Recorda completar la teva configuració d'usuari des de l'apartat 'configuració' de la pàgina")
+
+def sonnen_config_hourly():
+    hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
+    for i in range(len(optimalScheduler.solucio_final.timestamps)):
+        if optimalScheduler.solucio_final.timestamps[i] == hora_actual:
+            logger.info(f"[{optimalScheduler.solucio_final.timestamps[i]}] Configuració horaria Sonnen: {optimalScheduler.solucio_final.perfil_consum_energy_source[i]}")
+            sensor_id = "number.sonnenbatterie_79259_number_"
+            if optimalScheduler.solucio_final.perfil_consum_energy_source[i] > 0:
+                sensor_id += "charge"
+            elif optimalScheduler.solucio_final.perfil_consum_energy_source[i] < 0:
+                sensor_id += "discharge"
+            else:
+                sensor_id = "unknown"
+
+            positive_value = abs(optimalScheduler.solucio_final.perfil_consum_energy_source[i])
+            if sensor_id != "unknown":
+                database.set_sensor_value_HA(sensor_mode = 'number',
+                                             sensor_id= sensor_id,
+                                             value = positive_value * 100)
+            else:
+                database.set_sensor_value_HA(sensor_mode='number',
+                                             sensor_id='button.sonnenbatterie_79259_button_reset_all',
+                                             value=positive_value * 100)
+
+
 
 schedule.every().day.at("00:00").do(daily_task)
 schedule.every().day.at("01:00").do(daily_forecast_task)
