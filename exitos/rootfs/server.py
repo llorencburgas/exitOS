@@ -652,7 +652,7 @@ def optimize():
     database.set_sensor_value_HA(sensor_mode = 'number',
                                  sensor_id= 'number.sonnenbatterie_79259_number_discharge',
                                  variable = 'value',
-                                 value = -5)
+                                 value = 5)
 
     # for device in database.devices_info:
     #     if device['device_name'] == sonnen:
