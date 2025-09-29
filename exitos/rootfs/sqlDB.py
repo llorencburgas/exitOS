@@ -589,7 +589,7 @@ class SqlDB():
                     'option': value}
         elif sensor_mode == 'number':
             url = f"{self.base_url}services/number/set_value"
-            data = {'entity_id': sensor_id, "value": value}
+            data = {'entity_id': sensor_id, "state": value}
 
         response = requests.post(url, headers=self.headers, json=data)
 
