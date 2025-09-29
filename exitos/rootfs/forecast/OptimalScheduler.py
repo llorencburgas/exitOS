@@ -142,12 +142,12 @@ class OptimalScheduler:
         self.hores_simular = hores_simular
         self.minuts = minuts
         self.timestamps = timestamps
-        consum_bateria = self.energy_sources.simula()
+        # consum_bateria = self.energy_sources.simula()
         self.solucio_run.consumidors = consumer
         self.solucio_run.generadors = generator
         self.varbound = (
                 # [(min(consum_bateria['perfil_consum']), max(consum_bateria['perfil_consum']))] * 24   # 24 hores per a l’energy source
-            [(0,100)] * 24
+            [(-25,25)] * 24
         )
 
         result = self.__runDEModel(self.costDE)
@@ -179,13 +179,13 @@ class OptimalScheduler:
 
     def costDE(self, config):
         preu_llum_horari = self.preu_llum_horari
-        aux = self.energy_sources.simula(config)
+        aux = self.energy_sources.simula_kw(config)
         self.solucio_run.consum_hora = []
         self.solucio_run.preu_venta_hora = []
 
         resultat_total = 0
         for i in range(0, self.hores_simular * self.minuts):
-            consum_total_hora = self.consumers[i] + aux['perfil_consum'][i] - self.generators[i]  # W
+            consum_total_hora = self.consumers[i] + aux['consumption_profile'][i] - self.generators[i]  # W
 
             preu_venta = (preu_llum_horari[i] / 1000) * consum_total_hora  # W
             resultat_total += preu_venta
@@ -196,8 +196,9 @@ class OptimalScheduler:
         self.solucio_run.preu_llum_horari = preu_llum_horari
         self.solucio_run.preu_total = resultat_total
         self.solucio_run.timestamps = self.timestamps
-        self.solucio_run.perfil_consum_energy_source = aux['perfil_consum']
-        self.solucio_run.capacitat_actual_energy_source = aux['capacitat_actual']
+        self.solucio_run.perfil_consum_energy_source = aux['consumption_profile']
+        self.solucio_run.capacitat_actual_energy_source = aux['consumed_Kwh']
+        self.solucio_run.soc_objectiu = aux['soc_objectiu']
         return resultat_total
 
     def __updateDEStep(self, bounds, convergence):
@@ -236,104 +237,8 @@ class OptimalScheduler:
         return return_prices
 
 
+########################################################################################################################
 
-    #
-    # def __calcConsumersBalance(self, config):
-    #     self.kwargs_for_simulating.clear()
-    #
-    #     total_profile = [0] * self.hores_simular #perfil total de comsum hora a hora
-    #     individual_profile = {} # diccionari amb key = nom del consumer i valor = consumption profile
-    #     total_kwh = 0 # total de kwh gastats
-    #     total_hidrogen_kg = 0
-    #
-    #     total_cost = 0
-    #     valid_consumers = 0
-    #
-    #
-    #     consumer_sensor: AbsConsumer
-    #     for consumer in self.solucio_run.consumers.values():
-    #         for consumer_sensor in consumer.values():
-    #             start = consumer_sensor.active_calendar[0]
-    #             end = consumer_sensor.active_calendar[1] + 1
-    #
-    #             self.kwargs_for_simulating['electricity_prices'] = self.electricity_prices[start:end]
-    #
-    #             res_dictionary = consumer_sensor.doSimula(calendar = config[consumer_sensor.vbound_start:consumer_sensor.vbound_end],
-    #                                                       kwargs_simulation = self.kwargs_for_simulating)
-    #
-    #             consumption_profile, consumed_Kwh, total_hidrogen_kg, cost = self.__unpackSimulationResults(res_dictionary)
-    #
-    #
-    #         logger.debug("DEBUG POINT")
-    #
-    # def __calcBalanc(self, config):
-    #     # cost de tots els consumers
-    #     consumers_total_profile, consumers_individual_profile, consumers_total_kwh, valid_ones, \
-    #         cost_aproximacio, total_hidrogen_kg = self.__calcConsumersBalance(config)
-    #
-    # def costDE(self, config):
-    #     """Funció de cost on s'optimitza totes les variables possibles"""
-    #     balanc_energetic_per_hores, cost, total_hidrogen_kg, numero_assets_ok, \
-    #         consumers_individual_profile, generators_individual_profile, es_states = self.__calcBalanc(config)
-    #
-    # def __runDEModel(self, function):
-    #     self.costDE("")
-    #     result = differential_evolution(
-    #         func = function,
-    #         popsize = 150,
-    #         bounds = self.varbound,
-    #         integrality = [True] * len(self.varbound),
-    #         maxiter = self.maxiter,
-    #         mutation = (0.15, 0.25),
-    #         recombination = 0.7,
-    #         tol = 0.0001,
-    #         strategy = 'best1bin',
-    #         init = 'halton',
-    #         disp = True,
-    #         callback = self.__updateDEStep,
-    #         workers = -1
-    #     )
-    #
-    #     logger.debug(f"Status: {result['message']}")
-    #     logger.debug(f"Total Evaluations: {result['nfev']}")
-    #     logger.debug(f"Solution: {result['x']}")
-    #     logger.debug(f"Cost: {result['fun']}")
-    #
-    #     return result
-    #
-    # def __configureBounds(self):
-    #     varbound = []
-    #     index = 0
-    #
-    #     if self.solucio_run.consumers:
-    #         for consumer in self.solucio_run.consumers.values():
-    #             for consumer_sensor in consumer.values():
-    #                 consumer_sensor.vbound_start = index
-    #
-    #                 for hour in range(0, consumer_sensor.active_hours):
-    #                     varbound.append([consumer_sensor.calendar_range[0], consumer_sensor.calendar_range[1]])
-    #                     index += 1
-    #                 consumer_sensor.vbound_end = index
-    #
-    #     if self.solucio_run.energy_sources:
-    #         for energy_source in self.solucio_run.energy_sources.values():
-    #             for energy_source_sensor in energy_source.values():
-    #                 energy_source_sensor.vbound_start = index
-    #
-    #                 max_discharge = energy_source_sensor.min
-    #                 max_charge = energy_source_sensor.max
-    #
-    #                 for hour in range(0, energy_source_sensor.active_hours):
-    #                     varbound.append([max_discharge, max_charge])
-    #                     index += 1
-    #                 energy_source_sensor.vbound_end = index
-    #
-    #     return np.array(varbound)
-    #
-    # def __updateDEStep(self, bounds, convergence):
-    #     pass
-
-
-
-
-
+    def extract_sensor_type(self, sensor_name):
+        split_sensor_name = sensor_name.split('.')
+        return split_sensor_name[0]

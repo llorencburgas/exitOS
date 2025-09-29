@@ -580,3 +580,12 @@ class SqlDB():
             result = cur.fetchall()
             return [val[0] for val in result]
 
+    def set_sensor_value_HA(self, parent_id, sensor_id, variable, value):
+        logger.debug(f"----- Setting sensor value {sensor_id} to {value} -----")
+
+        url = f"{self.base_url}services/{parent_id}/{sensor_id}"
+        data = {variable: value}
+
+        response = requests.post(url, headers=self.headers, json=data)
+
+        logger.info(f"resposta bateria: {response.status_code} - {response.text}")

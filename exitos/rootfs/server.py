@@ -574,7 +574,7 @@ def get_res_certify_data():
 @app.route('/optimize')
 def optimize():
     # OPTIMITZACIÓ
-    debug_optimization = False
+    debug_optimization = True
     if debug_optimization:
         try:
 
@@ -615,6 +615,7 @@ def optimize():
             logger.warning(
             f"{'HORA':<20} "
             f"{'CARREGA':<13} "
+            f"{'SOC':<14} "
             f"{'CAPACITAT': <13} "
             f"{'PV':<8} "
             f"{'CONSUM_LAB':<15} "
@@ -627,6 +628,7 @@ def optimize():
                 logger.debug(
                   f"{optimalScheduler.solucio_final.timestamps[i]:<20} "
                   f"{optimalScheduler.solucio_final.perfil_consum_energy_source[i]:<13.4f} "
+                  f"{optimalScheduler.solucio_final.soc_objectiu[i]:<13.4f} "
                   f"{optimalScheduler.solucio_final.capacitat_actual_energy_source[i]:<13.2f} "
                   f"{optimalScheduler.solucio_final.generadors[i]:<8.2f} "
                   f"{optimalScheduler.solucio_final.consumidors[i]:<15.2f} "
@@ -639,40 +641,35 @@ def optimize():
         except Exception as e:
             logger.exception(f"❌ Error processant l'optimitzacio': {e}")
 
-    #configurar la bateria amb l'optimització
 
-    energy_source_id = "sensor.sonnenbatterie_79259_state_sonnenbatterie"
+    sonnen = 'sonnenbatterie 79259'
 
-    parent_device = database.query_select(table='sensors', column='parent_device', sensor_id=energy_source_id)[0]
-    all_entities = database.get_all_sensors_from_parent('Envoy 122308110967')
-
-    logger.warning(f"◽ Parent device: {parent_device}")
-    for entity in all_entities:
-        logger.info(f"   ▫️ Entity: {entity}")
+    database.set_sensor_value_HA(parent_id = sonnen,
+                                 sensor_id = 'select.sonnenbatterie_79259_select_operating_mode',
+                                 variable = 'options',
+                                 value = "manual")
 
 
-    for device in database.devices_info:
-        if device['device_name'] == parent_device:
-            logger.warning(f"\n📟 Dispositiu: {device['device_name']}")
-            logger.debug(f"    🔗 ID: {device['device_id']}")
-            for entitat in device["entities"]:
-                logger.info(f"\n  🔘 Entitat: {entitat['entity_name']} (estat: {entitat['entity_state']})")
-
-                attrs = entitat.get("entity_attrs", {})
-                if not attrs:
-                    logger.debug("    ⚠️ No hi ha atributs disponibles.")
-                    continue
-
-                for clau, valor in attrs.items():
-                    if isinstance(valor, (list, dict)):
-                        # Mostrem el valor com a JSON "one-line", però compacte
-                        valor_str = json.dumps(valor, ensure_ascii=False)
-                    else:
-                        valor_str = str(valor)
-                    logger.debug(f"    🔸 {clau}: {valor_str}")
-
-
-
+    # for device in database.devices_info:
+    #     if device['device_name'] == sonnen:
+    #         logger.warning(f"\n📟 Dispositiu: {device['device_name']}")
+    #         logger.debug(f"    🔗 ID: {device['device_id']}")
+    #         for entitat in device["entities"]:
+    #             logger.info(f"\n  🔘 Entitat: {entitat['entity_name']}")
+    #             logger.debug(f"    🔸 Estat: {entitat['entity_state']}")
+    #
+    #             attrs = entitat.get("entity_attrs", {})
+    #             if not attrs:
+    #                 logger.debug("    ⚠️ No hi ha atributs disponibles.")
+    #                 continue
+    #
+    #             for clau, valor in attrs.items():
+    #                 if isinstance(valor, (list, dict)):
+    #                     # Mostrem el valor com a JSON "one-line", però compacte
+    #                     valor_str = json.dumps(valor, ensure_ascii=False)
+    #                 else:
+    #                     valor_str = str(valor)
+    #                 logger.debug(f"    🔸 {clau}: {valor_str}")
 
     return "OK"
 
