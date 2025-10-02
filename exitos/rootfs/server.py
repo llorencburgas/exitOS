@@ -704,8 +704,6 @@ def daily_task():
     logger.warning(f"INICIANT PROCÉS D'OPTIMITZACIÓ DE LA SONNEN")
     optimize()
 
-
-
 def monthly_task():
     today = datetime.today()
     last_day = (today.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1) #últim dia del mes
