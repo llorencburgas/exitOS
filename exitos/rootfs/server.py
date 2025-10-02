@@ -704,7 +704,7 @@ def daily_task():
     logger.warning(f"INICIANT PROCÉS D'OPTIMITZACIÓ DE LA SONNEN")
     optimize()
 
-    schedule.every().hour.at(":00").do(sonnen_config_hourly)
+
 
 def monthly_task():
     today = datetime.today()
@@ -832,6 +832,7 @@ def sonnen_config_hourly():
 schedule.every().day.at("08:20").do(daily_task)
 schedule.every().day.at("01:00").do(daily_forecast_task)
 schedule.every().day.at("02:00").do(monthly_task)
+schedule.every().hour.at(":00").do(sonnen_config_hourly)
 # schedule.every().hour.at(":00").do(certificate_hourly_task)
 
 def run_scheduled_tasks():
