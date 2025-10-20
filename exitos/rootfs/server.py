@@ -11,6 +11,7 @@ import random
 
 import plotly.graph_objs as go
 import plotly.offline as pyo
+import plotly.express as px
 import pandas as pd
 from pandas import to_datetime
 
@@ -45,6 +46,7 @@ blockchain = Blockchain.Blockchain()
 
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')
+
 def serve_static(filepath):
     return static_file(filepath, root='./images/')
 
@@ -612,6 +614,7 @@ def optimize():
             energy_source = Battery.Battery(hores_simular = hores_simular, minuts = minuts_simular)
 
             result = optimalScheduler.optimize(consumer_data, generator_data, energy_source, hores_simular, minuts_simular, hores)
+
             logger.warning(
             f"{'HORA':<20} "
             f"{'CARREGA':<13} "
@@ -624,7 +627,7 @@ def optimize():
             f"{'PREU_VENTA':<12}"
             )
 
-            for i in range(len(result['x'])) :
+            for i in range(len(optimalScheduler.solucio_final.timestamps)) :
 
                 logger.debug(
                   f"{optimalScheduler.solucio_final.timestamps[i]:<20} "
@@ -638,6 +641,41 @@ def optimize():
                   f"{optimalScheduler.solucio_final.preu_venta_hora[i]:<12.2f}"
                 )
             logger.error(optimalScheduler.solucio_final.preu_total)
+
+            fmin, fmax = flexibility()
+
+            graph_timestamps = optimalScheduler.solucio_final.timestamps
+            graph_optimization = optimalScheduler.solucio_final.perfil_consum_energy_source
+
+            graph_df = pd.DataFrame({
+                "hora" : pd.to_datetime(graph_timestamps),
+                "optimitzacio" : graph_optimization,
+                "Fmin" : fmin,
+                "Fmax" : fmax
+            })
+
+            graph_long = graph_df.melt(
+                id_vars=["hora"],  # columna que es manté tal qual
+                value_vars=["optimitzacio", "Fmin", "Fmax"],  # columnes que es transformen
+                var_name="Serie",  # nom de la columna nova per als noms de les sèries
+                value_name="Valor"  # nom dels valors
+            )
+
+            fig = px.line(
+                graph_long,
+                x = "hora",
+                y = "Valor",
+                color = "Serie",
+                markers = True,
+                title = "Comparació optimització vs Fmin/Fmax"
+            )
+
+            fig.update_xaxes(dtick=3600000)  # 3600000 ms = 1 hora
+            fig.update_xaxes(tickformat="%H:%M")
+            fig.update_xaxes(tickangle=45)
+
+            fig.show()
+
 
         except Exception as e:
             logger.exception(f"❌ Error processant l'optimitzacio': {e}")
@@ -673,6 +711,45 @@ def optimize():
     #                 logger.debug(f"    🔸 {clau}: {valor_str}")
 
     return "OK"
+def flexibility():
+
+    increment = 1
+    efficiency = 0.95
+    PcMax = 25
+    PdMax = -25
+
+    fmin = []
+    fmax = []
+
+    for hour in range(len(optimalScheduler.solucio_final.timestamps)):
+
+        Pcmax = 25  # charging power Max (kW)
+        SOCmax = 25 # state of charge Max (kWh)
+        SOCt = optimalScheduler.solucio_final.perfil_consum_energy_source[hour]   # State of charge current (kWh)
+        Pdt = min(0, optimalScheduler.solucio_final.perfil_consum_energy_source[hour])    # Discharging power current (kW)
+        Eff = 0.95    # Battery efficiency
+        IT = 1    # Increment of time (h)
+
+        Fup_t = max(0,min(PcMax, int((SOCmax - SOCt)/(Eff * IT))) - Pdt)
+
+
+
+        FlexMax = max(0,
+                      min(0,
+                          (max(optimalScheduler.solucio_final.perfil_consum_energy_source) - optimalScheduler.solucio_final.perfil_consum_energy_source[hour]) /
+                          (efficiency * increment )) - min(0, optimalScheduler.solucio_final.perfil_consum_energy_source[hour]))
+
+        FlexMin = max(-25,
+                      optimalScheduler.solucio_final.capacitat_actual_energy_source[hour] +
+                      min(PdMax,
+                          (optimalScheduler.solucio_final.perfil_consum_energy_source[hour] - min(optimalScheduler.solucio_final.perfil_consum_energy_source)) / increment ))
+        fmin.append(FlexMin)
+        fmax.append(Fup_t)
+        logger.warning(f"HORA: {optimalScheduler.solucio_final.timestamps[hour]} ")
+        logger.info(f"FlexMax: {FlexMax}")
+        logger.info(f"FlexMin: {FlexMin}")
+    return fmin, fmax
+
 
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')
@@ -831,7 +908,7 @@ schedule.every().day.at("08:20").do(daily_task)
 schedule.every().day.at("01:00").do(daily_forecast_task)
 schedule.every().day.at("02:00").do(monthly_task)
 schedule.every().hour.at(":00").do(sonnen_config_hourly)
-# schedule.every().hour.at(":00").do(certificate_hourly_task)
+schedule.every().hour.at(":00").do(certificate_hourly_task)
 
 def run_scheduled_tasks():
     while True:

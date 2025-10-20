@@ -63,10 +63,19 @@
 </div>
 
 
+<!--    PROVISIONAL TEST BUTTON    -->
+<button id="test-optimization" onclick="TestOptimization()"><i style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-ghost"></i> Test Optimitzar</button>
+
+
 
 </body>
 
 <script>
+    function TestOptimization() {
+        fetch('optimize')
+            .then(response => response.text())
+            .then(data => console.log("Optimization pressed"))
+    }
 
     function onLoadPage() {
         const sensors_list = {{!active_sensors_list}};

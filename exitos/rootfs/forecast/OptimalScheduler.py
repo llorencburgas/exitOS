@@ -199,6 +199,8 @@ class OptimalScheduler:
         self.solucio_run.perfil_consum_energy_source = aux['consumption_profile']
         self.solucio_run.capacitat_actual_energy_source = aux['consumed_Kwh']
         self.solucio_run.soc_objectiu = aux['soc_objectiu']
+
+
         return resultat_total
 
     def __updateDEStep(self, bounds, convergence):

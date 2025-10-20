@@ -39,51 +39,51 @@ class Battery:
             elif current_time == 2: return ":30"
             else: return ":45"
 
-    def simula(self, soc_objectiu = None):
-        """
-        Simula el comportament de la bateria al llarg d'un dia a nivell horari. La bateria ha de funcionar amb %
-        """
-        if soc_objectiu is None: self.SOC_objectiu_horari = self.__get_soc_objectiu()
-        else: self.SOC_objectiu_horari = soc_objectiu
-
-        hores_consum = []
-        self.capacitat_actual = []
-        self.perfil_consum = []
-
-        for hora in range(self.hores_actives):
-            start_point = hora * self.minuts_per_hora
-            for minut in range(self.minuts_per_hora):
-                self.capacitat_actual.append(self.capacitat_actual_kwh)
-                current_minut_location = start_point + minut
-
-                SOC_objectiu_percentatge = self.SOC_objectiu_horari[current_minut_location] / 100
-                objectiu_kwh = self.capacitat_maxima * SOC_objectiu_percentatge
-
-                if self.capacitat_actual_kwh < objectiu_kwh: # carregar
-                    self.perfil_consum.append((objectiu_kwh - self.capacitat_actual_kwh) * (2 - self.eficiencia))
-                elif self.capacitat_actual_kwh > objectiu_kwh: # descarregar
-                    self.perfil_consum.append(objectiu_kwh - self.capacitat_actual_kwh)
-                else: # inactiu
-                    self.perfil_consum.append(0)
-
-                self.capacitat_actual_kwh = objectiu_kwh
-
-                minut_str = self.__get_minut_string(minut)
-                hores_consum.append(str(hora) + minut_str)
-
-
-        perfil_consum_24h = [0.0] * (self.hores_actives * self.minuts_per_hora)
-        for hora in range(len(self.perfil_consum)):
-
-            try:
-                perfil_consum_24h[hora] = self.perfil_consum[hora]
-            except Exception as e:
-                logger.info(f"HORA: {hora}  | error: {e}")
-
-        return_dict = {"perfil_consum": perfil_consum_24h,
-                       "hora": hores_consum,
-                       "capacitat_actual": self.capacitat_actual}
-        return return_dict
+    # def simula(self, soc_objectiu = None):
+    #     """
+    #     Simula el comportament de la bateria al llarg d'un dia a nivell horari. La bateria ha de funcionar amb %
+    #     """
+    #     if soc_objectiu is None: self.SOC_objectiu_horari = self.__get_soc_objectiu()
+    #     else: self.SOC_objectiu_horari = soc_objectiu
+    #
+    #     hores_consum = []
+    #     self.capacitat_actual = []
+    #     self.perfil_consum = []
+    #
+    #     for hora in range(self.hores_actives):
+    #         start_point = hora * self.minuts_per_hora
+    #         for minut in range(self.minuts_per_hora):
+    #             self.capacitat_actual.append(self.capacitat_actual_kwh)
+    #             current_minut_location = start_point + minut
+    #
+    #             SOC_objectiu_percentatge = self.SOC_objectiu_horari[current_minut_location] / 100
+    #             objectiu_kwh = self.capacitat_maxima * SOC_objectiu_percentatge
+    #
+    #             if self.capacitat_actual_kwh < objectiu_kwh: # carregar
+    #                 self.perfil_consum.append((objectiu_kwh - self.capacitat_actual_kwh) * (2 - self.eficiencia))
+    #             elif self.capacitat_actual_kwh > objectiu_kwh: # descarregar
+    #                 self.perfil_consum.append(objectiu_kwh - self.capacitat_actual_kwh)
+    #             else: # inactiu
+    #                 self.perfil_consum.append(0)
+    #
+    #             self.capacitat_actual_kwh = objectiu_kwh
+    #
+    #             minut_str = self.__get_minut_string(minut)
+    #             hores_consum.append(str(hora) + minut_str)
+    #
+    #
+    #     perfil_consum_24h = [0.0] * (self.hores_actives * self.minuts_per_hora)
+    #     for hora in range(len(self.perfil_consum)):
+    #
+    #         try:
+    #             perfil_consum_24h[hora] = self.perfil_consum[hora]
+    #         except Exception as e:
+    #             logger.info(f"HORA: {hora}  | error: {e}")
+    #
+    #     return_dict = {"perfil_consum": perfil_consum_24h,
+    #                    "hora": hores_consum,
+    #                    "capacitat_actual": self.capacitat_actual}
+    #     return return_dict
 
     def simula_kw(self, soc_objectiu = None):
         """
