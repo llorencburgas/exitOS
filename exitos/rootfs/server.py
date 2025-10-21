@@ -576,8 +576,12 @@ def get_res_certify_data():
 @app.route('/optimize')
 def optimize():
     # OPTIMITZACIÓ
-    debug_optimization = True
-    if debug_optimization:
+    has_sonnen = False
+    for i in database.devices_info:
+       if i['device_name'] == 'sonnenbatterie 79259':
+           has_sonnen = True
+
+    if has_sonnen:
         try:
 
             hores_simular = 24
@@ -613,142 +617,117 @@ def optimize():
 
             energy_source = Battery.Battery(hores_simular = hores_simular, minuts = minuts_simular)
 
-            result = optimalScheduler.optimize(consumer_data, generator_data, energy_source, hores_simular, minuts_simular, hores)
+            optimalScheduler.optimize(consumer_data, generator_data, energy_source, hores_simular, minuts_simular, hores)
 
-            logger.warning(
-            f"{'HORA':<20} "
-            f"{'CARREGA':<13} "
-            f"{'SOC':<14} "
-            f"{'CAPACITAT': <13} "
-            f"{'PV':<8} "
-            f"{'CONSUM_LAB':<15} "
-            f"{'CONSUM_TOTAL':<15} "
-            f"{'PREU_LLUM':<12} "
-            f"{'PREU_VENTA':<12}"
-            )
-
-            for i in range(len(optimalScheduler.solucio_final.timestamps)) :
-
-                logger.debug(
-                  f"{optimalScheduler.solucio_final.timestamps[i]:<20} "
-                  f"{optimalScheduler.solucio_final.perfil_consum_energy_source[i]:<13.4f} "
-                  f"{optimalScheduler.solucio_final.soc_objectiu[i]:<13.4f} "
-                  f"{optimalScheduler.solucio_final.capacitat_actual_energy_source[i]:<13.2f} "
-                  f"{optimalScheduler.solucio_final.generadors[i]:<8.2f} "
-                  f"{optimalScheduler.solucio_final.consumidors[i]:<15.2f} "
-                  f"{optimalScheduler.solucio_final.consum_hora[i]:<15.2f} "
-                  f"{optimalScheduler.solucio_final.preu_llum_horari[i]:<12.2f} "
-                  f"{optimalScheduler.solucio_final.preu_venta_hora[i]:<12.2f}"
-                )
-            logger.error(optimalScheduler.solucio_final.preu_total)
-
-            fmin, fmax = flexibility()
-
-            graph_timestamps = optimalScheduler.solucio_final.timestamps
-            graph_optimization = optimalScheduler.solucio_final.perfil_consum_energy_source
-
-            graph_df = pd.DataFrame({
-                "hora" : pd.to_datetime(graph_timestamps),
-                "optimitzacio" : graph_optimization,
-                "Fmin" : fmin,
-                "Fmax" : fmax
-            })
-
-            graph_long = graph_df.melt(
-                id_vars=["hora"],  # columna que es manté tal qual
-                value_vars=["optimitzacio", "Fmin", "Fmax"],  # columnes que es transformen
-                var_name="Serie",  # nom de la columna nova per als noms de les sèries
-                value_name="Valor"  # nom dels valors
-            )
-
-            fig = px.line(
-                graph_long,
-                x = "hora",
-                y = "Valor",
-                color = "Serie",
-                markers = True,
-                title = "Comparació optimització vs Fmin/Fmax"
-            )
-
-            fig.update_xaxes(dtick=3600000)  # 3600000 ms = 1 hora
-            fig.update_xaxes(tickformat="%H:%M")
-            fig.update_xaxes(tickangle=45)
-
-            fig.show()
-
+            debug_logger_optimization()
+            generate_plotly_flexibility()
 
         except Exception as e:
             logger.exception(f"❌ Error processant l'optimitzacio': {e}")
-
-    # sonnen = 'sonnenbatterie 79259'
-
-    # database.set_sensor_value_HA(sensor_mode = 'select',
-    #                              sensor_id = 'select.sonnenbatterie_79259_select_operating_mode',
-    #                              variable = 'options',
-    #                              value = "manual")
-    #
-
-
-    # for device in database.devices_info:
-    #     if device['device_name'] == sonnen:
-    #         logger.warning(f"\n📟 Dispositiu: {device['device_name']}")
-    #         logger.debug(f"    🔗 ID: {device['device_id']}")
-    #         for entitat in device["entities"]:
-    #             logger.info(f"\n  🔘 Entitat: {entitat['entity_name']}")
-    #             logger.debug(f"    🔸 Estat: {entitat['entity_state']}")
-    #
-    #             attrs = entitat.get("entity_attrs", {})
-    #             if not attrs:
-    #                 logger.debug("    ⚠️ No hi ha atributs disponibles.")
-    #                 continue
-    #
-    #             for clau, valor in attrs.items():
-    #                 if isinstance(valor, (list, dict)):
-    #                     # Mostrem el valor com a JSON "one-line", però compacte
-    #                     valor_str = json.dumps(valor, ensure_ascii=False)
-    #                 else:
-    #                     valor_str = str(valor)
-    #                 logger.debug(f"    🔸 {clau}: {valor_str}")
+    else:
+        logger.warning("⚠️ Aquest usuari no disposa d'una Sonnen.")
 
     return "OK"
+
 def flexibility():
+    """
+    Calcula la flexibilitat de l'optimització realitzada dins OptimalScheduler.SolucioFinal
+    """
 
-    increment = 1
-    efficiency = 0.95
-    PcMax = 25
-    PdMax = -25
+    SoC_max = 25 # Capacitat màxima de la bateria
+    SoC_min = 0  # Capacitat mínima per protegir la bateria
+    Pc_max = 2.5  # Potència màxima de la bateria Kw  (especificat a la bateria)
+    Pd_max = 2.5  # Potència màxima de descàrrega Kw (especificat a la bateria)
+    eff = 0.95   # Eficiència de càrrega
+    delta_t = 1  # Interval horari (hora)
 
-    fmin = []
-    fmax = []
+    fup = []
+    fdown = []
 
-    for hour in range(len(optimalScheduler.solucio_final.timestamps)):
+    for t in range(len(optimalScheduler.solucio_final.timestamps)):
+        SoC_t = optimalScheduler.solucio_final.capacitat_actual_energy_source[t]  # Estat de càrrega de la bateria a hora T
+        Pb_t = optimalScheduler.solucio_final.perfil_consum_energy_source[t]      # Potència actual de la bateria
 
-        Pcmax = 25  # charging power Max (kW)
-        SOCmax = 25 # state of charge Max (kWh)
-        SOCt = optimalScheduler.solucio_final.perfil_consum_energy_source[hour]   # State of charge current (kWh)
-        Pdt = min(0, optimalScheduler.solucio_final.perfil_consum_energy_source[hour])    # Discharging power current (kW)
-        Eff = 0.95    # Battery efficiency
-        IT = 1    # Increment of time (h)
+        flex_up = max(0,
+                       min(Pc_max,
+                            (SoC_max - SoC_t) / (eff * delta_t)) - Pb_t)
 
-        Fup_t = max(0,min(PcMax, int((SOCmax - SOCt)/(Eff * IT))) - Pdt)
+        flex_down = max(0,
+                        Pb_t + min(Pd_max,
+                                   SoC_t - SoC_min) / delta_t)
+
+        fup.append(flex_up)
+        fdown.append(flex_down)
+
+    return fup, fdown
+
+def generate_plotly_flexibility():
+    Fup, Fdown = flexibility()
+
+    fup_line = [optimalScheduler.solucio_final.perfil_consum_energy_source[t] + Fup[t] for t in range(len(optimalScheduler.solucio_final.timestamps))]
+    fdown_line = [optimalScheduler.solucio_final.perfil_consum_energy_source[t] - Fdown[t] for t in range(len(optimalScheduler.solucio_final.timestamps))]
+
+    graph_timestamps = optimalScheduler.solucio_final.timestamps
+    graph_optimization = optimalScheduler.solucio_final.perfil_consum_energy_source
+
+    graph_df = pd.DataFrame({
+        "hora": pd.to_datetime(graph_timestamps),
+        "optimitzacio": graph_optimization,
+        "Fup": fup_line,
+        "Fdown": fdown_line
+    })
+
+    graph_long = graph_df.melt(
+        id_vars=["hora"],  # columna que es manté tal qual
+        value_vars=["optimitzacio", "Fdown", "Fup"],  # columnes que es transformen
+        var_name="Serie",  # nom de la columna nova per als noms de les sèries
+        value_name="Valor"  # nom dels valors
+    )
+
+    fig = px.line(
+        graph_long,
+        x="hora",
+        y="Valor",
+        color="Serie",
+        markers=True,
+        title="Gràfica de Flexibilitat"
+    )
+
+    fig.update_xaxes(dtick=3600000)  # 3600000 ms = 1 hora
+    fig.update_xaxes(tickformat="%H:%M")
+    fig.update_xaxes(tickangle=45)
+
+    fig.show()
+
+def debug_logger_optimization():  #!!!!!!!!!ELIMINAR AL DEIXAR DE DEBUGAR!!!!!!!!!!!!!!!
+    logger.warning(
+        f"{'HORA':<20} "
+        f"{'CARREGA':<13} "
+        f"{'SOC':<14} "
+        f"{'CAPACITAT': <13} "
+        f"{'PV':<8} "
+        f"{'CONSUM_LAB':<15} "
+        f"{'CONSUM_TOTAL':<15} "
+        f"{'PREU_LLUM':<12} "
+        f"{'PREU_VENTA':<12}"
+    )
+
+    for i in range(len(optimalScheduler.solucio_final.timestamps)):
+        logger.debug(
+            f"{optimalScheduler.solucio_final.timestamps[i]:<20} "
+            f"{optimalScheduler.solucio_final.perfil_consum_energy_source[i]:<13.4f} "
+            f"{optimalScheduler.solucio_final.soc_objectiu[i]:<13.4f} "
+            f"{optimalScheduler.solucio_final.capacitat_actual_energy_source[i]:<13.2f} "
+            f"{optimalScheduler.solucio_final.generadors[i]:<8.2f} "
+            f"{optimalScheduler.solucio_final.consumidors[i]:<15.2f} "
+            f"{optimalScheduler.solucio_final.consum_hora[i]:<15.2f} "
+            f"{optimalScheduler.solucio_final.preu_llum_horari[i]:<12.2f} "
+            f"{optimalScheduler.solucio_final.preu_venta_hora[i]:<12.2f}"
+        )
+    logger.error(optimalScheduler.solucio_final.preu_total)
 
 
 
-        FlexMax = max(0,
-                      min(0,
-                          (max(optimalScheduler.solucio_final.perfil_consum_energy_source) - optimalScheduler.solucio_final.perfil_consum_energy_source[hour]) /
-                          (efficiency * increment )) - min(0, optimalScheduler.solucio_final.perfil_consum_energy_source[hour]))
-
-        FlexMin = max(-25,
-                      optimalScheduler.solucio_final.capacitat_actual_energy_source[hour] +
-                      min(PdMax,
-                          (optimalScheduler.solucio_final.perfil_consum_energy_source[hour] - min(optimalScheduler.solucio_final.perfil_consum_energy_source)) / increment ))
-        fmin.append(FlexMin)
-        fmax.append(Fup_t)
-        logger.warning(f"HORA: {optimalScheduler.solucio_final.timestamps[hour]} ")
-        logger.info(f"FlexMax: {FlexMax}")
-        logger.info(f"FlexMin: {FlexMin}")
-    return fmin, fmax
 
 
 # Ruta dinàmica per a les pàgines HTML
@@ -769,16 +748,7 @@ def get_page(page):
 ##################################### SCHEDULE
 
 def daily_task():
-    logger.debug(f"Running daily task at {datetime.now().strftime('%d-%b-%Y   %X')}")
-
-    logger.debug("STARTING DAILY SENSOR UPDATE")
-
-    database.update_database("all")
-    database.clean_database_hourly_average()
-
-    logger.debug("ENDING DAILY SENSOR UPDATE")
-
-    logger.warning(f"INICIANT PROCÉS D'OPTIMITZACIÓ DE LA SONNEN")
+    logger.warning(f"📈 INICIANT PROCÉS D'OPTIMITZACIÓ")
     optimize()
 
 def monthly_task():
@@ -904,10 +874,10 @@ def sonnen_config_hourly():
 
 
 
-schedule.every().day.at("08:20").do(daily_task)
+schedule.every().day.at("00:00").do(daily_task)
 schedule.every().day.at("01:00").do(daily_forecast_task)
 schedule.every().day.at("02:00").do(monthly_task)
-schedule.every().hour.at(":00").do(sonnen_config_hourly)
+# schedule.every().hour.at(":00").do(sonnen_config_hourly)
 schedule.every().hour.at(":00").do(certificate_hourly_task)
 
 def run_scheduled_tasks():
