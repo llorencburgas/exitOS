@@ -9,7 +9,7 @@
 
     <!-- llibreria d'icontes per al navbar-->
     <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
+    <script src="https://cdn.plot.ly/plotly-3.1.0.min.js" charset="utf-8"></script>
 
 </head>
 
@@ -55,6 +55,12 @@
 
 </div>
 
+<!--    PLANIFICACIÓ SONNEN -->
+<div class="scheduler-container">
+    <h2>Horaris Configurats</h2>
+    <div id="scheduler-grid" class="scheduler-grid"> <!--AQUI ES POSEN ELS FORECASTS--> </div>
+</div>
+
 
 <!--    FORECASTS     -->
 <div class="forecasts-container">
@@ -80,6 +86,7 @@
     function onLoadPage() {
         const sensors_list = {{!active_sensors_list}};
         const parent_div_forecast = document.getElementById("forecast-grid");
+        const parent_div_scheduler = document.getElementById("scheduler-grid")
         sensors_list.forEach((sensor_id) => {
             // const fixed_name = sensor_id.replace("sensor.", '')
             const fixed_name = sensor_id.replace(".pkl", "")
@@ -88,8 +95,6 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === "ok") {
-                        console.log("OKKKK -> ", fixed_name);
-
                         const container = document.createElement("div");
                         container.className = "forecast-card";
                         container.innerText = fixed_name;
@@ -143,17 +148,52 @@
 
                         Plotly.newPlot(container, [traceReal, tracePredReal, tracePredFuture], layout, config);
 
-                    } else {
-                        console.log("NOOOOO -> ", fixed_name);
-                        // const text = document.createElement("p");
-                        // text.innerHTML = "· " + sensor_id;
-                        // parent_div_no_forecast.appendChild(text);
-
                     }
                 });
 
 
         });
+
+        fetch('get_scheduler_data')
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === "ok") {
+                    const s_container = document.createElement("div");
+                    s_container.className = "scheduler-card";
+                    s_container.innerHTML = data.schedule_name;
+                    s_container.innerText = data.schedule_name;
+
+                    parent_div_scheduler.appendChild(s_container);
+
+                    const optimizedValues = data.schedule_values;
+                    const timestamps = data.timestamps;
+
+                    console.log(data);
+
+                    var scheduler_graph_data = [
+                        {
+                            x: timestamps,
+                            y: optimizedValues,
+                            type: 'scatter'
+                        }
+                    ];
+
+                    const layout = {
+                            title: 'Planing diari',
+                            xaxis: {title: 'Hores'},
+                            yaxis: {title: 'Consum (Kw)'},
+                            autosize: true,
+                            margin: {t: 40, r: 20, b: 50, l: 50},
+                            height: 300,
+                            dragmode: 'pan',
+                            showlegend: false,
+                        };
+                    const config = {responsive: true};
+
+                    Plotly.newPlot(s_container, scheduler_graph_data, layout, config);
+
+                }
+            })
     }
 
     onLoadPage();

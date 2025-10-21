@@ -728,7 +728,17 @@ def debug_logger_optimization():  #!!!!!!!!!ELIMINAR AL DEIXAR DE DEBUGAR!!!!!!!
         )
     logger.error(optimalScheduler.solucio_final.preu_total)
 
-
+@app.route('/get_scheduler_data')
+def get_scheduler_data():
+    try:
+       return json.dumps({
+           "status": "ok",
+           "timestamps": optimalScheduler.solucio_final.timestamps,
+           "schedule_values": optimalScheduler.solucio_final.perfil_consum_energy_source,
+           "schedule_name": "Sonnen"
+       })
+    except Exception as e:
+        logger.exception(f"❌ Error obtenint scheduler': {e}")
 
 
 
