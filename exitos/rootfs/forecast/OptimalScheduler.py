@@ -24,6 +24,7 @@ headers = {
     "Authorization": f"Bearer {bearer_token}",
     "Content-Type": "application/json",
 }
+in_ha = database.running_in_ha
 
 class OptimalScheduler:
     def __init__(self):
@@ -170,10 +171,11 @@ class OptimalScheduler:
                                         workers = 1
                                         )
 
-        logger.debug(f"     ▫️ Status: {result['message']}")
-        logger.debug(f"     ▫️ Total evaluations: {result['nfev']}")
-        logger.debug(f"     ▫️ Solution: {result['x']}")
-        logger.debug(f"     ▫️ Cost: {result['fun']}")
+        if not in_ha:
+            logger.debug(f"     ▫️ Status: {result['message']}")
+            logger.debug(f"     ▫️ Total evaluations: {result['nfev']}")
+            logger.debug(f"     ▫️ Solution: {result['x']}")
+            logger.debug(f"     ▫️ Cost: {result['fun']}")
 
         return result
 
@@ -205,7 +207,8 @@ class OptimalScheduler:
 
     def __updateDEStep(self, bounds, convergence):
         self.solucio_final = copy.deepcopy(self.solucio_run)
-        logger.debug(f"     Cost aproximacio {self.solucio_run.preu_total}")
+        if not in_ha:
+            logger.debug(f"     Cost aproximacio {self.solucio_run.preu_total}")
 
     def get_hourly_electric_prices(self, hores_simular: int = 24, minuts: int = 1):
         today = datetime.today().strftime('%Y%m%d')

@@ -620,7 +620,9 @@ def optimize():
             optimalScheduler.optimize(consumer_data, generator_data, energy_source, hores_simular, minuts_simular, hores)
 
             debug_logger_optimization()
-            generate_plotly_flexibility()
+
+            if not database.running_in_ha:
+                generate_plotly_flexibility()
 
         except Exception as e:
             logger.exception(f"❌ Error processant l'optimitzacio': {e}")
