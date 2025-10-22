@@ -653,7 +653,7 @@ def flexibility():
 
     full_path = os.path.join(forecast.models_filepath, "sonnen_opt.pkl")
 
-    if not os.path.exists(full_path): optimize()
+    # if not os.path.exists(full_path): optimize()
 
     sonnen_db = joblib.load(full_path)
 
@@ -814,14 +814,6 @@ def get_scheduler_data():
         fig_json = fig.to_plotly_json()
         response.content_type = "application/json"
         return json.dumps(fig_json, cls=plotly.utils.PlotlyJSONEncoder)
-
-
-        # return json.dumps({
-        #    "status": "ok",
-        #    "timestamps": optimalScheduler.solucio_final.timestamps,
-        #    "schedule_values": optimalScheduler.solucio_final.perfil_consum_energy_source,
-        #    "schedule_name": "Sonnen"
-        # })
 
     except Exception as e:
         logger.exception(f"❌ Error obtenint scheduler': {e}")
