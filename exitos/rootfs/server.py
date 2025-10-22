@@ -3,6 +3,7 @@ import os
 import threading
 import traceback
 import joblib
+import plotly
 import schedule
 import time
 import json
@@ -562,7 +563,6 @@ def get_res_certify_data():
         if os.path.exists(full_path):
             data = joblib.load(full_path)
             status = "OK"
-            logger.warning(data)
 
         return json.dumps({
             "status": status,
@@ -621,6 +621,21 @@ def optimize():
 
             debug_logger_optimization()
 
+            # GUARDAR A FITXER
+            sonnen_db = {
+                "timestamps": optimalScheduler.solucio_final.timestamps,
+                "SoC": optimalScheduler.solucio_final.capacitat_actual_energy_source,
+                "Power": optimalScheduler.solucio_final.perfil_consum_energy_source
+            }
+            full_path = os.path.join(forecast.models_filepath, "sonnen_opt.pkl")
+            if os.path.exists(full_path):
+                logger.warning("Eliminant arxiu antic d'optimització Sonnen")
+                os.remove(full_path)
+
+            joblib.dump(sonnen_db, full_path)
+            logger.info(f"✏️ Configuració diària Sonnen guardada al fitxer {full_path}")
+
+
             if not database.running_in_ha:
                 generate_plotly_flexibility()
 
@@ -636,6 +651,12 @@ def flexibility():
     Calcula la flexibilitat de l'optimització realitzada dins OptimalScheduler.SolucioFinal
     """
 
+    full_path = os.path.join(forecast.models_filepath, "sonnen_opt.pkl")
+
+    if not os.path.exists(full_path): optimize()
+
+    sonnen_db = joblib.load(full_path)
+
     SoC_max = 25 # Capacitat màxima de la bateria
     SoC_min = 0  # Capacitat mínima per protegir la bateria
     Pc_max = 2.5  # Potència màxima de la bateria Kw  (especificat a la bateria)
@@ -646,9 +667,9 @@ def flexibility():
     fup = []
     fdown = []
 
-    for t in range(len(optimalScheduler.solucio_final.timestamps)):
-        SoC_t = optimalScheduler.solucio_final.capacitat_actual_energy_source[t]  # Estat de càrrega de la bateria a hora T
-        Pb_t = optimalScheduler.solucio_final.perfil_consum_energy_source[t]      # Potència actual de la bateria
+    for t in range(len(sonnen_db['timestamps'])):
+        SoC_t = sonnen_db['SoC'][t]  # Estat de càrrega de la bateria a hora T
+        Pb_t = sonnen_db['Power'][t]     # Potència actual de la bateria
 
         flex_up = max(0,
                        min(Pc_max,
@@ -661,20 +682,17 @@ def flexibility():
         fup.append(flex_up)
         fdown.append(flex_down)
 
-    return fup, fdown
+    return fup, fdown, sonnen_db['Power'], sonnen_db['timestamps']
 
 def generate_plotly_flexibility():
-    Fup, Fdown = flexibility()
+    Fup, Fdown, consum, timestamps = flexibility()
 
-    fup_line = [optimalScheduler.solucio_final.perfil_consum_energy_source[t] + Fup[t] for t in range(len(optimalScheduler.solucio_final.timestamps))]
-    fdown_line = [optimalScheduler.solucio_final.perfil_consum_energy_source[t] - Fdown[t] for t in range(len(optimalScheduler.solucio_final.timestamps))]
-
-    graph_timestamps = optimalScheduler.solucio_final.timestamps
-    graph_optimization = optimalScheduler.solucio_final.perfil_consum_energy_source
+    fup_line = [consum[t] + Fup[t] for t in range(len(timestamps))]
+    fdown_line = [consum[t] - Fdown[t] for t in range(len(timestamps))]
 
     graph_df = pd.DataFrame({
-        "hora": pd.to_datetime(graph_timestamps),
-        "optimitzacio": graph_optimization,
+        "hora": pd.to_datetime(timestamps),
+        "optimitzacio": consum,
         "Fup": fup_line,
         "Fdown": fdown_line
     })
@@ -731,12 +749,80 @@ def debug_logger_optimization():  #!!!!!!!!!ELIMINAR AL DEIXAR DE DEBUGAR!!!!!!!
 @app.route('/get_scheduler_data')
 def get_scheduler_data():
     try:
-       return json.dumps({
-           "status": "ok",
-           "timestamps": optimalScheduler.solucio_final.timestamps,
-           "schedule_values": optimalScheduler.solucio_final.perfil_consum_energy_source,
-           "schedule_name": "Sonnen"
-       })
+        full_path = os.path.join(forecast.models_filepath, "sonnen_opt.pkl")
+        if not os.path.exists(full_path): optimize()
+        sonnen_db = joblib.load(full_path)
+
+        graph_timestamps = sonnen_db['timestamps']
+        graph_optimization = sonnen_db['Power']
+
+        graph_df = pd.DataFrame({
+            "hora": pd.to_datetime(graph_timestamps),
+            "optimitzacio": graph_optimization
+        })
+        graph_df['hora_str'] = graph_df['hora'].dt.strftime('%H:%M')
+
+        fig = px.area(graph_df, x="hora", y="optimitzacio",title="Planing diari")
+        fig.update_traces(
+            line=dict(color="green", width=2),
+            fillcolor="rgba(0, 128, 0, 0.3)"
+        )
+
+        now = datetime.now()
+        now_str = now.strftime('%H:%M')
+
+        fig.update_layout(
+            height=400,
+            yaxis=dict(zeroline=False),
+            xaxis=dict(
+                tickmode='array',
+                tickvals=graph_timestamps,
+                ticktext=graph_df['hora_str'],
+                tickangle=-45,
+                tickfont=dict(size=13),
+                title="Hores"
+            ),
+            yaxis_title="Consum (W)",
+            shapes=[
+                dict(
+                    type="line",
+                    x0=now,
+                    x1=now,
+                    y0=0,
+                    y1=1,
+                    xref="x",
+                    yref="paper",
+                    line=dict(color="red", width=2, dash="dash")
+                )
+            ],
+            annotations=[
+                dict(
+                    x=now,
+                    y=1.15,                 # una mica per sobre del gràfic
+                    xref="x",
+                    yref="paper",
+                    text="Hora Actual",
+                    showarrow=False,
+                    font=dict(color="red", size=12),
+                    textangle=-45            # rotat en diagonal
+                )
+            ],
+        )
+
+
+
+        fig_json = fig.to_plotly_json()
+        response.content_type = "application/json"
+        return json.dumps(fig_json, cls=plotly.utils.PlotlyJSONEncoder)
+
+
+        # return json.dumps({
+        #    "status": "ok",
+        #    "timestamps": optimalScheduler.solucio_final.timestamps,
+        #    "schedule_values": optimalScheduler.solucio_final.perfil_consum_energy_source,
+        #    "schedule_name": "Sonnen"
+        # })
+
     except Exception as e:
         logger.exception(f"❌ Error obtenint scheduler': {e}")
 

@@ -157,42 +157,52 @@
         fetch('get_scheduler_data')
             .then(response => response.json())
             .then(data => {
-                if(data.status === "ok") {
-                    const s_container = document.createElement("div");
-                    s_container.className = "scheduler-card";
-                    s_container.innerHTML = data.schedule_name;
-                    s_container.innerText = data.schedule_name;
 
-                    parent_div_scheduler.appendChild(s_container);
+                console.log(data)
 
-                    const optimizedValues = data.schedule_values;
-                    const timestamps = data.timestamps;
+                const container = document.createElement("div");
+                container.className = "scheduler-card";
+                container.innerText = "Sonnen";
 
-                    console.log(data);
+                parent_div_scheduler.appendChild(container);
 
-                    var scheduler_graph_data = [
-                        {
-                            x: timestamps,
-                            y: optimizedValues,
-                            type: 'scatter'
-                        }
-                    ];
+                Plotly.newPlot(container, data.data, data.layout)
+                // if(data.status === "ok") {
+                //     const s_container = document.createElement("div");
+                //     s_container.className = "scheduler-card";
+                //     s_container.innerHTML = data.schedule_name;
+                //     s_container.innerText = data.schedule_name;
+                //
+                //     parent_div_scheduler.appendChild(s_container);
+                //
+                //     const optimizedValues = data.schedule_values;
+                //     const timestamps = data.timestamps;
+                //
+                //     console.log(data);
+                //
+                //     var scheduler_graph_data = [
+                //         {
+                //             x: timestamps,
+                //             y: optimizedValues,
+                //             type: 'scatter'
+                //         }
+                //     ];
+                //
+                //     const layout = {
+                //             title: 'Planing diari',
+                //             xaxis: {title: 'Hores'},
+                //             yaxis: {title: 'Consum (Kw)'},
+                //             autosize: true,
+                //             margin: {t: 40, r: 20, b: 50, l: 50},
+                //             height: 300,
+                //             dragmode: 'pan',
+                //             showlegend: false,
+                //         };
+                //     const config = {responsive: true};
+                //
+                //     Plotly.newPlot(s_container, scheduler_graph_data, layout, config);
 
-                    const layout = {
-                            title: 'Planing diari',
-                            xaxis: {title: 'Hores'},
-                            yaxis: {title: 'Consum (Kw)'},
-                            autosize: true,
-                            margin: {t: 40, r: 20, b: 50, l: 50},
-                            height: 300,
-                            dragmode: 'pan',
-                            showlegend: false,
-                        };
-                    const config = {responsive: true};
-
-                    Plotly.newPlot(s_container, scheduler_graph_data, layout, config);
-
-                }
+                // }
             })
     }
 
