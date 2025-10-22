@@ -798,10 +798,10 @@ def get_scheduler_data():
             annotations=[
                 dict(
                     x=now,
-                    y=1.15,                 # una mica per sobre del gràfic
+                    y=1.2,                 # una mica per sobre del gràfic
                     xref="x",
                     yref="paper",
-                    text="Hora Actual",
+                    text="Actual",
                     showarrow=False,
                     font=dict(color="red", size=12),
                     textangle=-45            # rotat en diagonal
