@@ -208,7 +208,7 @@ def create_model_page(active_model = "None"):
     try:
         sensors_id = database.get_all_saved_sensors_id()
         models_saved = [os.path.basename(f)
-                        for f in glob.glob(forecast.models_filepath + "*.pkl")]
+                        for f in glob.glob(forecast.models_filepath + "forecastings/*.pkl")]
 
         forecasts_aux = database.get_forecasts_name()
         forecasts_id = []
@@ -371,7 +371,7 @@ def submit_model():
 @app.route('/get_model_config/<model_name>')
 def get_model_config(model_name):
     try:
-        model_path = os.path.join(forecast.models_filepath,f"{model_name}.pkl")
+        model_path = os.path.join(forecast.models_filepath,'forecastings/',f"{model_name}.pkl")
         config = dict()
         with open(model_path, 'rb') as f:
             config = joblib.load(f)
@@ -630,7 +630,8 @@ def optimize():
                 "Consumer": consumer_data,
                 "Generator": generator_data
             }
-            full_path = os.path.join(forecast.models_filepath, "sonnen_opt.pkl")
+            full_path = os.path.join(forecast.models_filepath, "optimizations/sonnen_opt.pkl")
+            os.makedirs(forecast.models_filepath + 'optimizations', exist_ok=True)
             if os.path.exists(full_path):
                 logger.warning("Eliminant arxiu antic d'optimització Sonnen")
                 os.remove(full_path)
@@ -654,7 +655,7 @@ def flexibility():
     Calcula la flexibilitat de l'optimització realitzada dins OptimalScheduler.SolucioFinal
     """
 
-    full_path = os.path.join(forecast.models_filepath, "sonnen_opt.pkl")
+    full_path = os.path.join(forecast.models_filepath, "optimizations/sonnen_opt.pkl")
 
     # if not os.path.exists(full_path): optimize()
 
@@ -750,7 +751,7 @@ def debug_logger_optimization():  #!!!!!!!!!ELIMINAR AL DEIXAR DE DEBUGAR!!!!!!!
 @app.route('/get_scheduler_data')
 def get_scheduler_data():
     try:
-        full_path = os.path.join(forecast.models_filepath, "sonnen_opt.pkl")
+        full_path = os.path.join(forecast.models_filepath, "optimizations/sonnen_opt.pkl")
         if not os.path.exists(full_path): optimize()
         sonnen_db = joblib.load(full_path)
 
@@ -766,12 +767,6 @@ def get_scheduler_data():
             "generacio": graph_generation
         })
         graph_df['hora_str'] = graph_df['hora'].dt.strftime('%H:%M')
-
-        # fig = px.area(graph_df, x="hora", y="optimitzacio",title="Planing diari")
-        # fig.update_traces(
-        #     line=dict(color="green", width=2),
-        #     fillcolor="rgba(0, 128, 0, 0.3)"
-        # )
 
         fig = go.Figure()
 
@@ -857,10 +852,11 @@ def get_scheduler_data():
     except Exception as e:
         logger.exception(f"❌ Error obtenint scheduler': {e}")
 
-
 @app.route('/optimization')
 def optimization_page():
-    return template("./www/optimization.html")
+    current_date = datetime.now().strftime('%d-%m-%Y')
+    return template("./www/optimization.html",
+                    current_date = current_date)
 
 
 
@@ -882,10 +878,11 @@ def get_page(page):
 ##################################### SCHEDULE
 
 def daily_task():
+    hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
     database.update_database("all")
     database.clean_database_hourly_average()
 
-    logger.warning(f"📈 INICIANT PROCÉS D'OPTIMITZACIÓ")
+    logger.warning(f"📈 [{hora_actual}] - INICIANT PROCÉS D'OPTIMITZACIÓ")
     optimize()
 
 def monthly_task():
@@ -910,7 +907,7 @@ def daily_train_model(model_config, model_name):
 def daily_forecast_task():
     hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
     logger.debug(f"📈 [{hora_actual}] - STARTING DAILY FORECASTING")
-    models_saved = [os.path.basename(f) for f in glob.glob(forecast.models_filepath + "*.pkl")]
+    models_saved = [os.path.basename(f) for f in glob.glob(forecast.models_filepath + "forecastings/*.pkl")]
     for model in models_saved:
         model_path = os.path.join(forecast.models_filepath, f"{model}")
         with open(model_path, 'rb') as f:

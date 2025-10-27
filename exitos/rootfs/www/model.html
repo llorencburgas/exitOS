@@ -458,7 +458,6 @@
             const config = {};
 
             lines.forEach(line => {
-                console.log("LINE: ", line);
                 const [key, value] = line.split("=");
                 if (key && value !== undefined) {
                     config[key.trim()] = value.trim();

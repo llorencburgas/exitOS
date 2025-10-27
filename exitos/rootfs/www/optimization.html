@@ -8,6 +8,7 @@
     <!--    <link rel="stylesheet" href="../resources/mainStyle.css">-->
 
     <!-- llibreria d'icontes per al navbar-->
+    <script src="https://cdn.plot.ly/plotly-3.1.0.min.js" charset="utf-8"></script>
     <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -15,8 +16,26 @@
 % rebase('./www/base.html', title='Exitos')
 
 <div class="container">
-  <h2>Pàgina en procés :D</h2>
-  <button id="test-optimization" onclick="TestOptimization()"><i style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-ghost"></i> Test Optimitzar</button>
+    <!--    PAGE NAME AND DATE  -->
+    <div class="content-section">
+        <h1>Optimització</h1>
+        <h4>{{current_date}}</h4>
+        <button id="test-optimization" onclick="TestOptimization()"><i style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-ghost"></i> Test Optimitzar</button>
+
+    </div>
+
+    <!--    PLANIFICACIÓ SONNEN  -->
+    <div class="scheduler-container">
+        <h2>Horaris Configurats</h2>
+        <div id="scheduler-grid" class="scheduler-grid">
+            <!--AQUI ES POSEN ELS FORECASTS-->
+        </div>
+
+    </div>
+
+
+
+
 </div>
 
 
@@ -29,5 +48,19 @@
             .then(response => response.text())
             .then(data => console.log("Optimization pressed"))
     }
+
+    function onLoadPage(){
+          const parent_div_scheduler = document.getElementById("scheduler-grid");
+                  fetch('get_scheduler_data')
+            .then(response => response.json())
+            .then(data => {
+                const container = document.createElement("div");
+                container.className = "scheduler-card";
+                parent_div_scheduler.appendChild(container);
+
+                Plotly.newPlot(container, data.data, data.layout)
+            })
+    }
+    onLoadPage();
 </script>
 </html>
