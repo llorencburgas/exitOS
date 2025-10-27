@@ -20,13 +20,22 @@
     <div class="content-section">
         <h1>Optimització</h1>
         <h4>{{current_date}}</h4>
-        <button id="test-optimization" onclick="TestOptimization()"><i style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-ghost"></i> Test Optimitzar</button>
-
+        <button id="test-optimization" onclick="TestOptimization()"><i style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-ghost"></i> Forçar Optimització</button>
     </div>
+
+
+    <div class="button-div">
+        <h3>Sonnenbatterie 79259</h3>
+        <span class="label-text"> OFF </span>
+        <input type="checkbox" id="toggle" class="offscreen" onchange="changeVisibleSensors()"/>
+        <label for="toggle" class="switch"></label>
+        <span class="label-text"> ON </span>
+    </div>
+
 
     <!--    PLANIFICACIÓ SONNEN  -->
     <div class="scheduler-container">
-        <h2>Horaris Configurats</h2>
+<!--        <h2>Horaris Configurats</h2>-->
         <div id="scheduler-grid" class="scheduler-grid">
             <!--AQUI ES POSEN ELS FORECASTS-->
         </div>

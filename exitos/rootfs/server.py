@@ -575,10 +575,15 @@ def get_res_certify_data():
 
 @app.route('/optimize')
 def optimize():
+    device_id = 'sonnenbatterie 79259'
+    consumer_id = 'sensor.smart_meter_63a_potencia_real'
+    generator_id = 'sensor.solarnet_potencia_fotovoltaica'
+
+
     # OPTIMITZACIÓ
     has_sonnen = False
     for i in database.devices_info:
-       if i['device_name'] == 'sonnenbatterie 79259':
+       if i['device_name'] == device_id:
            has_sonnen = True
 
     if has_sonnen:
@@ -587,8 +592,8 @@ def optimize():
             hores_simular = 24
             minuts_simular = 1 # 1 = 60 minuts  | 2 = 30 minuts | 4 = 15 minuts
 
-            consumer = database.get_data_from_latest_forecast_from_sensorid("sensor.smart_meter_63a_potencia_real")
-            generator = database.get_data_from_latest_forecast_from_sensorid("sensor.solarnet_potencia_fotovoltaica")
+            consumer = database.get_data_from_latest_forecast_from_sensorid(consumer_id)
+            generator = database.get_data_from_latest_forecast_from_sensorid(generator_id)
 
             today = datetime.now()
             start_date = datetime(today.year, today.month, today.day, 0, 0)
@@ -628,7 +633,10 @@ def optimize():
                 "SoC": [i * 1000 for i in optimalScheduler.solucio_final.capacitat_actual_energy_source],
                 "Power": [i * 1000 for i in optimalScheduler.solucio_final.perfil_consum_energy_source],
                 "Consumer": consumer_data,
-                "Generator": generator_data
+                "Generator": generator_data,
+                "Consumer_name" : consumer_id,
+                "Generator_name" : generator_id,
+                "Device_name" : device_id
             }
             full_path = os.path.join(forecast.models_filepath, "optimizations/sonnen_opt.pkl")
             os.makedirs(forecast.models_filepath + 'optimizations', exist_ok=True)
