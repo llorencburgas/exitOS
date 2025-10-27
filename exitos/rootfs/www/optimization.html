@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Control energètic eXIT</title>
+    <link rel="stylesheet" href="resources/mainStyle.css">
+    <link rel="icon" type="image/x-icon" href="static/favicon.ico">
+    <!--    <link rel="stylesheet" href="../resources/mainStyle.css">-->
+
+    <!-- llibreria d'icontes per al navbar-->
+    <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<!--    NAVBAR     -->
+% rebase('./www/base.html', title='Exitos')
+
+<div class="container">
+  <h2>Pàgina en procés :D</h2>
+  <button id="test-optimization" onclick="TestOptimization()"><i style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-ghost"></i> Test Optimitzar</button>
+</div>
+
+
+
+</body>
+
+<script>
+      function TestOptimization() {
+        fetch('optimize')
+            .then(response => response.text())
+            .then(data => console.log("Optimization pressed"))
+    }
+</script>
+</html>
