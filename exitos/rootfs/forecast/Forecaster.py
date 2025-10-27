@@ -587,7 +587,6 @@ class Forecaster:
         """
         :return:
         """
-        logger.info("Iniciant forecast...")
 
         # PAS 1 - Obtenir els valors del model
         model_select = self.db.get('model_select', [])  # intenta obtenir model_select, si no existeix retorna []
@@ -690,10 +689,10 @@ class Forecaster:
 
         joblib.dump(self.db, full_path)
         logger.warning(glob.glob(self.models_filepath + "*"))
-        logger.info(f"Model guardat al fitxer {model_filename}.pkl")
+        logger.info(f"  💾 Model guardat al fitxer {model_filename}.pkl")
 
         self.db.clear()
 
     def load_model(self, model_filename):
         self.db = joblib.load(self.models_filepath + model_filename)
-        logger.info(f"Model carregat del fitxer {model_filename}")
+        logger.info(f"  💾 Model carregat del fitxer {model_filename}")

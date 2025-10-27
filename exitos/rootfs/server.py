@@ -882,6 +882,9 @@ def get_page(page):
 ##################################### SCHEDULE
 
 def daily_task():
+    database.update_database("all")
+    database.clean_database_hourly_average()
+
     logger.warning(f"📈 INICIANT PROCÉS D'OPTIMITZACIÓ")
     optimize()
 
@@ -905,7 +908,8 @@ def daily_train_model(model_config, model_name):
     scaler = model_config.get('scaler_name', '')
 
 def daily_forecast_task():
-    logger.debug("STARTING DAILY FORECASTING")
+    hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
+    logger.debug(f"📈 [{hora_actual}] - STARTING DAILY FORECASTING")
     models_saved = [os.path.basename(f) for f in glob.glob(forecast.models_filepath + "*.pkl")]
     for model in models_saved:
         model_path = os.path.join(forecast.models_filepath, f"{model}")
@@ -914,9 +918,9 @@ def daily_forecast_task():
         aux = config.get('algorithm','')
         if aux != '':
             # daily_train_model(config, model)
-            logger.debug(f"*********** Running daily forecast for {model} **********")
+            logger.debug(f"     Running daily forecast for {model}")
             forecast_model(model)
-    logger.debug("ENDING DAILY TASKS")
+    logger.debug("ENDING DAILY FORECASTS")
 
 def certificate_hourly_task():
     logger.info(f"🕒 Running certificate hourly task at {datetime.now().strftime('%H:%M')}")
@@ -977,7 +981,7 @@ def certificate_hourly_task():
             joblib.dump(data_to_save, full_path)
 
         logger.info("🕒 CERTIFICAT HORARI COMPLETAT")
-        database.clean_database_hourly_average()
+
 
     else:
         logger.warning(f"Encara no t'has unit a cap comunitat! \n"
