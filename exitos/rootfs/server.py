@@ -587,7 +587,7 @@ def optimize():
             hores_simular = 24
             minuts_simular = 1 # 1 = 60 minuts  | 2 = 30 minuts | 4 = 15 minuts
 
-            consumer = database.get_data_from_latest_forecast_from_sensorid("sensor.consum_placa_c_ct9")
+            consumer = database.get_data_from_latest_forecast_from_sensorid("sensor.smart_meter_63a_potencia_real")
             generator = database.get_data_from_latest_forecast_from_sensorid("sensor.solarnet_potencia_fotovoltaica")
 
             today = datetime.now()
@@ -615,6 +615,7 @@ def optimize():
                     generator_data.append(0)
 
 
+            consumer_data = [-x for x in consumer_data]
             energy_source = Battery.Battery(hores_simular = hores_simular, minuts = minuts_simular)
 
             optimalScheduler.optimize(consumer_data, generator_data, energy_source, hores_simular, minuts_simular, hores)
@@ -624,8 +625,10 @@ def optimize():
             # GUARDAR A FITXER
             sonnen_db = {
                 "timestamps": optimalScheduler.solucio_final.timestamps,
-                "SoC": optimalScheduler.solucio_final.capacitat_actual_energy_source,
-                "Power": optimalScheduler.solucio_final.perfil_consum_energy_source
+                "SoC": [i * 1000 for i in optimalScheduler.solucio_final.capacitat_actual_energy_source],
+                "Power": [i * 1000 for i in optimalScheduler.solucio_final.perfil_consum_energy_source],
+                "Consumer": consumer_data,
+                "Generator": generator_data
             }
             full_path = os.path.join(forecast.models_filepath, "sonnen_opt.pkl")
             if os.path.exists(full_path):
@@ -717,8 +720,6 @@ def generate_plotly_flexibility():
     fig.update_xaxes(tickformat="%H:%M")
     fig.update_xaxes(tickangle=45)
 
-    fig.show()
-
 def debug_logger_optimization():  #!!!!!!!!!ELIMINAR AL DEIXAR DE DEBUGAR!!!!!!!!!!!!!!!
     logger.warning(
         f"{'HORA':<20} "
@@ -755,18 +756,56 @@ def get_scheduler_data():
 
         graph_timestamps = sonnen_db['timestamps']
         graph_optimization = sonnen_db['Power']
+        graph_consum = sonnen_db['Consumer']
+        graph_generation = sonnen_db['Generator']
 
         graph_df = pd.DataFrame({
             "hora": pd.to_datetime(graph_timestamps),
-            "optimitzacio": graph_optimization
+            "optimitzacio": graph_optimization,
+            "consum": graph_consum,
+            "generacio": graph_generation
         })
         graph_df['hora_str'] = graph_df['hora'].dt.strftime('%H:%M')
 
-        fig = px.area(graph_df, x="hora", y="optimitzacio",title="Planing diari")
-        fig.update_traces(
+        # fig = px.area(graph_df, x="hora", y="optimitzacio",title="Planing diari")
+        # fig.update_traces(
+        #     line=dict(color="green", width=2),
+        #     fillcolor="rgba(0, 128, 0, 0.3)"
+        # )
+
+        fig = go.Figure()
+
+        # Línia principal (verd amb fill)
+        fig.add_trace(go.Scatter(
+            x=graph_df["hora"],
+            y=graph_df["optimitzacio"],
+            mode='lines',
+            name="Optimització",
             line=dict(color="green", width=2),
-            fillcolor="rgba(0, 128, 0, 0.3)"
-        )
+            fill='tozeroy',
+            fillcolor="rgba(0,128,0,0.3)"
+        ))
+
+        # Línia del sensor2 (blau amb opacitat baixa)
+        fig.add_trace(go.Scatter(
+            x=graph_df["hora"],
+            y=graph_df["consum"],
+            mode='lines',
+            name="Consum",
+            line=dict(color="blue", width=2),
+            opacity=0.5
+        ))
+
+        # Línia del sensor3 (taronja amb opacitat baixa)
+        fig.add_trace(go.Scatter(
+            x=graph_df["hora"],
+            y=graph_df["generacio"],
+            mode='lines',
+            name="Generacio",
+            line=dict(color="orange", width=2),
+            opacity=0.5
+        ))
+
 
         now = datetime.now()
         now_str = now.strftime('%H:%M')
@@ -817,6 +856,11 @@ def get_scheduler_data():
 
     except Exception as e:
         logger.exception(f"❌ Error obtenint scheduler': {e}")
+
+
+@app.route('/optimization')
+def optimization_page():
+    return template("./www/optimization.html")
 
 
 
@@ -956,18 +1000,18 @@ def sonnen_config_hourly():
             if sensor_id != "unknown":
                 database.set_sensor_value_HA(sensor_mode = 'number',
                                              sensor_id= sensor_id,
-                                             value = positive_value * 100)
+                                             value = positive_value * 1000)
             else:
                 database.set_sensor_value_HA(sensor_mode='number',
                                              sensor_id='button.sonnenbatterie_79259_button_reset_all',
-                                             value=positive_value * 100)
+                                             value=positive_value * 1000)
 
 
 
 schedule.every().day.at("00:00").do(daily_task)
 schedule.every().day.at("01:00").do(daily_forecast_task)
 schedule.every().day.at("02:00").do(monthly_task)
-# schedule.every().hour.at(":00").do(sonnen_config_hourly)
+schedule.every().hour.at(":00").do(sonnen_config_hourly)
 schedule.every().hour.at(":00").do(certificate_hourly_task)
 
 def run_scheduled_tasks():

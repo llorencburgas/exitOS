@@ -148,7 +148,7 @@ class OptimalScheduler:
         self.solucio_run.generadors = generator
         self.varbound = (
                 # [(min(consum_bateria['perfil_consum']), max(consum_bateria['perfil_consum']))] * 24   # 24 hores per a l’energy source
-            [(-25,25)] * 24
+            [(-2.5,2.5)] * 24
         )
 
         result = self.__runDEModel(self.costDE)

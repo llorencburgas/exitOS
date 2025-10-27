@@ -8,17 +8,16 @@ class Battery:
         self.perfil_consum = []
         self.capacitat_actual = []
 
-        self.capacitat_maxima = 25 # KWh
+        self.capacitat_maxima = 2.5 # KWh
         self.capacitat_minima = 0  # KWh
         self.step = 1
         self.capacitat_actual_percentatge = 0.90
         self.capacitat_actual_kwh = self.capacitat_maxima * self.capacitat_actual_percentatge # kWh
         self.eficiencia = 0.95
-        self.claus_percentatge = {"100":1, "90": 0.9, "80":0.8, "70":0.7, "60":0.6, "50":0.5, "40":0.4, "30":0.3, "20":0.2, "10":0.1, "0": 0}
         self.hores_actives = hores_simular
         self.minuts_per_hora = minuts
 
-        self.SOC_objectiu_horari = soc_objectiu if soc_objectiu is not None else self.__get_soc_objectiu()
+        self.SOC_objectiu_horari = [self.capacitat_maxima] * (hores_simular * minuts)
 
     def __get_soc_objectiu(self):
         soc_objectiu = []
