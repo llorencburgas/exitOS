@@ -37,7 +37,7 @@
                 <!--  On / Off switch  -->
                 <div style="display: flex; align-items: center; margin-bottom: 10px;">
                     <span class="label-text"> OFF </span>
-                    <input type="checkbox" id="toggle" class="offscreen" onchange="changeVisibleSensors()"/>
+                    <input type="checkbox" id="toggle" class="offscreen" onchange="ChangeOptimizationStatus()"/>
                     <label for="toggle" class="switch"></label>
                     <span class="label-text"> ON </span>
                 </div>
@@ -60,11 +60,34 @@
 <div id="new-optimization-modal" class="modal hidden">
     <!--  FORMULARI DINÀMIC PER CREAR UNA NOVA OPTIMITZACIÓ  -->
     <div class="modal-content">
-        <h3>Nova Optimització</h3>
-        <label for="deviceType">Tipus de dispositiu: </label>
+        <h3 style="margin-bottom: 5px;">Nova Optimització</h3>
+
+        <!--   DISPOSITIU     -->
+        <label for="device-name">Dispositiu:</label>
+        <select name="device-name" id="device-name">
+            % for device in device_names:
+            <option value="{{device}}">{{device}}</option>
+            %end
+        </select>
+
+        <br>
+
+        <!--   TIPUS DE DISPOSITIU     -->
+        <label for="device-type">Tipus de dispositiu: </label>
         <select name="deviceType" id="device-type" onchange="UpdateRestrictions()"></select>
 
+        <!--   RESTRICCIONS     -->
         <div id="restrictionsContainer"></div>
+
+        <!--   VARIABLES ASSOCIADES     -->
+        <label for="aux-vars">Variables Associades:</label>
+        <select name="aux-vars" id="aux-vars" multiple>
+            <option value="1">Lorem ipsum 1</option>
+            <option value="2">Lorem ipsum 2</option>
+            <option value="3">Lorem ipsum 3</option>
+            <option value="4">Lorem ipsum 4</option>
+        </select>
+
 
         <div style="margin-top: 20px;">
             <button onclick="SubmitOptimization()"> Guardar </button>
@@ -121,18 +144,41 @@
         container.innerHTML = '';
 
         restrictions.forEach(restriction => {
-            container.innerHTML += `
-            <label>~${restriction}:</label>
-            <input type="text" name="${restriction}"/>`
+            if(typeof restriction === 'object'){
+                container.innerHTML += `
+                <label>${restriction.nom}: </label>
+                <input type="number"
+                        name="${restriction.nom}"
+                        min="${restriction.min ?? ''}"
+                        max="${restriction.max ?? ''}"
+                        step="${restriction.step ?? 'any'}" />
+                <br>
+                `;
+            }
+            else {
+                container.innerHTML += `
+                    <label>~${restriction}:</label>
+                    <input type="number" name="${restriction}" step="any"/>
+                    <br>
+                `;
+            }
         });
     }
 
     async function SubmitOptimization(){
           console.log("Submit Optimization");
+    //       TODO: guardar info optimització :D
+
+        CloseModal();
     }
 
     function CloseModal(){
           document.getElementById("new-optimization-modal").classList.add('hidden');
+    }
+
+    function ChangeOptimizationStatus(){
+        console.log("ChangeOptimizationStatus");
+        //TODO: encendre o apagar l'optimització automàtica del dispositiu.
     }
 
     onLoadPage();

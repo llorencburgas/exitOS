@@ -573,6 +573,9 @@ class SqlDB():
             logger.debug(f"📄 Cos resposta:\n     {response.text}")
             return {}
 
+    def get_devices_names(self):
+        return sorted([d["device_name"] for d in self.devices_info if "device_name" in d])
+
     def get_all_sensors_from_parent(self,parent_device):
         with self._get_connection() as con:
             cur = con.cursor()

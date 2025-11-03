@@ -872,10 +872,13 @@ def optimization_page():
         with open(config_path, 'r', encoding='utf-8') as f:
             devices_data = json.load(f)
 
+    devices_names = database.get_devices_names()
+
     current_date = datetime.now().strftime('%d-%m-%Y')
     return template("./www/optimization.html",
                     current_date = current_date,
-                    device_types = json.dumps(devices_data))
+                    device_types = json.dumps(devices_data),
+                    device_names = devices_names)
 
 
 
