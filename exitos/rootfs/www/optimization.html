@@ -186,7 +186,7 @@
 
         console.log(data);
 
-        const res = await fetch('/save_optimization_config',{
+        const res = await fetch('save_optimization_config',{
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
