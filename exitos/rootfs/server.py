@@ -904,10 +904,6 @@ def save_optimization_config():
 
     return {"status": "ok", "msg": f"Optimització desada com {device_name}.json"}
 
-    # joblib.dump(sonnen_db, full_path)
-    # logger.info(f"✏️ Configuració diària Sonnen guardada al fitxer {full_path}")
-
-
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')
 def get_page(page):

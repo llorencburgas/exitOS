@@ -21,8 +21,11 @@
         <h1>Optimització</h1>
         <h4>{{current_date}}</h4>
         <button id="test-optimization" onclick="TestOptimization()"><i style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-ghost"></i> Forçar Optimització</button>
-        <button id="new-optimization" onclick="NewOptimization()"><i style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-plus"></i> Nova Optimització</button>
+        <button id="new-device-config" onclick="NewDeviceConfig()"><i style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-plus"></i> Nova Configuració de Dispositiu</button>
     </div>
+
+    <!-- GRÀFICA OPTIMITZACIÓ -->
+    <div id="scheduler-grid" class="scheduler-grid"> </div>
 
     <!--    PLANIFICACIÓ SONNEN  -->
     <div class="scheduler-container">
@@ -46,9 +49,6 @@
                  <p><b>Variables associades : </b> Lorem</p>
                  <p><b>Restriccions : </b> Lorem</p>
 
-            </div>
-            <div id="scheduler-grid" class="scheduler-grid">
-                <!--AQUI ES POSEN ELS FORECASTS-->
             </div>
         </div>
     </div>
@@ -121,7 +121,7 @@
             })
     }
 
-    function NewOptimization(){
+    function NewDeviceConfig(){
           const modal = document.getElementById('new-optimization-modal');
           modal.classList.remove('hidden');
 

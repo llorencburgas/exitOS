@@ -356,7 +356,7 @@ input[type='checkbox']:checked + .switch {
 
 .optimization-graphs-container{
     display:grid;
-    grid-template-columns:1fr 2fr;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap:20px;
     padding: 40px;
 }
