@@ -862,9 +862,20 @@ def get_scheduler_data():
 
 @app.route('/optimization')
 def optimization_page():
+
+    config_path = 'resources/optimization_devices.conf'
+    devices_data = {}
+
+    if not os.path.exists(config_path):
+        logger.warning("⚠️ - No s'ha trobat el fitxer de configuració: {config_path}")
+    else:
+        with open(config_path, 'r') as f:
+            devices_data = json.load(f)
+
     current_date = datetime.now().strftime('%d-%m-%Y')
     return template("./www/optimization.html",
-                    current_date = current_date)
+                    current_date = current_date,
+                    device_types = json.dumps(devices_data))
 
 
 

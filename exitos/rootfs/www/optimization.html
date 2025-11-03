@@ -21,38 +21,65 @@
         <h1>Optimització</h1>
         <h4>{{current_date}}</h4>
         <button id="test-optimization" onclick="TestOptimization()"><i style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-ghost"></i> Forçar Optimització</button>
+        <button id="new-optimization" onclick="NewOptimization()"><i style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-plus"></i> Nova Optimització</button>
     </div>
-
-
-    <div class="button-div">
-        <h3>Sonnenbatterie 79259</h3>
-        <span class="label-text"> OFF </span>
-        <input type="checkbox" id="toggle" class="offscreen" onchange="changeVisibleSensors()"/>
-        <label for="toggle" class="switch"></label>
-        <span class="label-text"> ON </span>
-    </div>
-
 
     <!--    PLANIFICACIÓ SONNEN  -->
     <div class="scheduler-container">
-<!--        <h2>Horaris Configurats</h2>-->
-        <div id="scheduler-grid" class="scheduler-grid">
-            <!--AQUI ES POSEN ELS FORECASTS-->
+        <div class="optimization-graphs-container">
+            <div>
+                <br>
+                <br>
+
+                <!-- INFO DE L'OPTIMITZACIÓ ACTUAL -->
+                <h3 style="margin-bottom: 5px;">Sonnenbatterie 79259</h3>
+
+                <!--  On / Off switch  -->
+                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                    <span class="label-text"> OFF </span>
+                    <input type="checkbox" id="toggle" class="offscreen" onchange="changeVisibleSensors()"/>
+                    <label for="toggle" class="switch"></label>
+                    <span class="label-text"> ON </span>
+                </div>
+
+                 <p><b>Dispositiu : </b> Lorem</p>
+                 <p><b>Variables associades : </b> Lorem</p>
+                 <p><b>Restriccions : </b> Lorem</p>
+
+            </div>
+            <div id="scheduler-grid" class="scheduler-grid">
+                <!--AQUI ES POSEN ELS FORECASTS-->
+            </div>
         </div>
-
     </div>
-
-
-
-
 </div>
 
+
+
+
+<div id="new-optimization-modal" class="modal hidden">
+    <!--  FORMULARI DINÀMIC PER CREAR UNA NOVA OPTIMITZACIÓ  -->
+    <div class="modal-content">
+        <h3>Nova Optimització</h3>
+        <label for="deviceType">Tipus de dispositiu: </label>
+        <select name="deviceType" id="device-type" onchange="UpdateRestrictions()"></select>
+
+        <div id="restrictionsContainer"></div>
+
+        <div style="margin-top: 20px;">
+            <button onclick="SubmitOptimization()"> Guardar </button>
+            <button onclick="CloseModal()"> Cancel·lar </button>
+        </div>
+    </div>
+</div>
 
 
 </body>
 
 <script>
-      function TestOptimization() {
+    const device_types = {{!device_types}}
+
+    function TestOptimization() {
         fetch('optimize')
             .then(response => response.text())
             .then(data => console.log("Optimization pressed"))
@@ -70,6 +97,35 @@
                 Plotly.newPlot(container, data.data, data.layout)
             })
     }
+
+    function NewOptimization(){
+          const modal = document.getElementById('new-optimization-modal');
+          modal.classList.remove('hidden');
+
+          const select = document.getElementById('device-type');
+          select.innerHTML = '';
+
+          for (const type in device_types){
+              const opt = document.createElement('option');
+              opt.value = type;
+              opt.textContent = type;
+              select.appendChild(opt);
+          }
+          UpdateRestrictions();
+    }
+
+    function UpdateRestrictions() {
+          console.log("Update restrictions");
+    }
+
+    async function SubmitOptimization(){
+          console.log("Submit Optimization");
+    }
+
+    function CloseModal(){
+          document.getElementById("new-optimization-modal").classList.add('hidden');
+    }
+
     onLoadPage();
 </script>
 </html>
