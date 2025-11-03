@@ -869,7 +869,7 @@ def optimization_page():
     if not os.path.exists(config_path):
         logger.warning("⚠️ - No s'ha trobat el fitxer de configuració: {config_path}")
     else:
-        with open(config_path, 'r') as f:
+        with open(config_path, 'r', encoding='utf-8') as f:
             devices_data = json.load(f)
 
     current_date = datetime.now().strftime('%d-%m-%Y')

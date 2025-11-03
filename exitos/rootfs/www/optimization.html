@@ -115,7 +115,16 @@
     }
 
     function UpdateRestrictions() {
-          console.log("Update restrictions");
+        const type = document.getElementById('device-type').value;
+        const restrictions = device_types[type].restriccions;
+        const container = document.getElementById('restrictionsContainer');
+        container.innerHTML = '';
+
+        restrictions.forEach(restriction => {
+            container.innerHTML += `
+            <label>~${restriction}:</label>
+            <input type="text" name="${restriction}"/>`
+        });
     }
 
     async function SubmitOptimization(){
