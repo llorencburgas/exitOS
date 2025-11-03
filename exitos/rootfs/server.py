@@ -339,7 +339,7 @@ def delete_model():
     selected_model = request.forms.get("models")
     database.remove_forecast(selected_model)
 
-    model_path = forecast.models_filepath + selected_model
+    model_path = forecast.models_filepath +'forecastings/'+ selected_model
     if os.path.exists(model_path):
         os.remove(model_path)
         logger.info(f"Model deleted: {model_path}")
