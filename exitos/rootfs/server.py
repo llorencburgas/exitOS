@@ -882,6 +882,32 @@ def optimization_page():
 
 
 
+@app.post('/save_optimization_config')
+def save_optimization_config():
+    data = request.json
+    if not data:
+        response.status = 400
+        return {"status":"error", "msg": "Dades buides"}
+
+    data_dir = forecast.models_filepath + 'optimization'
+    device_name = data.get("name")
+
+    full_path = os.path.join(forecast.models_filepath, "optimizations/configs/"+ device_name +".json")
+    os.makedirs(forecast.models_filepath + 'optimizations/configs', exist_ok=True)
+    if os.path.exists(full_path):
+        logger.warning("Eliminant arxiu antic de configuració {data.name}")
+        os.remove(full_path)
+
+    with open(full_path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+
+    return {"status": "ok", "msg": f"Optimització desada com {device_name}.json"}
+
+    # joblib.dump(sonnen_db, full_path)
+    # logger.info(f"✏️ Configuració diària Sonnen guardada al fitxer {full_path}")
+
+
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')
 def get_page(page):

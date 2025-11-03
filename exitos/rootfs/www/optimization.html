@@ -81,11 +81,11 @@
 
         <!--   VARIABLES ASSOCIADES     -->
         <label for="aux-vars">Variables Associades:</label>
-        <select name="aux-vars" id="aux-vars" multiple>
-            <option value="1">Lorem ipsum 1</option>
-            <option value="2">Lorem ipsum 2</option>
-            <option value="3">Lorem ipsum 3</option>
-            <option value="4">Lorem ipsum 4</option>
+        <select name="aux-vars" id="aux-vars" >
+            <option value="Lorem Ipsum 1">Lorem ipsum 1</option>
+            <option value="Lorem Ipsum 2">Lorem ipsum 2</option>
+            <option value="Lorem Ipsum 3">Lorem ipsum 3</option>
+            <option value="Lorem Ipsum 4">Lorem ipsum 4</option>
         </select>
 
 
@@ -131,7 +131,7 @@
           for (const type in device_types){
               const opt = document.createElement('option');
               opt.value = type;
-              opt.textContent = type;
+              opt.textContent = device_types[type].nom;
               select.appendChild(opt);
           }
           UpdateRestrictions();
@@ -166,10 +166,39 @@
     }
 
     async function SubmitOptimization(){
-          console.log("Submit Optimization");
-    //       TODO: guardar info optimització :D
+        const name = document.getElementById('device-name').value;
+        const type = document.getElementById('device-type').value;
+        const vars = document.getElementById('aux-vars').value;
+        const restrictionInputs = document.querySelectorAll('#restrictionsContainer input');
 
-        CloseModal();
+        const restrictions = {};
+        console.log(restrictionInputs)
+        restrictionInputs.forEach(inp => {
+            restrictions[inp.name] = inp.value;
+        });
+
+        const data = {
+            name,
+            type,
+            restrictions,
+            vars: vars//.split(',').map(v => v.trim()).filter(v => v)
+        };
+
+        console.log(data);
+
+        const res = await fetch('/save_optimization_config',{
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        if (result.status === 'ok') {
+          document.getElementById('new-optimization-modal').classList.add('hidden');
+        }
+        else {
+          console.error(result.status);
+        }
     }
 
     function CloseModal(){
