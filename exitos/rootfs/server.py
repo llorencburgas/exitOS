@@ -863,6 +863,7 @@ def get_scheduler_data():
 @app.route('/optimization')
 def optimization_page():
 
+    # RESTRICCIONS PER A DISPOSITIU
     config_path = 'resources/optimization_devices.conf'
     devices_data = {}
 
@@ -872,14 +873,34 @@ def optimization_page():
         with open(config_path, 'r', encoding='utf-8') as f:
             devices_data = json.load(f)
 
-    devices_names = database.get_devices_names()
+    # DISPOSITIUS I ENTITATS ASSOCIADES
+    devices_entities = database.get_devices_and_entities()
+
+    # CONFIGURACIONS CREADES
+    created_configs_path = forecast.models_filepath + "/optimizations/configs"
+    json_config_files = [ f for f in os.listdir(created_configs_path) if f.endswith(".json") ]
 
     current_date = datetime.now().strftime('%d-%m-%Y')
     return template("./www/optimization.html",
                     current_date = current_date,
                     device_types = json.dumps(devices_data),
-                    device_names = devices_names)
+                    config_files_names = json_config_files,
+                    device_entities = devices_entities)
 
+
+@app.route('/get_device_config_data/<file_name>')
+def get_device_config_data(file_name):
+    config_path = forecast.models_filepath + "/optimizations/configs/" + file_name
+    device_config = {}
+
+    if not os.path.exists(config_path):
+        response.status = 400
+        return {"status": "error", "msg": "Dades buides"}
+
+    with open(config_path, 'r', encoding='utf-8') as f:
+        device_config = json.load(f)
+
+    return {"status": "ok", "device_config": device_config}
 
 
 @app.post('/save_optimization_config')
@@ -953,7 +974,7 @@ def daily_forecast_task():
     logger.debug(f"📈 [{hora_actual}] - STARTING DAILY FORECASTING")
     models_saved = [os.path.basename(f) for f in glob.glob(forecast.models_filepath + "forecastings/*.pkl")]
     for model in models_saved:
-        model_path = os.path.join(forecast.models_filepath, f"{model}")
+        model_path = os.path.join(forecast.models_filepath, "forecastings/" ,f"{model}")
         with open(model_path, 'rb') as f:
             config = joblib.load(f)
         aux = config.get('algorithm','')

@@ -573,8 +573,16 @@ class SqlDB():
             logger.debug(f"📄 Cos resposta:\n     {response.text}")
             return {}
 
-    def get_devices_names(self):
-        return sorted([d["device_name"] for d in self.devices_info if "device_name" in d])
+    def get_devices_and_entities(self):
+        result = {}
+
+        for device in self.devices_info:
+            name = device.get("device_name", "Unknown device")
+            entities = device.get("entities", [])
+            entity_names = [e.get("entity_name") for e in entities if "entity_name" in e]
+            result[name] = sorted(entity_names)  # Ordenem els fills alfabèticament
+
+        return result
 
     def get_all_sensors_from_parent(self,parent_device):
         with self._get_connection() as con:

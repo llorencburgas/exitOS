@@ -29,7 +29,7 @@
 
     <!--    PLANIFICACIÓ SONNEN  -->
     <div class="scheduler-container">
-        <div class="optimization-graphs-container">
+        <div class="optimization-graphs-container" id="optimization-graphs-container">
             <div>
                 <br>
                 <br>
@@ -64,10 +64,8 @@
 
         <!--   DISPOSITIU     -->
         <label for="device-name">Dispositiu:</label>
-        <select name="device-name" id="device-name">
-            % for device in device_names:
-            <option value="{{device}}">{{device}}</option>
-            %end
+        <select name="device-name" id="device-name" onchange="UpdateAssociatedVariables()">
+            <option value = ""> Selecciona un dispositiu </option>
         </select>
 
         <br>
@@ -80,13 +78,10 @@
         <div id="restrictionsContainer"></div>
 
         <!--   VARIABLES ASSOCIADES     -->
-        <label for="aux-vars">Variables Associades:</label>
-        <select name="aux-vars" id="aux-vars" >
-            <option value="Lorem Ipsum 1">Lorem ipsum 1</option>
-            <option value="Lorem Ipsum 2">Lorem ipsum 2</option>
-            <option value="Lorem Ipsum 3">Lorem ipsum 3</option>
-            <option value="Lorem Ipsum 4">Lorem ipsum 4</option>
-        </select>
+        <label for="aux-vars">Variables Disponibles:</label>
+        <select name="aux-vars" id="aux-vars" multiple size="5"></select>
+        <br>
+        <small>💡 Pots mantenir premut <b>Ctrl</b> (Windows/Linux) o <b>Cmd</b> (Mac) per seleccionar més d’una variable.</small>
 
 
         <div style="margin-top: 20px;">
@@ -101,6 +96,7 @@
 
 <script>
     const device_types = {{!device_types}}
+    const device_entities = {{!device_entities}}
 
     function TestOptimization() {
         fetch('optimize')
@@ -109,16 +105,17 @@
     }
 
     function onLoadPage(){
-          const parent_div_scheduler = document.getElementById("scheduler-grid");
-                  fetch('get_scheduler_data')
-            .then(response => response.json())
-            .then(data => {
-                const container = document.createElement("div");
-                container.className = "scheduler-card";
-                parent_div_scheduler.appendChild(container);
+        const parent_div_scheduler = document.getElementById("scheduler-grid");
+        fetch('get_scheduler_data')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.createElement("div");
+            container.className = "scheduler-card";
+            parent_div_scheduler.appendChild(container);
 
-                Plotly.newPlot(container, data.data, data.layout)
-            })
+            Plotly.newPlot(container, data.data, data.layout)
+        })
+        LoadConfigsSaved();
     }
 
     function NewDeviceConfig(){
@@ -135,6 +132,7 @@
               select.appendChild(opt);
           }
           UpdateRestrictions();
+          LoadDevicesEntities();
     }
 
     function UpdateRestrictions() {
@@ -165,14 +163,19 @@
         });
     }
 
+    function GetSelectedVariables(){
+        const varsSelect = document.getElementById("aux-vars");
+        return Array.from(varsSelect.selectedOptions).map(opt => opt.value);
+    }
+
     async function SubmitOptimization(){
         const name = document.getElementById('device-name').value;
         const type = document.getElementById('device-type').value;
-        const vars = document.getElementById('aux-vars').value;
+        const friendly_type = device_types[type].nom;
+        const vars = GetSelectedVariables();
         const restrictionInputs = document.querySelectorAll('#restrictionsContainer input');
 
         const restrictions = {};
-        console.log(restrictionInputs)
         restrictionInputs.forEach(inp => {
             restrictions[inp.name] = inp.value;
         });
@@ -180,11 +183,10 @@
         const data = {
             name,
             type,
+            friendly_type,
             restrictions,
-            vars: vars//.split(',').map(v => v.trim()).filter(v => v)
+            vars
         };
-
-        console.log(data);
 
         const res = await fetch('save_optimization_config',{
             method: 'POST',
@@ -203,6 +205,110 @@
 
     function CloseModal(){
           document.getElementById("new-optimization-modal").classList.add('hidden');
+    }
+
+    async function LoadDevicesEntities(){
+        let devices = {}
+
+        if(Array.isArray(device_entities)){
+            device_entities.forEach(item => {
+                const [name, entities] = Object.entries(item)[0];
+                devices[name] = entities;
+            });
+        }else{
+            devices = device_entities;
+        }
+
+
+        const deviceSelect = document.getElementById('device-name');
+        deviceSelect.innerHTML  = '<option value="">-- Selecciona un dispositiu --</option>';
+
+        console.log(devices);
+
+        const sortedDevices = Object.keys(devices).sort((a, b) =>
+                                a.localeCompare(b, 'ca', { sensitivity: 'base' }));
+
+        console.log(sortedDevices);
+
+        for (const dev of sortedDevices){
+            console.log(dev);
+            const opt = document.createElement('option');
+            opt.value = dev;
+            opt.textContent = dev;
+            deviceSelect.appendChild(opt);
+        }
+    }
+
+    function UpdateAssociatedVariables(){
+        const device = document.getElementById('device-name').value;
+        const varsSelect = document.getElementById('aux-vars');
+        varsSelect.innerHTML = '';
+
+        if (!device || !device_entities[device]) return;
+
+        for (const entity of device_entities[device]){
+            const opt = document.createElement('option');
+            opt.value = entity;
+            opt.textContent = entity;
+            varsSelect.appendChild(opt);
+        }
+    }
+
+    function LoadConfigsSaved(){
+        const saved_configs = {{!config_files_names}}
+        const parent_config_div = document.getElementById("optimization-graphs-container");
+
+        saved_configs.forEach((config_name) => {
+            fetch('get_device_config_data/' + config_name)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    // console.log(data["device_config"].vars[2]);
+                    const dev = data["device_config"];
+
+                    const container = document.createElement('div');
+
+                    // NOM DEL DISPOSITIU
+                    const name = document.createElement('h3');
+                    name.style.marginBottom = '5px'
+                    name.textContent = dev.name;
+                    container.appendChild(name);
+
+                    // ON - OFF SWITCH
+
+                    //TODO : switch
+
+                    // TIPUS DE DISPOSITIU
+                    const type = document.createElement('span');
+                    type.innerHTML = '<b>Dispositiu: </b>' + dev.friendly_type;
+                    container.appendChild(type);
+
+                    // RESTRICCIONS
+                    const restricctions = document.createElement('ul');
+                    restricctions.innerHTML = "<b>Restriccions: </b>";
+                    for (const r in dev.restrictions) {
+                        const restriction = document.createElement('li');
+                        restriction.innerHTML = r + ": " + dev.restrictions[r];
+                        restricctions.appendChild(restriction);
+                    }
+                    container.appendChild(restricctions);
+
+                    // VARIABLES (entitats)
+                    const extra_vars = document.createElement('ul');
+                    extra_vars.innerHTML = "<b>Variables Associades: </b>";
+                    for (const r in dev.vars) {
+                        const extra_var = document.createElement('li');
+                        extra_var.innerHTML = dev.vars[r];
+                        extra_vars.appendChild(extra_var);
+                    }
+                    container.appendChild(extra_vars);
+
+                    parent_config_div.appendChild(container);
+                }
+
+            })
+        })
+
     }
 
     function ChangeOptimizationStatus(){
