@@ -172,22 +172,28 @@ a.mail-text{
 
 /* === FORM  SELECT === */
 
-.form-select{
-    border: 2px solid var(--select-border-color);
-    border-radius: 5px;
-    background: var(--select-background-color);
-    padding: 3px;
-    transition: 0.4s;
-
-    :hover, :focus{
-        background: var(--select-background-hover-color);
-    }
+.form-select,
+#modelName{
+    width: 100%;
+    padding: 5px 6px;
+    margin-bottom: 5px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    background: var(--card-background-color);
+}
+.form-select:focus,
+#modelName:focus{
+    outline: none;
+    border-color: #4caf50;
+    box-shadow: 0 0 0 2px rgba(76,175,80,0.25);
 }
 
 .form-option{
     font-family: 'Rubik', Arial, serif;
     font-size: medium;
-
     display: flex;
     justify-content: flex-start;
     gap: 20px;
