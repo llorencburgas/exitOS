@@ -11,6 +11,9 @@
     --select-border-color: #ddd;
     --text-active-color: #000;
     --card-background-color: #fafafa;
+    --card-text-color: #2c3e50;
+    --button-bg-color: #04AA6D;
+    --button-bg-hover-color: #43a047;
 }
 
 
@@ -143,11 +146,11 @@ button{
     margin-top: 10px;
     margin-right: 10px;
 
-    background-color: var(--main-bg-color);
+    background-color: var(--button-bg-color);
 }
 
 button:hover{
-    background-color: var(--text-hover-color);
+    background-color: var(--button-bg-hover-color);
 }
 
 button:disabled{
@@ -333,6 +336,9 @@ input[type='checkbox']:checked + .switch {
 
 /* === OPTIMITZACIÓ === */
 
+
+/*new config*/
+
 .modal{
     position:fixed;
     top:0; left:0;
@@ -341,6 +347,8 @@ input[type='checkbox']:checked + .switch {
     display: flex;
     justify-content: center;
     align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(3px);
 }
 
 .modal.hidden{
@@ -349,14 +357,136 @@ input[type='checkbox']:checked + .switch {
 
 .modal-content{
     background: #fff;
-    padding: 30px;
-    border-radius: 10px;
-    width: 400px;
+    border-radius: 14px;
+    padding: 28px 32px;
+    width: 440px;
     max-height: 90vh;
     overflow-y: auto;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    position: relative;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn{
+    from{opacity: 0; transform: scale(0.97)}
+    to{opacity: 1; transform: scale(1)}
+}
+
+.modal-content h2{
+    margin-top: 0;
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: #2c3e50;
+    text-align: center;
+    margin-bottom: 1.3rem;
+}
+
+.new-config-section{
+    margin-bottom: 18px;
+}
+
+.new-config-section label{
+    display:block;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: #333;
+}
+
+.modal-content select,
+.modal-content input{
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    background: var(--card-background-color);
+}
+
+.modal-content select:focus,
+.modal-content input:focus{
+    outline: none;
+    border-color: #4caf50;
+    box-shadow: 0 0 0 2px rgba(76,175,80,0.25);
+}
+
+#aux-vars{
+    width: 100%;
+    min-height: 100px;
+    padding: 6px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background: #fdfdfd;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 0.95rem;
+    white-space: normal;
+    word-break: break-word;
+}
+
+small{
+    display: block;
+    margin-top: 6px;
+    color: #666;
+    font-size: 0.85rem;
+    line-height: 1.3em;
+}
+
+.modal-content button {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-weight: 500;
+  margin: 4px;
+  min-width: 120px;
+}
+/* BOTÓ GUARDAR */
+.modal-content button:first-of-type {
+  background-color: var(--button-bg-color);
+  color: #fff;
+}
+
+.modal-content button:first-of-type:hover {
+  background-color: var(--button-bg-hover-color);
+  transform: translateY(-2px);
+}
+
+/*  BOTÓ CANCEL·LAR */
+.modal-content button:last-of-type {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.modal-content button:last-of-type:hover {
+  background-color: #d5d5d5;
+  transform: translateY(-2px);
+}
+
+/*  BOTÓ DE TANCAR */
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  font-size: 1.4rem;
+  color: #666;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.modal-close::before {
+  content: "×";
+}
+
+.modal-close:hover {
+  color: #111;
 }
 
 
+/* show saved config*/
 .optimization-graphs-container{
     display:grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

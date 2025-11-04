@@ -41,22 +41,24 @@
 <div id="new-optimization-modal" class="modal hidden">
     <!--  FORMULARI DINÀMIC PER CREAR UNA NOVA OPTIMITZACIÓ  -->
     <div class="modal-content">
-        <h3 style="margin-bottom: 5px;">Nova Optimització</h3>
+        <span class="modal-close" onclick="CloseModal()"></span>
+        <h2>Nova Configuració de Dispositiu</h2>
 
         <!--   DISPOSITIU     -->
-        <label for="device-name">Dispositiu:</label>
-        <select name="device-name" id="device-name" onchange="UpdateAssociatedVariables()">
-            <option value = ""> Selecciona un dispositiu </option>
+        <div class="new-config-section">
+            <label for="device-name">Dispositiu:</label>
+            <select name="device-name" id="device-name" onchange="UpdateAssociatedVariables()">
         </select>
-
-        <br>
+        </div>
 
         <!--   TIPUS DE DISPOSITIU     -->
-        <label for="device-type">Tipus de dispositiu: </label>
-        <select name="deviceType" id="device-type" onchange="UpdateRestrictions()"></select>
+        <div class="new-config-section">
+            <label for="device-type">Tipus de dispositiu: </label>
+            <select name="deviceType" id="device-type" onchange="UpdateRestrictions()"></select>
+        </div>
 
         <!--   RESTRICCIONS     -->
-        <div id="restrictionsContainer"></div>
+        <div class="new-config-section" id="restrictionsContainer"></div>
 
         <!--   VARIABLES ASSOCIADES     -->
         <label for="aux-vars">Variables Disponibles:</label>
