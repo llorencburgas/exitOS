@@ -376,7 +376,7 @@ input[type='checkbox']:checked + .switch {
     margin-top: 0;
     font-size: 1.35rem;
     font-weight: 600;
-    color: #2c3e50;
+    color: #333;
     text-align: center;
     margin-bottom: 1.3rem;
 }
@@ -389,13 +389,14 @@ input[type='checkbox']:checked + .switch {
     display:block;
     font-weight: 500;
     margin-bottom: 6px;
-    color: #333;
+    color: #2c3e50;
 }
 
 .modal-content select,
 .modal-content input{
     width: 100%;
     padding: 10px 12px;
+    margin-bottom: 10px;
     border: 1px solid #ccc;
     border-radius: 8px;
     font-size: 0.95rem;
