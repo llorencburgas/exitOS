@@ -10,6 +10,7 @@
     --select-background-hover-color: #ddd;
     --select-border-color: #ddd;
     --text-active-color: #000;
+    --card-background-color: #fafafa;
 }
 
 
@@ -258,10 +259,12 @@ a.mail-text{
 .scheduler-container{
     padding: 40px;
 }
+
 .scheduler-container h2{
     margin-bottom: 20px;
     font-size: 24px;
 }
+
 .scheduler-grid{
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px,1fr));
@@ -360,3 +363,55 @@ input[type='checkbox']:checked + .switch {
     gap:20px;
     padding: 40px;
 }
+
+.device-config-container{
+    background-color: var(--card-background-color);
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    padding: 16px 20px;
+    margin: 16px 0;
+    transition: all 0.25s ease-in-out;
+}
+
+.device-config-container:hover{
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.device-config-title{
+    font-size: 1.3rem;
+    font-weight: 600;
+    /*color: var(--text-color);*/
+    color: #333;
+    margin-bottom: 6px;
+}
+
+.device-config-type{
+    display: block;
+    font-size: 0.95rem;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.device-cofig-boltText{
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.device-config-ul{
+    list-style: none;
+    padding-left: 16px;
+    margin-bottom: 10px;
+    border-left: 3px solid #e0e0e0;
+}
+
+.device-config-li{
+    padding: 6px 0 6px 10px;
+    color: #444;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    word-break: break-word;
+    white-space: normal;
+}
+

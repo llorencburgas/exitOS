@@ -30,26 +30,7 @@
     <!--    PLANIFICACIÓ SONNEN  -->
     <div class="scheduler-container">
         <div class="optimization-graphs-container" id="optimization-graphs-container">
-            <div>
-                <br>
-                <br>
-
-                <!-- INFO DE L'OPTIMITZACIÓ ACTUAL -->
-                <h3 style="margin-bottom: 5px;">Sonnenbatterie 79259</h3>
-
-                <!--  On / Off switch  -->
-                <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                    <span class="label-text"> OFF </span>
-                    <input type="checkbox" id="toggle" class="offscreen" onchange="ChangeOptimizationStatus()"/>
-                    <label for="toggle" class="switch"></label>
-                    <span class="label-text"> ON </span>
-                </div>
-
-                 <p><b>Dispositiu : </b> Lorem</p>
-                 <p><b>Variables associades : </b> Lorem</p>
-                 <p><b>Restriccions : </b> Lorem</p>
-
-            </div>
+            <!-- AQUI ES POSEN LES CONFIGURACIONS GUARDADES -->
         </div>
     </div>
 </div>
@@ -267,10 +248,11 @@
                     const dev = data["device_config"];
 
                     const container = document.createElement('div');
+                    container.className = "device-config-container";
 
                     // NOM DEL DISPOSITIU
                     const name = document.createElement('h3');
-                    name.style.marginBottom = '5px'
+                    name.className = "device-config-title";
                     name.textContent = dev.name;
                     container.appendChild(name);
 
@@ -280,14 +262,17 @@
 
                     // TIPUS DE DISPOSITIU
                     const type = document.createElement('span');
-                    type.innerHTML = '<b>Dispositiu: </b>' + dev.friendly_type;
+                    type.innerHTML = '<b class="device-cofig-boltText">Dispositiu: </b>' + dev.friendly_type;
+                    type.className = "device-config-type";
                     container.appendChild(type);
 
                     // RESTRICCIONS
                     const restricctions = document.createElement('ul');
-                    restricctions.innerHTML = "<b>Restriccions: </b>";
+                    restricctions.className = "device-config-ul";
+                    restricctions.innerHTML = '<b class="device-cofig-boltText">Restriccions: </b>';
                     for (const r in dev.restrictions) {
                         const restriction = document.createElement('li');
+                        restriction.className = "device-config-li";
                         restriction.innerHTML = r + ": " + dev.restrictions[r];
                         restricctions.appendChild(restriction);
                     }
@@ -295,9 +280,11 @@
 
                     // VARIABLES (entitats)
                     const extra_vars = document.createElement('ul');
-                    extra_vars.innerHTML = "<b>Variables Associades: </b>";
+                    extra_vars.className = "device-config-ul"
+                    extra_vars.innerHTML = '<b class="device-cofig-boltText">Variables Associades: </b>';
                     for (const r in dev.vars) {
                         const extra_var = document.createElement('li');
+                        extra_var.className = "device-config-li";
                         extra_var.innerHTML = dev.vars[r];
                         extra_vars.appendChild(extra_var);
                     }
