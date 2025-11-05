@@ -87,6 +87,10 @@
             .then(data => console.log("Optimization pressed"))
     }
 
+    /**
+     * Funció que es crida en carregar la pàgina.
+     * Genera la gràfica d'optimització i crida la funció per a mostrar les configuracions guardades
+     */
     function onLoadPage(){
         const parent_div_scheduler = document.getElementById("scheduler-grid");
         fetch('get_scheduler_data')
@@ -101,6 +105,9 @@
         LoadConfigsSaved();
     }
 
+    /**
+     * Obre el formulari per a crear una nova configuració i l'omple dinàmicament.
+     */
     function NewDeviceConfig(){
           const modal = document.getElementById('new-optimization-modal');
           modal.classList.remove('hidden');
@@ -118,6 +125,9 @@
           LoadDevicesEntities();
     }
 
+    /**
+     * Modifica les restriccions segons el tipus de device seleccionat al formulari
+     */
     function UpdateRestrictions() {
         const type = document.getElementById('device-type').value;
         const restrictions = device_types[type].restriccions;
@@ -146,6 +156,9 @@
         });
     }
 
+    /**
+     * Modifica els inputs per a les variables associades segons el tipus de dispositiu i entitats d'aquest
+     */
     function UpdateAssociatedVariables(){
         const device_type = document.getElementById('device-type').value;
         const device_name = document.getElementById('device-name').value;
@@ -155,16 +168,13 @@
         device_types.forEach(item => {
             const [name, entities] = Object.entries(item)[0];
             devices[name] = entities;
-            console.log("ITEM ", item);
         });
         }else{
             devices = device_entities;
         }
 
-       console.log(devices);
 
         const vars = device_types[device_type]["variables"];
-        console.log("variables ", vars);
         const container = document.getElementById('vars-config-section');
         container.innerHTML = '';
 
@@ -173,6 +183,7 @@
             const label = document.createElement("label");
             label.for = variable;
             label.textContent = variable;
+            label.id = "label-" + variable;
 
             const select = document.createElement("select");
             select.name = variable;
@@ -188,34 +199,45 @@
 
             container.appendChild(label);
             container.appendChild(select);
-
         })
-
-
-        // const device = document.getElementById('device-name').value;
-        //
-        // const varsSelect = document.getElementById('aux-vars');
-        // varsSelect.innerHTML = '';
-        //
-        // if (!device || !device_entities[device]) return;
-        //
-        // for (const entity of device_entities[device]){
-        //     const opt = document.createElement('option');
-        //     opt.value = entity.entity_id;
-        //     opt.textContent = entity.friendly_name;
-        //     varsSelect.appendChild(opt);
-        // }
     }
 
+    /**
+     * Retorna totes les variables seleccionades dins el div #vars-config-section.
+     * Busca tots els <select> dins aquest div, i per a cadascun recull
+     * totes les opcions seleccionades (amb id i friendly_name).
+     *
+     * @returns {Array<{id: string, friendly_name: string}>}
+     */
     function GetSelectedVariables(){
-        const varsSelect = document.getElementById("aux-vars");
-        return Array.from(varsSelect.selectedOptions).map(opt => ({
-            id: opt.value,
-            friendly_name: opt.textContent
-        }));
+        const container = document.getElementById("vars-config-section");
+        const allSelects = container.querySelectorAll('select');
+
+        const selectedVars = []
+
+        allSelects.forEach(select => {
+
+            const label = document.getElementById("label-" + select.id);
+            const groupLabel = label ? label.textContent.trim() : "Sense nom";
+
+            Array.from(select.selectedOptions).forEach(opt => {
+                selectedVars.push({
+                    id: opt.value,
+                    friendly_name: opt.text,
+                    function_name: groupLabel
+                });
+            })
+        })
+        return selectedVars;
     }
 
+    /**
+     * Envia les dades entrades al formulari a Back-end per guardar-les
+     * @async
+     * @returns {Promise<void>}  Si tot ha anat bé recarrega la pàgina amb les configuracions noves.
+     */
     async function SubmitOptimization(){
+
         const name = document.getElementById('device-name').value;
         const type = document.getElementById('device-type').value;
         const friendly_type = device_types[type].nom;
@@ -255,11 +277,17 @@
         }
     }
 
+    /**
+     * Tanca el formulari
+     */
     function CloseModal(){
           document.getElementById("new-optimization-modal").classList.add('hidden');
     }
 
-    async function LoadDevicesEntities(){
+    /**
+     * Omple els selects amb les variables concretes del dispositiu seleccionat
+     */
+    function LoadDevicesEntities(){
         let devices = {}
 
         if(Array.isArray(device_entities)){
@@ -285,6 +313,10 @@
         }
     }
 
+    /**
+     * Carrega des del back-end les configuracions guardades
+     * @returns {Promise<void>} Si les obté correctament les mostra a la pàgina.
+     */
     async function LoadConfigsSaved(){
         let saved_configs = ""
         const res = await fetch('get_config_file_names', {
@@ -327,11 +359,12 @@
                     // RESTRICCIONS
                     const restricctions = document.createElement('ul');
                     restricctions.className = "device-config-ul";
-                    restricctions.innerHTML = '<b class="device-cofig-boltText">Restriccions: </b>';
+                    restricctions.innerHTML = ' ';
                     for (const r in dev.restrictions) {
                         const restriction = document.createElement('li');
                         restriction.className = "device-config-li";
-                        restriction.innerHTML = r + ": " + dev.restrictions[r];
+                        restriction.innerHTML = `<b class="device-config-boldText">${r}: </b> ${dev.restrictions[r]}`;
+                        // restriction.innerHTML = r + ": " + dev.restrictions[r];
                         restricctions.appendChild(restriction);
                     }
                     container.appendChild(restricctions);
@@ -339,11 +372,11 @@
                     // VARIABLES (entitats)
                     const extra_vars = document.createElement('ul');
                     extra_vars.className = "device-config-ul"
-                    extra_vars.innerHTML = '<b class="device-cofig-boltText">Variables Associades: </b>';
+                    extra_vars.innerHTML = '';
                     for (const r in dev.vars) {
                         const extra_var = document.createElement('li');
                         extra_var.className = "device-config-li";
-                        extra_var.innerHTML = dev.vars[r].friendly_name;
+                        extra_var.innerHTML = `<b class="device-config-boldText"> ${dev.vars[r].function_name}: </b> ${dev.vars[r].friendly_name}`;
                         extra_vars.appendChild(extra_var);
                     }
                     container.appendChild(extra_vars);
@@ -353,7 +386,6 @@
                     delete_button.className = "device-config-delete-button";
                     delete_button.innerHTML = 'Eliminar Configuració';
                     delete_button.onclick = async () => {
-                        console.log("pressed");
                         const res = await fetch('delete_optimization_config/' + config_name, {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'}
