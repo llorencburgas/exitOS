@@ -579,7 +579,6 @@ def optimize():
     consumer_id = 'sensor.smart_meter_63a_potencia_real'
     generator_id = 'sensor.solarnet_potencia_fotovoltaica'
 
-
     # OPTIMITZACIÓ
     has_sonnen = False
     for i in database.devices_info:
@@ -621,7 +620,7 @@ def optimize():
 
 
             consumer_data = [-x for x in consumer_data]
-            energy_source = Battery.Battery(hores_simular = hores_simular, minuts = minuts_simular)
+            energy_source = Battery.Battery(hours_to_simulate= hores_simular, minutes_per_hour= minuts_simular)
 
             optimalScheduler.optimize(consumer_data, generator_data, energy_source, hores_simular, minuts_simular, hores)
 
@@ -876,17 +875,20 @@ def optimization_page():
     # DISPOSITIUS I ENTITATS ASSOCIADES
     devices_entities = database.get_devices_and_entities()
 
-    # CONFIGURACIONS CREADES
-    created_configs_path = forecast.models_filepath + "/optimizations/configs"
-    json_config_files = [ f for f in os.listdir(created_configs_path) if f.endswith(".json") ]
-
     current_date = datetime.now().strftime('%d-%m-%Y')
     return template("./www/optimization.html",
                     current_date = current_date,
                     device_types = json.dumps(devices_data),
-                    config_files_names = json_config_files,
                     device_entities = devices_entities)
 
+@app.post('/get_config_file_names')
+def get_config_file_names():
+    # CONFIGURACIONS CREADES
+    created_configs_path = forecast.models_filepath + "/optimizations/configs"
+    json_config_files = [f for f in os.listdir(created_configs_path) if f.endswith(".json")]
+
+    if len(json_config_files) == 0: return {"status": "error"}
+    return {"status": "ok", "names" : json_config_files}
 
 @app.route('/get_device_config_data/<file_name>')
 def get_device_config_data(file_name):
@@ -906,11 +908,11 @@ def get_device_config_data(file_name):
 @app.post('/save_optimization_config')
 def save_optimization_config():
     data = request.json
+    logger.info(data)
     if not data:
         response.status = 400
         return {"status":"error", "msg": "Dades buides"}
 
-    data_dir = forecast.models_filepath + 'optimization'
     device_name = data.get("name")
 
     full_path = os.path.join(forecast.models_filepath, "optimizations/configs/"+ device_name +".json")
@@ -924,6 +926,17 @@ def save_optimization_config():
 
 
     return {"status": "ok", "msg": f"Optimització desada com {device_name}.json"}
+
+@app.post('/delete_optimization_config/<file_name>')
+def delete_optimization_config(file_name):
+    logger.debug(f"eliminant info {file_name}")
+    full_path = os.path.join(forecast.models_filepath, "optimizations/configs/" + file_name)
+    logger.debug(full_path)
+    if os.path.exists(full_path):
+        os.remove(full_path)
+        return {"status": "ok"}
+    else:
+        return {"status": "error", "msg": "No existeix arxiu {file_name}.json"}
 
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')

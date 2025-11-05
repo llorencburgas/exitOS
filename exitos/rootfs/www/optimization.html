@@ -44,27 +44,27 @@
         <span class="modal-close" onclick="CloseModal()"></span>
         <h2>Nova Configuració de Dispositiu</h2>
 
-        <!--   DISPOSITIU     -->
-        <div class="new-config-section">
-            <label for="device-name">Dispositiu:</label>
-            <select name="device-name" id="device-name" onchange="UpdateAssociatedVariables()">
-        </select>
-        </div>
-
         <!--   TIPUS DE DISPOSITIU     -->
         <div class="new-config-section">
             <label for="device-type">Tipus de dispositiu: </label>
             <select name="deviceType" id="device-type" onchange="UpdateRestrictions()"></select>
         </div>
 
+        <!--   DISPOSITIU     -->
+        <div class="new-config-section">
+            <label for="device-name">Dispositiu:</label>
+            <select name="device-name" id="device-name" onchange="UpdateAssociatedVariables()"></select>
+        </div>
+
         <!--   RESTRICCIONS     -->
         <div class="new-config-section" id="restrictionsContainer"></div>
 
         <!--   VARIABLES ASSOCIADES     -->
-        <label for="aux-vars">Variables Disponibles:</label>
-        <select name="aux-vars" id="aux-vars" multiple size="5"></select>
-        <br>
-        <small>💡 Pots mantenir premut <b>Ctrl</b> (Windows/Linux) o <b>Cmd</b> (Mac) per seleccionar més d’una variable.</small>
+        <div class="vars-config-section" id="vars-config-section"></div>
+<!--        <label for="aux-vars">Variables Disponibles:</label>-->
+<!--        <select name="aux-vars" id="aux-vars" multiple size="5"></select>-->
+<!--        <br>-->
+<!--        <small>💡 Pots mantenir premut <b>Ctrl</b> (Windows/Linux) o <b>Cmd</b> (Mac) per seleccionar més d’una variable.</small>-->
 
 
         <div style="margin-top: 20px;">
@@ -146,9 +146,73 @@
         });
     }
 
+    function UpdateAssociatedVariables(){
+        const device_type = document.getElementById('device-type').value;
+        const device_name = document.getElementById('device-name').value;
+        let devices = {}
+
+       if(Array.isArray(device_types)){
+        device_types.forEach(item => {
+            const [name, entities] = Object.entries(item)[0];
+            devices[name] = entities;
+            console.log("ITEM ", item);
+        });
+        }else{
+            devices = device_entities;
+        }
+
+       console.log(devices);
+
+        const vars = device_types[device_type]["variables"];
+        console.log("variables ", vars);
+        const container = document.getElementById('vars-config-section');
+        container.innerHTML = '';
+
+        vars.forEach(variable => {
+
+            const label = document.createElement("label");
+            label.for = variable;
+            label.textContent = variable;
+
+            const select = document.createElement("select");
+            select.name = variable;
+            select.id = variable;
+
+            if (!device_name || !device_entities[device_name]) return;
+            for (const ent of device_entities[device_name]) {
+                const opt = document.createElement("option");
+                opt.value = ent.entity_id;
+                opt.textContent = ent.friendly_name;
+                select.appendChild(opt);
+            }
+
+            container.appendChild(label);
+            container.appendChild(select);
+
+        })
+
+
+        // const device = document.getElementById('device-name').value;
+        //
+        // const varsSelect = document.getElementById('aux-vars');
+        // varsSelect.innerHTML = '';
+        //
+        // if (!device || !device_entities[device]) return;
+        //
+        // for (const entity of device_entities[device]){
+        //     const opt = document.createElement('option');
+        //     opt.value = entity.entity_id;
+        //     opt.textContent = entity.friendly_name;
+        //     varsSelect.appendChild(opt);
+        // }
+    }
+
     function GetSelectedVariables(){
         const varsSelect = document.getElementById("aux-vars");
-        return Array.from(varsSelect.selectedOptions).map(opt => opt.value);
+        return Array.from(varsSelect.selectedOptions).map(opt => ({
+            id: opt.value,
+            friendly_name: opt.textContent
+        }));
     }
 
     async function SubmitOptimization(){
@@ -162,6 +226,8 @@
         restrictionInputs.forEach(inp => {
             restrictions[inp.name] = inp.value;
         });
+
+        console.log(vars);
 
         const data = {
             name,
@@ -180,6 +246,9 @@
         const result = await res.json();
         if (result.status === 'ok') {
           document.getElementById('new-optimization-modal').classList.add('hidden');
+          const parent_config_div = document.getElementById("optimization-graphs-container");
+          parent_config_div.innerHTML = '';
+          await LoadConfigsSaved();
         }
         else {
           console.error(result.status);
@@ -202,19 +271,13 @@
             devices = device_entities;
         }
 
-
         const deviceSelect = document.getElementById('device-name');
         deviceSelect.innerHTML  = '<option value="">-- Selecciona un dispositiu --</option>';
-
-        console.log(devices);
 
         const sortedDevices = Object.keys(devices).sort((a, b) =>
                                 a.localeCompare(b, 'ca', { sensitivity: 'base' }));
 
-        console.log(sortedDevices);
-
         for (const dev of sortedDevices){
-            console.log(dev);
             const opt = document.createElement('option');
             opt.value = dev;
             opt.textContent = dev;
@@ -222,23 +285,16 @@
         }
     }
 
-    function UpdateAssociatedVariables(){
-        const device = document.getElementById('device-name').value;
-        const varsSelect = document.getElementById('aux-vars');
-        varsSelect.innerHTML = '';
-
-        if (!device || !device_entities[device]) return;
-
-        for (const entity of device_entities[device]){
-            const opt = document.createElement('option');
-            opt.value = entity;
-            opt.textContent = entity;
-            varsSelect.appendChild(opt);
+    async function LoadConfigsSaved(){
+        let saved_configs = ""
+        const res = await fetch('get_config_file_names', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        const result = await res.json();
+        if (result.status === 'ok') {
+            saved_configs = JSON.parse(JSON.stringify(result.names));
         }
-    }
-
-    function LoadConfigsSaved(){
-        const saved_configs = {{!config_files_names}}
         const parent_config_div = document.getElementById("optimization-graphs-container");
 
         saved_configs.forEach((config_name) => {
@@ -287,10 +343,31 @@
                     for (const r in dev.vars) {
                         const extra_var = document.createElement('li');
                         extra_var.className = "device-config-li";
-                        extra_var.innerHTML = dev.vars[r];
+                        extra_var.innerHTML = dev.vars[r].friendly_name;
                         extra_vars.appendChild(extra_var);
                     }
                     container.appendChild(extra_vars);
+
+                    // BOTÓ ELIMINAR
+                    const delete_button = document.createElement('button');
+                    delete_button.className = "device-config-delete-button";
+                    delete_button.innerHTML = 'Eliminar Configuració';
+                    delete_button.onclick = async () => {
+                        console.log("pressed");
+                        const res = await fetch('delete_optimization_config/' + config_name, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'}
+                        });
+
+                        const result = await res.json();
+                        if (result.status === 'ok') {
+                            parent_config_div.innerHTML = '';
+                            await LoadConfigsSaved();
+                        } else {
+                            console.error(result.status);
+                        }
+                    }
+                    container.appendChild(delete_button);
 
                     parent_config_div.appendChild(container);
                 }

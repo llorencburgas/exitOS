@@ -184,6 +184,7 @@ a.mail-text{
     box-sizing: border-box;
     background: var(--card-background-color);
 }
+
 .form-select:focus,
 #modelName:focus{
     outline: none;
@@ -463,12 +464,14 @@ small{
 }
 
 /*  BOTÓ CANCEL·LAR */
-.modal-content button:last-of-type {
+.modal-content button:last-of-type,
+.device-config-delete-button{
   background-color: #e0e0e0;
   color: #333;
 }
 
-.modal-content button:last-of-type:hover {
+.modal-content button:last-of-type:hover,
+.device-config-delete-button:hover{
   background-color: #d5d5d5;
   transform: translateY(-2px);
 }

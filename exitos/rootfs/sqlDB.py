@@ -579,8 +579,19 @@ class SqlDB():
         for device in self.devices_info:
             name = device.get("device_name", "Unknown device")
             entities = device.get("entities", [])
-            entity_names = [e.get("entity_name") for e in entities if "entity_name" in e]
-            result[name] = sorted(entity_names)  # Ordenem els fills alfabèticament
+
+            entity_list = []
+            for e in entities:
+                entity_id = e.get("entity_name")
+                attrs = e.get("entity_attrs", {})
+                friendly_name = attrs.get("friendly_name", entity_id)
+
+                entity_list.append({
+                    "entity_id": entity_id,
+                    "friendly_name": friendly_name,
+                })
+            result[name] = entity_list
+
 
         return result
 
