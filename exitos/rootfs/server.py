@@ -913,7 +913,7 @@ def save_optimization_config():
         response.status = 400
         return {"status":"error", "msg": "Dades buides"}
 
-    device_name = data.get("name")
+    device_name = data.get("device_name")
 
     full_path = os.path.join(forecast.models_filepath, "optimizations/configs/"+ device_name +".json")
     os.makedirs(forecast.models_filepath + 'optimizations/configs', exist_ok=True)

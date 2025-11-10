@@ -186,6 +186,7 @@
             label.id = "label-" + variable;
 
             const select = document.createElement("select");
+            select.innerHTML  = '<option value="">-- Selecciona un sensor --</option>';
             select.name = variable;
             select.id = variable;
 
@@ -232,28 +233,106 @@
     }
 
     /**
+     * Mostra un missatge d'error sota un element concret si aquyest esta buit al moment de guardar.
+     * @param element element html que està buit al moment de guardar
+     * @param message Missatge que es mostrarà sota l'element
+     */
+    function showErroratSubmit(element, message){
+        element.classList.add('error');
+
+        //Si ja hi ha un missatge d'error, no el dupliquem
+        if(element.nextElementSibling && element.nextElementSibling.classList.contains('error-msg')) {
+            return;
+        }
+
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'error-msg';
+        errorMsg.textContent = message;
+        element.insertAdjacentElement('afterend', errorMsg);
+    }
+
+    /**
+     * Elimina els missatges d'error si l'usuari canvia el valor
+     */
+    document.addEventListener('input', (e) => {
+        if (e.target.classList.contains('error') && e.target.value.trim() !== ''){
+            e.target.classList.remove('error');
+
+            const msg = e.target.nextElementSibling;
+            if (msg.classList.contains('error-msg')) {
+                msg.remove()
+            }
+        }
+    })
+
+    /**
      * Envia les dades entrades al formulari a Back-end per guardar-les
      * @async
      * @returns {Promise<void>}  Si tot ha anat bé recarrega la pàgina amb les configuracions noves.
      */
     async function SubmitOptimization(){
 
-        const name = document.getElementById('device-name').value;
-        const type = document.getElementById('device-type').value;
-        const friendly_type = device_types[type].nom;
-        const vars = GetSelectedVariables();
+        const name = document.getElementById('device-name');
+        const type = document.getElementById('device-type');
         const restrictionInputs = document.querySelectorAll('#restrictionsContainer input');
+        const varsContainer = document.getElementById('vars-config-section');
+        const all_selects = varsContainer.querySelectorAll('select');
+
+        let valid = true;
+
+        // Netejar errors anteriors
+        document.querySelectorAll('.error-msg').forEach(e => e.remove());
+        document.querySelectorAll('.error').forEach(e => e.classList.remove('error'));
+
+        // Validar camp "Dispositiu"
+        if (name.value.trim() === ''){
+            showErroratSubmit(name, "Selecciona un Dispositiu");
+            valid = false;
+        }
+
+        // Validar camp "Tipus de Dispositiu"
+        if(type.value.trim() === ''){
+            showErroratSubmit(type, "Seleccione el tipus de Dispositiu");
+            valid = false;
+        }
+
+        //Validar restriccions
+        restrictionInputs.forEach(inp => {
+            if(inp.value.trim() === ''){
+                showErroratSubmit(inp, "Aquest camp és obligatori");
+                valid = false;
+            }
+        });
+
+        // validació variables extra
+        all_selects.forEach(select => {
+           if(select.value.trim() === ''){
+               showErroratSubmit(select, "Seleccione una entitat per a aquesta variable");
+               valid = false;
+           }
+        });
+
+        // Si hi ha algun error, eturem l'enviament
+        if (!valid) return;
+
+        // --- Creem l'objecte per enviar ---
+        const device_name = name.value;
+        const device_type = type.value;
+        const vars = GetSelectedVariables();
+        const friendly_type = device_types[device_type].nom;
+
+        console.log("DEVICE_NAME: ", device_name);
+        console.log("DEVICE_TYPE: ", device_type);
+        console.log("FRIENDLY_TYPE: ", friendly_type);
 
         const restrictions = {};
         restrictionInputs.forEach(inp => {
             restrictions[inp.name] = inp.value;
         });
 
-        console.log(vars);
-
         const data = {
-            name,
-            type,
+            device_name,
+            device_type,
             friendly_type,
             restrictions,
             vars
@@ -285,7 +364,7 @@
     }
 
     /**
-     * Omple els selects amb les variables concretes del dispositiu seleccionat
+     * Omple el select amb els dispositius
      */
     function LoadDevicesEntities(){
         let devices = {}
@@ -343,7 +422,7 @@
                     // NOM DEL DISPOSITIU
                     const name = document.createElement('h3');
                     name.className = "device-config-title";
-                    name.textContent = dev.name;
+                    name.textContent = dev.device_name;
                     container.appendChild(name);
 
                     // ON - OFF SWITCH

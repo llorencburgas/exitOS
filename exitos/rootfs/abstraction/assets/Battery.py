@@ -8,7 +8,7 @@ class Battery:
                  min_capacity = 0, actual_percentage = 0, efficiency = 100):
         """
         :param hours_to_simulate: Hores que es vol simular el programa. Per defecte són 24
-        :param minutes_per_hour: Quantitat minutal de la simulació ( 1 = cada hora, 2 = 30 minuts, 3 = 15 minuts)
+        :param minutes_per_hour: Quantitat minutal de la simulació ( 1 = cada hora, 2 = 30 minuts, 4 = 15 minuts)
         :param max_capacity: Capacitat màxima en KwH de la bateria
         :param min_capacity: Capacitat mínima en KwH de la bateria
         :param actual_percentage: Percentatge actual de la bateria (0-1)

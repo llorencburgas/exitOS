@@ -543,8 +543,7 @@ small{
     list-style: none;
     padding-left: 16px;
     margin-bottom: 10px;
-    border-left: 3px solid #e0e0e0;
-}
+ }
 
 .device-config-li{
     padding: 6px 0 6px 10px;
@@ -555,3 +554,23 @@ small{
     white-space: normal;
 }
 
+/* missatge d'error per camps buits */
+.error{
+    border-color: #e74c3c !important;
+    box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.15);
+    background-color: #fff8f8;
+}
+.error-msg{
+    color: #e74c3c;
+    font-size: 0.85rem;
+    margin-top: 1px;
+    margin-bottom: 3px;
+    padding-left: 4px;
+    animation: fadeInErrorMsg 0.3s ease;
+}
+
+/* Animació suau d'aparició ed l'error */
+@keyframes fadeInErrorMsg {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
