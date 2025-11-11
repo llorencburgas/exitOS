@@ -87,6 +87,8 @@ def get_sensors():
         sensors_save = database.get_sensors_save(sensors_id)
         sensors_type = database.get_sensors_type(sensors_id)
 
+        devices_entities = database.get_devices_and_entities()
+
 
         context = {
             "sensors_id": [None if pd.isna(v) else v for v in sensors_id],
@@ -99,7 +101,7 @@ def get_sensors():
             return template('./www/sensors.html')
         else:
             response.content_type = 'application/json'
-            return json.dumps(context)
+            return json.dumps(devices_entities)
     except Exception as ex:
         error_message = traceback.format_exc()
         return f"Error! Alguna cosa ha anat malament :c : {str(ex)}\nFull Traceback:\n{error_message}"

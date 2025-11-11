@@ -8,271 +8,287 @@
 
     <!-- llibreria d'icontes per al navbar-->
     <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
-    <style>
-
-        p {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        #sensors-table {
-            margin: 20px auto;
-            font-size: large;
-            border-collapse: collapse;
-            width: 100%;
-            word-break: break-all;
-            word-wrap: break-word;
-        }
-
-        #sensors-table td, #sensors-table th {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-
-        #sensors-table tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-
-        #sensors-table tr:hover {
-            background-color: #ddd;
-        }
-
-        #sensors-table th {
-            padding-top: 12px;
-            padding-bottom: 12px;
-            text-align: left;
-            background-color: #04AA6D;
-            color: white;
-        }
-
-        #backToTop {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-            background-color: #04AA6D;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 20px;
-            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-        }
-
-        #backToTop:hover {
-            background-color: #04D984;
-        }
-
-        #backToTop.show {
-            opacity: 1;
-            visibility: visible;
-        }
-    </style>
 </head>
 
 <body>
-<main>
-    <!--    NAVBAR     -->
-    % rebase('./www/base.html', title='Exitos')
+    <main>
+        <!--    NAVBAR     -->
+        % rebase('./www/base.html', title='Exitos')
 
-    <div class="container">
-        <div class="content-section">
-            <h2>Sensors Disponibles</h2>
-            <p> Seleccioni els sensors que vol guardar </p>
 
-            <div class="button-div">
-                <span class="label-text"> Tots els Sensors </span>
-                <input type="checkbox" id="toggle" class="offscreen" onchange="changeVisibleSensors()"/>
-                <label for="toggle" class="switch"></label>
-                <span class="label-text"> Sensors Guardats </span>
-            </div>
+        <div class="devices-table-container" id="mainContainer">
+            <h2>Configuració de Dispositius i Entitats</h2>
+            <p class="lead">Selecciona quins dispositius i entitats vols guardar, i assigna el tipus de cada entitat.</p>
 
             <div class="button-div">
-                <button class="save-sensors" type="submit" form="sensors-form"><i style="font-size: medium"
-                                                                                  class="fa-regular fa-floppy-disk"></i>
-                    Guardar Canvis
-                </button>
-                <button class="select-sensors" onclick="selectAll(true)"><i style="font-size: medium"
-                                                                            class="fa-regular fa-square-check"></i>
-                    Seleccionar Tots
-                </button>
-                <button class="select-sensors" onclick="selectAll(false)"><i style="font-size: medium"
-                                                                             class="fa-regular fa-square-minus"></i>
-                    Desseleccionar Tots
-                </button>
+                <div class="switch-wrap">
+                    <span class="muted">Tots els dispositius</span>
+                    <div id="onlySavedSwitch" class="switch" title="Mostra només dispositius guardats">
+                        <div class="knob"></div>
+                    </div>
+                    <span class="muted">Només guardats</span>
+                </div>
             </div>
+            <div class="button-div">
+
+                <button class="btn" id="saveBtn"><i class="fa-regular fa-floppy-disk"></i> Guardar canvis</button>
+                <button class="btn secondary" id="selectAllBtn"><i class="fa-regular fa-square-check"></i> Seleccionar tots</button>
+                <button class="btn secondary" id="deselectAllBtn"><i class="fa-regular fa-square-minus"></i> Desseleccionar tots</button>
+            </div>
+
+
+            <form id="devices-form">
+                <table id="devices-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 4px;">Guardar</th>
+                            <th>Nom del Dispositiu</th>
+                        </tr>
+                    </thead>
+                    <tbody id="devices-table-body"></tbody>
+                </table>
+            </form>
+
+            <div class="spacer"></div>
+            <div id="saveResult" class="muted"></div>
         </div>
-
-
-        <form action="./update_sensors" method="POST" id="sensors-form">
-            <!-- TABLE -->
-            <table id="sensors-table">
-                <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Guardar</th>
-                    <th>Nom del sensor</th>
-                    <th>ID del sensor</th>
-                    <th>Tipus de Sensor</th>
-                </tr>
-                </thead>
-                <tbody id="sensors-table-body">
-                </tbody>
-
-
-            </table>
-        </form>
-
-        <button id="backToTop" onclick="scrollToTop()" class="fa-solid fa-circle-up"></button>
-    </div>
-
-
-</main>
+    </main>
 </body>
 
 <script>
-    let onlySaved = true;
+    /* === PARÀMETRES I HELPERS === */
+     const ENTITY_TYPES = ["No especificat", "Energy Source", "Generator", "Consumer", "Controller"];
+     let onlySaved = false;
+     let devices = {};
 
-    //funció per seleccionar o deseleccionar totes les caselles
-    function selectAll(select) {
-        document.querySelectorAll('.checkboxes').forEach(checkbox => {
-            checkbox.checked = select;
-        });
+     const devicesTableBody = document.getElementById('devices-table-body');
+     const onlySavedSwitch = document.getElementById('onlySavedSwitch');
+     const saveBtn = document.getElementById('saveBtn');
+     const selectAllBtn = document.getElementById('selectAllBtn');
+     const deselectAllBtn = document.getElementById('deselectAllBtn');
+     const saveResult = document.getElementById('saveResult');
+
+    /**
+     * Carrega dispositius amb un fetch i els renderitza en pantalla.
+     * Assumim que fetch retorna format { "<device name>": [ {entity_id, friendly_name}, ... ], ... }
+     */
+     async function LoadDevices(){
+         try{
+             const res = await fetch('sensors?calling_from=JS');
+             const json = await res.json();
+
+             const raw = json.devices || json;
+
+             devices = {};
+             Object.keys(raw).sort((a,b) => a.localeCompare(b, 'ca', {sensitivity:'base'})).forEach(deviceName => {
+                 const ents = raw[deviceName] || [];
+                 devices[deviceName] = ents.map(e => {
+                     return {
+                         entity_id: e.entity_id || e.id || (typeof e === 'string' ? e: ''),
+                         friendly_name: e.friendly_name || e.name || (e.entity_id || ''),
+                         save: e.save ? 1: 0,
+                         type: e.type || "No especificat"
+                     };
+                 });
+             });
+             RenderDevices();
+         }catch(err){
+             console.error('Error carregant dispositius: ', err);
+             saveResult.textContent = "Error carregant dispositius"
+         }
+     }
+
+    /**
+     * Renderitza creant una fila per a cada dispositiu i una subtaula per les entitats.
+     */
+    function RenderDevices(){
+         devicesTableBody.innerHTML = '';
+         const deviceNames = Object.keys(devices);
+
+         deviceNames.forEach((deviceName, idx) => {
+             const entities = devices[deviceName];
+             const anySaved = entities.some(e => e.save === 1);
+             if(onlySaved && !anySaved) return;
+
+            CreateDeviceRow(idx+1, deviceName, entities);
+         });
     }
 
-    function createRow(sensorsTableBody, index, name, id, save, type) {
+    /**
+     * Crea una fila per a cada dispositiu + files per a la subtaula d'entitats
+     */
+    function CreateDeviceRow(index, deviceName, entities){
+        const row = document.createElement('tr');
+        row.className = 'device-row';
 
-        const row = document.createElement("tr");
-        row.id = "sensors-table-row"
+        //CHECKBOX
+        const tdCheckbox = document.createElement('td');
+        const devCheckbox = document.createElement('input');
+        devCheckbox.type = 'checkbox';
+        devCheckbox.className = 'device-checkbox';
+        devCheckbox.checked = entities.every(e => e.save === 1);
+        tdCheckbox.appendChild(devCheckbox);
 
-        const tdIndex = document.createElement("td");
-        tdIndex.textContent = index;
+        //NAME
+        const tdName = document.createElement('td');
+        const nameWrap = document.createElement('div');
+        nameWrap.className = 'device-name';
+        const tri = document.createElement('span');
+        tri.className = 'tri';
+        tri.textContent = '▶';
+        const nameText = document.createElement('span');
+        nameText.textContent = deviceName;
+        nameWrap.appendChild(tri);
+        nameWrap.appendChild(nameText);
+        tdName.appendChild(nameWrap);
 
-        const tdCheckbox = document.createElement("td")
-        const labelCheckbox = document.createElement("label");
-
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.classList.add("checkboxes");
-        checkbox.name = "sensor_id";
-        checkbox.value = id;
-
-        if (save === 1) {
-            checkbox.checked = true;
-        }
-
-        const tdName = document.createElement("td");
-        tdName.textContent = name;
-
-        const tdId = document.createElement("td");
-        tdId.textContent = id;
-
-        const tdSelect = document.createElement("td");
-        const labelSelect = document.createElement("label");
-        const select = document.createElement("select");
-        select.classList.add("form-select");
-        select.id = "sensor-type";
-        select.name = "sensor-type";
-        select.style.width = "100%";
-
-        const optionHidden = new Option("No Especificat", "None");
-        optionHidden.hidden = true;
-        const optionConsum = new Option("Consum", "Consum");
-        const optionGenerator = new Option("Generator", "Generator");
-        const optionEnergySource = new Option("Energy Source", "EnergySource");
-        const optionNonImportant = new Option("No Important", "No Important");
-
-        if (save === 0) {
-            select.disabled = true
-        }
-
-        if (type === "Generator") {
-            optionGenerator.selected = true;
-        } else if (type === "Consum") {
-            optionConsum.selected = true;
-        } else if (type === "No Important") {
-            optionNonImportant.selected = true;
-        }else if(type === "EnergySource"){
-            optionEnergySource.selected = true;
-
-        } else {
-            optionHidden.selected = true;
-        }
-
-        checkbox.addEventListener("change", function () {
-            select.disabled = !checkbox.checked;
-        })
-
-        labelCheckbox.appendChild(checkbox);
-        tdCheckbox.appendChild(labelCheckbox);
-
-        select.appendChild(optionConsum);
-        select.appendChild(optionHidden);
-        select.appendChild(optionGenerator);
-        select.appendChild(optionEnergySource);
-        select.appendChild(optionNonImportant);
-
-        labelSelect.appendChild(select);
-        tdSelect.appendChild(labelSelect);
-
-
-        row.appendChild(tdIndex);
+        //APPEND CHILDS
         row.appendChild(tdCheckbox);
         row.appendChild(tdName);
-        row.appendChild(tdId);
-        row.appendChild(tdSelect);
 
-        sensorsTableBody.appendChild(row);
+        // fila subtaula
+        const subRow = document.createElement('tr');
+        subRow.className = 'sub-row';
+        subRow.style.display = 'none';
 
+        const subCell = document.createElement('td');
+        subCell.colSpan = 3;
+
+        //subtaula d'entitats
+        const subTable = document.createElement('table');
+        subTable.className = 'entities-table';
+
+
+        //ordenar entitats per friendly_name
+        const sortedEntities = entities.slice().sort((a,b) => (a.friendly_name || a.entity_id).localeCompare(b.friendly_name || b.entity_id, 'ca', {sensitivity: 'base'}));
+        sortedEntities.forEach((ent, entIdx) => {
+            const entRow = CreateEntityRow(ent, entIdx, devCheckbox);
+            subTable.appendChild(entRow);
+        })
+
+        // subTable.appendChild(tbody);
+        subCell.appendChild(subTable);
+        subRow.appendChild(subCell);
+
+        // CREAR INTERACCIONS
+        nameWrap.addEventListener('click', () => {
+            const isOpen = subRow.style.display !== 'none';
+            subRow.style.display = isOpen ? 'none' : 'table-row';
+            nameWrap.classList.toggle('expanded', !isOpen);
+        });
+
+        // Quan canvii checkbox de dispositiu: marcar/desmarcar totes les entitats
+        devCheckbox.addEventListener('change', () => {
+            const check = devCheckbox.checked;
+            const entityCheckboxes = subRow.querySelectorAll('.entity-checkbox');
+            entityCheckboxes.forEach(cb => { cb.checked = check; cb.dispatchEvent(new Event('change')); });
+            // Actualitzar estats visuals
+            if (check) {
+                // si l'usuari decideix marcar el dispositiu però la subtaula està oculta, l'obrim per feedback
+                subRow.style.display = 'table-row';
+                nameWrap.classList.add('expanded');
+            }
+        });
+
+        devicesTableBody.appendChild(row);
+        devicesTableBody.appendChild(subRow);
     }
 
-    function changeVisibleSensors() {
+    /**
+     * Crea la fila per a cada entitat
+     */
+    function CreateEntityRow(ent, entIdx, devCheckbox){
+        const entRow = document.createElement('tr');
+        entRow.className = 'entity-row';
+
+        // CHECKBOX ENTITAT
+        const tdEntCheck = document.createElement('td');
+        const entCheck = document.createElement('input');
+        entCheck.type = 'checkbox';
+        entCheck.className = 'entity-checkbox';
+        entCheck.checked = !!ent.save;
+        entCheck.addEventListener("change", () => ent.save = entCheck.checked);
+        tdEntCheck.appendChild(entCheck);
+
+        // NOM ENTITAT
+        const tdEntName = document.createElement('td');
+        tdEntName.textContent = ent.friendly_name;
+
+        // // ID ENTITAT
+        // const tdEntId = document.createElement('td');
+        // tdEntId.textContent = ent.entity_id;
+
+        //SELECT TIPUS ENTITAT
+        const tdEntType = document.createElement('td');
+        const select = document.createElement('select');
+        select.className = 'entity-type-select';
+        ENTITY_TYPES.forEach(t => {
+            const opt = new Option(t, t);
+            if(t === ent.type) opt.selected = true;
+            select.appendChild(opt);
+        });
+
+        select.disabled = !entCheck.checked;
+        tdEntType.appendChild(select);
+
+        //INTERACCIONS
+        // Quan canvii checkbox d'entitat: habilita/deshabilita select i actualitza objecte local
+        entCheck.addEventListener('change', () => {
+          select.disabled = !entCheck.checked;
+          // si queda desmarcada i el dispositiu estava completament marcat, actualitzem checkbox del dispositiu
+          devCheckbox.checked = GetAllEntityCheckboxes(entRow.parentElement).every(cb => cb.checked);
+        });
+
+        // Quan canvii select, actualitzem l'objecte local
+        select.addEventListener('change', () => {
+          // res visual ara — validació al guardar
+            console.log("CHANGE!!");
+        });
+
+        entRow.appendChild(tdEntCheck);
+        entRow.appendChild(tdEntName);
+        // entRow.appendChild(tdEntId);
+        entRow.appendChild(tdEntType);
+
+        return entRow;
+    }
+
+    function GetAllEntityCheckboxes(tbodyElem){
+        if (!tbodyElem) return [];
+        return Array.from(tbodyElem.querySelectorAll('.entity-checkbox'));
+    }
+
+    /**
+     * Marca o desmarca totes les entitats i dispositius
+     */
+    function ToggleAll(select){
+        document.querySelectorAll('.device-checkbox').forEach(checkbox => {
+            checkbox.checked = select;
+            checkbox.dispatchEvent(new Event('change'));
+        });
+        document.querySelectorAll('.entity-checkbox').forEach(checkbox => {
+            checkbox.checked = select;
+            checkbox.dispatchEvent(new Event('change'));
+        })
+    }
+
+    function ToggleOnlySaved(){
         onlySaved = !onlySaved;
-        const sensorsTableBody = document.getElementById('sensors-table-body');
-        sensorsTableBody.innerHTML = '';
-
-        fetch("sensors?calling_from=JS")
-            .then(response => response.json())
-            .then(sensors => {
-                sensors.sensors_id.forEach((id, i) => {
-                    const name = sensors.sensors_name[i];
-                    const save = sensors.sensors_save[i];
-                    const type = sensors.sensors_type[i];
-
-                    if (onlySaved === false) {
-                        createRow(sensorsTableBody, i, name, id, save, type);
-                    } else {
-                        if (save === 1) {
-                            createRow(sensorsTableBody, i, name, id, save, type);
-                        }
-                    }
-                })
-
-            })
-            .catch(error => {
-                console.log("Error en la petició:", error.message);
-            });
-
-
+        onlySavedSwitch.classList.toggle('on', onlySaved);
+        RenderDevices();
     }
 
-    window.onscroll = function () {
-        let button = document.getElementById("backToTop");
-        if (document.documentElement.scrollTop > 300) {
-            button.classList.add("show");
-        } else {
-            button.classList.remove("show");
-        }
-    };
-
-    function scrollToTop() {
-        window.scrollTo({top: 0, behavior: 'smooth'});
+    async function SaveDevices(){
+        //TODO: guardar devices i entitites seleccionades
+        console.log("save devices");
     }
 
-    changeVisibleSensors();
-
+    //EVENTS I INICI
+    selectAllBtn.addEventListener('click', (e) => { e.preventDefault(); ToggleAll(true); });
+    deselectAllBtn.addEventListener('click', (e) => { e.preventDefault(); ToggleAll(false); });
+    onlySavedSwitch.addEventListener('click', ToggleOnlySaved);
+    saveBtn.addEventListener('click', (e) => { e.preventDefault(); SaveDevices(); });
+    LoadDevices();
 </script>
+
 </html>

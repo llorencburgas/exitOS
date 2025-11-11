@@ -20,8 +20,8 @@
     <div class="content-section">
         <h1>Optimització</h1>
         <h4>{{current_date}}</h4>
-        <button id="test-optimization" onclick="TestOptimization()"><i style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-ghost"></i> Forçar Optimització</button>
-        <button id="new-device-config" onclick="NewDeviceConfig()"><i style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-plus"></i> Nova Configuració de Dispositiu</button>
+        <button class="btn" id="test-optimization" onclick="TestOptimization()"><i style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-ghost"></i> Forçar Optimització</button>
+        <button class="btn" id="new-device-config" onclick="NewDeviceConfig()"><i style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-plus"></i> Nova Configuració de Dispositiu</button>
     </div>
 
     <!-- GRÀFICA OPTIMITZACIÓ -->
@@ -68,8 +68,8 @@
 
 
         <div style="margin-top: 20px;">
-            <button onclick="SubmitOptimization()"> Guardar </button>
-            <button onclick="CloseModal()"> Cancel·lar </button>
+            <button class="btn" onclick="SubmitOptimization()"> Guardar </button>
+            <button class="btn secondary" onclick="CloseModal()"> Cancel·lar </button>
         </div>
     </div>
 </div>
@@ -425,10 +425,6 @@
                     name.textContent = dev.device_name;
                     container.appendChild(name);
 
-                    // ON - OFF SWITCH
-
-                    //TODO : switch
-
                     // TIPUS DE DISPOSITIU
                     const type = document.createElement('span');
                     type.innerHTML = '<b class="device-cofig-boltText">Dispositiu: </b>' + dev.friendly_type;
@@ -462,7 +458,7 @@
 
                     // BOTÓ ELIMINAR
                     const delete_button = document.createElement('button');
-                    delete_button.className = "device-config-delete-button";
+                    delete_button.className = "btn secondary";
                     delete_button.innerHTML = 'Eliminar Configuració';
                     delete_button.onclick = async () => {
                         const res = await fetch('delete_optimization_config/' + config_name, {
