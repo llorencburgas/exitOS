@@ -145,7 +145,7 @@ def graphs_view():
                 continue
 
 
-            trace = go.Scatter(x=timestamps, y=values, mode='lines', name=f"Sensor {sensor_id}")
+            trace = go.Scatter(x=timestamps, y=values, mode='lines', name=f"Sensor {sensor_id}", line=dict(color='#04AA6D'))
             layout = go.Layout(xaxis=dict(title="Timestamp"),
                                yaxis=dict(title="Value "),
                                dragmode="pan")

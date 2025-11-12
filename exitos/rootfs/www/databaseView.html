@@ -16,91 +16,6 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css"/>
 
-
-    <style>
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        h2 {
-            margin-bottom: 20px;
-            margin-top: 20px;
-        }
-
-        .sensor-container {
-            max-width: 500px;
-        }
-
-        .tag-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            border: 1px solid #ccc;
-            padding: 10px;
-            min-height: 40px;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-            width: 100%;
-
-            /*align-items: flex-start;*/
-        }
-
-        .tag {
-            background-color: #04AA6D;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 3px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-
-            max-width: 100%;
-            word-break: break-word;
-            white-space: normal;
-        }
-
-        .tag .remove {
-            cursor: pointer;
-            font-weight: bold;
-            overflow: clip;
-        }
-
-        .search-box {
-            width: 100%;
-            padding: 8px;
-            margin-top: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        .sensor-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            border: 1px solid #ccc;
-            max-height: 150px;
-            overflow-y: auto;
-            background: white;
-            display: none;
-            position: absolute;
-            z-index: 1000;
-        }
-
-        .sensor-list li {
-            padding: 8px;
-            cursor: pointer;
-        }
-
-        .sensor-list li:hover {
-            background: #04AA6D;
-            color: white;
-        }
-
-        .dropdown {
-            position: relative;
-        }
-    </style>
 </head>
 <body>
     <!--    NAVBAR     -->
@@ -110,16 +25,16 @@
     <div class="container">
         <div class="content-section">
             <form action="./graphsView" method="POST" id="graphs-form">
-                <h1>Data</h1>
+                <h1>Visualitzador de Dades</h1>
 
-                <label> Tria un rang de dates:
-                    <input type="text" name="datetimes"/>
-                </label>
+                <h2 style="margin-top: 20px;">Data a mostrar:</h2>
+
+                <input class="database-date-input" type="text" name="datetimes"/>
 
                 <div id="sensor-data" data-sensors="{{sensors_id}}"></div>
 
-                <div class="sensor-container">
-                    <h2>Sensors a Mostrar:</h2>
+                <div class="sensor-container" style="max-width: 500px">
+                    <h2>Sensors a mostrar:</h2>
                     <div class="tag-container" id="selected-sensors"></div>
 
                     <div class="dropdown">
@@ -133,8 +48,8 @@
                 <input type="hidden" name="sensors_id" id="sensors-input" value="">
 
             </form>
-            <button id="fetch-data" onclick="FetchGraph()"> Mostrar Gràfiques</button>
-            <button id="update-database" onclick="UpdateDatabase()"> Actualitzar Base de Dades</button>
+            <button class="btn" id="fetch-data" onclick="FetchGraph()"> Mostrar Gràfiques</button>
+            <button class="btn secondary" id="update-database" onclick="UpdateDatabase()" style="margin-bottom: 30px;"> Actualitzar Base de Dades</button>
 
             % for sensor_id, graph_html in graphs.items():
             <h2>Sensor {{ sensor_id }}</h2>
@@ -315,7 +230,6 @@
             alwaysShowCalendars: true,
         }, function (start, end, label) {
             $('input[name="datetimes"]').val(start.format('DD/MM/YYYY HH:mm') + ' - ' + end.format('DD/MM/YYYY HH:mm'));
-            // $('input[name="datetimes"]').trigger('change');
         });
     });
 </script>
