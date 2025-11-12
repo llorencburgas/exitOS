@@ -11,14 +11,10 @@
     <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
 
   <style>
-    h1{margin-bottom: 2%;}
-    label{margin-top: 20px;}
+    /*h1{margin-bottom: 2%;}*/
+    /*label{margin-top: 20px;}*/
 
-    #map{
-      height: 200px;
-      width: 400px;
-      flex-shrink: 0;
-    }
+
     #info{
       max-height: 200px;
       max-width: 300px;
@@ -56,40 +52,40 @@
 
         <div class="container">
             <div class="content-section">
-              <h1>Configuració d'usuari</h1>
+              <h1 style="margin-bottom: 5px">Configuració d'usuari</h1>
 
-                <label for="user-name">Nom:
-                    <input type="text" name="user-name" id="user-name" placeholder="Entra el teu nom"
+                <label for="user-name" class="config-label">Nom:
+                    <input class="config-input" type="text" name="user-name" id="user-name" placeholder="Entra el teu nom"
                            value ="{{user_data['name']}}" {{'disabled' if user_data['locked'] else ''}} >
                 </label>
 
-                <label for="global-consumption"> Consum Global:
-                  <select name="global-consumption" id="global-consumption"
-                            {{'disabled' if user_data['locked'] else ''}}>
-                    <option value="None">None</option>
-                    %for sensor in sensors:
-                        <option value="{{sensor}}" {{'selected' if sensor == user_data['consumption'] else ''}}> {{sensor}} </option>
-                    %end
-                  </select>
-                </label>
-
-                <label for="global-generation"> Generació Global:
-                  <select name="global-generation" id="global-generation"
+                <label for="global-consumption" class="config-label"> Consum Global:
+                    <select class="config-input" name="global-consumption" id="global-consumption">
                         {{'disabled' if user_data['locked'] else ''}}>
-                    <option value="None">None</option>
-                    %for sensor in sensors:
-                    <option value="{{sensor}}" {{'selected' if sensor == user_data['generation'] else ''}} >{{sensor}}</option>
-                    %end
+                        <option value="None">None</option>
+                        %for sensor in sensors:
+                        <option value="{{sensor}}" {{'selected' if sensor == user_data['consumption'] else ''}}> {{sensor}} </option>
+                        %end
+                    </select>
+                </label>
+
+                <label for="global-generation" class="config-label"> Generació Global:
+                  <select class="config-input" name="global-generation" id="global-generation">
+                        {{'disabled' if user_data['locked'] else ''}}>
+                        <option value="None">None</option>
+                        %for sensor in sensors:
+                            <option value="{{sensor}}" {{'selected' if sensor == user_data['generation'] else ''}} >{{sensor}}</option>
+                        %end
                   </select>
                 </label>
 
-                <label for="map">Localització: </label>
+                <label for="map" class="config-label">Localització: </label>
                 <div class="map-container">
                   <div id="map"></div>
                   <div id="info" style="display:none;">
                     <p><strong>Direcció actual:</strong> <span id="address"></span></p>
-                    <p style="margin-top: 11px; font-size: 10px; font-style: italic; margin-bottom: 0;line-height: 1;">Aquesta ubicació s'obté a partir de les dades de Home Assistant.
-                    En cas de ser incorrectes modifica-les des de la configuració del programa Home Assistant.</p>
+                    <small>Aquesta ubicació s'obté a partir de les dades de Home Assistant.
+                    En cas de ser incorrectes modifica-les des de la configuració del programa Home Assistant.</small>
                   </div>
                 </div>
 

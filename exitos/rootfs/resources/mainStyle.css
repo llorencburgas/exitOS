@@ -981,3 +981,40 @@ p.lead{
 /*#endregion misc*/
 
 /*#endregion DEVICES PAGE*/
+
+/*#region CONFIG PAGE*/
+
+#map{
+    height: 200px;
+    width: 400px;
+    flex-shrink: 0;
+}
+
+.config-label{
+    display:block;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--text-accent-color);
+}
+
+.config-input{
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    background: var(--card-background-color);
+}
+
+.config-input:focus{
+    outline: none;
+    border-color: var(--color-primary-green);
+    box-shadow: 0 0 0 2px var(--color-primary-green-shadow);
+}
+
+
+/*#endregion CONFIG PAGE*/
+
