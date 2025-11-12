@@ -279,6 +279,12 @@ a.mail-text{
 /*#endregion*/
 
 /*#region MULTIPLE SELECT BOX*/
+
+.sensor-container,
+.selection-container{
+    max-width: 500px;
+}
+
 .tag-container {
     display: flex;
     flex-wrap: wrap;
@@ -348,6 +354,49 @@ a.mail-text{
 
 
 /*#endregion MULTIPLE SELECT BOX*/
+
+/*#region LOADING SPINNER*/
+#loadingSpinner{
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20%;
+    height: 20%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    background-color: var(--box-bg-color);
+    border-color: var(--box-border-color);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.spinner{
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid var(--color-primary-green);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#loadingText{
+    margin-top: 10px;
+    font-size: 16px;
+    color: var(--color-primary-green);
+    text-align: center;
+}
+/*#endregion LOADING SPINNER*/
 
 /*#region DATABASE PAGE*/
 .database-date-input{
@@ -435,6 +484,68 @@ a.mail-text{
 }
 
 /*#endregion DATABASE PAGE*/
+
+/*#region MODEL PAGE*/
+.model-form label{
+    display:block;
+    font-weight: 500;
+    color: var(--text-accent-color);
+}
+
+.model-form select,
+.dropdown input,
+.model-name input
+{
+    width: 100%;
+    padding: 8px 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    background: var(--card-background-color);
+    font-family: 'Rubik', Arial, sans-serif;
+}
+
+.model-form select:focus,
+.dropdown input:focus,
+.model-name input:focus{
+    outline: none;
+    border-color: var(--color-primary-green);
+    box-shadow: 0 0 0 2px var(--color-primary-green-shadow);
+}
+
+.model-checkbox-div{
+    display: flex;
+    align-items: center;
+    align-content: center;
+    gap: 6px;        /* Espai entre checkbox i text */
+    margin-bottom: 10px;
+}
+
+.meteoData-checkbox{
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--color-primary-green);
+    border-radius: 4px;
+    cursor: pointer;
+    /*display: block;*/
+    /*margin: auto;*/
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.meteoData-checkbox:checked {
+  background: var(--color-primary-green);
+  box-shadow: inset 0 0 0 3px white;
+}
+
+.meteoData-checkbox:hover {
+  transform: scale(1.1);
+}
+
+/*#endregion MODEL PAGE*/
 
 /*#region OPTIMIZATION SCHEDULER CONTAINER*/
 .scheduler-container{
@@ -870,45 +981,3 @@ p.lead{
 /*#endregion misc*/
 
 /*#endregion DEVICES PAGE*/
-
-/*!* === FORM  SELECT === *!*/
-
-/*.form-select,*/
-/*#modelName{*/
-/*    width: 100%;*/
-/*    padding: 5px 6px;*/
-/*    margin-bottom: 5px;*/
-/*    border: 1px solid #ccc;*/
-/*    border-radius: 8px;*/
-/*    font-size: 0.95rem;*/
-/*    transition: border-color 0.2s, box-shadow 0.2s;*/
-/*    box-sizing: border-box;*/
-/*    background: var(--card-background-color);*/
-/*}*/
-/*.entity-type-select {*/
-/*    width: 70%;*/
-/*    padding: 6px;*/
-/*    border-radius: 8px;*/
-/*    border: 1px solid #ddd;*/
-/*    background: #fff;*/
-/*}*/
-
-
-/*.form-select:focus,*/
-/*#modelName:focus{*/
-/*    outline: none;*/
-/*    border-color: #4caf50;*/
-/*    box-shadow: 0 0 0 2px rgba(76,175,80,0.25);*/
-/*}*/
-
-/*.form-option{*/
-/*    font-family: 'Rubik', Arial, serif;*/
-/*    font-size: medium;*/
-/*    display: flex;*/
-/*    justify-content: flex-start;*/
-/*    gap: 20px;*/
-/*    border: 2px solid var(--select-border-color);*/
-/*    background: var(--select-background-color);*/
-/*    padding: 10px;*/
-/*    transition: 0.4s;*/
-/*}*/

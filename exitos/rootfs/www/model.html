@@ -5,11 +5,11 @@
     <title>Control energètic eXIT</title>
     <link rel="stylesheet" href="resources/mainStyle.css">
     <link rel="icon" type="image/x-icon" href="static/favicon.ico">
-<!--    <link rel="stylesheet" href="../images/mainStyle.css">-->
 
-        <!-- llibreria d'icontes per al navbar-->
+    <script src="resources/spinner.js"></script>
     <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
     <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
+
 
 
     <style>
@@ -22,9 +22,6 @@
             flex-direction: column;
             justify-content: center;
         }
-        label{
-            margin-bottom: 5px;
-        }
         .container{
             display: flex;
             flex-direction: row;
@@ -34,109 +31,6 @@
             flex: 1;
             padding: 20px;
             box-sizing: border-box;
-        }
-        .selection-container{
-            max-width: 500px;
-        }
-
-        .tag-container{
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            border: 1px solid #ccc;
-            padding: 10px;
-            min-height: 40px;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-            width: 100%;
-
-            /*align-items: flex-start;*/
-        }
-        .tag{
-            background-color: #04AA6D;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 3px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-
-            max-width: 100%;
-            word-break: break-word;
-            white-space: normal;
-        }
-        .tag .remove{
-            cursor: pointer;
-            font-weight: bold;
-            overflow: clip;
-        }
-        .search-box{
-            width: 100%;
-            padding: 8px;
-            margin-top: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .sensor-list{
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            border: 1px solid #ccc;
-            max-height: 150px;
-            overflow-y: auto;
-            background: white;
-            display: none;
-            position: absolute;
-            z-index: 1000;
-        }
-        .sensor-list li {
-            padding: 8px;
-            cursor: pointer;
-        }
-        .sensor-list li:hover {
-            background: #04AA6D;
-            color: white;
-        }
-        .dropdown {
-            position: relative;
-        }
-
-        /* LOADING SPINNER */
-         #loadingSpinner{
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 20%;
-            height: 20%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            background-color: #f1f1f1;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-        }
-        .spinner{
-            border: 8px solid #f3f3f3;
-            border-top: 8px solid #04AA6D;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        #loadingText{
-            margin-top: 10px;
-            font-size: 16px;
-            color: #04AA6D;
-            text-align: center;
         }
 
     </style>
@@ -152,12 +46,12 @@
             <div class="content-section">
                 <h1> Forecast </h1>
 
-                <form action="./submit-model" method="POST" onsubmit="showLoadingSpinner()" >
+                <form action="./submit-model" method="POST" onsubmit="showLoadingSpinner()" class="model-form" >
 
                     <!--  MODEL ENTRENAT  -->
-                    <h3 style="margin-bottom:2px;">1. Selecciona el model entrenat</h3>
-                    <p style="font-size: 14px; font-style: italic; margin-bottom: 5px;"> Opcional... </p>
-                    <select class="form-select" id="models" name="models" required style="margin-bottom: 5px;">
+                    <h3 style="margin-bottom: 0">1. Selecciona el model entrenat</h3>
+                    <small> Opcional... </small>
+                    <select class="form-select" id="models" name="models" required>
                         <option class="form-option" value="newModel">Model Nou</option>
                         % for model in models_input:
                           <option class="form-option" value="{{model}}">{{model}}</option>
@@ -165,10 +59,10 @@
                     </select>
 
                     <!--  NOM DEL MODEL -->
-                    <label for="modelName">Nom del Model:
+                    <label class="model-name" for="modelName">Nom del Model:
+                        <small style="font-weight: 400"> En cas de deixar en blanc el nom serà el del sensor objectiu.</small>
                         <input type="text" name="modelName" id="modelName" placeholder="Escriu el nom...">
                     </label>
-                    <p style="font-size: 14px; font-style: italic; margin-bottom: 5px;"> En cas de deixar en blanc el nom serà el del sensor objectiu.</p>
 
                     <!--  SENSOR OBJECTIU  -->
                     <h3> 2. Selecciona el sensor objectiu</h3>
@@ -182,8 +76,8 @@
                     <div id="sensor-data" data-sensors="{{sensors_input}}"></div>
 
                     <div class="selection-container">
-                        <h3  style="margin-bottom:2px;"> 3. Selecciona variables extra</h3>
-                        <p style="font-size: 14px; font-style: italic; margin-bottom: 5px;"> Opcional... </p>
+                        <h3> 3. Selecciona variables extra</h3>
+                        <p> Opcional... </p>
                         <div class="tag-container" id="selected-sensors"></div>
 
                         <div class="dropdown">
@@ -218,14 +112,18 @@
                             <option value="MINMAX">MINMAX</option>
                         </select>
                     </label>
-                    <div>
-                        <label for="meteoData">Dades Meteorològiques: </label>
-                        <input type="checkbox" id="meteoData" name="meteoData" style="margin-left: 3px" value="false">
+
+
+                    <div class="model-checkbox-div">
+                        <input type="checkbox" class="meteoData-checkbox" id="meteoData" name="meteoData" value="false">
+                        <label for="meteoData">Dades Meteorològiques </label>
                     </div>
 
-                    <button id="create-model-button" name="action" value="train" type="submit"><i style="font-size: medium" class="fa-solid fa-bolt"></i> Train</button>
-                    <button id="fetch-data" name="action" value="forecast" type="submit" disabled><i style="font-size: medium" class="fa-solid fa-chart-line"></i> Forecast </button>
-                    <button id="delete-forecast" name="action" value="delete" type="submit" disabled><i style="font-size: medium;" class="fa-solid fa-trash-can"></i> Eliminar </button>
+
+
+                    <button class="btn" id="create-model-button" name="action" value="train" type="submit"><i style="font-size: medium" class="fa-solid fa-bolt"></i> Train</button>
+                    <button class="btn" id="fetch-data" name="action" value="forecast" type="submit" disabled><i style="font-size: medium" class="fa-solid fa-chart-line"></i> Forecast </button>
+                    <button class="btn secondary" id="delete-forecast" name="action" value="delete" type="submit" disabled><i style="font-size: medium;" class="fa-solid fa-trash-can"></i> Eliminar </button>
 
                 </form>
 
@@ -239,14 +137,7 @@
                     <div id="forecast-chart"></div>
                 </div>
             </div>
-
-            <div id="loadingSpinner" style="display: none;">
-                    <div class="spinner"></div>
-                    <p id="loadingText">Processant... <br> Això pot tardar una mica.</p>
-            </div>
-
         </div>
-
     </main>
 
 <script>
@@ -350,13 +241,12 @@
 
     //SPINNER LOGIC
     function showLoadingSpinner(){
-        document.getElementById('loadingSpinner').style.display = 'block';
+        LoadingSpinner.show()
     }
 
     function hideLoadingSpinner(){
-        document.getElementById('loadingSpinner').style.display = 'none';
+        LoadingSpinner.hide()
     }
-
 
     //MODEL CONFIG LOGIC
     function updateSelection(selectId, displayId){
@@ -441,7 +331,6 @@
 
                 label.appendChild(select);
                 configDiv.appendChild(label);
-                configDiv.appendChild(document.createElement('br'));
             });
         }
     }
@@ -595,9 +484,6 @@
         document.getElementById("models").value = "{{active_model}}" + ".pkl";
         updateModels("{{active_model}}" + ".pkl");
      }
-
-
-
 
 </script>
 
