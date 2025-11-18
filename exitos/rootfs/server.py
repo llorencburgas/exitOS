@@ -41,7 +41,7 @@ PORT = 55023
 app = Bottle()
 database = db.SqlDB()
 forecast = Forecast.Forecaster(debug=True)
-optimalScheduler = OptimalScheduler.OptimalScheduler()
+optimalScheduler = OptimalScheduler.OptimalScheduler(database)
 blockchain = Blockchain.Blockchain()
 
 
@@ -81,14 +81,10 @@ def sensors_page():
 @app.get('/get_sensors')
 def get_sensors():
     try:
-        devices_entities = database.get_devices_info()
-
-        aux = database.get_all_sensors_data()
-
-        logger.info(aux)
+        all_devices_data = database.get_all_sensors_data()
 
         response.content_type = 'application/json'
-        return json.dumps(aux)
+        return json.dumps(all_devices_data)
 
     except Exception as ex:
         error_message = traceback.format_exc()
@@ -151,13 +147,11 @@ def graphs_view():
 @app.route('/update_sensors', method='POST')
 def update_sensors():
     data = request.json
-    logger.info(data)
     if not data:
         response.status = 400
         return {"status":"error", "msg": "Dades buides"}
 
     database.reset_all_sensors_save()
-    logger.info(data)
 
     for device in data:
         database.update_sensor_active(sensor = device['entityId'], active = True)
@@ -835,7 +829,7 @@ def optimization_page():
             devices_data = json.load(f)
 
     # DISPOSITIUS I ENTITATS ASSOCIADES
-    devices_entities = database.get_devices_and_entities()
+    devices_entities = database.get_devices_info()
 
     current_date = datetime.now().strftime('%d-%m-%Y')
     return template("./www/optimization.html",

@@ -15,19 +15,14 @@ from abstraction.AbsEnergySource import AbsEnergySource
 from abstraction.AbsGenerator import AbsGenerator
 from abstraction.assets.Battery import Battery
 
+from exitos.rootfs.sqlDB import SqlDB
 
 logger = setup_logger()
-database = db.SqlDB()
-ha_url = database.base_url
-bearer_token = database.supervisor_token
-headers = {
-    "Authorization": f"Bearer {bearer_token}",
-    "Content-Type": "application/json",
-}
-in_ha = database.running_in_ha
 
 class OptimalScheduler:
-    def __init__(self):
+    def __init__(self, database: SqlDB):
+
+        self.database = database
 
         latitude, longitude = database.get_lat_long()
         self.latitude = latitude
@@ -62,7 +57,7 @@ class OptimalScheduler:
     def prepare_data(self, data):
         horizon_hours = 24
 
-        all_saved_sensors = database.get_all_saved_sensors_id()
+        all_saved_sensors = self.database.get_all_saved_sensors_id()
         all_sensors = []
         consumers = {}
         generators = {}
@@ -73,7 +68,7 @@ class OptimalScheduler:
                 if entitat['entity_name'] in all_saved_sensors:
                     current_sensor = {'sensor_id': entitat['entity_name'],
                                       'device_id': dispositiu['device_name'],
-                                      'sensor_type': database.get_sensors_type([entitat['entity_name'],])[0],
+                                      'sensor_type': self.database.get_sensors_type([entitat['entity_name'],])[0],
                                       'sensor_state': entitat.get("entity_state", 0) }
                     all_sensors.append(current_sensor)
 
@@ -88,7 +83,7 @@ class OptimalScheduler:
             if sensor_type == "Consum":
                 consumer_obj = AbsConsumer(sensor_id)
 
-                sensor_forecast = database.get_data_from_latest_forecast(sensor_id+".pkl")
+                sensor_forecast = self.database.get_data_from_latest_forecast(sensor_id+".pkl")
 
                 logger.warning("forecast obtingut")
                 logger.debug(sensor_forecast)
@@ -171,7 +166,7 @@ class OptimalScheduler:
                                         workers = 1
                                         )
 
-        if not in_ha:
+        if not self.database.running_in_ha:
             logger.debug(f"     ▫️ Status: {result['message']}")
             logger.debug(f"     ▫️ Total evaluations: {result['nfev']}")
             logger.debug(f"     ▫️ Solution: {result['x']}")
@@ -207,7 +202,7 @@ class OptimalScheduler:
 
     def __updateDEStep(self, bounds, convergence):
         self.solucio_final = copy.deepcopy(self.solucio_run)
-        if not in_ha:
+        if not self.database.running_in_ha:
             logger.debug(f"     Cost aproximacio {self.solucio_run.preu_total}")
 
     def get_hourly_electric_prices(self, hores_simular: int = 24, minuts: int = 1):
