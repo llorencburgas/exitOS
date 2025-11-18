@@ -52,6 +52,9 @@
             <div class="spacer"></div>
             <div id="saveResult" class="muted"></div>
         </div>
+
+        <button id = "back-to-top-btn" onclick="ScrollToTop()" class="fa-solid fa-circle-up"></button>
+
     </main>
 </body>
 
@@ -74,18 +77,23 @@
      */
      async function LoadDevices(){
          try{
-             const res = await fetch('sensors?calling_from=JS');
+             const res = await fetch('get_sensors');
              const json = await res.json();
 
              const raw = json.devices || json;
 
              devices = {};
-             Object.keys(raw).sort((a,b) => a.localeCompare(b, 'ca', {sensitivity:'base'})).forEach(deviceName => {
-                 const ents = raw[deviceName] || [];
+
+             raw.sort((a,b) => a.device_name
+                 .localeCompare(b.device_name, 'ca', {sensitivity:'base'}))
+                 .forEach(device => {
+                 const deviceName = device.device_name;
+                 const ents = device.entities || [];
+
                  devices[deviceName] = ents.map(e => {
                      return {
                          entity_id: e.entity_id || e.id || (typeof e === 'string' ? e: ''),
-                         friendly_name: e.friendly_name || e.name || (e.entity_id || ''),
+                         friendly_name: e.entity_name || e.name || (e.entity_id || ''),
                          save: e.save ? 1: 0,
                          type: e.type || "No especificat"
                      };
@@ -241,8 +249,8 @@
 
         // Quan canvii select, actualitzem l'objecte local
         select.addEventListener('change', () => {
-          // res visual ara — validació al guardar
-            console.log("CHANGE!!");
+          ent.type = select.value;
+
         });
 
         entRow.appendChild(tdEntCheck);
@@ -272,15 +280,55 @@
         })
     }
 
+    /**
+     * Alterna la vista entre tots els dispositius o només aquells guardats.
+     */
     function ToggleOnlySaved(){
         onlySaved = !onlySaved;
         onlySavedSwitch.classList.toggle('on', onlySaved);
         RenderDevices();
     }
 
+    /**
+     * Envia les dades seleccionades al backend per a guardar-les a la base de dades
+     */
     async function SaveDevices(){
-        //TODO: guardar devices i entitites seleccionades
-        console.log("save devices");
+        const selectedEntities = [];
+
+        Object.keys(devices).forEach(deviceName => {
+            devices[deviceName].forEach(ent => {
+                if(ent.save){
+                    selectedEntities.push({
+                        device:deviceName,
+                        entityId:ent.entity_id,
+                        friendly_name: ent.friendly_name,
+                        type: ent.type,
+                    });
+                }
+            })
+        });
+
+
+        const res = await fetch('update_sensors',{
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(selectedEntities),
+        });
+
+        const result = await res.json();
+        if (result.status === 'ok') {
+          console.log("OK");
+        }
+        else {
+          console.error(result.status);
+        }
+    }
+
+    /**
+     * Petita funcionalitat per retornar la pàgina a la part superior en premer el botó
+     */
+    function ScrollToTop(){
+        window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
     //EVENTS I INICI
@@ -288,6 +336,16 @@
     deselectAllBtn.addEventListener('click', (e) => { e.preventDefault(); ToggleAll(false); });
     onlySavedSwitch.addEventListener('click', ToggleOnlySaved);
     saveBtn.addEventListener('click', (e) => { e.preventDefault(); SaveDevices(); });
+
+     window.onscroll = function () {
+        let button = document.getElementById("back-to-top-btn");
+        if (document.documentElement.scrollTop > 300) {
+            button.classList.add("show");
+        } else {
+            button.classList.remove("show");
+        }
+    };
+
     LoadDevices();
 </script>
 

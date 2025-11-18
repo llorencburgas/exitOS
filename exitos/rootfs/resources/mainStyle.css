@@ -980,6 +980,34 @@ p.lead{
 .spacer { height: 14px; }
 /*#endregion misc*/
 
+/*#region Back to top button*/
+#back-to-top-btn{
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    background-color: var(--color-primary-green);
+    color: var(--color-primary-white);
+    border: none;
+    padding: 10px 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 20px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+}
+#back-to-top-btn:hover {
+    background-color: var(--button-bg-hover-color);
+}
+
+#back-to-top-btn.show {
+    opacity: 1;
+    visibility: visible;
+}
+/*#endregion Back to top button*/
+
+
 /*#endregion DEVICES PAGE*/
 
 /*#region CONFIG PAGE*/
@@ -1014,6 +1042,7 @@ p.lead{
     border-color: var(--color-primary-green);
     box-shadow: 0 0 0 2px var(--color-primary-green-shadow);
 }
+
 
 
 /*#endregion CONFIG PAGE*/

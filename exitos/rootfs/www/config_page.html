@@ -23,6 +23,7 @@
       padding: 10px;
       border: 1px solid #ccc;
       display: none;
+        border-radius: 5px;
     }
     #last-link-div{
         max-height: 200px;
@@ -31,6 +32,7 @@
         padding: 10px;
         border: 1px solid #ccc;
         display: none;
+        border-radius: 5px;
     }
     .map-container{
       display: flex;
@@ -52,15 +54,17 @@
 
         <div class="container">
             <div class="content-section">
-              <h1 style="margin-bottom: 5px">Configuració d'usuari</h1>
+              <h1 style="margin-bottom: 15px">Configuració d'usuari</h1>
 
-                <label for="user-name" class="config-label">Nom:
-                    <input class="config-input" type="text" name="user-name" id="user-name" placeholder="Entra el teu nom"
-                           value ="{{user_data['name']}}" {{'disabled' if user_data['locked'] else ''}} >
-                </label>
+                <div class="model-checkbox-div">
+                    <label for="user-name" class="config-label">Nom:
+                        <input class="config-input" type="text" name="user-name" id="user-name" placeholder="Entra el teu nom"
+                               value ="{{user_data['name']}}" {{'disabled' if user_data['locked'] else ''}} >
+                    </label>
+                </div>
 
                 <label for="global-consumption" class="config-label"> Consum Global:
-                    <select class="config-input" name="global-consumption" id="global-consumption">
+                    <select class="config-input" name="global-consumption" id="global-consumption"
                         {{'disabled' if user_data['locked'] else ''}}>
                         <option value="None">None</option>
                         %for sensor in sensors:
@@ -70,7 +74,7 @@
                 </label>
 
                 <label for="global-generation" class="config-label"> Generació Global:
-                  <select class="config-input" name="global-generation" id="global-generation">
+                  <select class="config-input" name="global-generation" id="global-generation"
                         {{'disabled' if user_data['locked'] else ''}}>
                         <option value="None">None</option>
                         %for sensor in sensors:
@@ -82,7 +86,7 @@
                 <label for="map" class="config-label">Localització: </label>
                 <div class="map-container">
                   <div id="map"></div>
-                  <div id="info" style="display:none;">
+                  <div id="info" style="display:none;" class="config-map-info">
                     <p><strong>Direcció actual:</strong> <span id="address"></span></p>
                     <small>Aquesta ubicació s'obté a partir de les dades de Home Assistant.
                     En cas de ser incorrectes modifica-les des de la configuració del programa Home Assistant.</small>
@@ -90,8 +94,8 @@
                 </div>
 
                 <div>
-                    <button type="button" id="lockBtn" onclick="lockForm()"><i style="font-size: medium" class="fa-solid fa-arrow-right-to-bracket"></i> Unir Comunitat </button>
-                    <button type="button" id="unlockBtn" onclick="unlockForm()"><i style="font-size: medium" class="fa-solid fa-arrow-right-from-bracket"></i> Abandonar Comunitat </button>
+                    <button class="btn" type="button" id="lockBtn" onclick="lockForm()"><i style="font-size: medium" class="fa-solid fa-arrow-right-to-bracket"></i> Unir Comunitat </button>
+                    <button class="btn" type="button" id="unlockBtn" onclick="unlockForm()"><i style="font-size: medium" class="fa-solid fa-arrow-right-from-bracket"></i> Abandonar Comunitat </button>
                 </div>
                 <div id="last-link-div">
                     <h3 style="margin-bottom:3px">Últims certificats: </h3>

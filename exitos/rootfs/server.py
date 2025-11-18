@@ -74,34 +74,22 @@ def get_init():
                     token = token,
                     active_sensors_list = active_sensors)
 
-#Ruta per a configurar quins sensors volem guardar
 @app.get('/sensors')
+def sensors_page():
+    return template('./www/sensors.html',)
+
+@app.get('/get_sensors')
 def get_sensors():
     try:
+        devices_entities = database.get_devices_info()
 
-        calling_from = request.query.get("calling_from", "HTML")
+        aux = database.get_all_sensors_data()
 
-        sensors = database.get_all_sensors()
-        sensors_id = sensors['entity_id'].tolist()
-        sensors_name = sensors['attributes.friendly_name'].tolist()
-        sensors_save = database.get_sensors_save(sensors_id)
-        sensors_type = database.get_sensors_type(sensors_id)
+        logger.info(aux)
 
-        devices_entities = database.get_devices_and_entities()
+        response.content_type = 'application/json'
+        return json.dumps(aux)
 
-
-        context = {
-            "sensors_id": [None if pd.isna(v) else v for v in sensors_id],
-            "sensors_name": [None if pd.isna(v) else v for v in sensors_name],
-            "sensors_save": sensors_save,
-            "sensors_type": sensors_type
-        }
-
-        if calling_from == "HTML":
-            return template('./www/sensors.html')
-        else:
-            response.content_type = 'application/json'
-            return json.dumps(devices_entities)
     except Exception as ex:
         error_message = traceback.format_exc()
         return f"Error! Alguna cosa ha anat malament :c : {str(ex)}\nFull Traceback:\n{error_message}"
@@ -162,48 +150,20 @@ def graphs_view():
 
 @app.route('/update_sensors', method='POST')
 def update_sensors():
+    data = request.json
+    logger.info(data)
+    if not data:
+        response.status = 400
+        return {"status":"error", "msg": "Dades buides"}
 
-    checked_sensors = request.forms.getall("sensor_id")
-    all_sensor_types = request.forms.getall("sensor-type")
-    sensors = database.get_all_sensors()
-    sensors_id = sensors['entity_id'].tolist()
+    database.reset_all_sensors_save()
+    logger.info(data)
 
-    i = 0
-    for sensor in checked_sensors:
-        database.update_sensor_type(sensor, all_sensor_types[i])
-        i+=1
+    for device in data:
+        database.update_sensor_active(sensor = device['entityId'], active = True)
+        database.update_sensor_type(sensor = device['entityId'], new_type = device['type'])
 
-    i = 0
-    for sensor_id in sensors_id:
-        is_active = sensor_id in checked_sensors
-        was_active = database.get_sensor_active(sensor_id)
-        if was_active == 0 and is_active:
-            database.update_sensor_active(sensor_id, is_active)
-            sensor_type = all_sensor_types[i].strip()
-            database.update_sensor_type(sensor_id, sensor_type)
-        if was_active == 1 and not is_active:
-            database.update_sensor_active(sensor_id, is_active)
-            database.remove_sensor_data(sensor_id)
-
-        if is_active:
-            i += 1
-
-
-    sensors_name = sensors['attributes.friendly_name'].tolist()
-    sensors_save = database.get_sensors_save(sensors_id)
-    sensors_type = database.get_sensors_type(sensors_id)
-
-    database.update_database("all")
-    database.clean_database_hourly_average()
-
-    context = {
-        "sensors_id": sensors_id,
-        "sensors_name": sensors_name,
-        "sensors_save": sensors_save,
-        "sensors_type": sensors_type
-    }
-
-    return template('./www/sensors.html', sensors=context)
+    return {"status": "ok", "msg": f"Sensors guardats"}
 
 @app.get('/model')
 def create_model_page(active_model = "None"):

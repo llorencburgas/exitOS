@@ -33,6 +33,7 @@ class SqlDB():
             "Authorization": f"Bearer {self.supervisor_token}",
             "Content-Type": "application/json"
         }
+
         self.devices_info = self.get_devices_info()
 
         #comprovem si la Base de Dades existeix
@@ -54,7 +55,7 @@ class SqlDB():
 
             #creant les taules
             cur.execute("CREATE TABLE IF NOT EXISTS dades(sensor_id TEXT, timestamp NUMERIC, value)")
-            cur.execute("CREATE TABLE IF NOT EXISTS sensors(sensor_id TEXT, units TEXT, parent_device TEXT, update_sensor BINARY, save_sensor BINARY, sensor_type TEXT)")
+            cur.execute("CREATE TABLE IF NOT EXISTS sensors(sensor_id TEXT,friendly_name TEXT, units TEXT, parent_device TEXT, update_sensor BINARY, save_sensor BINARY, sensor_type TEXT)")
             cur.execute("CREATE TABLE IF NOT EXISTS forecasts(forecast_name TEXT, sensor_forecasted TEXT, forecast_run_time NUMERIC, forecasted_time NUMERIC, predicted_value REAL, real_value REAL)")
 
             cur.execute("CREATE INDEX IF NOT EXISTS idx_dades_sensor_id_timestamp ON dades(sensor_id, timestamp)")
@@ -131,6 +132,41 @@ class SqlDB():
                 results.append(res[0] if res else 0)
         return results
 
+    def get_all_sensors_data(self):
+        with self._get_connection() as con:
+            cur = con.cursor()
+            cur.execute("select * from sensors")
+            rows = cur.fetchall()
+
+            grouped = {}
+
+            for row in rows:
+                entity_id = row[0]
+                friendly_name = row[1] or ""
+                device_name = row[3] or "Unknown"
+                save = row[5]
+                sensor_type = row[6]
+
+                if device_name not in grouped:
+                    grouped[device_name] = []
+
+                grouped[device_name].append({
+                    "entity_id": entity_id,
+                    "entity_name": friendly_name,
+                    "save": save,
+                    "type": sensor_type,
+                })
+
+            result = [
+                {
+                    "device_name": device,
+                    "entities": entities
+                }
+                for device, entities in grouped.items()
+            ]
+
+        return result
+
     def get_all_saved_sensors_data(self, sensors_saved: List[str], start_date: str, end_date: str) -> Dict[str, List[tuple]]:
         data: List[tuple] = []
         with self._get_connection() as con:
@@ -163,6 +199,10 @@ class SqlDB():
         query = "SELECT sensor_id FROM sensors WHERE units IN ('W', 'kW')" if kw else "SELECT sensor_id FROM sensors WHERE save_sensor = 1"
         with self._get_connection() as con:
             return [row[0] for row in con.execute(query).fetchall()]
+
+    def reset_all_sensors_save(self):
+        with self._get_connection() as con:
+            con.execute("UPDATE sensors SET save_sensor = 0")
 
     def update_sensor_active(self, sensor: str, active: bool):
         with self._get_connection() as con:
@@ -231,12 +271,10 @@ class SqlDB():
         logger.info("🧹 NETEJA COMPLETADA")
         self.vacuum()
 
-    def get_parent_device_from_sensor_id(self, sensor_id: str) -> str:
-        if self.devices_info == -1: return "None"
-
-        for device in self.devices_info:
+    def get_parent_device_from_sensor_id(self, sensor_id: str, devices_dict) -> str:
+        for device in devices_dict:
             for entity in device['entities']:
-                if entity['entity_name'] == sensor_id:
+                if entity['entity_id'] == sensor_id:
                     return device['device_name']
 
         return "None"
@@ -265,47 +303,52 @@ class SqlDB():
 
         local_tz = tzlocal.get_localzone()  # Gets system local timezone (e.g., 'Europe/Paris')
         current_date = datetime.now(local_tz)
+        devices = self.get_devices_info()
 
         with self._get_connection() as con:
             for j in sensors_list.index:
                 sensor_id = sensors_list.iloc[j]["entity_id"]
+                parent_device = self.get_parent_device_from_sensor_id(sensor_id, devices)
+
+                if parent_device == "None":
+                    continue
 
                 sensor_info = self.query_select("sensors", "*", sensor_id, con)
 
                 #si no hem obtingut cap sensor ( és a dir, no existeix a la nosta BD)
                 if sensor_info is None:
                     cur = con.cursor()
+                    columns = [col[1] for col in cur.execute("PRAGMA table_info(sensors)")]
+                    if 'friendly_name' not in columns:
+                        cur.execute("ALTER TABLE sensors ADD COLUMN friendly_name TEXT")
+                        logger.debug(f"Columna 'friendly_name' afegida a la base de dades")
 
                     values_to_insert = (
                         sensor_id,
+                        sensors_list.iloc[j]['attributes.friendly_name'],
                         sensors_list.iloc[j]["attributes.unit_of_measurement"],
                         True,
                         False,
                         "None",
-                        self.get_parent_device_from_sensor_id(sensor_id)
+                        parent_device,
                     )
                     cur.execute(
-                        "INSERT INTO sensors (sensor_id, units, update_sensor, save_sensor, sensor_type, parent_device) VALUES (?,?,?,?,?,?)",
+                        "INSERT INTO sensors (sensor_id,friendly_name, units, update_sensor, save_sensor, sensor_type, parent_device) VALUES (?,?,?,?,?,?,?)",
                         values_to_insert
                     )
                     cur.close()
                     con.commit()
                     logger.debug(f"     [ {current_date.strftime('%d-%b-%Y   %X')} ] Afegit un nou sensor a la base de dades: {sensor_id}")
-                else : #TODO: ELIMINAR QUAN TOTS ELS USUARIS TINGUIN LA TAULA FORECAST I SENSORS ACTUALITZADA
+                else: # TODO: eliminar tot el else quan tots els usuaris tinguin friendly_name dins sensors
                     cur = con.cursor()
-
-                    cur.execute("PRAGMA table_info(forecasts)")
-                    columns = [col[1] for col in cur.fetchall()]
-                    if 'sensor_forecasted' not in columns:
-                        cur.execute("ALTER TABLE forecasts ADD COLUMN sensor_forecasted TEXT")
-                        logger.debug(f"Columna 'sensor_forecasted' afegida a la base de dades: {sensor_id}")
 
                     cur.execute("PRAGMA table_info(sensors)")
                     columns = [col[1] for col in cur.fetchall()]
-                    if 'parent_device' not in columns:
-                        cur.execute("ALTER TABLE sensors ADD COLUMN parent_device TEXT")
-                        logger.debug(f"Columna 'parent_device' afegida a la base de dades: {sensor_id}")
-                        cur.execute("UPDATE sensors SET parent_device = ? WHERE sensor_id = ? ", (self.get_parent_device_from_sensor_id(sensor_id), sensor_id))
+
+                    if 'friendly_name' not in columns:
+                        cur.execute("ALTER TABLE sensors ADD COLUMN friendly_name TEXT")
+                        logger.debug(f"Columna 'friendly_name' afegida a la base de dades SENSORS")
+                        cur.execute("UPDATE sensors SET friendly_name = ? WHERE sensor_id = ? ", (sensors_list.iloc[j]['attributes.friendly_name'], sensor_id))
 
                     cur.close()
                     con.commit()
@@ -372,6 +415,7 @@ class SqlDB():
                         cur.close()
                         con.commit()
                         start_time += timedelta(days = 7)
+
         if all_sensors_debug:
             logger.info(f"🗃️ [ {current_date.strftime('%d-%b-%Y   %X')} ] TOTS ELS SENSORS HAN ESTAT ACTUALITZATS")
 
@@ -531,69 +575,51 @@ class SqlDB():
         """
         url = f"{self.base_url}template"
         template = """
-            {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq', None) | list %}
-            {% set ns = namespace(devices = []) %}
+        {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq', None) | list %}
+        {% set ns = namespace(devices = []) %}
 
-            {% for device in devices %}
-                {% set name = device_attr(device, 'name') %}
-                {% set ents = device_entities(device) %}
+        {% for device in devices %}
+            {% set name = device_attr(device, 'name') %}
+            {% set ents = device_entities(device) %}
 
-                {% set info = namespace(entities = []) %}
-                {% for entity in ents %}
-                    {% set entity_name = entity %}
-                    {% set entity_state = states[entity] %}
-                    {% set attrs = entity_state.attributes if entity_state else {} %}
-
+            {% set info = namespace(entities = []) %}
+            {% for entity in ents %}
+                {% set entity_name = entity %}
+                {% set entity_state = states[entity] %}
+                {% set attrs = entity_state.attributes if entity_state else {} %}
+                {% set friendly_name = attrs.friendly_name if attrs.friendly_name else '' %}
+                
+                {% if not entity_name.startswith('update.') %}
                     {% set info.entities = info.entities + [ {
-                      "entity_name": entity_name,
-                      "entity_state": entity_state.state if entity_state else None,
-                      "entity_attrs": attrs,
+                        "entity_id": entity_name,
+                        "entity_name": friendly_name,
                     } ] %}
-                {%endfor %}
-
+                {% endif %}
+            {%endfor %}
+            
+            {% if info.entities %}
                 {% set ns.devices = ns.devices + [ {
-                "device_id": device,
                 "device_name": name,
                 "entities": info.entities
                 } ] %}
-            {% endfor %}
+            {% endif %}
+        {% endfor %}
 
-            {{ ns.devices | tojson}}
-            """
+        {{ ns.devices | tojson}}
+
+        """
 
         response = requests.post(url, headers=self.headers, json = {"template": template})
 
         if response.status_code == 200:
             # json_response = response.json()
-            full_devices = response.text
+            full_devices = response.text.strip()
             result = json.loads(full_devices)
             return result
         else:
             logger.error(f"❌ Error en la resposta: {response.status_code}")
             logger.debug(f"📄 Cos resposta:\n     {response.text}")
             return {}
-
-    def get_devices_and_entities(self):
-        result = {}
-
-        for device in self.devices_info:
-            name = device.get("device_name", "Unknown device")
-            entities = device.get("entities", [])
-
-            entity_list = []
-            for e in entities:
-                entity_id = e.get("entity_name")
-                attrs = e.get("entity_attrs", {})
-                friendly_name = attrs.get("friendly_name", entity_id)
-
-                entity_list.append({
-                    "entity_id": entity_id,
-                    "friendly_name": friendly_name,
-                })
-            result[name] = entity_list
-
-
-        return result
 
     def get_all_sensors_from_parent(self,parent_device):
         with self._get_connection() as con:
