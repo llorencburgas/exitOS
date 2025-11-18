@@ -161,17 +161,11 @@
         const dev = device_entities.find(d => d.device_name === device_name);
         if (!dev) return;
 
-        console.log("device_name", device_name);
-        console.log("device_type", device_type);
-
-
         const vars = device_types[device_type]["variables"];
-        console.log("vars", vars);
         const container = document.getElementById('vars-config-section');
         container.innerHTML = '';
 
         vars.forEach(variable => {
-            console.log("variable", variable);
 
             const label = document.createElement("label");
             label.for = variable;
