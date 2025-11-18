@@ -222,9 +222,6 @@
         const tdEntName = document.createElement('td');
         tdEntName.textContent = ent.friendly_name;
 
-        // // ID ENTITAT
-        // const tdEntId = document.createElement('td');
-        // tdEntId.textContent = ent.entity_id;
 
         //SELECT TIPUS ENTITAT
         const tdEntType = document.createElement('td');
@@ -320,7 +317,7 @@
           console.log("OK");
         }
         else {
-          console.error(result.status);
+          console.error("ERROR", result.status);
         }
     }
 

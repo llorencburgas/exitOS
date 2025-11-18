@@ -507,7 +507,6 @@ class SqlDB():
             con.execute("VACUUM")
 
     def get_active_sensors_by_type(self, sensor_type: String = 'consum'):
-        #TODO: mirar si posar una booleana per indicar tipus d'unitats (Kw) del sensor
         with self._get_connection() as con:
             cursor = con.cursor()
 
