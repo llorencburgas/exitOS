@@ -864,7 +864,6 @@ def get_device_config_data(file_name):
 @app.post('/save_optimization_config')
 def save_optimization_config():
     data = request.json
-    logger.info(data)
     if not data:
         response.status = 400
         return {"status":"error", "msg": "Dades buides"}
@@ -880,6 +879,8 @@ def save_optimization_config():
     with open(full_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
+    for var in data['vars']:
+        database.update_sensor_active(var['id'], True)
 
     return {"status": "ok", "msg": f"Optimització desada com {device_name}.json"}
 

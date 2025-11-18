@@ -157,23 +157,21 @@
     function UpdateAssociatedVariables(){
         const device_type = document.getElementById('device-type').value;
         const device_name = document.getElementById('device-name').value;
-        let devices = {}
 
-       if(Array.isArray(device_types)){
-        device_types.forEach(item => {
-            const [name, entities] = Object.entries(item)[0];
-            devices[name] = entities;
-        });
-        }else{
-            devices = device_entities;
-        }
+        const dev = device_entities.find(d => d.device_name === device_name);
+        if (!dev) return;
+
+        console.log("device_name", device_name);
+        console.log("device_type", device_type);
 
 
         const vars = device_types[device_type]["variables"];
+        console.log("vars", vars);
         const container = document.getElementById('vars-config-section');
         container.innerHTML = '';
 
         vars.forEach(variable => {
+            console.log("variable", variable);
 
             const label = document.createElement("label");
             label.for = variable;
@@ -185,13 +183,13 @@
             select.name = variable;
             select.id = variable;
 
-            if (!device_name || !device_entities[device_name]) return;
-            for (const ent of device_entities[device_name]) {
+            // if (!device_name || !device_entities[device_name]) return;
+            dev.entities.forEach(ent => {
                 const opt = document.createElement("option");
                 opt.value = ent.entity_id;
-                opt.textContent = ent.friendly_name;
+                opt.textContent = ent.entity_name;
                 select.appendChild(opt);
-            }
+            });
 
             container.appendChild(label);
             container.appendChild(select);
@@ -316,9 +314,6 @@
         const vars = GetSelectedVariables();
         const friendly_type = device_types[device_type].nom;
 
-        console.log("DEVICE_NAME: ", device_name);
-        console.log("DEVICE_TYPE: ", device_type);
-        console.log("FRIENDLY_TYPE: ", friendly_type);
 
         const restrictions = {};
         restrictionInputs.forEach(inp => {
@@ -362,16 +357,11 @@
      * Omple el select amb els dispositius
      */
     function LoadDevicesEntities(){
-        let devices = {}
-
-        if(Array.isArray(device_entities)){
-            device_entities.forEach(item => {
-                const [name, entities] = Object.entries(item)[0];
-                devices[name] = entities;
-            });
-        }else{
-            devices = device_entities;
-        }
+        const devices = {};
+        device_entities.forEach(item => {
+            const name = item.device_name;
+            devices[name] = item.entities || [];
+        });
 
         const deviceSelect = document.getElementById('device-name');
         deviceSelect.innerHTML  = '<option value="">-- Selecciona un dispositiu --</option>';
