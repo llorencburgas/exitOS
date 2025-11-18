@@ -39,7 +39,7 @@ class SqlDB():
         #comprovem si la Base de Dades existeix
         if not os.path.isfile(self.database_file):
             logger.info("La base de dades no existeix Creant-la...")
-            self._init_db()
+        self._init_db()
 
     def _init_db(self):
         """
