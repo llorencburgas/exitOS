@@ -15,12 +15,11 @@ from abstraction.AbsEnergySource import AbsEnergySource
 from abstraction.AbsGenerator import AbsGenerator
 from abstraction.assets.Battery import Battery
 
-from exitos.rootfs.sqlDB import SqlDB
 
 logger = setup_logger()
 
 class OptimalScheduler:
-    def __init__(self, database: SqlDB):
+    def __init__(self, database: db):
 
         self.database = database
 
