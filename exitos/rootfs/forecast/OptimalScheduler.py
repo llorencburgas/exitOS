@@ -1,10 +1,10 @@
 import copy
 import requests
+import os
+import glob
+import json
 
-import forecast.ForecasterManager as ForecastManager
 import forecast.Solution as Solution
-import numpy as np
-import pandas as pd
 import sqlDB as db
 from datetime import datetime, timedelta
 from logging_config import setup_logger
@@ -15,6 +15,9 @@ from abstraction.AbsEnergySource import AbsEnergySource
 from abstraction.AbsGenerator import AbsGenerator
 from abstraction.assets.Battery import Battery
 
+from pathlib import Path
+from configparser import ConfigParser
+
 
 logger = setup_logger()
 
@@ -22,10 +25,8 @@ class OptimalScheduler:
     def __init__(self, database: db):
 
         self.database = database
+        self.latitude, self.longitude = database.get_lat_long()
 
-        latitude, longitude = database.get_lat_long()
-        self.latitude = latitude
-        self.longitude = longitude
         self.varbound = None
 
         self.maxiter = 300
@@ -46,89 +47,7 @@ class OptimalScheduler:
         self.kwargs_for_simulating = {}
 
 
-
-        # key arguments for those assets that share a common restriction and
-        # one execution effects the others assets execution
-
-
-        # !!!! CANVIAR PER FUNCIÓ QUE OBTÉ ELS PREUS REALS MÉS ENDAVANT !!!!
-
-    def prepare_data(self, data):
-        horizon_hours = 24
-
-        all_saved_sensors = self.database.get_all_saved_sensors_id()
-        all_sensors = []
-        consumers = {}
-        generators = {}
-        energy_sources = {}
-
-        for dispositiu in data:
-            for entitat in dispositiu["entities"]:
-                if entitat['entity_name'] in all_saved_sensors:
-                    current_sensor = {'sensor_id': entitat['entity_name'],
-                                      'device_id': dispositiu['device_name'],
-                                      'sensor_type': self.database.get_sensors_type([entitat['entity_name'],])[0],
-                                      'sensor_state': entitat.get("entity_state", 0) }
-                    all_sensors.append(current_sensor)
-
-        for sensor in all_sensors:
-            sensor_id = sensor['sensor_id']
-            device_id = sensor['device_id']
-            sensor_type = sensor['sensor_type']
-            state_val = sensor['sensor_state']
-
-            estimated_max_power = state_val #es pot substituir pel forecast si el tinc.
-
-            if sensor_type == "Consum":
-                consumer_obj = AbsConsumer(sensor_id)
-
-                sensor_forecast = self.database.get_data_from_latest_forecast(sensor_id+".pkl")
-
-                logger.warning("forecast obtingut")
-                logger.debug(sensor_forecast)
-
-                consumer_obj.calendar_range = (0, estimated_max_power)
-                consumer_obj.active_hours = horizon_hours
-                consumer_obj.active_calendar = [0, horizon_hours-1]
-                if device_id not in consumers:
-                    consumers[device_id] = {}
-                consumers[device_id][sensor_id] = consumer_obj
-
-            elif sensor_type == "Generator":
-                generator_obj = AbsGenerator(device_id)
-                generator_obj.calendar_range = (0, estimated_max_power)
-                generator_obj.active_hours = horizon_hours
-                generator_obj.active_calendar = [0, horizon_hours-1]
-                if device_id not in generators:
-                    generators[device_id] = {}
-                generators[device_id][sensor_id] = generator_obj
-
-            elif sensor_type == "EnergySource":
-                energy_obj = AbsEnergySource(sensor_id)
-                device_ents = [ent for ent  in data if ent['device_name'] == device_id][0]
-                min_val = None
-                max_val = None
-                for ent in device_ents['entities']:
-                    if ent['entity_name'].startswith("number"):
-                        min_val = ent['entity_attrs']['min']
-                        max_val = ent['entity_attrs']['max']
-                if min_val is None:
-                    min_val = estimated_max_power
-                    max_val = estimated_max_power
-                # energy_obj.calendar_range = (max_charge, max_discharge)
-                energy_obj.min = min_val
-                energy_obj.max = max_val
-
-                energy_obj.active_hours = horizon_hours
-                energy_obj.active_calendar = [0, horizon_hours-1]
-
-                if device_id not in energy_sources:
-                    energy_sources[device_id] = {}
-                energy_sources[device_id][sensor_id] = energy_obj
-
-        return consumers, generators, energy_sources
-
-    def optimize(self, consumer, generator, energy_source:Battery, hores_simular, minuts, timestamps):
+    def optimize2(self, consumer, generator, energy_source:Battery, hores_simular, minuts, timestamps):
         logger.info("🦖 - Començant optimització")
 
         self.consumers = consumer
@@ -148,9 +67,39 @@ class OptimalScheduler:
         result = self.__runDEModel(self.costDE)
         return result
 
+    def optimize(self, global_consumer_id, global_generator_id):
+        logger.info("🦖 - Començant optimització")
+
+        logger.debug(f" CONSUM: {global_consumer_id} \n GENERACIÓ: {global_generator_id}")
+        forecast_consum = self.database.get_data_from_latest_forecast_from_sensorid(global_consumer_id)
+        forecast_generator = self.database.get_data_from_latest_forecast_from_sensorid(global_generator_id)
+
+        config_path = os.path.join(self.database.base_filepath, "optimizations/configs/*.json")
+        all_devices = {}
+        for file_path in glob.glob(config_path):
+            with open(file_path, "r", encoding="utf-8") as f:
+                device_config = json.load(f)
+                device_name = device_config["device_name"]
+                all_devices[device_name] = device_config
+
+
+        for device in all_devices:
+            if device['device_type'] == "bateria":
+                energy_source = Battery(hours_to_simulate = 24,
+                                        minutes_per_hour = 1,
+                                        max_capacity = device['restrictions']['Capacitat màxima (kWh)'],
+                                        min_capacity = device['restrictions']['Capacitat mínima (kWh)'],
+                                        actual_percentage = 0,  #LLEGIR L'ÚLTIM VALOR DEL SENSOR
+                                        efficiency = 100) #LLEGIR L'ÚLTIM VALOR DEL SENSOR
+            i=0
+
+
+
+
+
     def __runDEModel(self, function):
         result = differential_evolution(func = function,
-                                        popsize = 150,
+                                        popsize = 100,
                                         bounds = self.varbound,
                                         integrality = [True] * len(self.varbound),
                                         maxiter = self.maxiter,
@@ -204,7 +153,8 @@ class OptimalScheduler:
         if not self.database.running_in_ha:
             logger.debug(f"     Cost aproximacio {self.solucio_run.preu_total}")
 
-    def get_hourly_electric_prices(self, hores_simular: int = 24, minuts: int = 1):
+    @staticmethod
+    def get_hourly_electric_prices(hores_simular: int = 24, minuts: int = 1):
         today = datetime.today().strftime('%Y%m%d')
         url = f"https://www.omie.es/es/file-download?parents%5B0%5D=marginalpdbc&filename=marginalpdbc_{today}.1"
         response = requests.get(url)
@@ -234,10 +184,3 @@ class OptimalScheduler:
             if aux == 24: aux = 0
 
         return return_prices
-
-
-########################################################################################################################
-
-    def extract_sensor_type(self, sensor_name):
-        split_sensor_name = sensor_name.split('.')
-        return split_sensor_name[0]

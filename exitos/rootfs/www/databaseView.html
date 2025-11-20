@@ -48,8 +48,9 @@
                 <input type="hidden" name="sensors_id" id="sensors-input" value="">
 
             </form>
-            <button class="btn" id="fetch-data" onclick="FetchGraph()"> Mostrar Gràfiques</button>
-            <button class="btn secondary" id="update-database" onclick="UpdateDatabase()" style="margin-bottom: 30px;"> Actualitzar Base de Dades</button>
+            <button class="btn" id="fetch-data" onclick="FetchGraph()"><i class="fa-solid fa-chart-line"></i> Mostrar Gràfiques</button>
+            <button class="btn secondary" id="update-database" onclick="UpdateDatabase()" style="margin-bottom: 100px;"><i class="fa-solid fa-arrows-rotate"></i> Actualitzar Base de Dades</button>
+            <button class="btn self-destruct" id="delete-database" onclick="OpenModal()" style="margin-bottom: 30px;"><i class="fa-solid fa-ban"></i> Eliminar Base de Dades </button>
 
             % for sensor_id, graph_html in graphs.items():
             <h2>Sensor {{ sensor_id }}</h2>
@@ -61,10 +62,29 @@
     </div>
 
 
+
+
+    <div id="self-destruct-modal" class="modal hidden">
+        <div id="modal-box" class="modal-content">
+            <h2 id="modal-title">SELF DESTRUCT</h2>
+            <div style="margin-top: 20px; display: flex; justify-content: center; gap: 12px;">
+                <p id="modal-text" style="justify-content: center">Estàs a punt d'eliminar tota la Base de Dades!!</p>
+            </div>
+
+            <div style="margin-top: 20px; display: flex; justify-content: center; gap: 12px;">
+                <button class="btn self-destruct" id="btn-yes"> Eliminar </button>
+                <button class="btn secondary" id="btn-no"> Cancel·lar </button>
+            </div>
+
+            <div id="explosion-container" class="explosion"></div>
+        </div>
+    </div>
+
+
 </body>
 
 <script>
-
+    //#region select sensors
     let sensors = document.getElementById("sensor-data").getAttribute("data-sensors").split(",");
     sensors = sensors.map(sensor => sensor.replace(/['\[\]]/g, ''));
 
@@ -142,7 +162,9 @@
         }
     });
 
+    //#endregion select sensors
 
+    //#region graph generation
     function FetchGraph() {
 
         const sensors = document.getElementById("sensors-input").value;
@@ -194,14 +216,157 @@
             });
     }
 
-
     function UpdateDatabase(){
         fetch('force_update_database')
             .then(response => response.text())
             .then(data => console.log("Database updated"))
     }
 
+    //#endregion graph generation
 
+    //#region SELF DESTRUCT BUTTON
+
+    const modal = document.getElementById("self-destruct-modal");
+    const modalBox = document.getElementById("modal-box");
+    const modalTitle = document.getElementById("modal-title");
+    const modalText = document.getElementById("modal-text");
+
+    let selfDestructCounter = 3;
+
+    function resetAnimations() {
+        modalBox.style.animation = "none";
+        modalBox.offsetHeight;
+        modalBox.style.animation = "";
+    }
+
+    function OpenModal() {
+        modal.classList.remove("hidden");
+        resetAnimations();
+        modalBox.classList.add("opening");
+    }
+
+    function AnimateStepChange(newTitle, newText) {
+        resetAnimations();
+        modalBox.classList.add("closing");
+
+        setTimeout(() => {
+            // Canvi de text DURANT el "punt mort"
+            modalTitle.textContent = newTitle;
+            modalText.textContent = newText;
+
+            modalBox.classList.remove("closing");
+            resetAnimations();
+            modalBox.classList.add("opening");
+
+        }, 250); // coincideix amb duració closing
+    }
+
+    function triggerExplosion(x, y) {
+        const sparks = 25;
+
+        for (let i = 0; i < sparks; i++) {
+            const spark = document.createElement("div");
+            spark.classList.add("spark");
+
+            // posició inicial (al centre del modal)
+            spark.style.left = `${x}px`;
+            spark.style.top = `${y}px`;
+
+            // direcció aleatòria
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 120 + Math.random() * 80;
+
+            spark.style.setProperty("--sx", `${Math.cos(angle) * distance}px`);
+            spark.style.setProperty("--sy", `${Math.sin(angle) * distance}px`);
+
+            document.body.appendChild(spark);
+
+            // eliminar després de l'animació
+            setTimeout(() => spark.remove(), 700);
+        }
+    }
+
+    function ResetTextSelfDestruct(){
+        selfDestructCounter = 3;
+        modalTitle.textContent = "SELF DESTRUCT";
+        modalText.textContent = "Estàs a punt d'eliminar tota la Base de Dades!!";
+    }
+
+    function DestroyModal() {
+
+        // 1. Explosió al centre del modal
+        const rect = modalBox.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        triggerExplosion(centerX, centerY);
+
+        // 2. Animació de destrucció (sacsejada + flash)
+        modalBox.classList.add("destroying");
+
+        // 3. Espera que acabi l'animació (800ms)
+        setTimeout(() => {
+            // Amaga el modal després de destruir-lo
+            modal.classList.add("hidden");
+            modalBox.classList.remove("destroying");
+
+            // Reset
+            ResetTextSelfDestruct();
+
+            SelfDestructBackend();
+
+        }, 800);
+    }
+
+    async function SelfDestructBackend(){
+        console.log("AAAAAAA")
+        const res = await fetch('self_destruct', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        const result = await res.json();
+        if (result.status === 'ok') {
+            console.log("EEEEEEEEE");
+        }
+    }
+
+
+    document.getElementById("btn-yes").addEventListener("click", () => {
+        selfDestructCounter--;
+
+        if (selfDestructCounter === 2) {
+            AnimateStepChange(
+                "Estàs segur del que estàs a punt de fer?",
+                "3"
+            );
+        }
+        else if (selfDestructCounter === 1) {
+            AnimateStepChange(
+                "No la podràs recuperar! Ho saps, no?",
+                "2"
+            );
+        }
+        else if (selfDestructCounter === 0) {
+            AnimateStepChange(
+                "Encara ets a temps...",
+                "1"
+            );
+        }
+        else{
+            setTimeout(() => {
+                DestroyModal();
+            }, 300);
+        }
+    });
+
+
+    document.getElementById("btn-no").addEventListener("click", () => {
+        modal.classList.add("hidden");
+        ResetTextSelfDestruct();
+    });
+
+
+    //#endregion a
 
     $(function () {
         $('input[name="datetimes"]').daterangepicker({

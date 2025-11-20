@@ -1,4 +1,9 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
+
+## 1.1.10
+- SELF DESTRUCT Button implemented
+
+
 ## 1.1.9
 - IMPORTANT: S'ha d'eliminar la taula de sensors de la base de dades. (O tota la base de dades directament) per tal que funcioni bé
 

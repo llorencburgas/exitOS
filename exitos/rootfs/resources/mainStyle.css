@@ -193,11 +193,19 @@ h2{
     color: var(--text-color);
 }
 
+.btn.self-destruct{
+    background-color: #e04141;
+    color: black;
+}
+
 .btn.secondary:hover{
   background-color: var(--button-secondary-bg-hover-color);
   transform: translateY(-2px);
 }
 
+.btn.self-destruct:hover{
+    background-color: #af3232;
+}
 /*#endregion*/
 
 /*#region FOOTER*/
@@ -575,6 +583,123 @@ a.mail-text{
 
 /*#region new config*/
 
+/*#region self-destruct animation*/
+
+/* Flash blanc sobtat */
+@keyframes flashBang {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    40% { opacity: 0.6; }
+    100% { opacity: 0; }
+}
+
+/* Ona expansiva circular */
+@keyframes shockwave {
+    0% {
+        transform: scale(0.2);
+        opacity: 0.9;
+    }
+    80% {
+        transform: scale(3.5);
+        opacity: 0.1;
+    }
+    100% {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* Espurnes */
+@keyframes spark {
+    0% {
+        transform: translate(0,0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--sx), var(--sy)) scale(0.3);
+        opacity: 0;
+    }
+}
+
+/* Tremolor final */
+@keyframes bigShake {
+    0%,100% { transform: translate(0); }
+    20% { transform: translate(-10px, 3px); }
+    40% { transform: translate(12px, -6px); }
+    60% { transform: translate(-8px, 4px); }
+    80% { transform: translate(6px, -3px); }
+}
+
+/* Contenidor d'explosió */
+.explosion {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: visible;
+}
+
+/* Flash blanc */
+.explosion-flash {
+    position: absolute;
+    inset: 0;
+    background: white;
+    border-radius: 50%;
+    animation: flashBang 0.45s ease-out forwards;
+}
+
+/* Ona expansiva */
+.explosion-wave {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 4px solid rgba(255, 140, 0, 0.7);
+    animation: shockwave 0.8s ease-out forwards;
+}
+
+/* Espurna individual */
+.spark {
+    position: absolute; /* abans era fixed */
+    width: 12px;
+    height: 12px;
+    background: orange;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    animation: sparkFly 700ms linear forwards;
+    z-index: 2000;
+}
+
+
+@keyframes sparkFly {
+    0% {
+        transform: translate(0,0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--sx), var(--sy)) scale(0.2);
+        opacity: 0;
+    }
+}
+
+
+/* Tremolor del modal */
+.modal-content.exploding {
+    animation: bigShake 0.3s ease-out forwards;
+}
+
+
+@keyframes fadeIn{
+    from{opacity: 0; transform: scale(0.9)}
+    to{opacity: 1; transform: scale(1)}
+}
+
+@keyframes fadeOut{
+    from{opacity: 1; transform: scale(1)}
+    to{opacity: 0; transform: scale(0.9)}
+}
+
+/*#endregion self-destruct animation*/
+
 .modal{
     position:fixed;
     top:0; left:0;
@@ -600,23 +725,28 @@ a.mail-text{
     overflow-y: auto;
     box-shadow: 0 6px 18px rgba(0,0,0,0.15);
     position: relative;
-    animation: fadeIn 0.3s ease-in-out;
 }
 
-@keyframes fadeIn{
-    from{opacity: 0; transform: scale(0.97)}
-    to{opacity: 1; transform: scale(1)}
+.modal-content.opening{
+     animation: fadeIn 0.25s ease forwards;
+}
+
+.modal-content.closing{
+    animation: fadeOut 0.25s ease forwards;
+}
+
+.modal-content.destroying {
+    animation:
+        bigShake 0.3s ease-out,
+        flashBang 0.45s ease-out,
+        fadeOut 0.4s ease-out 0.4s forwards;
 }
 
 
-.new-config-section{
-    margin-bottom: 18px;
-}
-
-.new-config-section label{
+.new-config-section label,
+.vars-config-section label{
     display:block;
     font-weight: 500;
-    margin-bottom: 6px;
     color: var(--text-accent-color);
 }
 

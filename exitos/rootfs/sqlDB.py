@@ -34,6 +34,11 @@ class SqlDB():
             "Content-Type": "application/json"
         }
 
+        if self.running_in_ha:
+            self.base_filepath = "share/exitos/"
+        else:
+            self.base_filepath = "./share/exitos/"
+
         self.devices_info = self.get_devices_info()
 
         #comprovem si la Base de Dades existeix
@@ -71,16 +76,31 @@ class SqlDB():
     def _get_connection(self):
         return sqlite3.connect(self.database_file)
 
+    def self_destruct(self):
+        with sqlite3.connect("dades.db") as con:
+            cur = con.cursor()
+            cur.execute("DROP TABLE IF EXISTS dades")
+            cur.execute("DROP TABLE IF EXISTS sensors")
+            cur.execute("DROP TABLE IF EXISTS forecasts")
+            con.commit()
+        self._init_db()
+
     def query_select(self, table:str, column:str, sensor_id: str, con = None) -> List[Any]:
         """
         Executa una query SQL a la base de dades
         """
-        if con is None: con = self._get_connection()
+        close_con = False
+        if con is None:
+            con = self._get_connection()
+            close_con = True
 
         cur = con.cursor()
         cur.execute(f"SELECT {column} FROM {table} WHERE sensor_id = ?", (sensor_id,))
         result = cur.fetchone()
         cur.close()
+
+        if close_con: con.close()
+
         return result
 
     def get_all_sensors(self) -> Optional[pd.DataFrame]:
@@ -190,8 +210,10 @@ class SqlDB():
 
     def get_data_from_sensor(self, sensor_id: str) -> pd.DataFrame:
         query = """SELECT timestamp, value FROM dades WHERE sensor_id = ? """
-        df = pd.read_sql_query(query, self._get_connection(), params=(sensor_id,))
+        con = self._get_connection()
+        df = pd.read_sql_query(query, con, params=(sensor_id,))
         df['timestamp'] = pd.to_datetime(df['timestamp'], format='ISO8601', errors='coerce')
+        con.close()
         return df.sort_values('timestamp').reset_index(drop=True)
 
     def get_all_saved_sensors_id(self, kw: bool = False) -> List[str]:

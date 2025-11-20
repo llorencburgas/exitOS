@@ -60,7 +60,10 @@
         <div class="new-config-section" id="restrictionsContainer"></div>
 
         <!--   VARIABLES ASSOCIADES     -->
-        <div class="vars-config-section" id="vars-config-section"></div>
+        <div class="new-config-section" id="vars-config-section"></div>
+
+        <!--   VARIABLES ASSOCIADES     -->
+        <div class="new-config-section" id="control-vars-config-section"></div>
 
         <div style="margin-top: 20px;">
             <button class="btn" onclick="SubmitOptimization()"> Guardar </button>
@@ -105,6 +108,7 @@
      */
     function NewDeviceConfig(){
           const modal = document.getElementById('new-optimization-modal');
+          modal.classList.add("opening");
           modal.classList.remove('hidden');
 
           const select = document.getElementById('device-type');
@@ -345,6 +349,7 @@
      */
     function CloseModal(){
           document.getElementById("new-optimization-modal").classList.add('hidden');
+          document.getElementById("new-optimization-modal").classList.remove('opening');
     }
 
     /**

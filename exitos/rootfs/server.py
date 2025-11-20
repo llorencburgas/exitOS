@@ -44,10 +44,12 @@ forecast = Forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler(database)
 blockchain = Blockchain.Blockchain()
 
-
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')
 
+#region HTML PAGES
+
+#region core_paths
 def serve_static(filepath):
     return static_file(filepath, root='./images/')
 
@@ -58,6 +60,22 @@ def serve_resources(filepath):
 @app.get('models/<filepath:path>')
 def serve_models(filepath):
     return static_file(filepath, root='./models/')
+
+# Ruta dinàmica per a les pàgines HTML
+@app.get('/<page>')
+def get_page(page):
+    # Ruta del fitxer HTML
+    # file_path = f'./www/{page}.html'
+    # Comprova si el fitxer existeix.
+    if os.path.exists(f'./www/{page}.html'):
+        # Control de dades segons la pàgina
+        return static_file(f'{page}.html', root='./www/')
+    elif os.path.exists(f'./www/{page}.css'):
+        return static_file(f'{page}.css', root='./www/')
+    else:
+        return HTTPError(404, "La pàgina no existeix")
+
+#endregion core_paths
 
 # Ruta inicial
 @app.get('/')
@@ -78,6 +96,182 @@ def get_init():
 def sensors_page():
     return template('./www/sensors.html',)
 
+@app.get('/databaseView')
+def database_graph_page():
+    sensors_id = database.get_all_saved_sensors_id()
+    graphs_html = {}
+
+    return template('./www/databaseView.html', sensors_id=sensors_id, graphs=graphs_html)
+
+@app.get('/model')
+def create_model_page(active_model = "None"):
+    try:
+        sensors_id = database.get_all_saved_sensors_id()
+        models_saved = [os.path.basename(f)
+                        for f in glob.glob(forecast.models_filepath + "forecastings/*.pkl")]
+
+        forecasts_aux = database.get_forecasts_name()
+        forecasts_id = []
+        for f in forecasts_aux:
+            forecasts_id.append(f[0])
+
+        if active_model == "None": active_model = "newModel"
+
+        return template('./www/model.html',
+                        sensors_input = sensors_id,
+                        models_input = models_saved,
+                        forecasts_id = forecasts_id,
+                        active_model = active_model)
+    except Exception as ex:
+        error_message = traceback.format_exc()
+        return f"Error! Alguna cosa ha anat malament :c : {str(ex)}\nFull Traceback:\n{error_message}"
+
+@app.route('/config_page')
+def config_page():
+
+    sensors_id = database.get_all_saved_sensors_id(kw=True)
+    user_lat = optimalScheduler.latitude
+    user_long = optimalScheduler.longitude
+    user_location = {'lat': user_lat, 'lon': user_long}
+
+    user_data = get_user_configuration_data()
+
+    return template('./www/config_page.html',
+                    sensors = sensors_id,
+                    location = user_location,
+                    user_data = user_data)
+
+@app.route('/optimization')
+def optimization_page():
+
+    # RESTRICCIONS PER A DISPOSITIU
+    config_path = 'resources/optimization_devices.conf'
+    devices_data = {}
+
+    if not os.path.exists(config_path):
+        logger.warning("⚠️ - No s'ha trobat el fitxer de configuració: {config_path}")
+    else:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            devices_data = json.load(f)
+
+    # DISPOSITIUS I ENTITATS ASSOCIADES
+    devices_entities = database.get_devices_info()
+
+    current_date = datetime.now().strftime('%d-%m-%Y')
+    return template("./www/optimization.html",
+                    current_date = current_date,
+                    device_types = json.dumps(devices_data),
+                    device_entities = devices_entities)
+
+#endregion PAGE CREATIONS
+
+#region PÀGINA MAIN
+@app.route('/get_scheduler_data')
+def get_scheduler_data():
+    try:
+        full_path = os.path.join(forecast.models_filepath, "optimizations/sonnen_opt.pkl")
+        if not os.path.exists(full_path): optimize()
+        sonnen_db = joblib.load(full_path)
+
+        graph_timestamps = sonnen_db['timestamps']
+        graph_optimization = sonnen_db['Power']
+        graph_consum = sonnen_db['Consumer']
+        graph_generation = sonnen_db['Generator']
+
+        graph_df = pd.DataFrame({
+            "hora": pd.to_datetime(graph_timestamps),
+            "optimitzacio": graph_optimization,
+            "consum": graph_consum,
+            "generacio": graph_generation
+        })
+        graph_df['hora_str'] = graph_df['hora'].dt.strftime('%H:%M')
+
+        fig = go.Figure()
+
+        # Línia principal (verd amb fill)
+        fig.add_trace(go.Scatter(
+            x=graph_df["hora"],
+            y=graph_df["optimitzacio"],
+            mode='lines',
+            name="Optimització",
+            line=dict(color="green", width=2),
+            fill='tozeroy',
+            fillcolor="rgba(0,128,0,0.3)"
+        ))
+
+        # Línia del sensor2 (blau amb opacitat baixa)
+        fig.add_trace(go.Scatter(
+            x=graph_df["hora"],
+            y=graph_df["consum"],
+            mode='lines',
+            name="Consum",
+            line=dict(color="blue", width=2),
+            opacity=0.5
+        ))
+
+        # Línia del sensor3 (taronja amb opacitat baixa)
+        fig.add_trace(go.Scatter(
+            x=graph_df["hora"],
+            y=graph_df["generacio"],
+            mode='lines',
+            name="Generacio",
+            line=dict(color="orange", width=2),
+            opacity=0.5
+        ))
+
+
+        now = datetime.now()
+
+        fig.update_layout(
+            height=400,
+            yaxis=dict(zeroline=False),
+            xaxis=dict(
+                tickmode='array',
+                tickvals=graph_timestamps,
+                ticktext=graph_df['hora_str'],
+                tickangle=-45,
+                tickfont=dict(size=13),
+                title="Hores"
+            ),
+            yaxis_title="Consum (W)",
+            shapes=[
+                dict(
+                    type="line",
+                    x0=now,
+                    x1=now,
+                    y0=0,
+                    y1=1,
+                    xref="x",
+                    yref="paper",
+                    line=dict(color="red", width=2, dash="dash")
+                )
+            ],
+            annotations=[
+                dict(
+                    x=now,
+                    y=1.2,                 # una mica per sobre del gràfic
+                    xref="x",
+                    yref="paper",
+                    text="Actual",
+                    showarrow=False,
+                    font=dict(color="red", size=12),
+                    textangle=-45            # rotat en diagonal
+                )
+            ],
+        )
+
+
+
+        fig_json = fig.to_plotly_json()
+        response.content_type = "application/json"
+        return json.dumps(fig_json, cls=plotly.utils.PlotlyJSONEncoder)
+
+    except Exception as e:
+        logger.exception(f"❌ Error obtenint scheduler': {e}")
+#endregion PÀGINA MAIN
+
+#region PÀGINA DEVICES
+
 @app.get('/get_sensors')
 def get_sensors():
     try:
@@ -90,18 +284,36 @@ def get_sensors():
         error_message = traceback.format_exc()
         return f"Error! Alguna cosa ha anat malament :c : {str(ex)}\nFull Traceback:\n{error_message}"
 
-@app.get('/databaseView')
-def database_graph_page():
-    sensors_id = database.get_all_saved_sensors_id()
-    graphs_html = {}
+@app.route('/update_sensors', method='POST')
+def update_sensors():
+    data = request.json
+    if not data:
+        response.status = 400
+        return {"status":"error", "msg": "Dades buides"}
 
-    return template('./www/databaseView.html', sensors_id=sensors_id, graphs=graphs_html)
+    database.reset_all_sensors_save()
+
+    for device in data:
+        database.update_sensor_active(sensor = device['entityId'], active = True)
+        database.update_sensor_type(sensor = device['entityId'], new_type = device['type'])
+
+    return {"status": "ok", "msg": f"Sensors guardats"}
+
+@app.route('/self_destruct', method='POST')
+def self_destruct_database():
+    database.self_destruct()
+    return {"status": "ok"}
+
+#endregion PÀGINA DEVICES
+
+#region PÀGINA DATABASE
 
 @app.route('/get_graph_info', method='POST')
 def graphs_view():
     try:
         selected_sensors = request.forms.get("sensors_id")
         selected_sensors_list = [sensor.strip() for sensor in selected_sensors.split(',')] if selected_sensors else []
+        date_to_check = ''
 
         date_to_check_input = request.forms.getall("datetimes")
         if  not date_to_check_input:
@@ -144,50 +356,56 @@ def graphs_view():
     except Exception as e:
         return json.dumps({"status": "error", "message": str(e)})
 
-@app.route('/update_sensors', method='POST')
-def update_sensors():
-    data = request.json
-    if not data:
-        response.status = 400
-        return {"status":"error", "msg": "Dades buides"}
+@app.route('/force_update_database')
+def force_update_database():
+    database.update_database("all")
+    database.clean_database_hourly_average()
+    return "ok"
 
-    database.reset_all_sensors_save()
+#endregion PÀGINA DATABASE
 
-    for device in data:
-        database.update_sensor_active(sensor = device['entityId'], active = True)
-        database.update_sensor_type(sensor = device['entityId'], new_type = device['type'])
+#region PÀGINA MODEL
 
-    return {"status": "ok", "msg": f"Sensors guardats"}
-
-@app.get('/model')
-def create_model_page(active_model = "None"):
+@app.route('/get_model_config/<model_name>')
+def get_model_config(model_name):
     try:
-        sensors_id = database.get_all_saved_sensors_id()
-        models_saved = [os.path.basename(f)
-                        for f in glob.glob(forecast.models_filepath + "forecastings/*.pkl")]
+        model_path = os.path.join(forecast.models_filepath,'forecastings/',f"{model_name}.pkl")
+        config = dict()
+        with open(model_path, 'rb') as f:
+            config = joblib.load(f)
 
-        forecasts_aux = database.get_forecasts_name()
-        forecasts_id = []
-        for f in forecasts_aux:
-            forecasts_id.append(f[0])
+        response_config = ""
+        response_config += f"algorithm = {config.get('algorithm','')}\n"
+        response_config += f"scaler = {config.get('scaler_name','')}\n"
+        response_config += f"sensorsId = {config.get('sensors_id','')}\n"
+        response_config += f"meteo_data = {str(config.get('meteo_data_is_selected', False)).lower()}\n"
 
-        if active_model == "None": active_model = "newModel"
+        extra = config.get('extra_sensors', {})
+        extra_sensors_id = ",".join(extra.keys()) if isinstance(extra, dict) else ''
+        response_config += f"extra_sensors = {extra_sensors_id}\n"
 
-        return template('./www/model.html',
-                        sensors_input = sensors_id,
-                        models_input = models_saved,
-                        forecasts_id = forecasts_id,
-                        active_model = active_model)
-    except Exception as ex:
-        error_message = traceback.format_exc()
-        return f"Error! Alguna cosa ha anat malament :c : {str(ex)}\nFull Traceback:\n{error_message}"
+        if "params" in config:
+            for k, v in config["params"].items():
+                if k == 'bootstrap':
+                    aux = 'true' if v else 'false'
+                    response_config += f"{k} = {aux}\n"
+                elif k == 'algorithm':
+                    response_config += f"KNN_algorithm = {v}\n"
+                else:
+                    response_config += f"{k} = {v}\n"
+        if "max_time" in config:
+            response_config += f"max_time = {config['max_time']}\n"
+
+        return response_config
+
+    except Exception as e:
+        return f"Error! : {str(e)}"
 
 def train_model():
     selected_model = request.forms.get("model")
     extra_sensors_id = request.forms.get("sensors_id") if request.forms.get("sensors_id") else None
     config = {}
 
-    keys = request.forms.keys()
     for key in request.forms.keys():
         if key != "model" or key != "sensors_id" or key != 'action':
             value = request.forms.get(key)
@@ -228,6 +446,7 @@ def train_model():
         model_name = aux[1]
     if scaled == 'None': scaled = None
 
+    extra_sensors_df = {}
     if extra_sensors_id is None:
         extra_sensors_id = None
     elif len(extra_sensors_id) == 1 and extra_sensors_id[0] == "None":
@@ -324,41 +543,6 @@ def submit_model():
         error_message = traceback.format_exc()
         return f"Error! The model could not be processed : {str(e)}\nFull Traceback:\n{error_message}"
 
-@app.route('/get_model_config/<model_name>')
-def get_model_config(model_name):
-    try:
-        model_path = os.path.join(forecast.models_filepath,'forecastings/',f"{model_name}.pkl")
-        config = dict()
-        with open(model_path, 'rb') as f:
-            config = joblib.load(f)
-
-        response_config = ""
-        response_config += f"algorithm = {config.get('algorithm','')}\n"
-        response_config += f"scaler = {config.get('scaler_name','')}\n"
-        response_config += f"sensorsId = {config.get('sensors_id','')}\n"
-        response_config += f"meteo_data = {str(config.get('meteo_data_is_selected', False)).lower()}\n"
-
-        extra = config.get('extra_sensors', {})
-        extra_sensors_id = ",".join(extra.keys()) if isinstance(extra, dict) else ''
-        response_config += f"extra_sensors = {extra_sensors_id}\n"
-
-        if "params" in config:
-            for k, v in config["params"].items():
-                if k == 'bootstrap':
-                    aux = 'true' if v else 'false'
-                    response_config += f"{k} = {aux}\n"
-                elif k == 'algorithm':
-                    response_config += f"KNN_algorithm = {v}\n"
-                else:
-                    response_config += f"{k} = {v}\n"
-        if "max_time" in config:
-            response_config += f"max_time = {config['max_time']}\n"
-
-        return response_config
-
-    except Exception as e:
-        return f"Error! : {str(e)}"
-
 @app.route('/get_forecast_data/<model_name>')
 def get_forecast_data(model_name):
     try:
@@ -417,41 +601,9 @@ def get_forecast_data(model_name):
         logger.error(f"❌ Error getting forecast for model {model_name}: {e}")
         return json.dumps({"status": "error", "message": str(e)})
 
-@app.route('/force_update_database')
-def force_update_database():
-    database.update_database("all")
-    database.clean_database_hourly_average()
-    return "ok"
+#endregion PÀGINA MODEL
 
-@app.route('/config_page')
-def config_page():
-
-    sensors_id = database.get_all_saved_sensors_id(kw=True)
-    user_lat = optimalScheduler.latitude
-    user_long = optimalScheduler.longitude
-    user_location = {'lat': user_lat, 'lon': user_long}
-
-    config_dir = forecast.models_filepath + 'config/user.config'
-    user_data = {
-        'name': '',
-        'consumption': '',
-        'generation': '',
-        'locked': False,
-    }
-
-    if os.path.exists(config_dir):
-        aux = joblib.load(config_dir)
-        user_data['name'] = aux['name']
-        user_data['consumption'] = aux['consumption']
-        user_data['generation'] = aux['generation']
-        user_data['locked'] = True
-
-
-    return template('./www/config_page.html',
-                    sensors = sensors_id,
-                    location = user_location,
-                    user_data = user_data)
-
+#region PÀGINA CONFIGURACIÓ
 @app.post('/save_config')
 def save_config():
     try:
@@ -529,20 +681,52 @@ def get_res_certify_data():
         logger.error(traceback.format_exc())
         return f"Error! : {str(e)}"
 
+def get_user_configuration_data():
+    config_dir = forecast.models_filepath + 'config/user.config'
+    user_data = {
+        'name': '',
+        'consumption': '',
+        'generation': '',
+        'locked': False,
+    }
+
+    if os.path.exists(config_dir):
+        aux = joblib.load(config_dir)
+        user_data['name'] = aux['name']
+        user_data['consumption'] = aux['consumption']
+        user_data['generation'] = aux['generation']
+        user_data['locked'] = True
+
+    return user_data
+
+#endregion PÀGINA CONFIGURACIÓ
+
+#region PÀGINA OPTIMITZACIÓ
+
 @app.route('/optimize')
 def optimize():
-    device_id = 'sonnenbatterie 79259'
-    consumer_id = 'sensor.smart_meter_63a_potencia_real'
-    generator_id = 'sensor.solarnet_potencia_fotovoltaica'
+    horizon = 24
+    horizon_min = 1 # 1 = 60 minuts  | 2 = 30 minuts | 4 = 15 minuts
+
+    user_data = get_user_configuration_data()
+    global_consumer_id = user_data['consumption']
+    global_generator_id = user_data['generation']
+
+    if global_generator_id == '' or global_consumer_id == '':
+        logger.warning("⚠️ Variables globals no seleccionades a la configuració d'usuari.")
+        return 'ERROR'
+
+    optimalScheduler.optimize(global_consumer_id, global_generator_id)
+
 
     # OPTIMITZACIÓ
     has_sonnen = False
-    for i in database.devices_info:
-       if i['device_name'] == device_id:
-           has_sonnen = True
-
     if has_sonnen:
         try:
+
+            device_id = 'sonnenbatterie 79259'
+            consumer_id = 'sensor.smart_meter_63a_potencia_real'
+            generator_id = 'sensor.solarnet_potencia_fotovoltaica'
 
             hores_simular = 24
             minuts_simular = 1 # 1 = 60 minuts  | 2 = 30 minuts | 4 = 15 minuts
@@ -608,8 +792,6 @@ def optimize():
 
         except Exception as e:
             logger.exception(f"❌ Error processant l'optimitzacio': {e}")
-    else:
-        logger.warning("⚠️ Aquest usuari no disposa d'una Sonnen.")
 
     return "OK"
 
@@ -711,132 +893,6 @@ def debug_logger_optimization():  #!!!!!!!!!ELIMINAR AL DEIXAR DE DEBUGAR!!!!!!!
         )
     logger.error(optimalScheduler.solucio_final.preu_total)
 
-@app.route('/get_scheduler_data')
-def get_scheduler_data():
-    try:
-        full_path = os.path.join(forecast.models_filepath, "optimizations/sonnen_opt.pkl")
-        if not os.path.exists(full_path): optimize()
-        sonnen_db = joblib.load(full_path)
-
-        graph_timestamps = sonnen_db['timestamps']
-        graph_optimization = sonnen_db['Power']
-        graph_consum = sonnen_db['Consumer']
-        graph_generation = sonnen_db['Generator']
-
-        graph_df = pd.DataFrame({
-            "hora": pd.to_datetime(graph_timestamps),
-            "optimitzacio": graph_optimization,
-            "consum": graph_consum,
-            "generacio": graph_generation
-        })
-        graph_df['hora_str'] = graph_df['hora'].dt.strftime('%H:%M')
-
-        fig = go.Figure()
-
-        # Línia principal (verd amb fill)
-        fig.add_trace(go.Scatter(
-            x=graph_df["hora"],
-            y=graph_df["optimitzacio"],
-            mode='lines',
-            name="Optimització",
-            line=dict(color="green", width=2),
-            fill='tozeroy',
-            fillcolor="rgba(0,128,0,0.3)"
-        ))
-
-        # Línia del sensor2 (blau amb opacitat baixa)
-        fig.add_trace(go.Scatter(
-            x=graph_df["hora"],
-            y=graph_df["consum"],
-            mode='lines',
-            name="Consum",
-            line=dict(color="blue", width=2),
-            opacity=0.5
-        ))
-
-        # Línia del sensor3 (taronja amb opacitat baixa)
-        fig.add_trace(go.Scatter(
-            x=graph_df["hora"],
-            y=graph_df["generacio"],
-            mode='lines',
-            name="Generacio",
-            line=dict(color="orange", width=2),
-            opacity=0.5
-        ))
-
-
-        now = datetime.now()
-        now_str = now.strftime('%H:%M')
-
-        fig.update_layout(
-            height=400,
-            yaxis=dict(zeroline=False),
-            xaxis=dict(
-                tickmode='array',
-                tickvals=graph_timestamps,
-                ticktext=graph_df['hora_str'],
-                tickangle=-45,
-                tickfont=dict(size=13),
-                title="Hores"
-            ),
-            yaxis_title="Consum (W)",
-            shapes=[
-                dict(
-                    type="line",
-                    x0=now,
-                    x1=now,
-                    y0=0,
-                    y1=1,
-                    xref="x",
-                    yref="paper",
-                    line=dict(color="red", width=2, dash="dash")
-                )
-            ],
-            annotations=[
-                dict(
-                    x=now,
-                    y=1.2,                 # una mica per sobre del gràfic
-                    xref="x",
-                    yref="paper",
-                    text="Actual",
-                    showarrow=False,
-                    font=dict(color="red", size=12),
-                    textangle=-45            # rotat en diagonal
-                )
-            ],
-        )
-
-
-
-        fig_json = fig.to_plotly_json()
-        response.content_type = "application/json"
-        return json.dumps(fig_json, cls=plotly.utils.PlotlyJSONEncoder)
-
-    except Exception as e:
-        logger.exception(f"❌ Error obtenint scheduler': {e}")
-
-@app.route('/optimization')
-def optimization_page():
-
-    # RESTRICCIONS PER A DISPOSITIU
-    config_path = 'resources/optimization_devices.conf'
-    devices_data = {}
-
-    if not os.path.exists(config_path):
-        logger.warning("⚠️ - No s'ha trobat el fitxer de configuració: {config_path}")
-    else:
-        with open(config_path, 'r', encoding='utf-8') as f:
-            devices_data = json.load(f)
-
-    # DISPOSITIUS I ENTITATS ASSOCIADES
-    devices_entities = database.get_devices_info()
-
-    current_date = datetime.now().strftime('%d-%m-%Y')
-    return template("./www/optimization.html",
-                    current_date = current_date,
-                    device_types = json.dumps(devices_data),
-                    device_entities = devices_entities)
-
 @app.post('/get_config_file_names')
 def get_config_file_names():
     # CONFIGURACIONS CREADES
@@ -845,21 +901,6 @@ def get_config_file_names():
 
     if len(json_config_files) == 0: return {"status": "error"}
     return {"status": "ok", "names" : json_config_files}
-
-@app.route('/get_device_config_data/<file_name>')
-def get_device_config_data(file_name):
-    config_path = forecast.models_filepath + "/optimizations/configs/" + file_name
-    device_config = {}
-
-    if not os.path.exists(config_path):
-        response.status = 400
-        return {"status": "error", "msg": "Dades buides"}
-
-    with open(config_path, 'r', encoding='utf-8') as f:
-        device_config = json.load(f)
-
-    return {"status": "ok", "device_config": device_config}
-
 
 @app.post('/save_optimization_config')
 def save_optimization_config():
@@ -895,22 +936,23 @@ def delete_optimization_config(file_name):
     else:
         return {"status": "error", "msg": "No existeix arxiu {file_name}.json"}
 
-# Ruta dinàmica per a les pàgines HTML
-@app.get('/<page>')
-def get_page(page):
-    # Ruta del fitxer HTML
-    # file_path = f'./www/{page}.html'
-    # Comprova si el fitxer existeix.
-    if os.path.exists(f'./www/{page}.html'):
-        # Control de dades segons la pàgina
-        return static_file(f'{page}.html', root='./www/')
-    elif os.path.exists(f'./www/{page}.css'):
-        return static_file(f'{page}.css', root='./www/')
-    else:
-        return HTTPError(404, "La pàgina no existeix")
+@app.route('/get_device_config_data/<file_name>')
+def get_device_config_data(file_name):
+    config_path = forecast.models_filepath + "/optimizations/configs/" + file_name
+    device_config = {}
 
+    if not os.path.exists(config_path):
+        response.status = 400
+        return {"status": "error", "msg": "Dades buides"}
 
-##################################### SCHEDULE
+    with open(config_path, 'r', encoding='utf-8') as f:
+        device_config = json.load(f)
+
+    return {"status": "ok", "device_config": device_config}
+
+#endregion PÀGINA OPTIMITZACIÓ
+
+#region DAILY TASKS
 
 def daily_task():
     hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
@@ -941,6 +983,7 @@ def daily_train_model(model_config, model_name):
 
 def daily_forecast_task():
     hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
+    database.update_database("all")
     logger.debug(f"📈 [{hora_actual}] - STARTING DAILY FORECASTING")
     models_saved = [os.path.basename(f) for f in glob.glob(forecast.models_filepath + "forecastings/*.pkl")]
     for model in models_saved:
@@ -1043,7 +1086,6 @@ def sonnen_config_hourly():
                                              value=positive_value * 1000)
 
 
-
 schedule.every().day.at("00:00").do(daily_task)
 schedule.every().day.at("01:00").do(daily_forecast_task)
 schedule.every().day.at("02:00").do(monthly_task)
@@ -1058,7 +1100,7 @@ def run_scheduled_tasks():
 scheduler_thread = threading.Thread(target=run_scheduled_tasks, daemon=True)
 scheduler_thread.start()
 
-##################################### MAIN
+#endregion DAILY TASKS
 
 
 # Funció main que encén el servidor web.
