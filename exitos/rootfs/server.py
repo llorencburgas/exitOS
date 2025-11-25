@@ -913,15 +913,17 @@ def save_optimization_config():
 
     full_path = os.path.join(forecast.models_filepath, "optimizations/configs/"+ device_name +".json")
     os.makedirs(forecast.models_filepath + 'optimizations/configs', exist_ok=True)
+
     if os.path.exists(full_path):
-        logger.warning("Eliminant arxiu antic de configuració {data.name}")
+        logger.warning(f"Eliminant arxiu antic de configuració {device_name}")
         os.remove(full_path)
 
     with open(full_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
-    for var in data['vars']:
-        database.update_sensor_active(var['id'], True)
+    for var in data['extra_vars'].values():
+        database.update_sensor_active(var['sensor_id'], True)
+
 
     return {"status": "ok", "msg": f"Optimització desada com {device_name}.json"}
 

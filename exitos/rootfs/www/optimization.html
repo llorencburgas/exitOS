@@ -27,15 +27,13 @@
     <!-- GRÀFICA OPTIMITZACIÓ -->
     <div id="scheduler-grid" class="scheduler-grid"> </div>
 
-    <!--    PLANIFICACIÓ SONNEN  -->
+    <!--    PLANIFICACIÓ  -->
     <div class="scheduler-container">
         <div class="optimization-graphs-container" id="optimization-graphs-container">
             <!-- AQUI ES POSEN LES CONFIGURACIONS GUARDADES -->
         </div>
     </div>
 </div>
-
-
 
 
 <div id="new-optimization-modal" class="modal hidden">
@@ -139,6 +137,7 @@
                 <label>${restriction.nom}: </label>
                 <input type="number"
                         name="${restriction.nom}"
+                        id="${restriction.id}"
                         min="${restriction.min ?? ''}"
                         max="${restriction.max ?? ''}"
                         step="${restriction.step ?? 'any'}" />
@@ -156,6 +155,36 @@
     }
 
     /**
+     * Crea select i option per als paràmetres entrats
+     */
+    function CreateSelectOption(container, varId, varName, dev, isControllVar ){
+        const label = document.createElement("label");
+        label.for = varId;
+        label.textContent = varName;
+        label.id = varId;
+
+        const select = document.createElement("select");
+        select.innerHTML  = '<option value="">-- Selecciona un sensor --</option>';
+        select.name = varId;
+        select.id = varId;
+
+        // if (!device_name || !device_entities[device_name]) return;
+        dev.entities.forEach(ent => {
+
+            if(isControllVar && ent.entity_id.startsWith("sensor.") )return;
+            if(!isControllVar && !ent.entity_id.startsWith("sensor.") )return;
+
+            const opt = document.createElement("option");
+            opt.value = ent.entity_id;
+            opt.textContent = ent.entity_name;
+            select.appendChild(opt);
+        });
+
+        container.appendChild(label);
+        container.appendChild(select);
+    }
+
+    /**
      * Modifica els inputs per a les variables associades segons el tipus de dispositiu i entitats d'aquest
      */
     function UpdateAssociatedVariables(){
@@ -166,31 +195,15 @@
         if (!dev) return;
 
         const vars = device_types[device_type]["variables"];
+        const control_vars = device_types[device_type]["variables_control"];
         const container = document.getElementById('vars-config-section');
         container.innerHTML = '';
 
         vars.forEach(variable => {
-
-            const label = document.createElement("label");
-            label.for = variable;
-            label.textContent = variable;
-            label.id = "label-" + variable;
-
-            const select = document.createElement("select");
-            select.innerHTML  = '<option value="">-- Selecciona un sensor --</option>';
-            select.name = variable;
-            select.id = variable;
-
-            // if (!device_name || !device_entities[device_name]) return;
-            dev.entities.forEach(ent => {
-                const opt = document.createElement("option");
-                opt.value = ent.entity_id;
-                opt.textContent = ent.entity_name;
-                select.appendChild(opt);
-            });
-
-            container.appendChild(label);
-            container.appendChild(select);
+            CreateSelectOption(container, variable['id'], variable['nom'], dev, false)
+        })
+        control_vars.forEach(variable => {
+            CreateSelectOption(container, variable['id'], variable['nom'], dev, true)
         })
     }
 
@@ -198,29 +211,39 @@
      * Retorna totes les variables seleccionades dins el div #vars-config-section.
      * Busca tots els <select> dins aquest div, i per a cadascun recull
      * totes les opcions seleccionades (amb id i friendly_name).
-     *
-     * @returns {Array<{id: string, friendly_name: string}>}
      */
     function GetSelectedVariables(){
         const container = document.getElementById("vars-config-section");
         const allSelects = container.querySelectorAll('select');
 
-        const selectedVars = []
+        const selectedExtraVars = {}
+        const selectedControlVars = {}
 
         allSelects.forEach(select => {
 
-            const label = document.getElementById("label-" + select.id);
+            const label = document.getElementById(select.id);
             const groupLabel = label ? label.textContent.trim() : "Sense nom";
 
             Array.from(select.selectedOptions).forEach(opt => {
-                selectedVars.push({
-                    id: opt.value,
-                    friendly_name: opt.text,
-                    function_name: groupLabel
-                });
+                if(opt.value.startsWith("sensor.")){
+                    selectedExtraVars[label.textContent] = {
+                        "sensor_id": opt.value,
+                        "friendly_name": opt.text,
+                        "code_name": label.id,
+                        "function_name":groupLabel
+                    };
+                }
+                else{
+                    selectedControlVars[label.textContent] = {
+                        "sensor_id": opt.value,
+                        "friendly_name": opt.text,
+                        "code_name": label.id,
+                        "function_name": groupLabel
+                    };
+                }
             })
         })
-        return selectedVars;
+        return[selectedExtraVars, selectedControlVars];
     }
 
     /**
@@ -309,21 +332,25 @@
         // --- Creem l'objecte per enviar ---
         const device_name = name.value;
         const device_type = type.value;
-        const vars = GetSelectedVariables();
+        const [extraVars, controlVars] = GetSelectedVariables();
         const friendly_type = device_types[device_type].nom;
-
 
         const restrictions = {};
         restrictionInputs.forEach(inp => {
-            restrictions[inp.name] = inp.value;
+            restrictions[inp.name] = {
+                "id": inp.id,
+                "value": inp.value,
+            };
         });
 
+
         const data = {
-            device_name,
-            device_type,
-            friendly_type,
-            restrictions,
-            vars
+            "device_name": device_name,
+            "device_type": device_type,
+            "friendly_name": friendly_type,
+            "restrictions": restrictions,
+            "extra_vars": extraVars,
+            "control_vars": controlVars
         };
 
         const res = await fetch('save_optimization_config',{
@@ -432,11 +459,17 @@
                     const extra_vars = document.createElement('ul');
                     extra_vars.className = "device-config-ul"
                     extra_vars.innerHTML = '';
-                    for (const r in dev.vars) {
+                    for (const r in dev.extra_vars) {
                         const extra_var = document.createElement('li');
                         extra_var.className = "device-config-li";
-                        extra_var.innerHTML = `<b class="device-config-boldText"> ${dev.vars[r].function_name}: </b> ${dev.vars[r].friendly_name}`;
+                        extra_var.innerHTML = `<b class="device-config-boldText"> ${dev.extra_vars[r].function_name}: </b> ${dev.extra_vars[r].friendly_name}`;
                         extra_vars.appendChild(extra_var);
+                    }
+                    for (const r in dev.control_vars) {
+                        const restriction_var = document.createElement('li');
+                        restriction_var.className = "device-config-li";
+                        restriction_var.innerHTML = `<b class="device-config-boldText"> ${dev.control_vars[r].function_name}: </b> ${dev.control_vars[r].friendly_name}`;
+                        extra_vars.appendChild(restriction_var);
                     }
                     container.appendChild(extra_vars);
 
