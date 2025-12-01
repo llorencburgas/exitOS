@@ -226,18 +226,18 @@
 
             Array.from(select.selectedOptions).forEach(opt => {
                 if(opt.value.startsWith("sensor.")){
-                    selectedExtraVars[label.textContent] = {
+                    selectedExtraVars[label.id] = {
                         "sensor_id": opt.value,
                         "friendly_name": opt.text,
-                        "code_name": label.id,
+                        "label_name": label.textContent,
                         "function_name":groupLabel
                     };
                 }
                 else{
-                    selectedControlVars[label.textContent] = {
+                    selectedControlVars[label.id] = {
                         "sensor_id": opt.value,
                         "friendly_name": opt.text,
-                        "code_name": label.id,
+                        "label_name": label.textContent,
                         "function_name": groupLabel
                     };
                 }
@@ -334,11 +334,12 @@
         const device_type = type.value;
         const [extraVars, controlVars] = GetSelectedVariables();
         const friendly_type = device_types[device_type].nom;
+        const device_category = device_types[device_type].tipus;
 
         const restrictions = {};
         restrictionInputs.forEach(inp => {
-            restrictions[inp.name] = {
-                "id": inp.id,
+            restrictions[inp.id] = {
+                "name": inp.name,
                 "value": inp.value,
             };
         });
@@ -347,6 +348,7 @@
         const data = {
             "device_name": device_name,
             "device_type": device_type,
+            "device_category": device_category,
             "friendly_name": friendly_type,
             "restrictions": restrictions,
             "extra_vars": extraVars,
@@ -438,7 +440,7 @@
 
                     // TIPUS DE DISPOSITIU
                     const type = document.createElement('span');
-                    type.innerHTML = '<b class="device-cofig-boltText">Dispositiu: </b>' + dev.friendly_type;
+                    type.innerHTML = dev.friendly_name;
                     type.className = "device-config-type";
                     container.appendChild(type);
 
@@ -449,7 +451,7 @@
                     for (const r in dev.restrictions) {
                         const restriction = document.createElement('li');
                         restriction.className = "device-config-li";
-                        restriction.innerHTML = `<b class="device-config-boldText">${r}: </b> ${dev.restrictions[r]}`;
+                        restriction.innerHTML = `<b class="device-config-boldText">${dev.restrictions[r].name}: </b> ${dev.restrictions[r].value}`;
                         // restriction.innerHTML = r + ": " + dev.restrictions[r];
                         restricctions.appendChild(restriction);
                     }

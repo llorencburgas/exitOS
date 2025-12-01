@@ -716,7 +716,12 @@ def optimize():
         logger.warning("⚠️ Variables globals no seleccionades a la configuració d'usuari.")
         return 'ERROR'
 
-    optimalScheduler.optimize(global_consumer_id, global_generator_id)
+
+    optimalScheduler.start_optimization(
+        consumer_id = global_consumer_id,
+        generator_id = global_generator_id,
+        horizon = horizon,
+        horizon_min = horizon_min)
 
 
     # OPTIMITZACIÓ
@@ -724,45 +729,46 @@ def optimize():
     if has_sonnen:
         try:
 
-            device_id = 'sonnenbatterie 79259'
-            consumer_id = 'sensor.smart_meter_63a_potencia_real'
-            generator_id = 'sensor.solarnet_potencia_fotovoltaica'
+            # device_id = 'sonnenbatterie 79259'
+            # consumer_id = 'sensor.smart_meter_63a_potencia_real'
+            # generator_id = 'sensor.solarnet_potencia_fotovoltaica'
+            #
+            # hores_simular = 24
+            # minuts_simular = 1 # 1 = 60 minuts  | 2 = 30 minuts | 4 = 15 minuts
+            #
+            # consumer = database.get_data_from_latest_forecast_from_sensorid(consumer_id)
+            # generator = database.get_data_from_latest_forecast_from_sensorid(generator_id)
+            #
+            # today = datetime.now()
+            # start_date = datetime(today.year, today.month, today.day, 0, 0)
+            # end_date = start_date + timedelta(hours=hores_simular - 1)
+            #
+            # timestamps = pd.date_range(start=start_date, end=end_date, freq='h')
+            # hores = []
+            # for i in range(len(timestamps)): hores.append(timestamps[i].strftime("%Y-%m-%d %H:%M"))
+            #
+            # consumer_data = []
+            # generator_data = []
+            # for hora in hores:
+            #     # dt = datetime.strptime(hora, "%Y-%m-%d %H:%M")
+            #     if hora in consumer['timestamp'].values:
+            #         fila = consumer[consumer['timestamp'] == hora]
+            #         consumer_data.append(fila['value'].values[0])
+            #     else:
+            #         consumer_data.append(0)
+            #
+            #     if hora in generator['timestamp'].values:
+            #         fila = generator[generator['timestamp'] == hora]
+            #         generator_data.append(fila['value'].values[0])
+            #     else:
+            #         generator_data.append(0)
+            #
+            #
+            # consumer_data = [-x for x in consumer_data]
 
-            hores_simular = 24
-            minuts_simular = 1 # 1 = 60 minuts  | 2 = 30 minuts | 4 = 15 minuts
+            # energy_source = Battery.Battery(hours_to_simulate= hores_simular, minutes_per_hour= minuts_simular)
 
-            consumer = database.get_data_from_latest_forecast_from_sensorid(consumer_id)
-            generator = database.get_data_from_latest_forecast_from_sensorid(generator_id)
-
-            today = datetime.now()
-            start_date = datetime(today.year, today.month, today.day, 0, 0)
-            end_date = start_date + timedelta(hours=hores_simular - 1)
-
-            timestamps = pd.date_range(start=start_date, end=end_date, freq='h')
-            hores = []
-            for i in range(len(timestamps)): hores.append(timestamps[i].strftime("%Y-%m-%d %H:%M"))
-
-            consumer_data = []
-            generator_data = []
-            for hora in hores:
-                # dt = datetime.strptime(hora, "%Y-%m-%d %H:%M")
-                if hora in consumer['timestamp'].values:
-                    fila = consumer[consumer['timestamp'] == hora]
-                    consumer_data.append(fila['value'].values[0])
-                else:
-                    consumer_data.append(0)
-
-                if hora in generator['timestamp'].values:
-                    fila = generator[generator['timestamp'] == hora]
-                    generator_data.append(fila['value'].values[0])
-                else:
-                    generator_data.append(0)
-
-
-            consumer_data = [-x for x in consumer_data]
-            energy_source = Battery.Battery(hours_to_simulate= hores_simular, minutes_per_hour= minuts_simular)
-
-            optimalScheduler.optimize(consumer_data, generator_data, energy_source, hores_simular, minuts_simular, hores)
+            # optimalScheduler.optimize(consumer_data, generator_data, energy_source, hores_simular, minuts_simular, hores)
 
             debug_logger_optimization()
 
@@ -962,7 +968,7 @@ def daily_task():
     database.clean_database_hourly_average()
 
     logger.warning(f"📈 [{hora_actual}] - INICIANT PROCÉS D'OPTIMITZACIÓ")
-    optimize()
+    # optimize()
 
 def monthly_task():
     today = datetime.today()
@@ -1091,7 +1097,7 @@ def sonnen_config_hourly():
 schedule.every().day.at("00:00").do(daily_task)
 schedule.every().day.at("01:00").do(daily_forecast_task)
 schedule.every().day.at("02:00").do(monthly_task)
-schedule.every().hour.at(":00").do(sonnen_config_hourly)
+# schedule.every().hour.at(":00").do(sonnen_config_hourly)
 schedule.every().hour.at(":00").do(certificate_hourly_task)
 
 def run_scheduled_tasks():

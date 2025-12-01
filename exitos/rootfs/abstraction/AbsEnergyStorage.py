@@ -3,20 +3,33 @@
 from abc import abstractmethod
 
 
-class AbsEnergySource:
+class AbsEnergyStorage:
     """
     Class that is the parent for all different energy sources
     """
 
-    def __init__(self,name):
+    def __init__(self, config):
         # Initialize the energy source with the given configuration and name
-        self.name = name
-        self.min = None
-        self.max = None
-        self.acive_hours = None
+        self.name = config['device_name']
+        self.min = float(config['restrictions']['min']['value'])
+        self.max = float(config['restrictions']['max']['value'])
+
+        # self.brand = brand
+        # self.max = max
+        # self.min = min
+        # self.efficiency_sensor = eff
+        # self.actual_percentage_sensor = perc
+        # self.control_charge_sensor = charge
+        # self.control_discharge_sensor = discharge
+        # self.control_mode_sensor = mode
+
+
+        self.vbound_start = 0
+        self.vbound_end = 0
+
 
     @abstractmethod
-    def doSimula(self, calendar, **kwargs):
+    def Simula(self, calendar, **kwargs):
         """
         Method to simulate the energy source
         :param calendar: the calendar

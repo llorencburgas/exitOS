@@ -7,10 +7,14 @@ class AbsGenerator:
 
     def __init__(self, name):
         self.name = name
-        self.calendar_range = None
-        self.active_hours = None
+        self.forecast_data = None
+        self.timestamps = None
 
-        self.debug_var = 0
+        self.min = 0
+        self.max = 0
+
+        self.vbound_start = 0
+        self.vbound_end = 0
 
     @abstractmethod
     def doSimula(self, calendar, **kwargs):

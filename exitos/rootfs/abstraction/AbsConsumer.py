@@ -9,12 +9,12 @@ class AbsConsumer:
     """
     def __init__(self, name):
         # Initialize the consumer with the given configuration and name
-        self.config = None
         self.name = name
-        #self.max_power = configuration['max_power']
-        self.calendar_range = None
-        self.active_hours = None
-        self.active_calendar = None
+        self.forecast_data = None
+        self.timestamps = None
+
+        self.min = 0
+        self.max = 0
 
         self.vbound_start = 0
         self.vbound_end = 0
