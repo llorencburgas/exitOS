@@ -101,15 +101,14 @@ class OptimalScheduler:
                 self.generators[current_config['device_name']] = to_save_data
 
             elif current_config['device_category'] == "EnergyStorage":
-                match current_config['friendly_name']:
-                    case "Bateria Sonnen":
-                        from abstraction.assets.SonnenBattery import SonnenBattery
-                        aux_eff = self.database.get_latest_data_from_sensor(current_config['extra_vars']['eficiencia']['sensor_id'])
-                        aux_actual_percentage = self.database.get_latest_data_from_sensor(current_config['extra_vars']['percentatge_actual']['sensor_id'])
+                if current_config['friendly_name'] == "Bateria Sonnen":
+                    from abstraction.assets.SonnenBattery import SonnenBattery
+                    aux_eff = self.database.get_latest_data_from_sensor(current_config['extra_vars']['eficiencia']['sensor_id'])
+                    aux_actual_percentage = self.database.get_latest_data_from_sensor(current_config['extra_vars']['percentatge_actual']['sensor_id'])
 
-                        current_energyStorage = SonnenBattery(config = current_config, eff = aux_eff, perc = aux_actual_percentage)
-                    case _:
-                        continue
+                    current_energyStorage = SonnenBattery(config = current_config, eff = aux_eff, perc = aux_actual_percentage)
+                else:
+                    continue
 
 
                 self.energy_storages[current_config['device_name']] = current_energyStorage
