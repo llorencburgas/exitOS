@@ -3,21 +3,21 @@ import requests
 import os
 import glob
 import json
+import logging
 
-import forecast.Solution as Solution
 import sqlDB as db
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from logging_config import setup_logger
 from scipy.optimize import differential_evolution
 
-from abstraction.AbsConsumer import AbsConsumer
-from abstraction.AbsEnergyStorage import AbsEnergyStorage
-from abstraction.AbsGenerator import AbsGenerator
-from abstraction.assets.Battery import Battery
 
-logger = setup_logger()
+from abstraction.AbsEnergyStorage import AbsEnergyStorage
+from abstraction.assets.Battery import Battery
+from abstraction.DeviceRegistry import DEVICE_REGISTRY, create_device_from_config
+
+
+logger = logging.getLogger("exitOS")
 
 class OptimalScheduler:
     def __init__(self, database: db):
@@ -80,41 +80,27 @@ class OptimalScheduler:
         """
 
         configs_saved = [os.path.basename(f) for f in glob.glob(self.base_filepath + "optimizations/configs/*.json")]
-        all_configs = {}
 
         for config in configs_saved:
             config_path = os.path.join(self.base_filepath, "optimizations/configs", f"{config}")
             with open(config_path, "r",encoding="utf-8") as f:
                 current_config = json.load(f)
-            # all_configs[config] = current_config
-
-            if current_config['device_category'] == "Consumer":
-                to_save_data = {
-                    "device_name": current_config['device_name'],
-                }
-                self.consumers[current_config['device_name']] = to_save_data
-
-            elif current_config['device_category'] == "Generator":
-                to_save_data = {
-                    "device_name": current_config['device_name'],
-                }
-                self.generators[current_config['device_name']] = to_save_data
-
-            elif current_config['device_category'] == "EnergyStorage":
-                if current_config['friendly_name'] == "Bateria Sonnen":
-                    from abstraction.assets.SonnenBattery import SonnenBattery
-                    aux_eff = self.database.get_latest_data_from_sensor(current_config['extra_vars']['eficiencia']['sensor_id'])
-                    aux_actual_percentage = self.database.get_latest_data_from_sensor(current_config['extra_vars']['percentatge_actual']['sensor_id'])
-
-                    current_energyStorage = SonnenBattery(config = current_config, eff = aux_eff, perc = aux_actual_percentage)
-                else:
-                    continue
 
 
-                self.energy_storages[current_config['device_name']] = current_energyStorage
+            dev = create_device_from_config(current_config, self.database)
+
+            device_category = current_config['device_category']
+            device_type = current_config['device_type']
+
+            if device_category == "Generator":
+                self.generators[device_type] = dev
+            elif device_category == "Consumer":
+                self.consumers[device_type] = dev
+            elif device_category == "EnergyStorage":
+                self.energy_storages[device_type] = dev
             else:
-                logger.debug(f"     ERROR: Dispositiu {current_config} amb categoria {current_config['device_category']}, ignorant.")
-                continue
+                raise ValueError(f"Categoria '{device_category}' desconeguda per al dispositiu {device_type}")
+
 
     def get_sensor_forecast_data(self,sensor_id):
         """
@@ -210,7 +196,6 @@ class OptimalScheduler:
         return result['x']
 
     def cost_DE(self, config):
-        logger.info("============ COST DE ===============")
         aux = self.__calc_total_balance(config)
         return aux
 

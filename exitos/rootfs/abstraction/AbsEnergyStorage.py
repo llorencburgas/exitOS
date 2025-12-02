@@ -1,16 +1,16 @@
 # Class that is the parent for all different energy sources
-
+from abstraction.AbsDevice import AbsDevice
 from abc import abstractmethod
 
 
-class AbsEnergyStorage:
+class AbsEnergyStorage(AbsDevice):
     """
     Class that is the parent for all different energy sources
     """
 
     def __init__(self, config):
         # Initialize the energy source with the given configuration and name
-        self.name = config['device_name']
+        super().__init__(config)
         self.min = float(config['restrictions']['min']['value'])
         self.max = float(config['restrictions']['max']['value'])
 
@@ -23,34 +23,33 @@ class AbsEnergyStorage:
         # self.control_discharge_sensor = discharge
         # self.control_mode_sensor = mode
 
-
-        self.vbound_start = 0
-        self.vbound_end = 0
-
-
-    @abstractmethod
-    def Simula(self, calendar, **kwargs):
-        """
-        Method to simulate the energy source
-        :param calendar: the calendar
-        :param kwargs: dictionary with all the extra necessary arguments
-        :return: None
-        """
-        pass
-
-    @abstractmethod
-    def canviaSimula(self, simImpl):
-        """
-        Method to change the simulation implementation
-        :param simImpl: the new simulation implementation
-        :return: None
-        """
-        pass
-
-    @abstractmethod
-    def resetToInit(self):
-        """
-        Method to reset the energy source to its initial state
-        :return: None
-        """
-        pass
+    #
+    #
+    #
+    #
+    # @abstractmethod
+    # def Simula(self, calendar, **kwargs):
+    #     """
+    #     Method to simulate the energy source
+    #     :param calendar: the calendar
+    #     :param kwargs: dictionary with all the extra necessary arguments
+    #     :return: None
+    #     """
+    #     pass
+    #
+    # @abstractmethod
+    # def canviaSimula(self, simImpl):
+    #     """
+    #     Method to change the simulation implementation
+    #     :param simImpl: the new simulation implementation
+    #     :return: None
+    #     """
+    #     pass
+    #
+    # @abstractmethod
+    # def resetToInit(self):
+    #     """
+    #     Method to reset the energy source to its initial state
+    #     :return: None
+    #     """
+    #     pass

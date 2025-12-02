@@ -1,22 +1,25 @@
 import logging
+from abstraction.DeviceRegistry import register_device
 from abstraction.AbsEnergyStorage import AbsEnergyStorage
 
 logger = logging.getLogger("exitOS")
 
 
+@register_device("SonnenBattery")
 class SonnenBattery(AbsEnergyStorage):
-    def __init__(self,config, eff, perc):
+
+    def __init__(self,config, database):
         super().__init__(config)
-        self.name = "SonnenBattery"
-        self.efficiency = eff[1]
-        self.actual_percentage = perc[1]
+
+        self.efficiency = database.get_latest_data_from_sensor(config["extra_vars"]["eficiencia"]["sensor_id"])[1]
+        self.actual_percentage = database.get_latest_data_from_sensor(config["extra_vars"]["percentatge_actual"]["sensor_id"])[1]
 
         self.control_charge_sensor = config['control_vars']['carregar']['sensor_id'],
         self.control_discharge_sensor = config['control_vars']['descarregar']['sensor_id'],
         self.control_mode_sensor = config['control_vars']['mode_operar']['sensor_id']
 
+
     def simula(self, config, horizon, horizon_min):
-        logger.error("************** SIMULA ***************")
         kw_carrega = []
         consumption_profile = []
         total_cost = 0
