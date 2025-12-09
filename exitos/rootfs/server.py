@@ -169,20 +169,21 @@ def optimization_page():
 @app.route('/get_scheduler_data')
 def get_scheduler_data():
     try:
-        full_path = os.path.join(forecast.models_filepath, "optimizations/sonnen_opt.pkl")
+        today = datetime.today().strftime("%d_%m_%Y")
+        full_path = os.path.join(forecast.models_filepath, "optimizations/"+today+".pkl")
         if not os.path.exists(full_path): optimize()
-        sonnen_db = joblib.load(full_path)
+        optimization_db = joblib.load(full_path)
 
-        graph_timestamps = sonnen_db['timestamps']
-        graph_optimization = sonnen_db['Power']
-        graph_consum = sonnen_db['Consumer']
-        graph_generation = sonnen_db['Generator']
+        graph_timestamps = optimization_db['timestamps']
+        graph_optimization = optimization_db['total_balance']
+        # graph_consum = sonnen_db['Consumer']
+        # graph_generation = sonnen_db['Generator']
 
         graph_df = pd.DataFrame({
             "hora": pd.to_datetime(graph_timestamps),
             "optimitzacio": graph_optimization,
-            "consum": graph_consum,
-            "generacio": graph_generation
+            # "consum": graph_consum,
+            # "generacio": graph_generation
         })
         graph_df['hora_str'] = graph_df['hora'].dt.strftime('%H:%M')
 
@@ -199,25 +200,25 @@ def get_scheduler_data():
             fillcolor="rgba(0,128,0,0.3)"
         ))
 
-        # Línia del sensor2 (blau amb opacitat baixa)
-        fig.add_trace(go.Scatter(
-            x=graph_df["hora"],
-            y=graph_df["consum"],
-            mode='lines',
-            name="Consum",
-            line=dict(color="blue", width=2),
-            opacity=0.5
-        ))
-
-        # Línia del sensor3 (taronja amb opacitat baixa)
-        fig.add_trace(go.Scatter(
-            x=graph_df["hora"],
-            y=graph_df["generacio"],
-            mode='lines',
-            name="Generacio",
-            line=dict(color="orange", width=2),
-            opacity=0.5
-        ))
+        # # Línia del sensor2 (blau amb opacitat baixa)
+        # fig.add_trace(go.Scatter(
+        #     x=graph_df["hora"],
+        #     y=graph_df["consum"],
+        #     mode='lines',
+        #     name="Consum",
+        #     line=dict(color="blue", width=2),
+        #     opacity=0.5
+        # ))
+        #
+        # # Línia del sensor3 (taronja amb opacitat baixa)
+        # fig.add_trace(go.Scatter(
+        #     x=graph_df["hora"],
+        #     y=graph_df["generacio"],
+        #     mode='lines',
+        #     name="Generacio",
+        #     line=dict(color="orange", width=2),
+        #     opacity=0.5
+        # ))
 
 
         now = datetime.now()
@@ -259,8 +260,6 @@ def get_scheduler_data():
                 )
             ],
         )
-
-
 
         fig_json = fig.to_plotly_json()
         response.content_type = "application/json"
@@ -717,11 +716,28 @@ def optimize():
         return 'ERROR'
 
 
-    optimalScheduler.start_optimization(
+    result, total_price, total_balance = optimalScheduler.start_optimization(
         consumer_id = global_consumer_id,
         generator_id = global_generator_id,
         horizon = horizon,
         horizon_min = horizon_min)
+
+    # GUARDAR A FITXER
+    optimization_result = {
+        "timestamps": optimalScheduler.timestamps,
+        "total_balance": total_balance,
+        "total_price": total_price,
+        "optimization_vbounds": result
+    }
+    today = datetime.today().strftime("%d_%m_%Y")
+    full_path = os.path.join(forecast.models_filepath, "optimizations/"+today+".pkl")
+    os.makedirs(forecast.models_filepath + 'optimizations', exist_ok=True)
+    if os.path.exists(full_path):
+        logger.warning("Eliminant arxiu antic d'optimització ")
+        os.remove(full_path)
+
+    joblib.dump(optimization_result, full_path)
+    logger.info(f"✏️ Optimització diària guardada al fitxer {full_path}")
 
 
     # OPTIMITZACIÓ

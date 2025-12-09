@@ -9,7 +9,7 @@ import sqlDB as db
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from scipy.optimize import differential_evolution
+from scipy.optimize import differential_evolution, Bounds
 
 
 from abstraction.AbsEnergyStorage import AbsEnergyStorage
@@ -32,21 +32,27 @@ class OptimalScheduler:
         self.horizon = 24
         self.horizon_min = 1  # 1 = 60 minuts  | 2 = 30 minuts | 4 = 15 minuts
         self.maxiter = 150
+        self.timestamps = []
 
         self.global_consumer_id = ""
         self.global_generator_id = ""
         self.global_consumer_forecast = {
-            "forecast_data": None,
-            "forecast_timestamps": None
+            "forecast_data": [0] * (self.horizon * self.horizon_min),
+            "forecast_timestamps": [0] * (self.horizon * self.horizon_min)
         }
         self.global_generator_forecast = {
-            "forecast_data": None,
-            "forecast_timestamps": None
+            "forecast_data": [0] * (self.horizon * self.horizon_min),
+            "forecast_timestamps": [0] * (self.horizon * self.horizon_min)
         }
 
         self.consumers = {}
         self.generators = {}
         self.energy_storages = {}
+
+        self.best_result = 9999
+        self.current_result = 0
+        self.best_result_balance = None
+        self.current_result_balance = None
 
         self.electricity_prices = []
 
@@ -67,11 +73,9 @@ class OptimalScheduler:
 
         self.electricity_prices = self.get_hourly_electric_prices()
 
-        init_time = datetime.now()
         result = self.__optimize()
-        end_time = datetime.now()
 
-        return 0
+        return result, self.best_result, self.best_result_balance
 
     def prepare_data_for_optimization(self):
         """
@@ -101,7 +105,6 @@ class OptimalScheduler:
             else:
                 raise ValueError(f"Categoria '{device_category}' desconeguda per al dispositiu {device_type}")
 
-
     def get_sensor_forecast_data(self,sensor_id):
         """
         Obté l'últim forecast del sensor i prepara les dades per a l'optimització
@@ -117,9 +120,9 @@ class OptimalScheduler:
         today = datetime.now()
         start_date = datetime(today.year, today.month, today.day, 0,0)
         end_date = start_date + timedelta(hours = self.horizon - 1)
-        timestamps = pd.date_range(start=start_date, end=end_date, freq='h')
+        self.timestamps = pd.date_range(start=start_date, end=end_date, freq='h')
         hours = []
-        for i in range(len(timestamps)): hours.append(timestamps[i].strftime("%Y-%m-%d %H:%M"))
+        for i in range(len(self.timestamps)): hours.append(self.timestamps[i].strftime("%Y-%m-%d %H:%M"))
 
         sensor_data = []
 
@@ -130,7 +133,7 @@ class OptimalScheduler:
             else:
                 sensor_data.append(0)
 
-        return sensor_data, timestamps
+        return sensor_data, self.timestamps
 
     def configure_varbounds(self):
         """
@@ -138,14 +141,16 @@ class OptimalScheduler:
         :return:
         """
 
-        varbound = []
+        lb = []
+        ub = []
         index = 0
 
         # CONSUMERS
         for consumer in self.consumers.values():
             consumer.vbound_start = index
             for hour in range(self.horizon * self.horizon_min):
-                varbound.append([consumer.min, consumer.max])
+                lb.append(consumer.min)
+                ub.append(consumer.max)
                 index += 1
             consumer.vbound_end = index - 1
 
@@ -153,7 +158,8 @@ class OptimalScheduler:
         for generator in self.generators.values():
             generator.vbound_start = index
             for hour in range(self.horizon * self.horizon_min):
-                varbound.append([generator.min, generator.max])
+                lb.append(generator.min)
+                ub.append(generator.max)
                 index += 1
             generator.vbound_end = index - 1
 
@@ -161,12 +167,13 @@ class OptimalScheduler:
         for energy_storage in self.energy_storages.values():
             energy_storage.vbound_start = index
             for hour in range(self.horizon * self.horizon_min):
-                varbound.append([energy_storage.min, energy_storage.max])
+                lb.append(energy_storage.min)
+                ub.append(energy_storage.max)
                 index += 1
             energy_storage.vbound_end = index - 1
 
-
-        return np.array(varbound)
+        bounds = Bounds(lb, ub, True)
+        return bounds
 
     def __optimize(self):
         logger.info("🦖 - Començant optimització")
@@ -174,7 +181,7 @@ class OptimalScheduler:
         result = differential_evolution(func = self.cost_DE,
                                         popsize = 150,
                                         bounds = self.varbound,
-                                        integrality = [True] * len(self.varbound),
+                                        integrality = [1] * len(self.varbound.lb),
                                         maxiter = self.maxiter,
                                         mutation = (0.15, 0.25),
                                         recombination = 0.7,
@@ -184,65 +191,85 @@ class OptimalScheduler:
                                         disp = True,
                                         updating = 'deferred',
                                         callback = self.__update_DE_step,
-                                        workers = -1
+                                        workers = 1
                                         )
 
-        if not self.database.running_in_ha:
-            logger.debug(f"     ▫️ Status: {result['message']}")
-            logger.debug(f"     ▫️ Total evaluations: {result['nfev']}")
-            logger.debug(f"     ▫️ Solution: {result['x']}")
-            logger.debug(f"     ▫️ Cost: {result['fun']}")
+
+        # if not self.database.running_in_ha:
+        logger.warning(" OPTIMIZE FINALITZAT")
+        logger.debug(f"     ▫️ Status: {result['message']}")
+        logger.debug(f"     ▫️ Total evaluations: {result['nfev']}")
+        logger.debug(f"     ▫️ Solution: {result['x']}")
+        logger.debug(f"     ▫️ Cost: {result['fun']}")
+
+
+        logger.debug(f"\n     ▫️ Best Price: {self.best_result}")
+        logger.debug(f"     ▫️ Total Balance: {self.best_result_balance}")
 
         return result['x']
 
     def cost_DE(self, config):
+
         aux = self.__calc_total_balance(config)
         return aux
 
     def __update_DE_step(self,bounds, convergence):
-        pass
+        if not self.database.running_in_ha:
+            logger.debug(f"      ▫️ Convergence {convergence}")
+            logger.debug(f"      ▫️ Bounds {bounds}")
+
+            logger.debug(f"      ▫️ Current price {self.current_result}")
+            logger.debug(f"      ▫️ Best price {self.best_result}")
+
+            if self.current_result < self.best_result:
+                logger.debug(f"      ▫️ Updated Best result: {self.best_result} -> {self.current_result}")
+                self.best_result = self.current_result
+                self.best_result_balance = self.current_result_balance
 
     def __calc_total_balance(self,config):
 
-        total_balance = [0] * self.horizon * self.horizon_min
-        total_balance, total_cost, bat_states = self.__calc_total_banace_energy(config, total_balance)
-        return total_cost
+        total_balance = [0] * (self.horizon * self.horizon_min)
 
-    def __calc_total_banace_consumer(self, config):
-        pass
+        total_consumers = self.__calc_total_balance_consumer(config)
+        total_generators = self.__calc_total_balance_generator(config)
 
-    def __calc_total_banace_generator(self, config):
-        pass
+        for hour in range(self.horizon * self.horizon_min):
+            total_consumers[hour] += self.global_consumer_forecast['forecast_data'][hour]
+            total_generators[hour] += self.global_generator_forecast['forecast_data'][hour]
 
-    def __calc_total_banace_energy(self, config, total_balance):
+            total_balance[hour] = total_generators[hour] - total_consumers[hour]
 
-        bat_states = {}
+        balance_result = self.__calc_total_balance_energy(config, total_balance)
 
+        total_price = 0
 
+        for hour in range(self.horizon * self.horizon_min):
+            total_price += balance_result[hour] * (self.electricity_prices[hour]/1000)
+
+        self.current_result_balance = balance_result
+        self.current_result = total_price
+
+        return total_price
+
+    def __calc_total_balance_consumer(self, config):
+        return [0] * (self.horizon * self.horizon_min)
+
+    def __calc_total_balance_generator(self, config):
+        return [0] * (self.horizon * self.horizon_min)
+
+    def __calc_total_balance_energy(self, config, total_balance):
+
+        total_energy_sources = total_balance
         for energy_storage in self.energy_storages.values():
             start = energy_storage.vbound_start
             end = energy_storage.vbound_end
 
             res_dict = energy_storage.simula(config[start:end], self.horizon, self.horizon_min)
 
-            if len(res_dict['consumption_profile']) < 24: # -- ?? --
-                return None
-
             for hour in range(0, len(total_balance)):
-                total_balance[hour] += res_dict['consumption_profile'][hour]
+                total_energy_sources[hour] += res_dict['consumption_profile'][hour]
 
-
-            bat_states[energy_storage.name] = res_dict['schedule']
-        return total_balance, res_dict['total_cost'], bat_states
-
-
-
-
-
-
-        return current_es['total_cost']
-
-
+        return total_energy_sources
 
     def get_hourly_electric_prices(self,):
         today = datetime.today().strftime('%Y%m%d')

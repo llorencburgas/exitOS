@@ -689,7 +689,6 @@ class Forecaster:
             os.remove(full_path)
 
         joblib.dump(self.db, full_path)
-        logger.warning(glob.glob(self.models_filepath + "*"))
         logger.info(f"  💾 Model guardat al fitxer {model_filename}.pkl")
 
         self.db.clear()
