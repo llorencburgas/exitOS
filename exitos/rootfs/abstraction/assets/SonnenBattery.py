@@ -73,7 +73,7 @@ class SonnenBattery(AbsEnergyStorage):
 
 
     def controla(self, config,current_hour):
-        for i in range(len(self.horizon * self.horizon_min)):
+        for i in range(self.horizon * self.horizon_min):
             if config[i] == current_hour:
                 logger.info(f"     ▫️ Configurant {self.name} -> {config[i]}")
 
