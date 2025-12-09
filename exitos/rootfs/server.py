@@ -2,6 +2,8 @@ import math
 import os
 import threading
 import traceback
+from sched import scheduler
+
 import joblib
 import plotly
 import schedule
@@ -25,7 +27,6 @@ from collections import OrderedDict
 from forecast import Forecaster as Forecast
 import forecast.ForecasterManager as ForecasterManager
 import forecast.OptimalScheduler as OptimalScheduler
-import abstraction.assets.Battery as Battery
 import sqlDB as db
 import blockchain as Blockchain
 
@@ -739,82 +740,16 @@ def optimize():
     joblib.dump(optimization_result, full_path)
     logger.info(f"✏️ Optimització diària guardada al fitxer {full_path}")
 
-
-    # OPTIMITZACIÓ
-    # has_sonnen = False
-    # if has_sonnen:
-    #     try:
-    #
-    #         # device_id = 'sonnenbatterie 79259'
-    #         # consumer_id = 'sensor.smart_meter_63a_potencia_real'
-    #         # generator_id = 'sensor.solarnet_potencia_fotovoltaica'
-    #         #
-    #         # hores_simular = 24
-    #         # minuts_simular = 1 # 1 = 60 minuts  | 2 = 30 minuts | 4 = 15 minuts
-    #         #
-    #         # consumer = database.get_data_from_latest_forecast_from_sensorid(consumer_id)
-    #         # generator = database.get_data_from_latest_forecast_from_sensorid(generator_id)
-    #         #
-    #         # today = datetime.now()
-    #         # start_date = datetime(today.year, today.month, today.day, 0, 0)
-    #         # end_date = start_date + timedelta(hours=hores_simular - 1)
-    #         #
-    #         # timestamps = pd.date_range(start=start_date, end=end_date, freq='h')
-    #         # hores = []
-    #         # for i in range(len(timestamps)): hores.append(timestamps[i].strftime("%Y-%m-%d %H:%M"))
-    #         #
-    #         # consumer_data = []
-    #         # generator_data = []
-    #         # for hora in hores:
-    #         #     # dt = datetime.strptime(hora, "%Y-%m-%d %H:%M")
-    #         #     if hora in consumer['timestamp'].values:
-    #         #         fila = consumer[consumer['timestamp'] == hora]
-    #         #         consumer_data.append(fila['value'].values[0])
-    #         #     else:
-    #         #         consumer_data.append(0)
-    #         #
-    #         #     if hora in generator['timestamp'].values:
-    #         #         fila = generator[generator['timestamp'] == hora]
-    #         #         generator_data.append(fila['value'].values[0])
-    #         #     else:
-    #         #         generator_data.append(0)
-    #         #
-    #         #
-    #         # consumer_data = [-x for x in consumer_data]
-    #
-    #         # energy_source = Battery.Battery(hours_to_simulate= hores_simular, minutes_per_hour= minuts_simular)
-    #
-    #         # optimalScheduler.optimize(consumer_data, generator_data, energy_source, hores_simular, minuts_simular, hores)
-    #
-    #         debug_logger_optimization()
-    #
-    #         # GUARDAR A FITXER
-    #         sonnen_db = {
-    #             "timestamps": optimalScheduler.solucio_final.timestamps,
-    #             "SoC": [i * 1000 for i in optimalScheduler.solucio_final.capacitat_actual_energy_source],
-    #             "Power": [i * 1000 for i in optimalScheduler.solucio_final.perfil_consum_energy_source],
-    #             "Consumer": consumer_data,
-    #             "Generator": generator_data,
-    #             "Consumer_name" : consumer_id,
-    #             "Generator_name" : generator_id,
-    #             "Device_name" : device_id
-    #         }
-    #         full_path = os.path.join(forecast.models_filepath, "optimizations/sonnen_opt.pkl")
-    #         os.makedirs(forecast.models_filepath + 'optimizations', exist_ok=True)
-    #         if os.path.exists(full_path):
-    #             logger.warning("Eliminant arxiu antic d'optimització Sonnen")
-    #             os.remove(full_path)
-    #
-    #         joblib.dump(sonnen_db, full_path)
-    #         logger.info(f"✏️ Configuració diària Sonnen guardada al fitxer {full_path}")
-    #
-    #
-    #         if not database.running_in_ha:
-    #             generate_plotly_flexibility()
-    #
-    #     except Exception as e:
-    #         logger.exception(f"❌ Error processant l'optimitzacio': {e}")
-
+    #configurar schedule job
+    # mirem que no existeixi el job
+    for job in schedule.get_jobs():
+        if job.job_func == 'config_optimized_devices_HA':
+            scheduler.cancel(job)
+    # afegim job nou
+    interval = 60 // horizon_min
+    minutes = list(range(0, 60, interval))
+    for m in minutes:
+        schedule.every().hour.at(f":{m:02d}").do(config_optimized_devices_HA)
     return "OK"
 
 def flexibility():
@@ -983,7 +918,7 @@ def daily_task():
     database.update_database("all")
     database.clean_database_hourly_average()
 
-    logger.warning(f"📈 [{hora_actual}] - INICIANT PROCÉS D'OPTIMITZACIÓ")
+    # logger.warning(f"📈 [{hora_actual}] - INICIANT PROCÉS D'OPTIMITZACIÓ")
     # optimize()
 
 def monthly_task():
@@ -1086,34 +1021,27 @@ def certificate_hourly_task():
         logger.warning(f"Encara no t'has unit a cap comunitat! \n"
                        f"Recorda completar la teva configuració d'usuari des de l'apartat 'configuració' de la pàgina")
 
-def sonnen_config_hourly():
-    hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
-    for i in range(len(optimalScheduler.solucio_final.timestamps)):
-        if optimalScheduler.solucio_final.timestamps[i] == hora_actual:
-            logger.info(f"[{optimalScheduler.solucio_final.timestamps[i]}] Configuració horaria Sonnen: {optimalScheduler.solucio_final.perfil_consum_energy_source[i]}")
-            sensor_id = "number.sonnenbatterie_79259_number_"
-            if optimalScheduler.solucio_final.perfil_consum_energy_source[i] > 0:
-                sensor_id += "charge"
-            elif optimalScheduler.solucio_final.perfil_consum_energy_source[i] < 0:
-                sensor_id += "discharge"
-            else:
-                sensor_id = "unknown"
+def config_optimized_devices_HA():
+    today = datetime.today().strftime("%d_%m_%Y")
+    full_path = os.path.join(forecast.models_filepath, "optimizations/" + today + ".pkl")
+    if not os.path.exists(full_path): optimize()
+    optimization_db = joblib.load(full_path)
 
-            positive_value = abs(optimalScheduler.solucio_final.perfil_consum_energy_source[i])
-            if sensor_id != "unknown":
-                database.set_sensor_value_HA(sensor_mode = 'number',
-                                             sensor_id= sensor_id,
-                                             value = positive_value * 1000)
-            else:
-                database.set_sensor_value_HA(sensor_mode='number',
-                                             sensor_id='button.sonnenbatterie_79259_button_reset_all',
-                                             value=positive_value * 1000)
+    optimization_timestamps = optimization_db['timestamps']
+    optimization_result = optimization_db['optimization_vbounds']
 
+    for consumer in optimalScheduler.consumers.values():
+        logger.info(f"{consumer.name} optimizing {consumer.name} ...")
+    for generator in optimalScheduler.generators.values():
+        logger.info(f"{generator.name} optimizing {generator.name} ...")
+    for energy_storage in optimalScheduler.energy_storages.values():
+        logger.info(f"{energy_storage.name} optimizing {energy_storage.name} ...")
+        value, sensor_id, sensor_type = energy_storage.controla(optimization_timestamps, optimization_result)
+        database.set_sensor_value_HA(sensor_type, sensor_id, value)
 
 schedule.every().day.at("00:00").do(daily_task)
 schedule.every().day.at("01:00").do(daily_forecast_task)
 schedule.every().day.at("02:00").do(monthly_task)
-# schedule.every().hour.at(":00").do(sonnen_config_hourly)
 schedule.every().hour.at(":00").do(certificate_hourly_task)
 
 def run_scheduled_tasks():

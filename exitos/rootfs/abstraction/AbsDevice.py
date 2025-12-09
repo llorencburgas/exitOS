@@ -12,3 +12,8 @@ class AbsDevice(ABC):
     @abstractmethod
     def simula(self, *args, **kwargs):
         pass
+
+    @abstractmethod
+    def controla(self, *args, **kwargs):
+        pass
+

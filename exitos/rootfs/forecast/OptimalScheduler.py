@@ -13,7 +13,6 @@ from scipy.optimize import differential_evolution, Bounds
 
 
 from abstraction.AbsEnergyStorage import AbsEnergyStorage
-from abstraction.assets.Battery import Battery
 from abstraction.DeviceRegistry import DEVICE_REGISTRY, create_device_from_config
 
 
@@ -214,7 +213,7 @@ class OptimalScheduler:
         return aux
 
     def __update_DE_step(self,bounds, convergence):
-
+        logger.info(f"◽ New Step")
         logger.debug(f"      ▫️ Convergence {convergence}")
         logger.debug(f"      ▫️ Bounds {bounds}")
 
@@ -312,30 +311,6 @@ class OptimalScheduler:
 # ============================================================================
 
 
-
-
-
-
-
-    def optimize2(self, consumer, generator, energy_source:Battery, hores_simular, minuts, timestamps):
-        logger.info("🦖 - Començant optimització")
-
-        self.consumers = consumer
-        self.generators = generator
-        self.energy_sources = energy_source
-        self.hores_simular = hores_simular
-        self.minuts = minuts
-        self.timestamps = timestamps
-        # consum_bateria = self.energy_sources.simula()
-        self.solucio_run.consumidors = consumer
-        self.solucio_run.generadors = generator
-        self.varbound = (
-                # [(min(consum_bateria['perfil_consum']), max(consum_bateria['perfil_consum']))] * 24   # 24 hores per a l’energy source
-            [(-2.5,2.5)] * 24
-        )
-
-        result = self.__runDEModel(self.costDE)
-        return result
 
     def optimize(self, global_consumer_id, global_generator_id):
         logger.info("🦖 - Començant optimització")

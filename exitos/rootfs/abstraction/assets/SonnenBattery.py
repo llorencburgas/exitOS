@@ -1,4 +1,6 @@
 import logging
+from datetime import datetime
+
 from abstraction.DeviceRegistry import register_device
 from abstraction.AbsEnergyStorage import AbsEnergyStorage
 
@@ -24,6 +26,8 @@ class SonnenBattery(AbsEnergyStorage):
         consumption_profile = []
         total_cost = 0
         actual_capacity_kwh = self.max * self.actual_percentage
+        self.horizon = horizon
+        self.horizon_min = horizon_min
 
         for hour in range(horizon-1):
             start_point = hour * horizon_min
@@ -68,17 +72,14 @@ class SonnenBattery(AbsEnergyStorage):
         return return_dict
 
 
+    def controla(self, config,current_hour):
+        for i in range(len(self.horizon * self.horizon_min)):
+            if config[i] == current_hour:
+                logger.info(f"     ▫️ Configurant {self.name} -> {config[i]}")
 
-# to_save_data = {
-#     "device_name": current_config['device_name'],
-#     "device_type": current_config['device_type'],
-#     "max_val": current_config['restrictions']['max'],
-#     "min_val": current_config['restrictions']['min'],
-#     "efficiency_sensor": current_config['extra_vars']['eficiencia']['sensor_id'],
-#     "actual_percentage_sensor": current_config['extra_vars']['percentatge_actual']['sensor_id'],
-#     "control_charge_sensor": current_config['control_vars']['carregar']['sensor_id'],
-#     "control_discharge_sensor": current_config['control_vars']['descarregar']['sensor_id'],
-#     "control_mode_sensor": current_config['control_vars']['mode_operar']['sensor_id']
-#
-# }
-
+                positive_value = abs(config[i])
+                if config[i] >= 0:
+                    return positive_value, self.control_charge_sensor, 'number'
+                elif config[i] < 0:
+                    return positive_value, self.control_discharge_sensor, 'number'
+        return None
