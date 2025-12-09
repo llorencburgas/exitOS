@@ -214,17 +214,17 @@ class OptimalScheduler:
         return aux
 
     def __update_DE_step(self,bounds, convergence):
-        if not self.database.running_in_ha:
-            logger.debug(f"      ▫️ Convergence {convergence}")
-            logger.debug(f"      ▫️ Bounds {bounds}")
 
-            logger.debug(f"      ▫️ Current price {self.current_result}")
-            logger.debug(f"      ▫️ Best price {self.best_result}")
+        logger.debug(f"      ▫️ Convergence {convergence}")
+        logger.debug(f"      ▫️ Bounds {bounds}")
 
-            if self.current_result < self.best_result:
-                logger.debug(f"      ▫️ Updated Best result: {self.best_result} -> {self.current_result}")
-                self.best_result = self.current_result
-                self.best_result_balance = self.current_result_balance
+        logger.debug(f"      ▫️ Current price {self.current_result}")
+        logger.debug(f"      ▫️ Best price {self.best_result}")
+
+        if self.current_result < self.best_result:
+            logger.debug(f"      ▫️ Updated Best result: {self.best_result} -> {self.current_result}")
+            self.best_result = self.current_result
+            self.best_result_balance = self.current_result_balance
 
     def __calc_total_balance(self,config):
 
