@@ -7,6 +7,7 @@
     <link rel="icon" type="image/x-icon" href="static/favicon.ico">
     <!--  ICONES NAVBAR  -->
     <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
+    <script src="resources/plotly-theme.js"></script>
 </head>
 
 <body>
@@ -15,6 +16,9 @@
         <div class="logo">
             <img src="./static/exitlogo.png" alt="eXiT Control Energètic">
         </div>
+
+<!--        <button onclick="toggleTheme()">Canvia tema</button>-->
+
 
         <ul>
             <li><a href="./"><i class="fa-solid fa-house"></i> Inici</a></li>
@@ -35,4 +39,28 @@
     </footer>
 
 </body>
+<script>
+
+    function applyTheme(theme) {
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+
+        PlotlyTheme.applyToAll();
+    }
+
+    function loadTheme() {
+        return localStorage.getItem("theme") || "light";
+    }
+
+    applyTheme(loadTheme());
+
+    window.toggleTheme = function(){
+        const current = loadTheme();
+        const next = current === 'dark' ? 'light' : 'dark';
+
+        applyTheme(next);
+    };
+
+
+</script>
 </html>

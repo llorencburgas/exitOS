@@ -9,13 +9,33 @@
 
     /* text */
     --text-color: #0f2418;
+    --text-h2: #222;
+    --text-navbar-text: #0f2418;
     --text-hover-color: #04D984; /* només usat en el navbar al fer hover, mirar de canviar*/
     --text-accent-color: #2c3e50;
     --text-muted: #666;
     --text-error-msg: #e74c3c;
 
+    /* hero */
+    --hero-background-color: #e0e0e0;
+    --hero–text-color: #0f2418;
+    --hero-opacity: 1;
+
     /* cards */
     --card-background-color: #fafafa;
+
+    /* table */
+    --table-border-line: #ececec;
+    --table-hover: #fbfbfb;
+    --subtable-text-color: #374151;
+
+    --checkbox-shadow: white;
+
+    /* select */
+    --table-select-bg: #fff;
+    --table-select-border: #fff;
+    --table-select-disabled-bg: #f7f7f7;
+    --table-select-disabled-txt: #999;
 
     /* button */
     --button-bg-hover-color: rgba(4, 170, 109, 0.87);
@@ -28,7 +48,90 @@
     --box-bg-color: #fafafa;
     --box-error-border: #E74C3C26;
 
+    /* date picker*/
+    --dp-bg-color: #fff;
+    --dp-selected-text: #E6E6E6FF;
+    --dp-border-color: #ddd;
+    --dp-offday-bg: #fff;
+    --dp-offday-txt: #999;
+    --dp-hover-day: #a8e6a1;
+    --dp-day-range: #a8e6a1;
+
+    /* plots */
+    --plot-bg: #ffffff;
+    --plot-paper: #ffffff;
+    --plot-grid: #dddddd;
+    --plot-text: #0f2418;
 }
+
+[data-theme="dark"] {
+
+    /* colors principals */
+    --color-primary-green: #04AA6D; /* lleugerament més brillant per destacar en fosc */
+    --color-primary-white: #1b1b1b; /* blanc suau */
+    --color-primary-green-shadow: rgba(4, 217, 132, 0.25);
+    --color-primary-black: #f5f5f5; /* text clar sobre fosc */
+
+    /* text */
+    --text-color: #e6e6e6; /* text principal clar */
+    --text-h2: #ccc;
+    --text-navbar-text: #0f2418; /* navbar clar */
+    --text-hover-color: #04FF9C; /* hover més brillant per destacar */
+    --text-accent-color: #888fa1; /* blau suau com accent */
+    --text-muted: #aaaaaa; /* gris suau per text secundari */
+    --text-error-msg: #ff7b6a; /* vermell adaptat a fosc */
+
+    /* hero */
+    --hero-background-color: #e0e0e0;
+    --hero–text-color: #ffffff;
+    --hero-opacity: 0.6;
+
+    /* cards */
+    --card-background-color: #2a2a2a; /* fons de targeta fosc però no negre */
+
+    /* table */
+    --table-border-line: #4b4b4b;
+    --table-hover: #3f3f3f;
+    --subtable-text-color: #374151;
+
+    --checkbox-shadow: black;
+
+    /* select */
+    --table-select-bg: #333;
+    --table-select-border: #444;
+    --table-select-txt: #f3f3f3;
+    --table-select-disabled-bg: #222;
+    --table-select-disabled-border: #333;
+    --table-select-disabled-txt: #868686;
+
+    /* button */
+    --button-bg-hover-color: rgba(4, 217, 132, 0.35);
+    --button-bg-disabled-color: #3b5f52; /* verd grisós per disabled */
+    --button-secondary-bg-color: #333; /* botó secundari fosc */
+    --button-secondary-bg-hover-color: #3d3d3d;
+
+    /* boxes */
+    --box-border-color: #3a3a3a; /* gris fosc per contorns */
+    --box-bg-color: #1c1c1c; /* color de fons de caixes */
+    --box-error-border: rgba(231, 76, 60, 0.25); /* error lleuger i integrat a fosc */
+
+    /* date picker*/
+    --dp-bg-color: #222;
+    --dp-selected-text: #0F2418FF;
+    --dp-border-color: #444;
+    --dp-offday-bg: #333;
+    --dp-offday-txt: #999;
+    --dp-hover-day: #40573e;
+    --dp-day-range: #5d7e5a;
+
+
+    /* plots */
+    --plot-bg: #1e1e1e;
+    --plot-paper: #121212;
+    --plot-grid: #333333;
+    --plot-text: #e6e6e6;
+}
+
 
 
 *{
@@ -60,7 +163,7 @@ h2{
     margin: 0 0 8px 0;
     font-size: 1.35rem;
     font-weight: 600;
-    color: #222;
+    color: var(--text-h2);
     text-align: center;
 }
 
@@ -91,7 +194,7 @@ h2{
 
 .navbar ul li a{
     text-decoration: none;
-    color: var(--text-color);
+    color: var(--text-navbar-text);
     font-weight: 500;
     transition: 0.2s;
     display: flex;
@@ -124,21 +227,34 @@ h2{
 /*#region MAIN PAGE HERO */
 
 .hero{
+    position: relative;
     text-align: center;
     padding: 60px 20px;
-    background: url('../static/community.webp') no-repeat center center/cover;
-    color: var(--color-primary-white);
+    color: var(--hero–text-color);
+    overflow: hidden;
+}
+.hero::before{
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: url('../static/community.webp') no-repeat center center / cover;
+    opacity: var(--hero-opacity);
+    z-index: 0;
+}
+.hero > * {
+    position: relative;
+    z-index: 1;
 }
 
 .hero h1{
     font-size: 36px;
     margin-bottom: 12px;
-    color: var(--text-color);
+    color: var(--hero–text-color);
 }
 
 .hero p{
     font-size: 18px;
-    color: var(--text-color);
+    color: var(--hero–text-color);
     opacity: 0.9;
 }
 /*#endregion*/
@@ -153,6 +269,7 @@ h2{
 
     h2{
         text-align: center;
+        color: var(--text-color);
     }
 
     .content-section{
@@ -212,13 +329,13 @@ h2{
 
 .footer{
     background-color: var(--color-primary-green);
-    color: var(--text-color);
+    color: var(--text-navbar-text);
     padding: 10px;
     text-align: center;
 }
 
 a.mail-text{
-    color: var(--text-color);
+    color: var(--text-navbar-text);
 }
 
 /*#endregion*/
@@ -283,6 +400,9 @@ a.mail-text{
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    font-size: 16px;
+    text-align: center;
+    color: var(--text-color);
 }
 /*#endregion*/
 
@@ -418,6 +538,7 @@ a.mail-text{
     box-sizing: border-box;
     background: var(--card-background-color);
     text-align: center;
+    color: var(--text-muted);
 }
 
 .database-date-input:focus{
@@ -428,9 +549,23 @@ a.mail-text{
 
 .daterangepicker {
     border-radius: 12px !important;
+    border: 1px solid var(--dp-border-color) !important;
     overflow: hidden;
     box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    background-color: var(--dp-bg-color) !important;
 }
+
+.daterangepicker select{
+    background-color: var(--table-select-bg) !important;
+    border-color: var(--table-select-border) !important;
+    color: var(--table-select-txt) !important;
+}
+
+.daterangepicker .calendar-table{
+    background-color: var(--dp-bg-color) !important;
+    color: var(--text-color) !important;
+}
+
 .daterangepicker .calendar-table th,
 .daterangepicker select {
     border-radius: 4px !important;
@@ -439,24 +574,42 @@ a.mail-text{
 .daterangepicker td.active,
 .daterangepicker td.active:hover {
     background-color: var(--color-primary-green) !important;  /* verd */
-    color: white !important;
+    color: var(--dp-bg-color) !important;
     border-radius: 8px;                     /* cantonades rodones dels dies */
 }
 
 .daterangepicker td.in-range {
-    background-color: #a8e6a1 !important;   /* verd clar per rang */
+    background-color: var(--dp-day-range) !important;   /* verd clar per rang */
     border-radius: 8px;
+}
+
+.daterangepicker .drp-buttons{
+    border-top: 1px solid var(--dp-border-color) !important;
+}
+.daterangepicker.show-ranges.ltr .drp-calendar.left{
+    border-left: 1px solid var(--dp-border-color) !important;
+}
+.daterangepicker .calendar-table{
+    border: 1px solid var(--dp-border-color) !important;
+}
+.daterangepicker td.off{
+    background-color: var(--dp-offday-bg) !important;
+    color: var(--dp-offday-txt) !important;
 }
 
 /* Dies hover (no seleccionats) */
 .daterangepicker td:hover:not(.disabled):not(.active) {
-    background-color: #c1f0c1 !important;
+    background-color: var(--dp-hover-day) !important;
     border-radius: 8px;
+}
+
+.daterangepicker .drp-buttons .drp-selected{
+    color: var(--text-muted) !important;
 }
 .daterangepicker .drp-buttons .applyBtn {
     background-color: var(--color-primary-green) !important;
     border-color: #28a745 !important;
-    color: white !important;
+    color: var(--text-color) !important;
     border-radius: 8px !important;
 }
 
@@ -467,16 +620,25 @@ a.mail-text{
 
 .daterangepicker .drp-buttons .cancelBtn {
     border-radius: 8px !important;
+    background-color: var(--button-secondary-bg-color) !important;
+    color: var(--text-color) !important;
+}
+.daterangepicker .drp-buttons .cancelBtn:hover {
+    background-color: var(--button-secondary-bg-hover-color) !important;
+}
+
+.daterangepicker .ranges li {
+    color: var(--text-muted) !important;
 }
 
 .daterangepicker .ranges li.active {
-    background-color: #28a745 !important;
-    color: white !important;
+    background-color: var(--color-primary-green) !important;
+    color: var(--dp-selected-text) !important;
     border-radius: 8px !important;
 }
 
 .daterangepicker .ranges li:hover:not(.active) {
-    background-color: #a8e6a1 !important;
+    background-color: var(--dp-hover-day) !important;
     border-radius: 8px;
 }
 
@@ -486,7 +648,7 @@ a.mail-text{
     padding: 4px 6px;
 }
 
-/* Opcional: centrar contingut dins del select de mesos/any */
+
 .daterangepicker select {
     text-align: center;
 }
@@ -576,6 +738,9 @@ a.mail-text{
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    font-size: 16px;
+    text-align: center;
+    color: var(--text-color);
 }
 /*#endregion*/
 
@@ -993,12 +1158,12 @@ p.lead{
 }
 
 #devices-table tbody tr.device-row:hover {
-  background: #fbfbfb;
+  background: var(--table-hover);
 }
 
 #devices-table td {
     padding: 10px;
-    border-bottom: 1px solid #ececec;
+    border-bottom: 1px solid var(--table-border-line);
     vertical-align: middle;
     justify-content: center;
 }
@@ -1044,12 +1209,13 @@ p.lead{
     text-align: left;
     border-bottom: 1px solid var(--box-border-color);
     font-size: 0.94rem;
+    color: var(--text-color);
 }
 
 .entities-table th {
     background: #f8fafc;
     font-weight: 600;
-    color: #374151;
+    color: var(--subtable-text-color);
 }
 
 .entity-row input[type="checkbox"] {
@@ -1060,13 +1226,15 @@ p.lead{
     width: 70%;
     padding: 6px;
     border-radius: 8px;
-    border: 1px solid #ddd;
-    background: #fff;
+    border: 1px solid var(--table-select-border);
+    background: var(--table-select-bg);
+    color: var(--table-select-txt)
 }
 
 .entity-type-select:disabled {
-    background: #f7f7f7;
-    color: #999;
+    border: 1px solid var(--table-select-border);
+    background: var(--table-select-disabled-bg);
+    color: var(--table-select-disabled-txt);
 }
 /*#endregion subtaula entitats*/
 
@@ -1090,7 +1258,7 @@ p.lead{
 
 .device-checkbox:checked, .entity-checkbox:checked {
   background: var(--color-primary-green);
-  box-shadow: inset 0 0 0 3px white;
+  box-shadow: inset 0 0 0 3px var(--checkbox-shadow);
 }
 
 .device-checkbox:hover, .entity-checkbox:hover {

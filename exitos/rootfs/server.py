@@ -38,6 +38,7 @@ logger = setup_logger()
 HOSTNAME = '0.0.0.0'
 PORT = 55023
 
+
 #INICIACIÓ DE L'APLICACIÓ I LA BASE DE DADES
 app = Bottle()
 database = db.SqlDB()

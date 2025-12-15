@@ -7,6 +7,7 @@
     <link rel="icon" type="image/x-icon" href="static/favicon.ico">
     <!--    <link rel="stylesheet" href="../resources/mainStyle.css">-->
 
+
     <!-- llibreria d'icontes per al navbar-->
     <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
     <script src="https://cdn.plot.ly/plotly-3.1.0.min.js" charset="utf-8"></script>
@@ -64,7 +65,7 @@
 <!--    PLANIFICACIÓ SONNEN -->
 <div class="scheduler-container">
     <h2>Horaris Configurats</h2>
-    <div id="scheduler-grid" class="scheduler-grid"> <!--AQUI ES POSEN ELS FORECASTS--> </div>
+    <div id="scheduler-grid" class="scheduler-grid"> <!--AQUI ES POSA EL PLOTLY--> </div>
 </div>
 
 
@@ -143,7 +144,12 @@
 
                         const config = {responsive: true};
 
-                        Plotly.newPlot(container, [traceReal, tracePredReal, tracePredFuture], layout, config);
+                        Plotly.newPlot(
+                            container,
+                            [traceReal, tracePredReal, tracePredFuture],
+                            PlotlyTheme.mergeLayout(layout),
+                            config
+                        );
 
                     }
                 });
@@ -160,7 +166,11 @@
 
                 parent_div_scheduler.appendChild(container);
 
-                Plotly.newPlot(container, data.data, data.layout)
+                Plotly.newPlot(
+                    container,
+                    data.data,
+                    PlotlyTheme.mergeLayout(data.layout)
+                );
 
             })
     }
