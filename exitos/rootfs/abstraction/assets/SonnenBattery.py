@@ -22,6 +22,9 @@ class SonnenBattery(AbsEnergyStorage):
 
 
     def simula(self, config, horizon, horizon_min):
+        logger.info(f"Sonnen_Simula -> Self.max = {self.max}")
+        logger.info(f"Sonnen_Simula -> Self.actual_percentage = {self.actual_percentage}")
+
         kw_carrega = []
         consumption_profile = []
         total_cost = 0
