@@ -364,37 +364,33 @@ class OptimalScheduler:
         return result
 
     def costDE(self, config):
-        try:
-            preu_llum_horari = self.preu_llum_horari
-            aux = self.energy_sources.simula_kw(config)
-            self.solucio_run.consum_hora = []
-            self.solucio_run.preu_venta_hora = []
+        preu_llum_horari = self.preu_llum_horari
+        aux = self.energy_sources.simula_kw(config)
+        self.solucio_run.consum_hora = []
+        self.solucio_run.preu_venta_hora = []
 
-            resultat_total = 0
-            for i in range(0, self.hores_simular * self.minuts):
-                consum_total_hora = (self.consumers[i] +
-                                     aux['consumption_profile'][i] -
-                                     self.generators[i])  # W
+        resultat_total = 0
+        for i in range(0, self.hores_simular * self.minuts):
+            consum_total_hora = (self.consumers[i] +
+                                 aux['consumption_profile'][i] -
+                                 self.generators[i])  # W
 
-                preu_venta = (preu_llum_horari[i] / 1000) * consum_total_hora  # W
-                resultat_total += preu_venta
+            preu_venta = (preu_llum_horari[i] / 1000) * consum_total_hora  # W
+            resultat_total += preu_venta
 
-                self.solucio_run.consum_hora.append(consum_total_hora)
-                self.solucio_run.preu_venta_hora.append(preu_venta)
+            self.solucio_run.consum_hora.append(consum_total_hora)
+            self.solucio_run.preu_venta_hora.append(preu_venta)
 
-            self.solucio_run.preu_llum_horari = preu_llum_horari
-            self.solucio_run.preu_total = resultat_total
-            self.solucio_run.timestamps = self.timestamps
-            self.solucio_run.perfil_consum_energy_source = aux['consumption_profile']
-            self.solucio_run.capacitat_actual_energy_source = aux['consumed_Kwh']
-            self.solucio_run.soc_objectiu = aux['soc_objectiu']
+        self.solucio_run.preu_llum_horari = preu_llum_horari
+        self.solucio_run.preu_total = resultat_total
+        self.solucio_run.timestamps = self.timestamps
+        self.solucio_run.perfil_consum_energy_source = aux['consumption_profile']
+        self.solucio_run.capacitat_actual_energy_source = aux['consumed_Kwh']
+        self.solucio_run.soc_objectiu = aux['soc_objectiu']
 
-            logger.debug(f"costDe -> {resultat_total}")
+        logger.debug(f"costDe -> {resultat_total}")
 
-            return resultat_total
-        except Exception as e:
-            logger.error(e)
-            return 999999
+        return resultat_total
 
     def __updateDEStep(self, bounds, convergence):
         self.solucio_final = copy.deepcopy(self.solucio_run)
