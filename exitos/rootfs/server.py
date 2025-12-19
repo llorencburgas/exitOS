@@ -919,8 +919,8 @@ def daily_task():
     database.update_database("all")
     database.clean_database_hourly_average()
 
-    # logger.warning(f"📈 [{hora_actual}] - INICIANT PROCÉS D'OPTIMITZACIÓ")
-    # optimize()
+    logger.warning(f"📈 [{hora_actual}] - INICIANT PROCÉS D'OPTIMITZACIÓ")
+    optimize()
 
 def monthly_task():
     today = datetime.today()
