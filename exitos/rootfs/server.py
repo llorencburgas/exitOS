@@ -3,7 +3,6 @@ import os
 import threading
 import traceback
 from sched import scheduler
-from turtledemo.penrose import start
 
 import joblib
 import plotly
