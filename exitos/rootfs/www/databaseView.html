@@ -189,30 +189,33 @@
         })
             .then(response => response.json())
             .then(data => {
-                if (data.status === "error") console.error(data.message);
-                else {
-                    const graphContainer = document.getElementById("graph-container");
-                    graphContainer.innerHTML = "";
-                    graphContainer.style.width = "100%";
+                const graphContainer = document.getElementById("graph-container");
+                graphContainer.innerHTML = "";
+                graphContainer.style.width = "100%";
 
-                    for (const [key, value] of Object.entries(data.message)) {
-                        //titol
-                        const h2 = document.createElement("h2");
-                        h2.textContent = key;
-                        graphContainer.appendChild(h2);
+                Object.entries(data.graphs).forEach(([sensorId, graph]) => {
+                    const h2 = document.createElement("h2");
+                    h2.textContent = sensorId;
+                    graphContainer.appendChild(h2);
 
-                        //div
-                        const div = document.createElement("div");
-                        div.style.width = "100%";
-                        div.innerHTML = `${value}`;
-                        graphContainer.appendChild(div);
+                    const container = document.createElement("div");
+                    graphContainer.appendChild(container);
+
+                    const trace = {
+                        x: graph.timestamps,
+                        y: graph.values,
+                        mode: 'lines',
+                        name: 'sensorId',
+                        line: {color: 'green'}
                     }
-
-                    const scripts = graphContainer.querySelectorAll("script");
-                    scripts.forEach(script => {
-                        eval(script.textContent); // executa el codi del <script> literalment
+                    const layout = PlotlyTheme.mergeLayout({
+                        xaxis: {title: 'Timestamp'},
+                        yaxis: {title: 'Value'},
+                        dragmode: 'pan'
                     });
-                }
+
+                    Plotly.newPlot(container, [trace], layout, { responsive: true });
+                });
             });
     }
 
@@ -366,7 +369,7 @@
     });
 
 
-    //#endregion a
+    //#endregion
 
     $(function () {
         $('input[name="datetimes"]').daterangepicker({

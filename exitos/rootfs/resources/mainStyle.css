@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap');
+@import "https://unpkg.com/open-props/easings.min.css";
 
 :root{
     /* colors principals */
@@ -33,7 +34,7 @@
 
     /* select */
     --table-select-bg: #fff;
-    --table-select-border: #fff;
+    --table-select-border: #ccc;
     --table-select-disabled-bg: #f7f7f7;
     --table-select-disabled-txt: #999;
 
@@ -62,6 +63,10 @@
     --plot-paper: #ffffff;
     --plot-grid: #dddddd;
     --plot-text: #0f2418;
+
+    /*dak-light switch*/
+    --icon-fill: #121212;
+    --icon-fill-hover: #1e1e1e;
 }
 
 [data-theme="dark"] {
@@ -111,7 +116,7 @@
     --button-secondary-bg-hover-color: #3d3d3d;
 
     /* boxes */
-    --box-border-color: #3a3a3a; /* gris fosc per contorns */
+    --box-border-color: #575757; /* gris fosc per contorns */
     --box-bg-color: #1c1c1c; /* color de fons de caixes */
     --box-error-border: rgba(231, 76, 60, 0.25); /* error lleuger i integrat a fosc */
 
@@ -220,6 +225,100 @@ h2{
 .navbar .logo img{
     height: 40px;
     width: auto;
+}
+
+/*#endregion*/
+
+/*#region LIGHT - DARK SWITCH*/
+.theme-toggle{
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-toggle svg {
+  display: block;
+}
+
+
+.sun-and-moon > :is(.moon, .sun, .sun-beams) {
+  transform-origin: center;
+}
+
+.sun-and-moon > :is(.moon, .sun) {
+  fill: var(--icon-fill);
+}
+
+.theme-toggle:is(:hover, :focus-visible) > .sun-and-moon > :is(.moon, .sun) {
+  fill: var(--icon-fill-hover);
+}
+
+.sun-and-moon > .sun-beams {
+  stroke: var(--icon-fill);
+  stroke-width: 2px;
+}
+
+.theme-toggle:is(:hover, :focus-visible) .sun-and-moon > .sun-beams {
+  stroke: var(--icon-fill-hover);
+}
+
+[data-theme="dark"] .sun-and-moon > .sun {
+  transform: scale(1.75);
+}
+
+[data-theme="dark"] .sun-and-moon > .sun-beams {
+  opacity: 0;
+}
+
+[data-theme="dark"] .sun-and-moon > .moon > circle {
+  transform: translateX(-7px);
+}
+
+@supports (cx: 1) {
+  [data-theme="dark"] .sun-and-moon > .moon > circle {
+    cx: 17;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sun-and-moon > .sun {
+    transition: transform .5s var(--ease-elastic-3);
+  }
+
+  .sun-and-moon > .sun-beams {
+    transition: transform .5s var(--ease-elastic-4), opacity .5s var(--ease-3);
+  }
+
+  .sun-and-moon .moon > circle {
+    transition: transform .25s var(--ease-out-5);
+  }
+
+  @supports (cx: 1) {
+    .sun-and-moon .moon > circle {
+      transition: cx .25s var(--ease-out-5);
+    }
+  }
+
+  [data-theme="dark"] .sun-and-moon > .sun {
+    transition-timing-function: var(--ease-3);
+    transition-duration: .25s;
+    transform: scale(1.75);
+  }
+
+  [data-theme="dark"] .sun-and-moon > .sun-beams {
+    transition-duration: .15s;
+    transform: rotateZ(-25deg);
+  }
+
+  [data-theme="dark"] .sun-and-moon > .moon > circle {
+    transition-duration: .5s;
+    transition-delay: .25s;
+  }
 }
 
 /*#endregion*/
@@ -666,10 +765,11 @@ a.mail-text{
 .dropdown input,
 .model-name input
 {
+    color: var(--text-muted);
     width: 100%;
     padding: 8px 8px;
     margin-bottom: 10px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--table-select-border);
     border-radius: 8px;
     font-size: 0.95rem;
     transition: border-color 0.2s, box-shadow 0.2s;
@@ -708,7 +808,7 @@ a.mail-text{
 
 .meteoData-checkbox:checked {
   background: var(--color-primary-green);
-  box-shadow: inset 0 0 0 3px white;
+  box-shadow: inset 0 0 0 3px var(--checkbox-shadow);
 }
 
 .meteoData-checkbox:hover {
@@ -917,10 +1017,11 @@ a.mail-text{
 
 .modal-content select,
 .modal-content input{
+    color: var(--text-color);
     width: 100%;
     padding: 10px 12px;
     margin-bottom: 10px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--table-select-border);
     border-radius: 8px;
     font-size: 0.95rem;
     transition: border-color 0.2s, box-shadow 0.2s;
@@ -1341,6 +1442,15 @@ p.lead{
     box-shadow: 0 0 0 2px var(--color-primary-green-shadow);
 }
 
+.config-link{
+    text-decoration: none;
+    color: var(--text-accent-color);
+}
+
+.config-link-error{
+    text-decoration: none;
+    color: var(--text-error-msg);
+}
 
 
 /*#endregion CONFIG PAGE*/

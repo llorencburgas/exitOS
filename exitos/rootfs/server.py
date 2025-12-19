@@ -3,6 +3,7 @@ import os
 import threading
 import traceback
 from sched import scheduler
+from turtledemo.penrose import start
 
 import joblib
 import plotly
@@ -320,40 +321,57 @@ def graphs_view():
         if  not date_to_check_input:
             start_date = datetime.today() - timedelta(days=30)
             end_date = datetime.today()
+            date_label = None
         else:
             date_to_check = date_to_check_input[0].split(' - ')
             start_date = datetime.strptime(date_to_check[0], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
             end_date = datetime.strptime(date_to_check[1], '%d/%m/%Y %H:%M').strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
+            date_label = date_to_check_input[0]
 
 
         sensors_data = database.get_all_saved_sensors_data(selected_sensors_list, start_date, end_date)
-        graphs_html = {}
+
+        response = {
+            "status": "ok",
+            "range":{
+                "start": start_date,
+                "end": end_date,
+                "label": date_label,
+            },
+            "graphs": {}
+        }
 
         if len(sensors_data) == 0:
-            for sensor in selected_sensors_list:
-                graphs_html[sensor] = f'<div class="no-data">No hi ha dades disponibles del sensor {sensor} per a les dates {date_to_check[0]} - {date_to_check[1]}</div>'
+            return json.dumps({
+                "status": "empty",
+                "message": "No hi ha dades disponibles",
+                "graphs": {}
+            })
 
-        for sensor_id, data in sensors_data.items():
-            timestamps = [record[0] for record in data]
-            values = [record[1] for record in data if record[1] is not None]
+        for sensor_id, records in sensors_data.items():
+            timestamps = []
+            values = []
+
+            for ts, value in records:
+                if value is not None:
+                    timestamps.append(ts)
+                    values.append(value)
 
             if not values:
-                graphs_html[sensor_id] = f'<div class="no-data">No hi ha dades disponibles del sensor <strong>{sensor_id}</strong> per a les dates {date_to_check[0]} - {date_to_check[1]}</div>'
+                response["graphs"][sensor_id] = {
+                    "status": "no-data",
+                    "message": f"No hi ha dades del sensor {sensor_id}"
+                }
                 continue
 
+            response["graphs"][sensor_id] = {
+                "status": "ok",
+                "timestamps": timestamps,
+                "values": values
+            }
 
-            trace = go.Scatter(x=timestamps, y=values, mode='lines', name=f"Sensor {sensor_id}", line=dict(color='#04AA6D'))
-            layout = go.Layout(xaxis=dict(title="Timestamp"),
-                               yaxis=dict(title="Value "),
-                               dragmode="pan")
+        return json.dumps(response)
 
-            fig = go.Figure(data=[trace], layout=layout)
-            graph_html = pyo.plot(fig, output_type='div', include_plotlyjs=False)
-
-
-            graphs_html[sensor_id] = graph_html
-
-        return json.dumps({"status": "success", "message": graphs_html})
     except Exception as e:
         return json.dumps({"status": "error", "message": str(e)})
 

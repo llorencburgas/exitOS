@@ -432,7 +432,11 @@
                      dragmode: 'pan'
                  };
 
-                 Plotly.newPlot('forecast-chart', [traceReal, tracePredReal, tracePredFuture], layout);
+                 Plotly.newPlot(
+                            'forecast-chart',
+                            [traceReal, tracePredReal, tracePredFuture],
+                            PlotlyTheme.mergeLayout(layout)
+                 );
                  hideLoadingSpinner();
              }else{
                 document.getElementById("forecast-title").style.display = "none";

@@ -109,6 +109,7 @@
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
+//#region Map
   var lat = {{location['lat']}};
   var lon = {{location['lon']}};
   console.log("lat:", lat, "\nlong", lon);
@@ -129,6 +130,7 @@
       document.getElementById('info').style.display = 'block';
     }
   });
+//#endregion
 
   function lockForm(){
     const form = document.querySelector('.content-section');
@@ -192,19 +194,19 @@
                       const line = document.createElement('p');
                       const date = document.createElement('strong');
                       const link = document.createElement('a');
+                      link.className = 'config-link';
 
                       date.innerHTML = timestamp + ": ";
 
                       if(value === "Error"){
                         link.innerHTML = "  Error en el certificat";
+                        link.className = 'config-link-error';
                       }
                       else{
                         link.innerHTML = "  Rebut Correctament";
                         link.href = link_header + value;
                         link.target = '_blank';
                       }
-                      link.style.textDecoration = 'none';
-                      link.style.color = "#0f2418"
 
                       line.appendChild(date);
                       line.appendChild(link);

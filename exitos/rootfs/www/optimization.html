@@ -96,7 +96,11 @@
             container.className = "scheduler-card";
             parent_div_scheduler.appendChild(container);
 
-            Plotly.newPlot(container, data.data, data.layout)
+            Plotly.newPlot(
+                container,
+                data.data,
+                PlotlyTheme.mergeLayout(data.layout)
+            );
         })
         LoadConfigsSaved();
     }
