@@ -85,9 +85,10 @@ class OptimalScheduler:
 
         configs_saved = [os.path.basename(f) for f in glob.glob(self.base_filepath + "optimizations/configs/*.json")]
 
-
         for config in configs_saved:
             config_path = os.path.join(self.base_filepath, "optimizations/configs", f"{config}")
+            if not os.path.exists(config_path): return "Empty"
+
             with open(config_path, "r",encoding="utf-8") as f:
                 current_config = json.load(f)
 
