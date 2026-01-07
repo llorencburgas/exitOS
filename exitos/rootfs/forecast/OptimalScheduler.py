@@ -84,7 +84,6 @@ class OptimalScheduler:
         """
 
         configs_saved = [os.path.basename(f) for f in glob.glob(self.base_filepath + "optimizations/configs/*.json")]
-        if len(configs_saved) == 0: return False
 
 
         for config in configs_saved:

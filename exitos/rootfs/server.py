@@ -896,10 +896,14 @@ def debug_logger_optimization():  #!!!!!!!!!ELIMINAR AL DEIXAR DE DEBUGAR!!!!!!!
 def get_config_file_names():
     # CONFIGURACIONS CREADES
     created_configs_path = forecast.models_filepath + "/optimizations/configs"
-    json_config_files = [f for f in os.listdir(created_configs_path) if f.endswith(".json")]
 
-    if len(json_config_files) == 0: return {"status": "error"}
-    return {"status": "ok", "names" : json_config_files}
+    if os.path.exists(created_configs_path) and os.path.isdir(created_configs_path):
+        json_config_files = [f for f in os.listdir(created_configs_path) if f.endswith(".json")]
+
+        if len(json_config_files) == 0: return {"status": "error"}
+        return {"status": "ok", "names" : json_config_files}
+    else:
+        return {"status": "error"}
 
 @app.post('/save_optimization_config')
 def save_optimization_config():
