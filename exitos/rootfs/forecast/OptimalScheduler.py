@@ -61,7 +61,7 @@ class OptimalScheduler:
         self.horizon_min = horizon_min
 
         have_data = self.prepare_data_for_optimization()
-        if not have_data: return "Empty"
+        if not have_data: return "Empty", None, None
 
         self.global_consumer_id = consumer_id
         self.global_generator_id = generator_id
