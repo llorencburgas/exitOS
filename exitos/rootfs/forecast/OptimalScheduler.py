@@ -84,9 +84,11 @@ class OptimalScheduler:
         """
 
         configs_saved = [os.path.basename(f) for f in glob.glob(self.base_filepath + "optimizations/configs/*.json")]
+        logger.debug(f"configs saved: {configs_saved}")
 
         for config in configs_saved:
             config_path = os.path.join(self.base_filepath, "optimizations/configs", f"{config}")
+            logger.info(f"Loading config: {config}")
             if not os.path.exists(config_path): return "Empty"
 
             with open(config_path, "r",encoding="utf-8") as f:
@@ -180,7 +182,7 @@ class OptimalScheduler:
         return bounds
 
     def __optimize(self):
-        logger.info("🦖 - Començant optimització")
+        logger.info(f"🦖 - Començant optimització  a les {datetime.now().strftime('%Y-%m-%d %H:00')}")
 
         result = differential_evolution(func = self.cost_DE,
                                         popsize = 150,
@@ -316,90 +318,90 @@ class OptimalScheduler:
 # ============================================================================
 
 
-
-    def optimize(self, global_consumer_id, global_generator_id):
-        logger.info(f"🦖 - Començant optimització a les {datetime.now().strftime('%Y-%m-%d %H:00')}")
-
-        logger.debug(f" CONSUM: {global_consumer_id} \n GENERACIÓ: {global_generator_id}")
-        forecast_consum = self.database.get_data_from_latest_forecast_from_sensorid(global_consumer_id)
-        forecast_generator = self.database.get_data_from_latest_forecast_from_sensorid(global_generator_id)
-
-        config_path = os.path.join(self.database.base_filepath, "optimizations/configs/*.json")
-        all_devices = {}
-        for file_path in glob.glob(config_path):
-            with open(file_path, "r", encoding="utf-8") as f:
-                device_config = json.load(f)
-                device_name = device_config["device_name"]
-                all_devices[device_name] = device_config
-
-
-        for device in all_devices:
-            if device['device_type'] == "bateria":
-                energy_source = Battery(hours_to_simulate = 24,
-                                        minutes_per_hour = 1,
-                                        max_capacity = device['restrictions']['Capacitat màxima (kWh)'],
-                                        min_capacity = device['restrictions']['Capacitat mínima (kWh)'],
-                                        actual_percentage = 0,  #LLEGIR L'ÚLTIM VALOR DEL SENSOR
-                                        efficiency = 100) #LLEGIR L'ÚLTIM VALOR DEL SENSOR
-            i=0
-
-    def __runDEModel(self, function):
-        result = differential_evolution(func = function,
-                                        popsize = 100,
-                                        bounds = self.varbound,
-                                        integrality = [True] * len(self.varbound),
-                                        maxiter = self.maxiter,
-                                        mutation = (0.15, 0.25),
-                                        recombination = 0.7,
-                                        tol = 0.0001,
-                                        strategy = 'best1bin',
-                                        init = 'halton',
-                                        disp = True,
-                                        updating = 'deferred',
-                                        callback = self.__updateDEStep,
-                                        workers = 1
-                                        )
-
-        if not self.database.running_in_ha:
-            logger.debug(f"     ▫️ Status: {result['message']}")
-            logger.debug(f"     ▫️ Total evaluations: {result['nfev']}")
-            logger.debug(f"     ▫️ Solution: {result['x']}")
-            logger.debug(f"     ▫️ Cost: {result['fun']}")
-
-        return result
-
-    def costDE(self, config):
-        preu_llum_horari = self.preu_llum_horari
-        aux = self.energy_sources.simula_kw(config)
-        self.solucio_run.consum_hora = []
-        self.solucio_run.preu_venta_hora = []
-
-        resultat_total = 0
-        for i in range(0, self.hores_simular * self.minuts):
-            consum_total_hora = (self.consumers[i] +
-                                 aux['consumption_profile'][i] -
-                                 self.generators[i])  # W
-
-            preu_venta = (preu_llum_horari[i] / 1000) * consum_total_hora  # W
-            resultat_total += preu_venta
-
-            self.solucio_run.consum_hora.append(consum_total_hora)
-            self.solucio_run.preu_venta_hora.append(preu_venta)
-
-        self.solucio_run.preu_llum_horari = preu_llum_horari
-        self.solucio_run.preu_total = resultat_total
-        self.solucio_run.timestamps = self.timestamps
-        self.solucio_run.perfil_consum_energy_source = aux['consumption_profile']
-        self.solucio_run.capacitat_actual_energy_source = aux['consumed_Kwh']
-        self.solucio_run.soc_objectiu = aux['soc_objectiu']
-
-        logger.debug(f"costDe -> {resultat_total}")
-
-        return resultat_total
-
-    def __updateDEStep(self, bounds, convergence):
-        self.solucio_final = copy.deepcopy(self.solucio_run)
-        if not self.database.running_in_ha:
-            logger.debug(f"     Cost aproximacio {self.solucio_run.preu_total}")
-
-
+    #
+    # def optimize(self, global_consumer_id, global_generator_id):
+    #     logger.info(f"🦖 - Començant optimització a les {datetime.now().strftime('%Y-%m-%d %H:00')}")
+    #
+    #     logger.debug(f" CONSUM: {global_consumer_id} \n GENERACIÓ: {global_generator_id}")
+    #     forecast_consum = self.database.get_data_from_latest_forecast_from_sensorid(global_consumer_id)
+    #     forecast_generator = self.database.get_data_from_latest_forecast_from_sensorid(global_generator_id)
+    #
+    #     config_path = os.path.join(self.database.base_filepath, "optimizations/configs/*.json")
+    #     all_devices = {}
+    #     for file_path in glob.glob(config_path):
+    #         with open(file_path, "r", encoding="utf-8") as f:
+    #             device_config = json.load(f)
+    #             device_name = device_config["device_name"]
+    #             all_devices[device_name] = device_config
+    #
+    #
+    #     for device in all_devices:
+    #         if device['device_type'] == "bateria":
+    #             energy_source = Battery(hours_to_simulate = 24,
+    #                                     minutes_per_hour = 1,
+    #                                     max_capacity = device['restrictions']['Capacitat màxima (kWh)'],
+    #                                     min_capacity = device['restrictions']['Capacitat mínima (kWh)'],
+    #                                     actual_percentage = 0,  #LLEGIR L'ÚLTIM VALOR DEL SENSOR
+    #                                     efficiency = 100) #LLEGIR L'ÚLTIM VALOR DEL SENSOR
+    #         i=0
+    #
+    # def __runDEModel(self, function):
+    #     result = differential_evolution(func = function,
+    #                                     popsize = 100,
+    #                                     bounds = self.varbound,
+    #                                     integrality = [True] * len(self.varbound),
+    #                                     maxiter = self.maxiter,
+    #                                     mutation = (0.15, 0.25),
+    #                                     recombination = 0.7,
+    #                                     tol = 0.0001,
+    #                                     strategy = 'best1bin',
+    #                                     init = 'halton',
+    #                                     disp = True,
+    #                                     updating = 'deferred',
+    #                                     callback = self.__updateDEStep,
+    #                                     workers = 1
+    #                                     )
+    #
+    #     if not self.database.running_in_ha:
+    #         logger.debug(f"     ▫️ Status: {result['message']}")
+    #         logger.debug(f"     ▫️ Total evaluations: {result['nfev']}")
+    #         logger.debug(f"     ▫️ Solution: {result['x']}")
+    #         logger.debug(f"     ▫️ Cost: {result['fun']}")
+    #
+    #     return result
+    #
+    # def costDE(self, config):
+    #     preu_llum_horari = self.preu_llum_horari
+    #     aux = self.energy_sources.simula_kw(config)
+    #     self.solucio_run.consum_hora = []
+    #     self.solucio_run.preu_venta_hora = []
+    #
+    #     resultat_total = 0
+    #     for i in range(0, self.hores_simular * self.minuts):
+    #         consum_total_hora = (self.consumers[i] +
+    #                              aux['consumption_profile'][i] -
+    #                              self.generators[i])  # W
+    #
+    #         preu_venta = (preu_llum_horari[i] / 1000) * consum_total_hora  # W
+    #         resultat_total += preu_venta
+    #
+    #         self.solucio_run.consum_hora.append(consum_total_hora)
+    #         self.solucio_run.preu_venta_hora.append(preu_venta)
+    #
+    #     self.solucio_run.preu_llum_horari = preu_llum_horari
+    #     self.solucio_run.preu_total = resultat_total
+    #     self.solucio_run.timestamps = self.timestamps
+    #     self.solucio_run.perfil_consum_energy_source = aux['consumption_profile']
+    #     self.solucio_run.capacitat_actual_energy_source = aux['consumed_Kwh']
+    #     self.solucio_run.soc_objectiu = aux['soc_objectiu']
+    #
+    #     logger.debug(f"costDe -> {resultat_total}")
+    #
+    #     return resultat_total
+    #
+    # def __updateDEStep(self, bounds, convergence):
+    #     self.solucio_final = copy.deepcopy(self.solucio_run)
+    #     if not self.database.running_in_ha:
+    #         logger.debug(f"     Cost aproximacio {self.solucio_run.preu_total}")
+    #
+    #
