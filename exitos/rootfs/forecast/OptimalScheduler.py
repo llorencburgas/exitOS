@@ -61,6 +61,7 @@ class OptimalScheduler:
         self.horizon_min = horizon_min
 
         have_data = self.prepare_data_for_optimization()
+        logger.warning(have_data)
         if not have_data: return "Empty", None, None
 
         self.global_consumer_id = consumer_id
@@ -85,11 +86,14 @@ class OptimalScheduler:
 
         configs_saved = [os.path.basename(f) for f in glob.glob(self.base_filepath + "optimizations/configs/*.json")]
         logger.debug(f"configs saved: {configs_saved}")
+        if len(configs_saved) == 0:
+            logger.info("No config files found. Ending Optimization")
+            return False
 
         for config in configs_saved:
             config_path = os.path.join(self.base_filepath, "optimizations/configs", f"{config}")
             logger.info(f"Loading config: {config}")
-            if not os.path.exists(config_path): return "Empty"
+            if not os.path.exists(config_path): return False
 
             with open(config_path, "r",encoding="utf-8") as f:
                 current_config = json.load(f)
