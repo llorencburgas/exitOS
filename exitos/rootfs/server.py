@@ -173,7 +173,9 @@ def get_scheduler_data():
     try:
         today = datetime.today().strftime("%d_%m_%Y")
         full_path = os.path.join(forecast.models_filepath, "optimizations/"+today+".pkl")
-        if not os.path.exists(full_path): optimize()
+        if not os.path.exists(full_path):
+            can_optimize = optimize()
+            if can_optimize == "Empty": return
         optimization_db = joblib.load(full_path)
 
         graph_timestamps = optimization_db['timestamps']
@@ -761,6 +763,8 @@ def optimize():
         horizon = horizon,
         horizon_min = horizon_min)
 
+    if result == 'Empty': return "Empty"
+
     # GUARDAR A FITXER
     optimization_result = {
         "timestamps": optimalScheduler.timestamps,
@@ -1062,7 +1066,10 @@ def certificate_hourly_task():
 def config_optimized_devices_HA():
     today = datetime.today().strftime("%d_%m_%Y")
     full_path = os.path.join(forecast.models_filepath, "optimizations/" + today + ".pkl")
-    if not os.path.exists(full_path): optimize()
+    if not os.path.exists(full_path):
+        can_optimize = optimize()
+        if can_optimize == "Empty": return
+
     optimization_db = joblib.load(full_path)
 
     optimization_timestamps = optimization_db['timestamps']

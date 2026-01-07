@@ -60,7 +60,8 @@ class OptimalScheduler:
         self.horizon = horizon
         self.horizon_min = horizon_min
 
-        self.prepare_data_for_optimization()
+        have_data = self.prepare_data_for_optimization()
+        if not have_data: return "Empty"
 
         self.global_consumer_id = consumer_id
         self.global_generator_id = generator_id
@@ -83,6 +84,8 @@ class OptimalScheduler:
         """
 
         configs_saved = [os.path.basename(f) for f in glob.glob(self.base_filepath + "optimizations/configs/*.json")]
+        if len(configs_saved) == 0: return False
+
 
         for config in configs_saved:
             config_path = os.path.join(self.base_filepath, "optimizations/configs", f"{config}")
@@ -103,6 +106,8 @@ class OptimalScheduler:
                 self.energy_storages[device_type] = dev
             else:
                 raise ValueError(f"Categoria '{device_category}' desconeguda per al dispositiu {device_type}")
+
+        return True
 
     def get_sensor_forecast_data(self,sensor_id):
         """
