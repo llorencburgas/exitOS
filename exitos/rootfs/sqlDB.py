@@ -463,8 +463,20 @@ class SqlDB():
             return f"Error! : {str(e)}"
 
     def save_forecast(self, data):
+        forecast_name = data[0][0]
+        forecast_run_time = data[0][2]
+
         with self._get_connection() as con:
             cur = con.cursor()
+
+            #eliminem forecast amb mateix data i nom per evitar duplicats en un sol dia
+            cur.execute("""
+            DELETE FROM forecasts
+                WHERE forecast_name = ?
+                AND forecast_run_time = ?
+            """, (forecast_name, forecast_run_time))
+
+            #inserim el nou forecast
             cur.executemany("""
                 INSERT INTO forecasts (forecast_name, sensor_forecasted, forecast_run_time, forecasted_time, predicted_value, real_value) 
                 VALUES (?,?,?,?,?,?)
@@ -472,6 +484,7 @@ class SqlDB():
 
             con.commit()
             cur.close()
+
 
     def get_forecasts_name(self):
         with self._get_connection() as con:
@@ -481,19 +494,15 @@ class SqlDB():
             cur.close()
         return aux
 
-    def get_data_from_latest_forecast(self, forecast_id):
+    def get_data_from_forecast_from_date(self, forecast_id, date):
         with self._get_connection() as con:
             cur = con.cursor()
             cur.execute("""
                     SELECT forecast_run_time, forecasted_time, predicted_value, real_value
                     FROM forecasts
                     WHERE forecast_name = ?
-                    AND forecast_run_time = (
-                        SELECT MAX(forecast_run_time)
-                        FROM forecasts
-                        WHERE forecast_name = ?
-                    )
-                """, (forecast_id, forecast_id))
+                    AND forecast_run_time = ?
+                """, (forecast_id, date))
             aux = cur.fetchall()
             cur.close()
             data = pd.DataFrame(aux, columns=('run_date','timestamp', 'value', 'real_value'))

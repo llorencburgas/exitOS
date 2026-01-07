@@ -313,7 +313,7 @@ class OptimalScheduler:
 
 
     def optimize(self, global_consumer_id, global_generator_id):
-        logger.info("🦖 - Començant optimització")
+        logger.info(f"🦖 - Començant optimització a les {datetime.now().strftime('%Y-%m-%d %H:00')}")
 
         logger.debug(f" CONSUM: {global_consumer_id} \n GENERACIÓ: {global_generator_id}")
         forecast_consum = self.database.get_data_from_latest_forecast_from_sensorid(global_consumer_id)

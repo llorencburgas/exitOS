@@ -13,7 +13,6 @@ import glob
 import random
 
 import plotly.graph_objs as go
-import plotly.offline as pyo
 import plotly.express as px
 import pandas as pd
 from pandas import to_datetime
@@ -118,6 +117,7 @@ def create_model_page(active_model = "None"):
             forecasts_id.append(f[0])
 
         if active_model == "None": active_model = "newModel"
+
 
         return template('./www/model.html',
                         sensors_input = sensors_id,
@@ -514,7 +514,7 @@ def train_model():
 def forecast_model(selected_forecast):
     forecast_df, real_values, sensor_id = ForecasterManager.predict_consumption_production(model_name=selected_forecast)
 
-    forecasted_done_time = datetime.now().replace(second=0, microsecond=0)
+    forecasted_done_time = datetime.today().strftime('%d-%m-%Y')
     timestamps = forecast_df.index.tolist()
     predictions = forecast_df['value'].tolist()
 
@@ -564,57 +564,77 @@ def submit_model():
 @app.route('/get_forecast_data/<model_name>')
 def get_forecast_data(model_name):
     try:
-        forecasts = database.get_data_from_latest_forecast(model_name + ".pkl")
-        if forecasts.empty:
-            return json.dumps({"status":"no_forecasts"})
+        logger.info("111")
+        today_date = datetime.today().strftime('%d-%m-%Y')
+        yesterday_date = (datetime.today() - timedelta(days = 1)).strftime('%d-%m-%Y')
 
+        forecasts = database.get_data_from_forecast_from_date(model_name + ".pkl", today_date)
+        yesterday = database.get_data_from_forecast_from_date(model_name + ".pkl", yesterday_date)
+
+        if forecasts.empty or yesterday.empty:
+            return json.dumps({"status":"no_forecasts"})
+        logger.info("222")
         timestamps = forecasts["timestamp"].tolist()
         predictions = forecasts["value"].tolist()
-        real_values = forecasts["real_value"].tolist()
 
-        #separem dades reals de prediccions futures
-        overlapping_timestamps = []
-        overlapping_predictions = []
-        real_vals = []
+        real_values = []
+        real_values_timestamps = []
+        for i in range(len(forecasts['real_value'])):
+            if not math.isnan(forecasts['real_value'][i]):
+                real_values.append(forecasts['real_value'][i])
+                real_values_timestamps.append(forecasts['timestamp'].tolist()[i])
 
-        future_timestamps = []
-        future_predictions = []
+        yesterday_predictions = yesterday["value"].tolist()
+        yesterday_timestamps = yesterday["timestamp"].tolist()
+        #
+        # #separem dades reals de prediccions futures
+        # overlapping_timestamps = []
+        # overlapping_predictions = []
+        # real_vals = []
+        #
+        # future_timestamps = []
+        # future_predictions = []
+        #
+        # today = datetime.today()
+        # first_day = today - timedelta(days=7)
+        #
+        # for i in range(len(timestamps)):
+        #     if not math.isnan(real_values[i]):
+        #         overlapping_timestamps.append(timestamps[i])
+        #         overlapping_predictions.append(predictions[i])
+        #         real_vals.append(real_values[i])
+        #     else:
+        #         future_timestamps.append(timestamps[i])
+        #         future_predictions.append(predictions[i])
+        #
+        # #Calculem timestamps pel Plotly
+        # last_timestamp = None
+        # if future_timestamps:
+        #     last_timestamp = datetime.strptime(future_timestamps[-1], "%Y-%m-%d %H:%M")
+        # elif overlapping_timestamps:
+        #     last_timestamp = datetime.strptime(overlapping_timestamps[-1], "%Y-%m-%d %H:%M")
+        #
+        # if last_timestamp:
+        #     start_timestamp = last_timestamp - timedelta(days=7)
+        # else:
 
-        today = datetime.today()
-        first_day = today - timedelta(days=7)
-
-        for i in range(len(timestamps)):
-            if not math.isnan(real_values[i]):
-                overlapping_timestamps.append(timestamps[i])
-                overlapping_predictions.append(predictions[i])
-                real_vals.append(real_values[i])
-            else:
-                future_timestamps.append(timestamps[i])
-                future_predictions.append(predictions[i])
-
-        #Calculem timestamps pel Plotly
-        last_timestamp = None
-        if future_timestamps:
-            last_timestamp = datetime.strptime(future_timestamps[-1], "%Y-%m-%d %H:%M")
-        elif overlapping_timestamps:
-            last_timestamp = datetime.strptime(overlapping_timestamps[-1], "%Y-%m-%d %H:%M")
-        if last_timestamp:
-            start_timestamp = last_timestamp - timedelta(days=7)
-        else:
-            start_timestamp = datetime.today() - timedelta(days=7)
-            last_timestamp = datetime.today()
-
+        start_timestamp = (datetime.today() - timedelta(days=4)).strftime('%d-%m-%Y')
+        last_timestamp = (datetime.today() + timedelta(days=3)).strftime('%d-%m-%Y')
+        logger.info("333")
 
         return json.dumps({
             "status": "ok",
-            "timestamps_overlap": overlapping_timestamps,
-            "predictions_overlap": overlapping_predictions,
-            "real_values": real_vals,
-            "timestamps_future": future_timestamps,
-            "predictions_future": future_predictions,
-            "last7daysStart": start_timestamp.strftime("%Y-%m-%d %H:%M"),
-            "last7daysEnd": last_timestamp.strftime("%Y-%m-%d %H:%M"),
+            "timestamps": timestamps,
+            # "predictions": predictions,
+            # "real_values": real_values,
+            # "real_values_timestamps": real_values_timestamps,
+            # "yesterday_predictions": yesterday_predictions,
+            # "yesterday_timestamps": yesterday_timestamps,
+            # "start_timestamp": start_timestamp,
+            # "last_timestamp": last_timestamp,
         })
+
+
     except Exception as e:
         logger.error(f"❌ Error getting forecast for model {model_name}: {e}")
         return json.dumps({"status": "error", "message": str(e)})
