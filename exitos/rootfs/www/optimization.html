@@ -92,15 +92,17 @@
         fetch('get_scheduler_data')
         .then(response => response.json())
         .then(data => {
-            const container = document.createElement("div");
-            container.className = "scheduler-card";
-            parent_div_scheduler.appendChild(container);
+            if (data !== "ERROR"){
+                const container = document.createElement("div");
+                container.className = "scheduler-card";
+                parent_div_scheduler.appendChild(container);
 
-            Plotly.newPlot(
-                container,
-                data.data,
-                PlotlyTheme.mergeLayout(data.layout)
-            );
+                Plotly.newPlot(
+                    container,
+                    data.data,
+                    PlotlyTheme.mergeLayout(data.layout)
+                );
+            }
         })
         LoadConfigsSaved();
     }

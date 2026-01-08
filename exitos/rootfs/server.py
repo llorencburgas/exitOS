@@ -205,27 +205,6 @@ def get_scheduler_data():
             fillcolor="rgba(0,128,0,0.3)"
         ))
 
-        # # Línia del sensor2 (blau amb opacitat baixa)
-        # fig.add_trace(go.Scatter(
-        #     x=graph_df["hora"],
-        #     y=graph_df["consum"],
-        #     mode='lines',
-        #     name="Consum",
-        #     line=dict(color="blue", width=2),
-        #     opacity=0.5
-        # ))
-        #
-        # # Línia del sensor3 (taronja amb opacitat baixa)
-        # fig.add_trace(go.Scatter(
-        #     x=graph_df["hora"],
-        #     y=graph_df["generacio"],
-        #     mode='lines',
-        #     name="Generacio",
-        #     line=dict(color="orange", width=2),
-        #     opacity=0.5
-        # ))
-
-
         now = datetime.now()
 
         fig.update_layout(
@@ -802,7 +781,6 @@ def optimize():
     except Exception as e:
         logger.error(f"❌ Error optimitzant: {str(e)}: {traceback.format_exc()}")
 
-
 def flexibility():
     """
     Calcula la flexibilitat de l'optimització realitzada dins OptimalScheduler.SolucioFinal
@@ -1120,7 +1098,7 @@ scheduler_thread.start()
 @app.route('/panik_function')
 def panik_function():
     logger.warning("panik function activated")
-    config_optimized_devices_HA()
+
     # config_optimized_devices_HA()
 #endregion DEBUG REGION
 
