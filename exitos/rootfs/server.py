@@ -1096,7 +1096,7 @@ def config_optimized_devices_HA():
             value, sensor_id, sensor_type = energy_storage.controla(optimization_timestamps, optimization_result)
             database.set_sensor_value_HA(sensor_type, sensor_id, value)
     except Exception as e:
-        logger.error(f"❌ {datetime.now().strftime("%H:%m")} Error configurant horariament un dispositiu a H.A {e}")
+        logger.error(f"❌ {datetime.now().strftime('%H:%m')} Error configurant horariament un dispositiu a H.A {e}")
 
 schedule.every().day.at("00:00").do(daily_task)
 schedule.every().day.at("01:00").do(daily_forecast_task)
