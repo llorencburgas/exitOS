@@ -1120,6 +1120,7 @@ scheduler_thread.start()
 @app.route('/panik_function')
 def panik_function():
     logger.warning("panik function activated")
+    config_optimized_devices_HA()
     # config_optimized_devices_HA()
 #endregion DEBUG REGION
 
