@@ -174,14 +174,15 @@ def get_scheduler_data():
         today = datetime.today().strftime("%d_%m_%Y")
         full_path = os.path.join(forecast.models_filepath, "optimizations/"+today+".pkl")
         if not os.path.exists(full_path):
-            can_optimize = optimize()
-            if can_optimize == "Empty": return
+            optimize()
+
+        if not os.path.exists(full_path): return json.dumps("ERROR")
+
         optimization_db = joblib.load(full_path)
 
         graph_timestamps = optimization_db['timestamps']
         graph_optimization = optimization_db['total_balance']
-        # graph_consum = sonnen_db['Consumer']
-        # graph_generation = sonnen_db['Generator']
+
 
         graph_df = pd.DataFrame({
             "hora": pd.to_datetime(graph_timestamps),
@@ -752,54 +753,55 @@ def get_user_configuration_data():
 
 @app.route('/optimize')
 def optimize():
-    horizon = 24
-    horizon_min = 1 # 1 = 60 minuts  | 2 = 30 minuts | 4 = 15 minuts
+    try:
+        horizon = 24
+        horizon_min = 1 # 1 = 60 minuts  | 2 = 30 minuts | 4 = 15 minuts
 
-    user_data = get_user_configuration_data()
-    global_consumer_id = user_data['consumption']
-    global_generator_id = user_data['generation']
+        user_data = get_user_configuration_data()
+        global_consumer_id = user_data['consumption']
+        global_generator_id = user_data['generation']
 
-    if global_generator_id == '' or global_consumer_id == '':
-        logger.warning("⚠️ Variables globals no seleccionades a la configuració d'usuari.")
-        return 'ERROR'
+        if global_generator_id == '' or global_consumer_id == '':
+            logger.warning("⚠️ Variables globals no seleccionades a la configuració d'usuari.")
+            return 'ERROR'
 
 
-    result, total_price, total_balance = optimalScheduler.start_optimization(
-        consumer_id = global_consumer_id,
-        generator_id = global_generator_id,
-        horizon = horizon,
-        horizon_min = horizon_min)
+        success, result, total_price, total_balance = optimalScheduler.start_optimization(
+            consumer_id = global_consumer_id,
+            generator_id = global_generator_id,
+            horizon = horizon,
+            horizon_min = horizon_min)
 
-    if result == 'Empty': return "Empty"
+        if success:
+            # GUARDAR A FITXER
+            optimization_result = {
+                "timestamps": optimalScheduler.timestamps,
+                "total_balance": total_balance,
+                "total_price": total_price,
+                "optimization_vbounds": result
+            }
+            today = datetime.today().strftime("%d_%m_%Y")
+            full_path = os.path.join(forecast.models_filepath, "optimizations/"+today+".pkl")
+            os.makedirs(forecast.models_filepath + 'optimizations', exist_ok=True)
+            if os.path.exists(full_path):
+                logger.warning("Eliminant arxiu antic d'optimització ")
+                os.remove(full_path)
 
-    # GUARDAR A FITXER
-    optimization_result = {
-        "timestamps": optimalScheduler.timestamps,
-        "total_balance": total_balance,
-        "total_price": total_price,
-        "optimization_vbounds": result
-    }
-    today = datetime.today().strftime("%d_%m_%Y")
-    full_path = os.path.join(forecast.models_filepath, "optimizations/"+today+".pkl")
-    os.makedirs(forecast.models_filepath + 'optimizations', exist_ok=True)
-    if os.path.exists(full_path):
-        logger.warning("Eliminant arxiu antic d'optimització ")
-        os.remove(full_path)
+            joblib.dump(optimization_result, full_path)
+            logger.info(f"✏️ Optimització diària guardada al fitxer {full_path}")
 
-    joblib.dump(optimization_result, full_path)
-    logger.info(f"✏️ Optimització diària guardada al fitxer {full_path}")
+            #configurar schedule job, mirem que no existeixi el job
+            for job in schedule.get_jobs():
+                if job.job_func == 'config_optimized_devices_HA':
+                    scheduler.cancel(job)
+            # afegim job nou
+            interval = 60 // horizon_min
+            minutes = list(range(0, 60, interval))
+            for m in minutes:
+                schedule.every().hour.at(f":{m:02d}").do(config_optimized_devices_HA)
+    except Exception as e:
+        logger.error(f"❌ Error optimitzant: {str(e)}: {traceback.format_exc()}")
 
-    #configurar schedule job
-    # mirem que no existeixi el job
-    for job in schedule.get_jobs():
-        if job.job_func == 'config_optimized_devices_HA':
-            scheduler.cancel(job)
-    # afegim job nou
-    interval = 60 // horizon_min
-    minutes = list(range(0, 60, interval))
-    for m in minutes:
-        schedule.every().hour.at(f":{m:02d}").do(config_optimized_devices_HA)
-    return "OK"
 
 def flexibility():
     """

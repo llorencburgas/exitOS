@@ -57,26 +57,33 @@ class OptimalScheduler:
 
 
     def start_optimization(self, consumer_id, generator_id, horizon, horizon_min):
-        self.horizon = horizon
-        self.horizon_min = horizon_min
+        try:
+            self.horizon = horizon
+            self.horizon_min = horizon_min
 
-        have_data = self.prepare_data_for_optimization()
-        logger.warning(have_data)
-        if not have_data: return "Empty", None, None
+            has_data = self.prepare_data_for_optimization()
 
-        self.global_consumer_id = consumer_id
-        self.global_generator_id = generator_id
+            if has_data:
+                self.global_consumer_id = consumer_id
+                self.global_generator_id = generator_id
 
-        self.global_consumer_forecast['forecast_data'], self.global_consumer_forecast['forecast_timestamps'] = self.get_sensor_forecast_data(consumer_id)
-        self.global_generator_forecast['forecast_data'], self.global_generator_forecast['forecast_timestamps'] = self.get_sensor_forecast_data(generator_id)
+                self.global_consumer_forecast['forecast_data'], self.global_consumer_forecast['forecast_timestamps'] = self.get_sensor_forecast_data(consumer_id)
+                self.global_generator_forecast['forecast_data'], self.global_generator_forecast['forecast_timestamps'] = self.get_sensor_forecast_data(generator_id)
 
-        self.varbound = self.configure_varbounds()
+                self.varbound = self.configure_varbounds()
 
-        self.electricity_prices = self.get_hourly_electric_prices()
+                self.electricity_prices = self.get_hourly_electric_prices()
 
-        result = self.__optimize()
+                result = self.__optimize()
+            else:
+                result = None
 
-        return result, self.best_result, self.best_result_balance
+            return has_data, result, self.best_result, self.best_result_balance
+
+        except Exception as e:
+            logger.error(f"❌ No s'ha pogut realitzar l'optimització")
+            # return False, None, None, None
+
 
     def prepare_data_for_optimization(self):
         """
@@ -109,6 +116,7 @@ class OptimalScheduler:
                 raise ValueError(f"Categoria '{device_category}' desconeguda per al dispositiu {device_type}")
 
         return True
+
 
     def get_sensor_forecast_data(self,sensor_id):
         """
