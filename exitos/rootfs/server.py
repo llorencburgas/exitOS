@@ -566,18 +566,27 @@ def submit_model():
 @app.route('/get_forecast_data/<model_name>')
 def get_forecast_data(model_name):
     try:
-        logger.info("111")
         today_date = datetime.today().strftime('%d-%m-%Y')
         yesterday_date = (datetime.today() - timedelta(days = 1)).strftime('%d-%m-%Y')
 
         forecasts = database.get_data_from_forecast_from_date(model_name + ".pkl", today_date)
         yesterday = database.get_data_from_forecast_from_date(model_name + ".pkl", yesterday_date)
 
-        if forecasts.empty or yesterday.empty:
-            return json.dumps({"status":"no_forecasts"})
-        logger.info("222")
-        timestamps = forecasts["timestamp"].tolist()
-        predictions = forecasts["value"].tolist()
+        if forecasts.empty:
+            predictions = ""
+            timestamps = ""
+        else:
+            timestamps = forecasts["timestamp"].tolist()
+            predictions = forecasts["value"].tolist()
+
+        if yesterday.empty:
+            yesterday_predictions = ""
+            yesterday_timestamps = ""
+        else:
+            yesterday_predictions = yesterday["value"].tolist()
+            yesterday_timestamps = yesterday["timestamp"].tolist()
+
+
 
         real_values = []
         real_values_timestamps = []
@@ -586,8 +595,7 @@ def get_forecast_data(model_name):
                 real_values.append(forecasts['real_value'][i])
                 real_values_timestamps.append(forecasts['timestamp'].tolist()[i])
 
-        yesterday_predictions = yesterday["value"].tolist()
-        yesterday_timestamps = yesterday["timestamp"].tolist()
+
         #
         # #separem dades reals de prediccions futures
         # overlapping_timestamps = []
@@ -620,20 +628,19 @@ def get_forecast_data(model_name):
         #     start_timestamp = last_timestamp - timedelta(days=7)
         # else:
 
-        start_timestamp = (datetime.today() - timedelta(days=4)).strftime('%d-%m-%Y')
-        last_timestamp = (datetime.today() + timedelta(days=3)).strftime('%d-%m-%Y')
-        logger.info("333")
+        start_timestamp = (datetime.today() - timedelta(days=4)).replace(hour=0, minute=0).strftime('%Y-%m-%d %H:%M')
+        last_timestamp = (datetime.today() + timedelta(days=4)).replace(hour=0, minute=0).strftime('%Y-%m-%d %H:%M')
 
         return json.dumps({
             "status": "ok",
             "timestamps": timestamps,
-            # "predictions": predictions,
-            # "real_values": real_values,
-            # "real_values_timestamps": real_values_timestamps,
-            # "yesterday_predictions": yesterday_predictions,
-            # "yesterday_timestamps": yesterday_timestamps,
-            # "start_timestamp": start_timestamp,
-            # "last_timestamp": last_timestamp,
+            "predictions": predictions,
+            "real_values": real_values,
+            "real_values_timestamps": real_values_timestamps,
+            "yesterday_predictions": yesterday_predictions,
+            "yesterday_timestamps": yesterday_timestamps,
+            "start_timestamp": start_timestamp,
+            "last_timestamp": last_timestamp,
         })
 
 
@@ -1068,25 +1075,28 @@ def certificate_hourly_task():
                        f"Recorda completar la teva configuració d'usuari des de l'apartat 'configuració' de la pàgina")
 
 def config_optimized_devices_HA():
-    today = datetime.today().strftime("%d_%m_%Y")
-    full_path = os.path.join(forecast.models_filepath, "optimizations/" + today + ".pkl")
-    if not os.path.exists(full_path):
-        can_optimize = optimize()
-        if can_optimize == "Empty": return
+    try:
+        today = datetime.today().strftime("%d_%m_%Y")
+        full_path = os.path.join(forecast.models_filepath, "optimizations/" + today + ".pkl")
+        if not os.path.exists(full_path):
+            can_optimize = optimize()
+            if can_optimize == "Empty": return
 
-    optimization_db = joblib.load(full_path)
+        optimization_db = joblib.load(full_path)
 
-    optimization_timestamps = optimization_db['timestamps']
-    optimization_result = optimization_db['optimization_vbounds']
+        optimization_timestamps = optimization_db['timestamps']
+        optimization_result = optimization_db['optimization_vbounds']
 
-    for consumer in optimalScheduler.consumers.values():
-        logger.info(f"{consumer.name} optimizing {consumer.name} ...")
-    for generator in optimalScheduler.generators.values():
-        logger.info(f"{generator.name} optimizing {generator.name} ...")
-    for energy_storage in optimalScheduler.energy_storages.values():
-        logger.info(f"{energy_storage.name} optimizing {energy_storage.name} ...")
-        value, sensor_id, sensor_type = energy_storage.controla(optimization_timestamps, optimization_result)
-        database.set_sensor_value_HA(sensor_type, sensor_id, value)
+        for consumer in optimalScheduler.consumers.values():
+            logger.info(f"{consumer.name} optimizing {consumer.name} ...")
+        for generator in optimalScheduler.generators.values():
+            logger.info(f"{generator.name} optimizing {generator.name} ...")
+        for energy_storage in optimalScheduler.energy_storages.values():
+            logger.info(f"{energy_storage.name} optimizing {energy_storage.name} ...")
+            value, sensor_id, sensor_type = energy_storage.controla(optimization_timestamps, optimization_result)
+            database.set_sensor_value_HA(sensor_type, sensor_id, value)
+    except Exception as e:
+        logger.error(f"❌ {datetime.now().strftime("%H:%m")} Error configurant horariament un dispositiu a H.A {e}")
 
 schedule.every().day.at("00:00").do(daily_task)
 schedule.every().day.at("01:00").do(daily_forecast_task)
@@ -1102,6 +1112,14 @@ scheduler_thread = threading.Thread(target=run_scheduled_tasks, daemon=True)
 scheduler_thread.start()
 
 #endregion DAILY TASKS
+
+
+#region DEBUG REGION
+@app.route('/panik_function')
+def panik_function():
+    logger.warning("panik function activated")
+    # config_optimized_devices_HA()
+#endregion DEBUG REGION
 
 
 # Funció main que encén el servidor web.

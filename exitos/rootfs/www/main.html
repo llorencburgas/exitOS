@@ -24,6 +24,10 @@
     <p>Gestiona, visualitza i optimitza la teva energia</p>
 </div>
 
+<!--    PANIK BUTTON    -->
+<div style="display: flex; justify-content: center; align-items: center;">
+    <button class="btn" onclick="panikButtonTest()" style="padding: 10px 20px;"><i class="fa-solid fa-skull"></i> PANIK BUTTON</button>
+</div>
 
 <!--    INFO CARDS    -->
 <div class="container">
@@ -62,6 +66,7 @@
 
 </div>
 
+
 <!--    PLANIFICACIÓ SONNEN -->
 <div class="scheduler-container">
     <h2>Horaris Configurats</h2>
@@ -76,17 +81,28 @@
 </div>
 
 
-
-
 </body>
 
 <script>
+    /**
+     * Funció purament per testejar. ELIMINAR QUAN ACABI DE DEBUGAR
+     * **/
+    function panikButtonTest() {
+        fetch('panik_function')
+                .then(response => response.json())
+                .then(data => {
+                    console.log("OK");
+                });
+    }
+
+    /**
+    * Obté amb 2 fetch els forecastings guardats i el graph d'optimització
+    **/
     function onLoadPage() {
         const sensors_list = {{!active_sensors_list}};
         const parent_div_forecast = document.getElementById("forecast-grid");
         const parent_div_scheduler = document.getElementById("scheduler-grid")
         sensors_list.forEach((sensor_id) => {
-            // const fixed_name = sensor_id.replace("sensor.", '')
             const fixed_name = sensor_id.replace(".pkl", "")
 
             fetch('get_forecast_data/' + fixed_name)
@@ -101,39 +117,42 @@
                         parent_div_forecast.appendChild(container);
 
 
-                        const realTimestamps = data.timestamps_overlap;
-                        const realPredictions = data.predictions_overlap;
+                        const timestamps = data.timestamps;
+                        const predictions = data.predictions;
                         const realValues = data.real_values;
-                        const futureTimestamps = data.timestamps_future;
-                        const futurePredictions = data.predictions_future;
-                        const last7DaysStart = data.last7daysStart;
-                        const last7DaysEnd = data.last7daysEnd;
-
+                        const realValuesTimestamps = data.real_values_timestamps;
+                        const yesterday = data.yesterday_predictions;
+                        const yesterdayTimestamps = data.yesterday_timestamps;
+                        const startTimestamps = data.start_timestamp;
+                        const endTimestamps = data.last_timestamp;
 
                         const traceReal = {
-                            x: realTimestamps,
+                            x: realValuesTimestamps,
                             y: realValues,
                             mode: "lines",
                             name: "Dades Reals",
-                            line: {color: 'red', dash: 'dot'}
-                        };
-                        const tracePredReal = {
-                            x: realTimestamps,
-                            y: realPredictions,
-                            mode: 'lines',
-                            name: 'Predicció (part real)',
-                            line: {color: 'green'}
-                        };
-                        const tracePredFuture = {
-                            x: futureTimestamps,
-                            y: futurePredictions,
-                            mode: 'lines',
-                            name: 'Predicció (futur)',
                             line: {color: 'orange', dash: 'dot'}
+                        };
+
+                        const tracePrediction = {
+                            x: timestamps,
+                            y: predictions,
+                            mode: 'lines',
+                            name: 'Predicció Avui',
+                            line: { color: 'green' }
+                        };
+
+                        const traceYesterday = {
+                            x: yesterdayTimestamps,
+                            y: yesterday,
+                            mode: 'lines',
+                            name: 'Predicció Ahir',
+                            line: {color: 'red', dash: 'dot'}
                         }
+
                         const layout = {
                             title: 'Predicció vs Dades Reals',
-                            xaxis: {title: 'Temps', range:[last7DaysStart, last7DaysEnd]},
+                            xaxis: {title: 'Temps', range:[startTimestamps, endTimestamps]},
                             yaxis: {title: 'Consum (Kw)'},
                             autosize: true,
                             margin: {t: 40, r: 20, b: 50, l: 50},
@@ -143,13 +162,18 @@
                         };
 
                         const config = {responsive: true};
-
-                        Plotly.newPlot(
-                            container,
-                            [traceReal, tracePredReal, tracePredFuture],
-                            PlotlyTheme.mergeLayout(layout),
-                            config
-                        );
+                        if(yesterday === "" && predictions === ""){
+                            container.innerHTML = 'No hi ha dades a mostrar pel model ' + sensor_id;
+                        }
+                        else if(yesterday === ""){
+                            Plotly.newPlot(container,[traceReal, tracePrediction], PlotlyTheme.mergeLayout(layout), config);
+                        }
+                        else if(predictions === ""){
+                            Plotly.newPlot(container,[traceYesterday], PlotlyTheme.mergeLayout(layout),config);
+                        }
+                        else{
+                            Plotly.newPlot(container,[traceReal, tracePrediction, traceYesterday], PlotlyTheme.mergeLayout(layout),config);
+                        }
 
                     }
                 });

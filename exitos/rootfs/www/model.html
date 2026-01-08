@@ -151,7 +151,7 @@
     const selectedSensorsContainer = document.getElementById("selected-sensors");
     const sensorsInput = document.getElementById("sensors-input");
 
-    //Funció per a actualitzar el hidden input field
+    /**Funció per a actualitzar el hidden input field**/
     function updateSensorsHiddenInput(){
         sensorsInput.value = Array.from(selectedSensors).join(",");
     }
@@ -338,7 +338,7 @@
     function updateModelSelection(modelPath){
         showLoadingSpinner();
         
-        // Habilitar el botón de eliminar cuando se selecciona un modelo
+        // Habilitar el botó d'eliminar quan es selecciona un model
         document.getElementById("delete-forecast").disabled = false;
         
      fetch('get_model_config/' + modelPath)
@@ -389,21 +389,24 @@
      fetch('get_forecast_data/' + modelPath)
          .then(response => response.json())
          .then(data => {
-             console.log("888");
+             console.log(data);
              if(data.status === "ok"){
-                 console.log("444");
+                 document.getElementById("forecast-chart").innerHTML = '';
+
                  const timestamps = data.timestamps;
                  const predictions = data.predictions;
                  const realValues = data.real_values;
+                 const realValuesTimestamps = data.real_values_timestamps;
                  const yesterday = data.yesterday_predictions;
                  const yesterdayTimestamps = data.yesterday_timestamps;
+                 const startTimestamps = data.start_timestamp;
+                 const endTimestamps = data.last_timestamp;
 
 
                  document.getElementById("forecast-title").innerText = `Resultats del Forecast per al model: ${modelPath}`;
                  document.getElementById("forecast-title").style.display = "block";
-                console.log("555");
                  const traceReal = {
-                     x: timestamps,
+                     x: realValuesTimestamps,
                      y: realValues,
                      mode: "lines",
                      name: "Dades Reals",
@@ -413,30 +416,38 @@
                      x: timestamps,
                      y: predictions,
                      mode: 'lines',
-                     name: 'Predicció (part real)',
+                     name: 'Predicció Avui',
                      line: { color: 'green' }
                  };
                  const traceYesterday = {
                      x: yesterdayTimestamps,
                      y: yesterday,
                      mode: 'lines',
-                     name: 'Predicció ahir',
+                     name: 'Predicció Ahir',
                      line: {color: 'red', dash: 'dot'}
                  }
                  const layout = {
                      title: 'Predicció vs Dades Reals',
-                     xaxis: {title: 'Temps', range:[data.start_timestamp, data.last_timestamp]},
+                     xaxis: {title: 'Temps', range:[startTimestamps, endTimestamps]},
                      yaxis: {title: 'Consum (Kw)'},
                      width: 800,
                      height: 500,
                      dragmode: 'pan'
                  };
-                console.log("666");
-                 Plotly.newPlot(
-                            'forecast-chart',
-                            [traceReal, tracePrediction, traceYesterday],
-                            PlotlyTheme.mergeLayout(layout)
-                 );
+
+
+                 if(yesterday === "" && predictions === ""){
+                     document.getElementById("forecast-chart").innerHTML = 'No hi ha dades a mostrar';
+                 }
+                 else if(yesterday === ""){
+                     Plotly.newPlot('forecast-chart',[traceReal, tracePrediction], PlotlyTheme.mergeLayout(layout));
+                 }
+                 else if(predictions === ""){
+                     Plotly.newPlot('forecast-chart',[traceYesterday], PlotlyTheme.mergeLayout(layout));
+                 }
+                 else{
+                    Plotly.newPlot('forecast-chart',[traceReal, tracePrediction, traceYesterday], PlotlyTheme.mergeLayout(layout));
+                 }
                  hideLoadingSpinner();
              }else{
                 document.getElementById("forecast-title").style.display = "none";
