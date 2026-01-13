@@ -1,7 +1,7 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-dockerfile
 build_from:
-  #aarch64: "ghcr.io/home-assistant/aarch64-base-ubuntu:24.04"
-  amd64: "chancletaondulada/exitosprimigenio:v1"
+  aarch64: "chancletaondulada/exitosprimigenio:v1-arm64"
+  amd64: "chancletaondulada/exitosprimigenio:v1-amd64"
   #armv7: "ghcr.io/home-assistant/armv7-base-ubuntu:24.04"
   #i386: "ghcr.io/home-assistant/i386-base-ubuntu"
 
