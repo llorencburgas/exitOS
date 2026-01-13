@@ -1,15 +1,6 @@
 ARG BUILD_FROM
 FROM ${BUILD_FROM}
 
-#instalem python, pip i llibreries que necessitarem
-RUN apt update \
-    && apt install -y dos2unix python3 python3-pip\
-    && pip install --upgrade pip \
-    && pip install requests pandas scikit-learn psutil numpy holidays tomli func_timeout schedule plotly colorlog tzlocal \
-    && pip install pysha3 eth-keys
-
-
-
 #afegim els fitxers del servidor dins el container de docker
 ADD ./rootfs/server.py .
 ADD ./rootfs/bottle.py .
