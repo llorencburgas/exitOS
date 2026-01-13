@@ -77,6 +77,7 @@ class OptimalScheduler:
                 result, cost = self.__optimize()
             else:
                 result = None
+                cost = None
 
             return has_data, result, cost
 
