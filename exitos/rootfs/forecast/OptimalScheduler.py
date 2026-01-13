@@ -74,11 +74,11 @@ class OptimalScheduler:
 
                 self.electricity_prices = self.get_hourly_electric_prices()
 
-                result = self.__optimize()
+                result, cost = self.__optimize()
             else:
                 result = None
 
-            return has_data, result, self.best_result, self.best_result_balance
+            return has_data, result, cost
 
         except Exception as e:
             logger.error(f"❌ No s'ha pogut realitzar l'optimització")
@@ -116,7 +116,6 @@ class OptimalScheduler:
                 raise ValueError(f"Categoria '{device_category}' desconeguda per al dispositiu {device_type}")
 
         return True
-
 
     def get_sensor_forecast_data(self,sensor_id):
         """
@@ -203,7 +202,7 @@ class OptimalScheduler:
                                         init = 'halton',
                                         disp = True,
                                         updating = 'deferred',
-                                        callback = self.__update_DE_step,
+                                        # callback = self.__update_DE_step,
                                         workers = 1
                                         )
 
@@ -219,7 +218,7 @@ class OptimalScheduler:
         logger.debug(f"\n     ▫️ Best Price: {self.best_result}")
         logger.debug(f"     ▫️ Total Balance: {self.best_result_balance}")
 
-        return result['x']
+        return result['x'], result['fun']
 
     def cost_DE(self, config):
 
@@ -265,7 +264,16 @@ class OptimalScheduler:
         return total_price
 
     def __calc_total_balance_consumer(self, config):
-        return [0] * (self.horizon * self.horizon_min)
+        total_consumption = 0
+        for consumer in self.consumers.values():
+            start = consumer.vbound_start
+            end = consumer.vbound_end
+
+            res_dict = consumer.simula(config[start:end], self.horizon, self.horizon_min)
+
+            total_consumption += res_dict['total_cost']
+
+        return total_consumption
 
     def __calc_total_balance_generator(self, config):
         return [0] * (self.horizon * self.horizon_min)

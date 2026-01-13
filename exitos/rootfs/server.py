@@ -745,7 +745,7 @@ def optimize():
             return 'ERROR'
 
 
-        success, result, total_price, total_balance = optimalScheduler.start_optimization(
+        success, result, price = optimalScheduler.start_optimization(
             consumer_id = global_consumer_id,
             generator_id = global_generator_id,
             horizon = horizon,
@@ -755,8 +755,8 @@ def optimize():
             # GUARDAR A FITXER
             optimization_result = {
                 "timestamps": optimalScheduler.timestamps,
-                "total_balance": total_balance,
-                "total_price": total_price,
+                "total_balance": result,
+                "total_price": price,
                 "optimization_vbounds": result
             }
             today = datetime.today().strftime("%d_%m_%Y")
@@ -851,33 +851,6 @@ def generate_plotly_flexibility():
     fig.update_xaxes(dtick=3600000)  # 3600000 ms = 1 hora
     fig.update_xaxes(tickformat="%H:%M")
     fig.update_xaxes(tickangle=45)
-
-def debug_logger_optimization():  #!!!!!!!!!ELIMINAR AL DEIXAR DE DEBUGAR!!!!!!!!!!!!!!!
-    logger.warning(
-        f"{'HORA':<20} "
-        f"{'CARREGA':<13} "
-        f"{'SOC':<14} "
-        f"{'CAPACITAT': <13} "
-        f"{'PV':<8} "
-        f"{'CONSUM_LAB':<15} "
-        f"{'CONSUM_TOTAL':<15} "
-        f"{'PREU_LLUM':<12} "
-        f"{'PREU_VENTA':<12}"
-    )
-
-    for i in range(len(optimalScheduler.solucio_final.timestamps)):
-        logger.debug(
-            f"{optimalScheduler.solucio_final.timestamps[i]:<20} "
-            f"{optimalScheduler.solucio_final.perfil_consum_energy_source[i]:<13.4f} "
-            f"{optimalScheduler.solucio_final.soc_objectiu[i]:<13.4f} "
-            f"{optimalScheduler.solucio_final.capacitat_actual_energy_source[i]:<13.2f} "
-            f"{optimalScheduler.solucio_final.generadors[i]:<8.2f} "
-            f"{optimalScheduler.solucio_final.consumidors[i]:<15.2f} "
-            f"{optimalScheduler.solucio_final.consum_hora[i]:<15.2f} "
-            f"{optimalScheduler.solucio_final.preu_llum_horari[i]:<12.2f} "
-            f"{optimalScheduler.solucio_final.preu_venta_hora[i]:<12.2f}"
-        )
-    logger.error(optimalScheduler.solucio_final.preu_total)
 
 @app.post('/get_config_file_names')
 def get_config_file_names():
