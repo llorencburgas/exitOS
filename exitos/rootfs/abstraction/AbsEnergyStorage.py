@@ -14,6 +14,5 @@ class AbsEnergyStorage(AbsDevice):
         self.min = float(config['restrictions']['min']['value'])
         self.max = float(config['restrictions']['max']['value'])
 
-        self.horizon = 24
-        self.horizon_min = 1
+
 

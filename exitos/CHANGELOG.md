@@ -1,5 +1,9 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.1.17
+- New Base Docker Image implemented
+
+
 ## 1.1.10
 - SELF DESTRUCT Button implemented
 

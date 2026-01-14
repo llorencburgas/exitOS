@@ -744,8 +744,10 @@ def optimize():
             logger.warning("⚠️ Variables globals no seleccionades a la configuració d'usuari.")
             return 'ERROR'
 
+        result = None
+        price = []
 
-        success, result, price = optimalScheduler.start_optimization(
+        success, devices_config, price, total_balance_hourly = optimalScheduler.start_optimization(
             consumer_id = global_consumer_id,
             generator_id = global_generator_id,
             horizon = horizon,
@@ -755,7 +757,7 @@ def optimize():
             # GUARDAR A FITXER
             optimization_result = {
                 "timestamps": optimalScheduler.timestamps,
-                "total_balance": result,
+                "total_balance": total_balance_hourly,
                 "total_price": price,
                 "optimization_vbounds": result
             }

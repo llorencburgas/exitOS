@@ -9,6 +9,9 @@ class AbsDevice(ABC):
         self.vbound_start = 0
         self.vbound_end = 0
 
+        self.horizon = 24
+        self.horizon_min = 1
+
     @abstractmethod
     def simula(self, *args, **kwargs):
         pass

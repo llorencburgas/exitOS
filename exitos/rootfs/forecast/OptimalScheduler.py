@@ -62,6 +62,7 @@ class OptimalScheduler:
             self.horizon_min = horizon_min
 
             has_data = self.prepare_data_for_optimization()
+            cost = []
 
             if has_data:
                 self.global_consumer_id = consumer_id
@@ -75,15 +76,16 @@ class OptimalScheduler:
                 self.electricity_prices = self.get_hourly_electric_prices()
 
                 result, cost = self.__optimize()
+                debug = self.__calc_total_balance(config = result, total = False)
             else:
                 result = None
-                cost = None
+                cost = []
 
-            return has_data, result, cost
+            return has_data, result, cost, debug
 
         except Exception as e:
-            logger.error(f"❌ No s'ha pogut realitzar l'optimització")
-            # return False, None, None, None
+            logger.error(f"❌ No s'ha pogut realitzar l'optimització: {e}")
+            return False, None, None
 
 
     def prepare_data_for_optimization(self):
@@ -203,7 +205,7 @@ class OptimalScheduler:
                                         init = 'halton',
                                         disp = True,
                                         updating = 'deferred',
-                                        # callback = self.__update_DE_step,
+                                        callback = self.__update_DE_step,
                                         workers = 1
                                         )
 
@@ -216,15 +218,10 @@ class OptimalScheduler:
         logger.debug(f"     ▫️ Cost: {result['fun']}")
 
 
-        logger.debug(f"\n     ▫️ Best Price: {self.best_result}")
-        logger.debug(f"     ▫️ Total Balance: {self.best_result_balance}")
-
         return result['x'], result['fun']
 
     def cost_DE(self, config):
-
-        aux = self.__calc_total_balance(config)
-        return aux
+        return self.__calc_total_balance(config)
 
     def __update_DE_step(self,bounds, convergence):
         logger.info(f"◽ New Step")
@@ -239,7 +236,7 @@ class OptimalScheduler:
             self.best_result = self.current_result
             self.best_result_balance = self.current_result_balance
 
-    def __calc_total_balance(self,config):
+    def __calc_total_balance(self,config, total = True):
 
         total_balance = [0] * (self.horizon * self.horizon_min)
 
@@ -254,6 +251,8 @@ class OptimalScheduler:
 
         balance_result = self.__calc_total_balance_energy(config, total_balance)
 
+        if not total: return balance_result
+
         total_price = 0
 
         for hour in range(self.horizon * self.horizon_min):
@@ -265,14 +264,14 @@ class OptimalScheduler:
         return total_price
 
     def __calc_total_balance_consumer(self, config):
-        total_consumption = 0
+        total_consumption = [0] * (self.horizon * self.horizon_min)
         for consumer in self.consumers.values():
             start = consumer.vbound_start
             end = consumer.vbound_end
 
             res_dict = consumer.simula(config[start:end], self.horizon, self.horizon_min)
-
-            total_consumption += res_dict['total_cost']
+            for hour in range(len(res_dict['consumption_profile'])):
+                total_consumption[hour] = res_dict['consumption_profile'][hour]
 
         return total_consumption
 

@@ -60,7 +60,8 @@ class SonnenBattery(AbsEnergyStorage):
 
         consumption_profile_24h = [0.0] * 24
         for hour in range(len(consumption_profile)):
-            consumption_profile_24h[hour] = consumption_profile[hour]
+            consumption_profile_24h[hour+1] = consumption_profile[hour]
+
 
         return_dict = {
             "consumption_profile": consumption_profile_24h,
