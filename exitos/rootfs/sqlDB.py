@@ -485,7 +485,6 @@ class SqlDB():
             con.commit()
             cur.close()
 
-
     def get_forecasts_name(self):
         with self._get_connection() as con:
             cur = con.cursor()
@@ -508,22 +507,18 @@ class SqlDB():
             data = pd.DataFrame(aux, columns=('run_date','timestamp', 'value', 'real_value'))
         return data
 
-    def get_data_from_latest_forecast_from_sensorid(self, sensor_id):
+    def get_data_from_forecast_from_date_and_sensorID(self, sensor_id, date):
         with self._get_connection() as con:
             cur = con.cursor()
             cur.execute("""
-                    SELECT forecasted_time, predicted_value, real_value
-                    FROM forecasts
-                    WHERE sensor_forecasted = ?
-                    AND forecast_run_time = (
-                        SELECT MAX(forecast_run_time)
+                        SELECT forecast_run_time, forecasted_time, predicted_value, real_value
                         FROM forecasts
                         WHERE sensor_forecasted = ?
-                    )
-                """, (sensor_id, sensor_id))
+                          AND forecast_run_time = ?
+                        """, (sensor_id, date))
             aux = cur.fetchall()
             cur.close()
-            data = pd.DataFrame(aux, columns=('timestamp', 'value', 'real_value'))
+            data = pd.DataFrame(aux, columns=('run_date', 'timestamp', 'value', 'real_value'))
         return data
 
     def remove_forecast(self, forecast_id):

@@ -62,7 +62,6 @@ class OptimalScheduler:
             self.horizon_min = horizon_min
 
             has_data = self.prepare_data_for_optimization()
-            cost = []
 
             if has_data:
                 self.global_consumer_id = consumer_id
@@ -76,12 +75,13 @@ class OptimalScheduler:
                 self.electricity_prices = self.get_hourly_electric_prices()
 
                 result, cost = self.__optimize()
-                debug = self.__calc_total_balance(config = result, total = False)
+                total_balance = self.__calc_total_balance(config = result, total = False)
             else:
                 result = None
                 cost = []
+                total_balance = []
 
-            return has_data, result, cost, debug
+            return has_data, result, cost, total_balance
 
         except Exception as e:
             logger.error(f"❌ No s'ha pogut realitzar l'optimització: {e}")
@@ -130,7 +130,7 @@ class OptimalScheduler:
         :return:
         """
 
-        sensor_forecast = self.database.get_data_from_latest_forecast_from_sensorid(sensor_id)
+        sensor_forecast = self.database.get_data_from_forecast_from_date_and_sensorID(sensor_id=sensor_id, date= datetime.today().strftime('%d-%m-%Y'))
 
         today = datetime.now()
         start_date = datetime(today.year, today.month, today.day, 0,0)
@@ -247,12 +247,14 @@ class OptimalScheduler:
             total_consumers[hour] += self.global_consumer_forecast['forecast_data'][hour]
             total_generators[hour] += self.global_generator_forecast['forecast_data'][hour]
 
-            total_balance[hour] = total_generators[hour] - total_consumers[hour]
+            total_balance[hour] = total_consumers[hour] - total_generators[hour]
 
         balance_result = self.__calc_total_balance_energy(config, total_balance)
 
         if not total: return balance_result
 
+
+        # ajuntem el consum horari en una sola variable global.
         total_price = 0
 
         for hour in range(self.horizon * self.horizon_min):
@@ -271,7 +273,7 @@ class OptimalScheduler:
 
             res_dict = consumer.simula(config[start:end], self.horizon, self.horizon_min)
             for hour in range(len(res_dict['consumption_profile'])):
-                total_consumption[hour] = res_dict['consumption_profile'][hour]
+                total_consumption[hour] += res_dict['consumption_profile'][hour]
 
         return total_consumption
 
