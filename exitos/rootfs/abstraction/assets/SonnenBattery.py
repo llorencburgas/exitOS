@@ -74,13 +74,14 @@ class SonnenBattery(AbsEnergyStorage):
 
 
     def controla(self, config,current_hour):
-        for i in range(self.horizon * self.horizon_min):
-            if config[i] == current_hour:
-                logger.info(f"     ▫️ Configurant {self.name} -> {config[i]}")
+        current_pos = self.vbound_start + current_hour
+        logger.info(f"     ▫️ Configurant {self.name} -> {config[current_pos]}")
 
-                positive_value = abs(config[i])
-                if config[i] >= 0:
-                    return positive_value, self.control_charge_sensor, 'number'
-                elif config[i] < 0:
-                    return positive_value, self.control_discharge_sensor, 'number'
+        positive_value = abs(config[current_pos])
+
+        if config[current_pos] >= 0:
+            return positive_value, self.control_charge_sensor, 'number'
+        elif config[current_pos] < 0:
+            return positive_value, self.control_discharge_sensor, 'number'
+
         return None

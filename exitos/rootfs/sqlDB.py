@@ -111,6 +111,15 @@ class SqlDB():
                 return sensors_list[['entity_id', 'attributes.friendly_name']]
         return None
 
+    def get_current_sensor_state(self, sensor_id: str):
+        """ Retorna el valor de l'última hora obtinguda del sensor"""
+        response = get(f"{self.base_url}states/{sensor_id}", headers=self.headers)
+        if response.ok:
+            aux = pd.json_normalize(response.json())
+            return aux['state']
+        return None
+
+
     def clean_sensors_db(self):
         logger.debug("Iniciant neteja de la Base de Dades de Sensors")
         all_sensors = self.get_all_sensors()
@@ -654,8 +663,6 @@ class SqlDB():
             return [val[0] for val in result]
 
     def set_sensor_value_HA(self, sensor_mode, sensor_id, value):
-        logger.debug(f"----- Setting sensor value {sensor_id} to {value} -----")
-
         if sensor_mode == 'select':
             url = f"{self.base_url}services/select/select_option"
             data = {'entity_id': sensor_id,
@@ -666,9 +673,12 @@ class SqlDB():
         elif sensor_mode == 'button':
             url = f"{self.base_url}services/button/press"
             data = {'entity_id': sensor_id}
+        elif sensor_mode == 'switch':
+            url = f"{self.base_url}services/switch/turn_on"
+            data = {'entity_id': sensor_id}
 
         response = requests.post(url, headers=self.headers, json=data)
 
-        logger.info(f"resposta bateria: {response.status_code} - {response.text}")
+        logger.info(f"resposta {sensor_id}: {response.status_code} - {response.text}")
 
 

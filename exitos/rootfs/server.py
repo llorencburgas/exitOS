@@ -759,7 +759,7 @@ def optimize():
                 "timestamps": optimalScheduler.timestamps,
                 "total_balance": total_balance_hourly,
                 "total_price": price,
-                "optimization_vbounds": result
+                "optimization_vbounds": devices_config
             }
             today = datetime.today().strftime("%d_%m_%Y")
             full_path = os.path.join(forecast.models_filepath, "optimizations/"+today+".pkl")
@@ -1031,6 +1031,12 @@ def certificate_hourly_task():
 
 def config_optimized_devices_HA():
     try:
+        if (optimalScheduler.consumers == {} and
+                optimalScheduler.generators == {} and
+                optimalScheduler.energy_storages == {}):
+            optimalScheduler.prepare_data_for_optimization()
+
+
         today = datetime.today().strftime("%d_%m_%Y")
         full_path = os.path.join(forecast.models_filepath, "optimizations/" + today + ".pkl")
         if not os.path.exists(full_path):
@@ -1040,18 +1046,28 @@ def config_optimized_devices_HA():
         optimization_db = joblib.load(full_path)
 
         optimization_timestamps = optimization_db['timestamps']
+
+        current_hour = datetime.now().hour
+
         optimization_result = optimization_db['optimization_vbounds']
 
+
+
+        # -- CONSUMERS --
         for consumer in optimalScheduler.consumers.values():
-            logger.info(f"{consumer.name} optimizing {consumer.name} ...")
+            value, sensor_id, sensor_type = consumer.controla(config = optimization_result, current_hour= current_hour)
+            database.set_sensor_value_HA(sensor_type, sensor_id, value)
+
+        # -- GENERATORS --
         for generator in optimalScheduler.generators.values():
             logger.info(f"{generator.name} optimizing {generator.name} ...")
+
+        # -- ENERGY STORAGES --
         for energy_storage in optimalScheduler.energy_storages.values():
-            logger.info(f"{energy_storage.name} optimizing {energy_storage.name} ...")
-            value, sensor_id, sensor_type = energy_storage.controla(optimization_timestamps, optimization_result)
+            value, sensor_id, sensor_type = energy_storage.controla(config = optimization_result, current_hour= current_hour)
             database.set_sensor_value_HA(sensor_type, sensor_id, value)
     except Exception as e:
-        logger.error(f"❌ {datetime.now().strftime('%H:%m')} Error configurant horariament un dispositiu a H.A {e}")
+        logger.error(f"❌ [{datetime.now().strftime('%d:%m:%Y %H:%m')}] -  Error configurant horariament un dispositiu a H.A {e}")
 
 schedule.every().day.at("00:00").do(daily_task)
 schedule.every().day.at("01:00").do(daily_forecast_task)
@@ -1073,6 +1089,8 @@ scheduler_thread.start()
 @app.route('/panik_function')
 def panik_function():
     logger.warning("panik function activated")
+    optimize()
+    config_optimized_devices_HA()
 
     # config_optimized_devices_HA()
 #endregion DEBUG REGION

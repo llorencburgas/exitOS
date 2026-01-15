@@ -12,6 +12,7 @@ class ShellyPlus1pm(AbsConsumer):
 
     def __init__(self,config, database):
         super().__init__(config)
+        self.database = database
         self.is_on = None #??
         self.min = 0
         self.max = 1
@@ -47,7 +48,14 @@ class ShellyPlus1pm(AbsConsumer):
         return return_dict
 
     def controla(self, config,current_hour):
-        pass
+        current_pos = self.vbound_start + current_hour
+        logger.info(f"     ▫️ Configurant {self.name} -> {config[current_pos]}")
+
+        current_state = self.database.get_current_sensor_state(self.sensor_name)
+        if current_state is None: return None
+
+        if current_state[0] != config[current_pos]:
+            return config[current_pos], self.sensor_name, "switch"
 
     def get_consumption_when_ON(self, data):
         """
