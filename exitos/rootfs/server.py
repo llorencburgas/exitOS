@@ -1088,9 +1088,8 @@ scheduler_thread.start()
 #region DEBUG REGION
 @app.route('/panik_function')
 def panik_function():
-    logger.warning("panik function activated")
-    optimize()
-    config_optimized_devices_HA()
+    aux = database.debug()
+    logger.warning(aux)
 
     # config_optimized_devices_HA()
 #endregion DEBUG REGION

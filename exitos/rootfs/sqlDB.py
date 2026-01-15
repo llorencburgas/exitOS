@@ -119,7 +119,6 @@ class SqlDB():
             return aux['state']
         return None
 
-
     def clean_sensors_db(self):
         logger.debug("Iniciant neteja de la Base de Dades de Sensors")
         all_sensors = self.get_all_sensors()
@@ -541,56 +540,6 @@ class SqlDB():
         with self._get_connection() as con:
             con.execute("VACUUM")
 
-    def get_active_sensors_by_type(self, sensor_type: String = 'consum'):
-        with self._get_connection() as con:
-            cursor = con.cursor()
-
-            cursor.execute("""
-                SELECT sensor_id FROM sensors WHERE save_sensor = 1 AND sensor_type = ?
-                """, (sensor_type,)
-            )
-            sensors = cursor.fetchall()
-
-            resultat = {}
-            for sensor in sensors:
-                cursor.execute("""
-                    SELECT MIN(timestamp), MAX(timestamp), COUNT(*) FROM dades WHERE sensor_id = ?
-                """, (sensor[0],))
-
-                fila = cursor.fetchone()
-                min_ts, max_ts, total_valors = fila
-
-                if min_ts and max_ts:
-                    min_dt = datetime.fromisoformat(min_ts)
-                    max_dt = datetime.fromisoformat(max_ts)
-                    total_hores = int((max_dt - min_dt).total_seconds() //3600) + 1
-
-                    # Obtenim dies actius (format YYYY-MM-DD)
-                    cursor.execute("""
-                                   SELECT DISTINCT DATE (timestamp)
-                                   FROM dades
-                                   WHERE sensor_id = ?
-                                   """, (sensor[0],))
-                    days_with_data = [row[0] for row in cursor.fetchall()]
-
-                    resultat[sensor[0]] = {
-                        "calendar_range": (min_ts, max_ts),
-                        "active_hours": total_hores,
-                        "active_calendar": set(days_with_data),
-                        "vbound_start": None,
-                        "vbound_end": None
-                    }
-                else:
-                    resultat[sensor[0]] = {
-                        "calendar_range": None,
-                        "active_hours": 0,
-                        "active_calendar": set(),
-                        "vbound_start": None,
-                        "vbound_end": None
-                    }
-
-            return resultat
-
     def get_latest_data_from_sensor(self, sensor_id):
         with self._get_connection() as con:
             cursor = con.cursor()
@@ -609,37 +558,70 @@ class SqlDB():
         """
         url = f"{self.base_url}template"
         template = """
-        {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq', None) | list %}
-        {% set ns = namespace(devices = []) %}
+   {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq', None) | list %}
+{% set ns = namespace(devices = []) %}
 
-        {% for device in devices %}
-            {% set name = device_attr(device, 'name') %}
-            {% set ents = device_entities(device) %}
+{# ----------------------- #}
+{# DISPOSITIUS NORMALS     #}
+{# ----------------------- #}
+{% for device in devices %}
+    {% set name = device_attr(device, 'name') %}
+    {% set ents = device_entities(device) %}
 
-            {% set info = namespace(entities = []) %}
-            {% for entity in ents %}
-                {% set entity_name = entity %}
-                {% set entity_state = states[entity] %}
-                {% set attrs = entity_state.attributes if entity_state else {} %}
-                {% set friendly_name = attrs.friendly_name if attrs.friendly_name else '' %}
-                
-                {% if not entity_name.startswith('update.') %}
-                    {% set info.entities = info.entities + [ {
-                        "entity_id": entity_name,
-                        "entity_name": friendly_name,
-                    } ] %}
-                {% endif %}
-            {%endfor %}
-            
-            {% if info.entities %}
-                {% set ns.devices = ns.devices + [ {
-                "device_name": name,
-                "entities": info.entities
-                } ] %}
-            {% endif %}
-        {% endfor %}
+    {% set info = namespace(entities = []) %}
+    {% for entity in ents %}
+        {% set entity_state = states[entity] %}
+        {% set attrs = entity_state.attributes if entity_state else {} %}
+        {% set friendly_name = attrs.friendly_name if attrs.friendly_name else '' %}
+        
+        {% if not entity.startswith('update.') %}
+            {% set info.entities = info.entities + [ {
+                "entity_id": entity,
+                "entity_name": friendly_name
+            } ] %}
+        {% endif %}
+    {% endfor %}
+    
+    {% if info.entities %}
+        {% set ns.devices = ns.devices + [ {
+            "device_name": name,
+            "entities": info.entities
+        } ] %}
+    {% endif %}
+{% endfor %}
 
-        {{ ns.devices | tojson}}
+
+{# ----------------------- #}
+{# ENTITATS SENSE DEVICE   #}
+{# ----------------------- #}
+
+{% set orphan = namespace(entities = []) %}
+
+{% for s in states %}
+    {% set eid = s.entity_id %}
+    {% set dev = device_id(eid) %}
+    
+    {% if dev == None and not eid.startswith('update.') %}
+        {% set attrs = s.attributes %}
+        {% set friendly_name = attrs.friendly_name if attrs.friendly_name else '' %}
+        
+        {% set orphan.entities = orphan.entities + [ {
+            "entity_id": eid,
+            "entity_name": friendly_name
+        } ] %}
+    {% endif %}
+{% endfor %}
+
+{% if orphan.entities %}
+    {% set ns.devices = ns.devices + [ {
+        "device_name": "Entitats sense device",
+        "entities": orphan.entities
+    } ] %}
+{% endif %}
+
+
+{{ ns.devices | tojson }}
+
 
         """
 
@@ -654,13 +636,6 @@ class SqlDB():
             logger.error(f"❌ Error en la resposta: {response.status_code}")
             logger.debug(f"📄 Cos resposta:\n     {response.text}")
             return {}
-
-    def get_all_sensors_from_parent(self,parent_device):
-        with self._get_connection() as con:
-            cur = con.cursor()
-            cur.execute("SELECT sensor_id FROM sensors WHERE parent_device = ?",(parent_device,))
-            result = cur.fetchall()
-            return [val[0] for val in result]
 
     def set_sensor_value_HA(self, sensor_mode, sensor_id, value):
         if sensor_mode == 'select':
@@ -681,4 +656,14 @@ class SqlDB():
 
         logger.info(f"resposta {sensor_id}: {response.status_code} - {response.text}")
 
+
+
+
+
+    def debug(self):
+        response = get(f"{self.base_url}states", headers=self.headers)
+        if response.ok:
+            aux = pd.json_normalize(response.json())
+            return aux
+        return None
 
