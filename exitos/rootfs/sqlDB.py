@@ -558,71 +558,56 @@ class SqlDB():
         """
         url = f"{self.base_url}template"
         template = """
-           {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq', None) | list %}
+            {% set _ = now() %}
+            
+            {% set orphan_name = "0rphans" %}
+            {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq', None) | list %}
             {% set ns = namespace(devices = []) %}
             
-            {# ----------------------- #}
-            {# DISPOSITIUS NORMALS     #}
-            {# ----------------------- #}
+            {# DISPOSITIUS NORMALS #}
             {% for device in devices %}
-                {% set name = device_attr(device, 'name') %}
-                {% set ents = device_entities(device) %}
-            
+                {% set name = device_attr(device, 'name') or device %}
+                {% set ents = device_entities(device) or [] %}
                 {% set info = namespace(entities = []) %}
+            
                 {% for entity in ents %}
-                    {% set entity_state = states[entity] %}
-                    {% set attrs = entity_state.attributes if entity_state else {} %}
-                    {% set friendly_name = attrs.friendly_name if attrs.friendly_name else '' %}
-                    
                     {% if not entity.startswith('update.') %}
-                        {% set info.entities = info.entities + [ {
+                        {% set friendly = state_attr(entity, 'friendly_name') or '' %}
+                        {% set info.entities = info.entities + [{
                             "entity_id": entity,
-                            "entity_name": friendly_name
-                        } ] %}
+                            "entity_name": friendly
+                        }] %}
                     {% endif %}
                 {% endfor %}
-                
+            
                 {% if info.entities %}
-                    {% set ns.devices = ns.devices + [ {
+                    {% set ns.devices = ns.devices + [{
                         "device_name": name,
                         "entities": info.entities
-                    } ] %}
+                    }] %}
                 {% endif %}
             {% endfor %}
             
-            
-            {# ----------------------- #}
-            {# ENTITATS SENSE DEVICE   #}
-            {# ----------------------- #}
-            
+            {# ENTITATS SENSE DEVICE #}
             {% set orphan = namespace(entities = []) %}
             
-            {% for s in states %}
-                {% set eid = s.entity_id %}
-                {% set dev = device_id(eid) %}
-                
-                {% if dev == None and not eid.startswith('update.') %}
-                    {% set attrs = s.attributes %}
-                    {% set friendly_name = attrs.friendly_name if attrs.friendly_name else '' %}
-                    
-                    {% set orphan.entities = orphan.entities + [ {
+            {% for st in states %}
+                {% set eid = st.entity_id %}
+                {% if device_id(eid) is none and not eid.startswith('update.') %}
+                    {% set friendly = state_attr(eid, 'friendly_name') or '' %}
+                    {% set orphan.entities = orphan.entities + [{
                         "entity_id": eid,
-                        "entity_name": friendly_name
-                    } ] %}
+                        "entity_name": friendly
+                    }] %}
                 {% endif %}
             {% endfor %}
             
-            {% if orphan.entities %}
-                {% set ns.devices = ns.devices + [ {
-                    "device_name": "0rphans",
-                    "entities": orphan.entities
-                } ] %}
-            {% endif %}
-            
+            {% set ns.devices = ns.devices + [{
+                "device_name": orphan_name,
+                "entities": orphan.entities
+            }] %}
             
             {{ ns.devices | tojson }}
-
-
         """
 
         response = requests.post(url, headers=self.headers, json = {"template": template})
