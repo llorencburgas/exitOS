@@ -613,6 +613,7 @@ class SqlDB():
         response = requests.post(url, headers=self.headers, json = {"template": template})
 
         if response.status_code == 200:
+            logger.debug(f"📄 Template devices:\n     {response.text}")
             # json_response = response.json()
             full_devices = response.text.strip()
             result = json.loads(full_devices)
