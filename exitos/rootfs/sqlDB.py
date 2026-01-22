@@ -558,69 +558,69 @@ class SqlDB():
         """
         url = f"{self.base_url}template"
         template = """
-   {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq', None) | list %}
-{% set ns = namespace(devices = []) %}
-
-{# ----------------------- #}
-{# DISPOSITIUS NORMALS     #}
-{# ----------------------- #}
-{% for device in devices %}
-    {% set name = device_attr(device, 'name') %}
-    {% set ents = device_entities(device) %}
-
-    {% set info = namespace(entities = []) %}
-    {% for entity in ents %}
-        {% set entity_state = states[entity] %}
-        {% set attrs = entity_state.attributes if entity_state else {} %}
-        {% set friendly_name = attrs.friendly_name if attrs.friendly_name else '' %}
-        
-        {% if not entity.startswith('update.') %}
-            {% set info.entities = info.entities + [ {
-                "entity_id": entity,
-                "entity_name": friendly_name
-            } ] %}
-        {% endif %}
-    {% endfor %}
-    
-    {% if info.entities %}
-        {% set ns.devices = ns.devices + [ {
-            "device_name": name,
-            "entities": info.entities
-        } ] %}
-    {% endif %}
-{% endfor %}
-
-
-{# ----------------------- #}
-{# ENTITATS SENSE DEVICE   #}
-{# ----------------------- #}
-
-{% set orphan = namespace(entities = []) %}
-
-{% for s in states %}
-    {% set eid = s.entity_id %}
-    {% set dev = device_id(eid) %}
-    
-    {% if dev == None and not eid.startswith('update.') %}
-        {% set attrs = s.attributes %}
-        {% set friendly_name = attrs.friendly_name if attrs.friendly_name else '' %}
-        
-        {% set orphan.entities = orphan.entities + [ {
-            "entity_id": eid,
-            "entity_name": friendly_name
-        } ] %}
-    {% endif %}
-{% endfor %}
-
-{% if orphan.entities %}
-    {% set ns.devices = ns.devices + [ {
-        "device_name": "Entitats sense device",
-        "entities": orphan.entities
-    } ] %}
-{% endif %}
-
-
-{{ ns.devices | tojson }}
+           {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq', None) | list %}
+            {% set ns = namespace(devices = []) %}
+            
+            {# ----------------------- #}
+            {# DISPOSITIUS NORMALS     #}
+            {# ----------------------- #}
+            {% for device in devices %}
+                {% set name = device_attr(device, 'name') %}
+                {% set ents = device_entities(device) %}
+            
+                {% set info = namespace(entities = []) %}
+                {% for entity in ents %}
+                    {% set entity_state = states[entity] %}
+                    {% set attrs = entity_state.attributes if entity_state else {} %}
+                    {% set friendly_name = attrs.friendly_name if attrs.friendly_name else '' %}
+                    
+                    {% if not entity.startswith('update.') %}
+                        {% set info.entities = info.entities + [ {
+                            "entity_id": entity,
+                            "entity_name": friendly_name
+                        } ] %}
+                    {% endif %}
+                {% endfor %}
+                
+                {% if info.entities %}
+                    {% set ns.devices = ns.devices + [ {
+                        "device_name": name,
+                        "entities": info.entities
+                    } ] %}
+                {% endif %}
+            {% endfor %}
+            
+            
+            {# ----------------------- #}
+            {# ENTITATS SENSE DEVICE   #}
+            {# ----------------------- #}
+            
+            {% set orphan = namespace(entities = []) %}
+            
+            {% for s in states %}
+                {% set eid = s.entity_id %}
+                {% set dev = device_id(eid) %}
+                
+                {% if dev == None and not eid.startswith('update.') %}
+                    {% set attrs = s.attributes %}
+                    {% set friendly_name = attrs.friendly_name if attrs.friendly_name else '' %}
+                    
+                    {% set orphan.entities = orphan.entities + [ {
+                        "entity_id": eid,
+                        "entity_name": friendly_name
+                    } ] %}
+                {% endif %}
+            {% endfor %}
+            
+            {% if orphan.entities %}
+                {% set ns.devices = ns.devices + [ {
+                    "device_name": "0rphans",
+                    "entities": orphan.entities
+                } ] %}
+            {% endif %}
+            
+            
+            {{ ns.devices | tojson }}
 
 
         """
