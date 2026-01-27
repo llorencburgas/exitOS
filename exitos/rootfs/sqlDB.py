@@ -639,7 +639,7 @@ class SqlDB():
 
         response = requests.post(url, headers=self.headers, json=data)
 
-        logger.info(f"resposta {sensor_id}: {response.status_code} - {response.text}")
+        logger.info(f"          ▫️ Resposta H.A -> {sensor_id}: {response.status_code} - {response.text}")
 
 
 
