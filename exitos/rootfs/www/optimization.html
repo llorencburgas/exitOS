@@ -432,25 +432,26 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'ok') {
-                    // console.log(data["device_config"].vars[2]);
                     const dev = data["device_config"];
 
                     const container = document.createElement('div');
                     container.className = "device-config-container";
 
-                    // NOM DEL DISPOSITIU
+                    //region NOM DEL DISPOSITIU
                     const name = document.createElement('h3');
                     name.className = "device-config-title";
                     name.textContent = dev.device_name;
                     container.appendChild(name);
+                    //endregion
 
-                    // TIPUS DE DISPOSITIU
+                    //region TIPUS DE DISPOSITIU
                     const type = document.createElement('span');
                     type.innerHTML = dev.friendly_name;
                     type.className = "device-config-type";
                     container.appendChild(type);
+                    //endregion
 
-                    // RESTRICCIONS
+                    //region RESTRICCIONS
                     const restricctions = document.createElement('ul');
                     restricctions.className = "device-config-ul";
                     restricctions.innerHTML = ' ';
@@ -462,8 +463,9 @@
                         restricctions.appendChild(restriction);
                     }
                     container.appendChild(restricctions);
+                    //endregion
 
-                    // VARIABLES (entitats)
+                    //region VARIABLES (entitats)
                     const extra_vars = document.createElement('ul');
                     extra_vars.className = "device-config-ul"
                     extra_vars.innerHTML = '';
@@ -480,8 +482,9 @@
                         extra_vars.appendChild(restriction_var);
                     }
                     container.appendChild(extra_vars);
+                    //endregion
 
-                    // BOTÓ ELIMINAR
+                    //region BOTÓ ELIMINAR
                     const delete_button = document.createElement('button');
                     delete_button.className = "btn secondary";
                     delete_button.innerHTML = 'Eliminar Configuració';
@@ -500,8 +503,59 @@
                         }
                     }
                     container.appendChild(delete_button);
+                    //endregion
 
+                    //region GRÀFICA
+                    const graph_container = document.createElement('div');
+                    graph_container.className = "scheduler-card"
+
+                    graph_container.style.width = "100%";
+                    graph_container.style.maxWidth = "100%";
+                    graph_container.style.boxSizing = "border-box";
+                    graph_container.style.marginTop = "20px";
+                    graph_container.style.paddingRight = "10px";
+
+                    const trace = {
+                        x: dev.timestamps,
+                        y: dev.hourly_config,
+                        mode: "lines+markers",
+                        name: "configuració",
+                        line: {color: 'green'}
+                    };
+                    const layout = {
+                        title: "Configuració d'avui",
+                        autosize: true,
+                        // Posem els fons transparents perquè no es vegi el "div" que sobresurt
+                        paper_bgcolor: 'rgba(0,0,0,0)',
+                        plot_bgcolor: 'rgba(0,0,0,0)',
+                        margin: { l: 50, r: 20, t: 40, b: 60 }, // Marges més ajustats
+                        xaxis: {
+                            title: "Hora",
+                            tickangle: -45,
+                            gridcolor: '#444' // Color de graella suau per al mode fosc
+                        },
+                        yaxis: {
+                            title: "Configuració",
+                            gridcolor: '#444'
+                        },
+                        height: 350 // Una mica més baixet queda millor en targetes
+                    };
+                    const config = {
+                        responsive: true
+                    }
+                    container.appendChild(graph_container);
                     parent_config_div.appendChild(container);
+
+                    setTimeout(() => {
+                        Plotly.newPlot(
+                            graph_container,
+                            [trace],
+                            PlotlyTheme.mergeLayout(layout),
+                            { responsive: true, displayModeBar: false }
+                        );
+                    }, 10);
+                    //endregion
+
                 }
 
             })

@@ -20,6 +20,7 @@ from pandas import to_datetime
 from bottle import Bottle, template, run, static_file, HTTPError, request, response
 from datetime import datetime, timedelta
 
+from exitos.rootfs.abstraction.AbsDevice import AbsDevice
 from logging_config import setup_logger
 from collections import OrderedDict
 
@@ -151,7 +152,7 @@ def optimization_page():
     devices_data = {}
 
     if not os.path.exists(config_path):
-        logger.warning("⚠️ - No s'ha trobat el fitxer de configuració: {config_path}")
+        logger.warning(f"⚠️ - No s'ha trobat el fitxer de configuració: {config_path}")
     else:
         with open(config_path, 'r', encoding='utf-8') as f:
             devices_data = json.load(f)
@@ -744,7 +745,6 @@ def optimize():
             logger.warning("⚠️ Variables globals no seleccionades a la configuració d'usuari.")
             return 'ERROR'
 
-        result = None
         price = []
 
         success, devices_config, price, total_balance_hourly = optimalScheduler.start_optimization(
@@ -759,8 +759,9 @@ def optimize():
                 "timestamps": optimalScheduler.timestamps,
                 "total_balance": total_balance_hourly,
                 "total_price": price,
-                "optimization_vbounds": devices_config
+                "devices_config": devices_config
             }
+
             today = datetime.today().strftime("%d_%m_%Y")
             full_path = os.path.join(forecast.models_filepath, "optimizations/"+today+".pkl")
             os.makedirs(forecast.models_filepath + 'optimizations', exist_ok=True)
@@ -779,6 +780,7 @@ def optimize():
             interval = 60 // horizon_min
             minutes = list(range(0, 60, interval))
             for m in minutes:
+                #todo: revisar hora de configuració
                 schedule.every().hour.at(f":{m:02d}").do(config_optimized_devices_HA)
     except Exception as e:
         logger.error(f"❌ Error optimitzant: {str(e)}: {traceback.format_exc()}")
@@ -914,6 +916,19 @@ def get_device_config_data(file_name):
 
     with open(config_path, 'r', encoding='utf-8') as f:
         device_config = json.load(f)
+
+    today = datetime.today().strftime("%d_%m_%Y")
+    device_config_path = os.path.join(forecast.models_filepath, "optimizations/" + today + ".pkl")
+    if not os.path.exists(device_config_path):
+        return {"status": "ok", "device_config": device_config}
+
+    optimization_db = joblib.load(device_config_path)
+    fixed_name = file_name.removesuffix(".json")
+
+    device_config['hourly_config'] = optimization_db['devices_config'][fixed_name].tolist()
+    device_config['timestamps'] = pd.to_datetime(optimization_db['timestamps']).strftime('%Hh').tolist()
+
+
 
     return {"status": "ok", "device_config": device_config}
 
