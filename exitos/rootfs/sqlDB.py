@@ -643,12 +643,3 @@ class SqlDB():
 
 
 
-
-
-    def debug(self):
-        response = get(f"{self.base_url}states", headers=self.headers)
-        if response.ok:
-            aux = pd.json_normalize(response.json())
-            return aux
-        return None
-
