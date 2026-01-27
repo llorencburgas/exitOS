@@ -1109,7 +1109,9 @@ scheduler_thread.start()
 #region DEBUG REGION
 @app.route('/panik_function')
 def panik_function():
-    config_optimized_devices_HA()
+    # config_optimized_devices_HA()
+    # database.set_sensor_value_HA("number", "number.sonnenbatterie_79259_number_charge", 300)
+    database.set_sensor_value_HA("number", "number.sonnenbatterie_79259_number_discharge", 300)
 #endregion DEBUG REGION
 
 

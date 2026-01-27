@@ -16,7 +16,7 @@ class SonnenBattery(AbsEnergyStorage):
         self.efficiency = database.get_latest_data_from_sensor(config["extra_vars"]["eficiencia"]["sensor_id"])[1]
         self.actual_percentage = database.get_latest_data_from_sensor(config["extra_vars"]["percentatge_actual"]["sensor_id"])[1]
 
-        self.control_charge_sensor = config['control_vars']['carregar']['sensor_id'],
+        self.control_charge_sensor = config['control_vars']['carregar']['sensor_id']
         self.control_discharge_sensor = config['control_vars']['descarregar']['sensor_id']
         self.control_mode_sensor = config['control_vars']['mode_operar']['sensor_id']
 
@@ -75,7 +75,7 @@ class SonnenBattery(AbsEnergyStorage):
         current_pos = self.vbound_start + current_hour
 
         positive_value = abs(config[current_pos])
-        value_to_HA = positive_value * 100
+        value_to_HA = positive_value * 1000
 
         if config[current_pos] >= 0:
             logger.info(f"     ▫️ Configurant {self.name} -> 🔋 Charge {value_to_HA}")
