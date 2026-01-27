@@ -20,7 +20,6 @@ from pandas import to_datetime
 from bottle import Bottle, template, run, static_file, HTTPError, request, response
 from datetime import datetime, timedelta
 
-from exitos.rootfs.abstraction.AbsDevice import AbsDevice
 from logging_config import setup_logger
 from collections import OrderedDict
 
