@@ -17,57 +17,55 @@ class SonnenBattery(AbsEnergyStorage):
         self.actual_percentage = database.get_latest_data_from_sensor(config["extra_vars"]["percentatge_actual"]["sensor_id"])[1]
 
         self.control_charge_sensor = config['control_vars']['carregar']['sensor_id'],
-        self.control_discharge_sensor = config['control_vars']['descarregar']['sensor_id'],
+        self.control_discharge_sensor = config['control_vars']['descarregar']['sensor_id']
         self.control_mode_sensor = config['control_vars']['mode_operar']['sensor_id']
 
-
     def simula(self, config, horizon, horizon_min):
-        kw_carrega = []
-        consumption_profile = []
+        kw_carrega = []  # Estat de càrrega (SoC) en cada moment
+        consumption_profile = []  # El que realment consumeix/aporta la bateria
         total_cost = 0
+
         actual_capacity_kwh = self.max * self.actual_percentage
-        self.horizon = horizon
-        self.horizon_min = horizon_min
+        num_intervals = (horizon - 1) * horizon_min
 
-        for hour in range(horizon-1):
-            start_point = hour * horizon_min
-            for minute in range(horizon_min):
-                current_min_location = start_point + minute
-                if config[current_min_location] > 0:
-                    actual_capacity_kwh += config[current_min_location] * self.efficiency
-                elif config[current_min_location] < 0:
-                    actual_capacity_kwh += config[current_min_location]
+        for i in range(num_intervals):
+            accio_proposada = config[i]
 
-                cost = 0
+            # Calculem el nou estat teòric
+            if accio_proposada > 0:  # Carregant
+                nou_estat = actual_capacity_kwh + (accio_proposada * self.efficiency)
+            else:  # Descarregant
+                nou_estat = actual_capacity_kwh + accio_proposada
 
-                if actual_capacity_kwh > self.max:
-                    if current_min_location == 0:
-                        config[current_min_location] = self.max - actual_capacity_kwh
-                    else:
-                        config[current_min_location] = self.max - kw_carrega[current_min_location - 1]
+            accio_real = accio_proposada
+            cost_penalitzacio = 0
 
-                    cost = actual_capacity_kwh - self.max
-                    actual_capacity_kwh = self.max
-                elif actual_capacity_kwh < self.max:
-                    if current_min_location == 0:
-                        config[current_min_location] = self.min - actual_capacity_kwh
-                    else:
-                        config[current_min_location] = self.min - kw_carrega[current_min_location - 1]
+            # Control de límits (sense modificar el vector 'config' original)
+            if nou_estat > self.max:
+                cost_penalitzacio = (nou_estat - self.max) * 10  # Penalitzem l'excés
+                accio_real = (self.max - actual_capacity_kwh) / self.efficiency if accio_proposada > 0 else 0
+                actual_capacity_kwh = self.max
+            elif nou_estat < self.min:
+                cost_penalitzacio = (self.min - nou_estat) * 10  # Penalitzem descarregar massa
+                accio_real = self.min - actual_capacity_kwh
+                actual_capacity_kwh = self.min
+            else:
+                actual_capacity_kwh = nou_estat
 
-                kw_carrega.append(actual_capacity_kwh)
-                consumption_profile.append(config[current_min_location])
-                total_cost += cost
+            kw_carrega.append(actual_capacity_kwh)
+            consumption_profile.append(accio_real)
+            total_cost += cost_penalitzacio
+
 
         consumption_profile_24h = [0.0] * 24
-        for hour in range(len(consumption_profile)):
-            consumption_profile_24h[hour+1] = consumption_profile[hour]
-
+        for i in range(min(len(consumption_profile), 23)):
+            consumption_profile_24h[i + 1] = consumption_profile[i]
 
         return_dict = {
             "consumption_profile": consumption_profile_24h,
             "consumed_Kwh": kw_carrega,
             "total_cost": total_cost,
-            "schedule": config
+            "schedule": consumption_profile
         }
 
         return return_dict

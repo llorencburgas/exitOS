@@ -81,6 +81,7 @@ class OptimalScheduler:
                 result = None
                 cost = []
                 total_balance = []
+                all_devices_config = []
 
             return has_data, all_devices_config, cost, total_balance
 
@@ -211,7 +212,7 @@ class OptimalScheduler:
         logger.debug(f"     ▫️ Cost: {result['fun']}")
 
 
-        return result['x'], result['fun']
+        return result['x'].copy(), result['fun']
 
     def cost_DE(self, config):
         return self.__calc_total_balance(config)
@@ -264,7 +265,7 @@ class OptimalScheduler:
             start = consumer.vbound_start
             end = consumer.vbound_end
 
-            res_dict = consumer.simula(config[start:end], self.horizon, self.horizon_min)
+            res_dict = consumer.simula(config[start:end].copy(), self.horizon, self.horizon_min)
             for hour in range(len(res_dict['consumption_profile'])):
                 total_consumption[hour] += res_dict['consumption_profile'][hour]
 
@@ -275,7 +276,7 @@ class OptimalScheduler:
 
     def __calc_total_balance_energy(self, config, total_balance):
 
-        total_energy_sources = total_balance
+        total_energy_sources = list(total_balance)
         for energy_storage in self.energy_storages.values():
             start = energy_storage.vbound_start
             end = energy_storage.vbound_end

@@ -781,6 +781,7 @@ def optimize():
             for m in minutes:
                 #todo: revisar hora de configuració
                 schedule.every().hour.at(f":{m:02d}").do(config_optimized_devices_HA)
+
     except Exception as e:
         logger.error(f"❌ Error optimitzant: {str(e)}: {traceback.format_exc()}")
 
