@@ -333,7 +333,7 @@ class OptimalScheduler:
                 start = item.vbound_start
                 end = item.vbound_end
 
-                device_config = config[start:end]
+                device_config = config[start:end+1]
 
                 all_devices_config[item.name] = device_config
 
