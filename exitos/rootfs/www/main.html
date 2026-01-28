@@ -67,7 +67,7 @@
 </div>
 
 
-<!--    PLANIFICACIÓ SONNEN -->
+<!--    OPTIMITZACIÓ GENERAL -->
 <div class="scheduler-container">
     <h2>Horaris Configurats</h2>
     <div id="scheduler-grid" class="scheduler-grid"> <!--AQUI ES POSA EL PLOTLY--> </div>
@@ -78,6 +78,13 @@
 <div class="forecasts-container">
     <h2>Forecastings Guardats</h2>
     <div id="forecast-grid" class="forecast-grid"> <!--AQUI ES POSEN ELS FORECASTS--> </div>
+</div>
+
+
+<!--    CONFIGURACIÓ DISPOSITIUS     -->
+<div class="forecasts-container">
+    <h2>Configuració Horària Dispositius</h2>
+    <div id="device-config-grid" class="forecast-grid"> <!--AQUI ES POSEN ELS CONFIGS--> </div>
 </div>
 
 
@@ -101,86 +108,102 @@
     function onLoadPage() {
         const sensors_list = {{!active_sensors_list}};
         const parent_div_forecast = document.getElementById("forecast-grid");
-        const parent_div_scheduler = document.getElementById("scheduler-grid")
+        const parent_div_scheduler = document.getElementById("scheduler-grid");
+        const parent_div_device_config = document.getElementById("device-config-grid");
+
         sensors_list.forEach((sensor_id) => {
-            const fixed_name = sensor_id.replace(".pkl", "")
-
-            fetch('get_forecast_data/' + fixed_name)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === "ok") {
-                        const container = document.createElement("div");
-                        container.className = "forecast-card";
-                        container.innerText = fixed_name;
-                        container.innerHTML = fixed_name;
-
-                        parent_div_forecast.appendChild(container);
-
-
-                        const timestamps = data.timestamps;
-                        const predictions = data.predictions;
-                        const realValues = data.real_values;
-                        const realValuesTimestamps = data.real_values_timestamps;
-                        const yesterday = data.yesterday_predictions;
-                        const yesterdayTimestamps = data.yesterday_timestamps;
-                        const startTimestamps = data.start_timestamp;
-                        const endTimestamps = data.last_timestamp;
-
-                        const traceReal = {
-                            x: realValuesTimestamps,
-                            y: realValues,
-                            mode: "lines",
-                            name: "Dades Reals",
-                            line: {color: 'orange', dash: 'dot'}
-                        };
-
-                        const tracePrediction = {
-                            x: timestamps,
-                            y: predictions,
-                            mode: 'lines',
-                            name: 'Predicció Avui',
-                            line: { color: 'green' }
-                        };
-
-                        const traceYesterday = {
-                            x: yesterdayTimestamps,
-                            y: yesterday,
-                            mode: 'lines',
-                            name: 'Predicció Ahir',
-                            line: {color: 'red', dash: 'dot'}
-                        }
-
-                        const layout = {
-                            title: 'Predicció vs Dades Reals',
-                            xaxis: {title: 'Temps', range:[startTimestamps, endTimestamps]},
-                            yaxis: {title: 'Consum (Kw)'},
-                            autosize: true,
-                            margin: {t: 40, r: 20, b: 50, l: 50},
-                            height: 300,
-                            dragmode: 'pan',
-                            showlegend: false,
-                        };
-
-                        const config = {responsive: true};
-                        if(yesterday === "" && predictions === ""){
-                            container.innerHTML = 'No hi ha dades a mostrar pel model ' + sensor_id;
-                        }
-                        else if(yesterday === ""){
-                            Plotly.newPlot(container,[traceReal, tracePrediction], PlotlyTheme.mergeLayout(layout), config);
-                        }
-                        else if(predictions === ""){
-                            Plotly.newPlot(container,[traceYesterday], PlotlyTheme.mergeLayout(layout),config);
-                        }
-                        else{
-                            Plotly.newPlot(container,[traceReal, tracePrediction, traceYesterday], PlotlyTheme.mergeLayout(layout),config);
-                        }
-
-                    }
-                });
-
-
+            loadForecastsData(sensor_id, parent_div_forecast, );
         });
 
+        loadSchedulerData(parent_div_scheduler);
+
+        loadDevicesConfigData(parent_div_device_config);
+
+    }
+
+    /**
+     * Carrega des del Backend el forecast per al sensor indicat i genera el plotly
+     * **/
+    function loadForecastsData(sensor_id, parent_div_forecast){
+        const fixed_name = sensor_id.replace(".pkl", "")
+        fetch('get_forecast_data/' + fixed_name)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "ok") {
+                    const container = document.createElement("div");
+                    container.className = "forecast-card";
+                    container.innerText = fixed_name;
+                    container.innerHTML = fixed_name;
+
+                    parent_div_forecast.appendChild(container);
+
+
+                    const timestamps = data.timestamps;
+                    const predictions = data.predictions;
+                    const realValues = data.real_values;
+                    const realValuesTimestamps = data.real_values_timestamps;
+                    const yesterday = data.yesterday_predictions;
+                    const yesterdayTimestamps = data.yesterday_timestamps;
+                    const startTimestamps = data.start_timestamp;
+                    const endTimestamps = data.last_timestamp;
+
+                    const traceReal = {
+                        x: realValuesTimestamps,
+                        y: realValues,
+                        mode: "lines",
+                        name: "Dades Reals",
+                        line: {color: 'orange', dash: 'dot'}
+                    };
+
+                    const tracePrediction = {
+                        x: timestamps,
+                        y: predictions,
+                        mode: 'lines',
+                        name: 'Predicció Avui',
+                        line: { color: 'green' }
+                    };
+
+                    const traceYesterday = {
+                        x: yesterdayTimestamps,
+                        y: yesterday,
+                        mode: 'lines',
+                        name: 'Predicció Ahir',
+                        line: {color: 'red', dash: 'dot'}
+                    }
+
+                    const layout = {
+                        title: 'Predicció vs Dades Reals',
+                        xaxis: {title: 'Temps', range:[startTimestamps, endTimestamps]},
+                        yaxis: {title: 'Consum (Kw)'},
+                        autosize: true,
+                        margin: {t: 40, r: 20, b: 50, l: 50},
+                        height: 300,
+                        dragmode: 'pan',
+                        showlegend: false,
+                    };
+
+                    const config = {responsive: true};
+                    if(yesterday === "" && predictions === ""){
+                        container.innerHTML = 'No hi ha dades a mostrar pel model ' + sensor_id;
+                    }
+                    else if(yesterday === ""){
+                        Plotly.newPlot(container,[traceReal, tracePrediction], PlotlyTheme.mergeLayout(layout), config);
+                    }
+                    else if(predictions === ""){
+                        Plotly.newPlot(container,[traceYesterday], PlotlyTheme.mergeLayout(layout),config);
+                    }
+                    else{
+                        Plotly.newPlot(container,[traceReal, tracePrediction, traceYesterday], PlotlyTheme.mergeLayout(layout),config);
+                    }
+
+                }
+            });
+    }
+
+    /**
+     * Carrega la gràfica de consum general del dia i genera el plotly (gràfica resultat de l'optimització)
+     * **/
+    function loadSchedulerData(parent_div_scheduler) {
         fetch('get_scheduler_data')
             .then(response => response.json())
             .then(data => {
@@ -197,6 +220,72 @@
                     );
                 }
             })
+    }
+
+    /**
+     * Carrega les gràfiques de configuració horàries dels dispositius optimitzats
+     * **/
+    async function loadDevicesConfigData(parent_div_config){
+        let saved_configs = ""
+        const res = await fetch('get_config_file_names', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        const result = await res.json();
+        if (result.status === 'ok') {
+            saved_configs = JSON.parse(JSON.stringify(result.names));
+        }
+
+        saved_configs.forEach((config_name) => {
+            fetch('get_device_config_data/' + config_name)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    const dev = data["device_config"];
+
+                    const graph_container = document.createElement('div');
+                    graph_container.className = "scheduler-card";
+                    graph_container.innerHTML = dev.device_name;
+                    graph_container.innerText = dev.device_name;
+
+                    const trace = {
+                            x: dev.timestamps,
+                            y: dev.hourly_config,
+                            mode: "lines+markers",
+                            name: "configuració",
+                            line: {color: 'green'}
+                        };
+
+                    const layout = {
+                        title: 'Configuració Horària',
+                        xaxis: {title: 'Hora'},
+                        yaxis: {title: 'Config'},
+                        autosize: true,
+                        margin: {t: 40, r: 20, b: 50, l: 50},
+                        height: 300,
+                        dragmode: 'pan',
+                        showlegend: false,
+                    };
+
+                    const config = {
+                        responsive: true
+                    }
+
+                    parent_div_config.appendChild(graph_container);
+
+                    setTimeout(() => {
+                        Plotly.newPlot(
+                            graph_container,
+                            [trace],
+                            PlotlyTheme.mergeLayout(layout),
+                            { responsive: true, displayModeBar: false }
+                        );
+                    }, 10);
+                }
+
+
+            });
+        })
     }
 
     onLoadPage();
