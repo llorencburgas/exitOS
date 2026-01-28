@@ -265,7 +265,7 @@ class OptimalScheduler:
             start = consumer.vbound_start
             end = consumer.vbound_end
 
-            res_dict = consumer.simula(config[start:end].copy(), self.horizon, self.horizon_min)
+            res_dict = consumer.simula(config[start:end+1].copy(), self.horizon, self.horizon_min)
             for hour in range(len(res_dict['consumption_profile'])):
                 total_consumption[hour] += res_dict['consumption_profile'][hour]
 
@@ -281,7 +281,7 @@ class OptimalScheduler:
             start = energy_storage.vbound_start
             end = energy_storage.vbound_end
 
-            res_dict = energy_storage.simula(config[start:end], self.horizon, self.horizon_min)
+            res_dict = energy_storage.simula(config[start:end+1], self.horizon, self.horizon_min)
 
             for hour in range(0, len(total_balance)):
                 total_energy_sources[hour] += res_dict['consumption_profile'][hour]
