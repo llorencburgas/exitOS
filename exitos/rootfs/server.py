@@ -771,16 +771,17 @@ def optimize():
             joblib.dump(optimization_result, full_path)
             logger.info(f"✏️ Optimització diària guardada al fitxer {full_path}")
 
-            #configurar schedule job, mirem que no existeixi el job
-            for job in schedule.get_jobs():
-                if job.job_func == 'config_optimized_devices_HA':
-                    scheduler.cancel(job)
-            # afegim job nou
-            interval = 60 // horizon_min
-            minutes = list(range(0, 60, interval))
-            for m in minutes:
-                #todo: revisar hora de configuració
-                schedule.every().hour.at(f":{m:02d}").do(config_optimized_devices_HA)
+            schedule.clear('device_config_tasks')
+            schedule.every().hour.at(":00").do(config_optimized_devices_HA).tag('device_config_tasks')
+            logger.info("📅 Job programat per executar-se un cop cada hora (als minuts :00)")
+
+            # interval_minuts = horizon_min
+            # minuts_exec = list(range(0, 60, interval_minuts))
+            #
+            # for m in minuts_exec:
+            #     hour_format = f"{m:02d}:00"
+            #     schedule.every().hour.at(hour_format).do(config_optimized_devices_HA).tag('device_config_tasks')
+            #     logger.info(f"📅 Job programat cada hora a les {hour_format}")
 
     except Exception as e:
         logger.error(f"❌ Error optimitzant: {str(e)}: {traceback.format_exc()}")
