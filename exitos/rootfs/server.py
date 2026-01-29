@@ -1087,7 +1087,7 @@ def config_optimized_devices_HA():
         logger.error(f"❌ [{datetime.now().strftime('%d:%m:%Y %H:%m')}] -  Error configurant horariament un dispositiu a H.A {e}")
 
 schedule.every().day.at("23:30").do(daily_task)
-schedule.every().day.at("01:00").do(daily_forecast_task)
+schedule.every().day.at("23:45").do(daily_forecast_task)
 schedule.every().day.at("02:00").do(monthly_task)
 schedule.every().hour.at(":00").do(certificate_hourly_task)
 
