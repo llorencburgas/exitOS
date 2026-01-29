@@ -1118,7 +1118,7 @@ def panik_function():
 
 # Funció main que encén el servidor web.
 def main():
-    run(app=app, host=HOSTNAME, port=PORT)
+    run(app=app, host=HOSTNAME, port=PORT, quiet=True)
 
 
 # Executem la funció main
