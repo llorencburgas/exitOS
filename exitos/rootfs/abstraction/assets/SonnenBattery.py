@@ -74,7 +74,7 @@ class SonnenBattery(AbsEnergyStorage):
     def controla(self, config,current_hour):
 
         positive_value = abs(config[current_hour])
-        value_to_HA = positive_value * 100
+        value_to_HA = positive_value * 1000
 
         if config[current_hour] >= 0:
             logger.info(f"     ▫️ Configurant {self.name} -> 🔋 Charge {value_to_HA}")
