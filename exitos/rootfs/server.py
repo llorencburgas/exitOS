@@ -761,7 +761,7 @@ def optimize():
                 "devices_config": devices_config
             }
 
-            tomorrow_date = datetime.today() + timedelta(days=1).strftime("%d_%m_%Y")
+            tomorrow_date = (datetime.today() + timedelta(days=1)).strftime("%d_%m_%Y")
             full_path = os.path.join(forecast.models_filepath, "optimizations/"+tomorrow_date+".pkl")
             os.makedirs(forecast.models_filepath + 'optimizations', exist_ok=True)
             if os.path.exists(full_path):
