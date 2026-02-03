@@ -174,7 +174,7 @@ def get_scheduler_data():
         today = datetime.today().strftime("%d_%m_%Y")
         full_path = os.path.join(forecast.models_filepath, "optimizations/"+today+".pkl")
         if not os.path.exists(full_path):
-            optimize()
+            optimize(today=True)
 
         if not os.path.exists(full_path): return json.dumps("ERROR")
 
@@ -730,8 +730,12 @@ def get_user_configuration_data():
 
 #region PÀGINA OPTIMITZACIÓ
 
+@app.route('/run_optimization')
+def run_optimization():
+    optimize(today=True)
+
 @app.route('/optimize')
-def optimize():
+def optimize(today=False):
     try:
         horizon = 24
         horizon_min = 1 # 1 = 60 minuts  | 2 = 30 minuts | 4 = 15 minuts
@@ -760,9 +764,11 @@ def optimize():
                 "total_price": price,
                 "devices_config": devices_config
             }
-
-            tomorrow_date = (datetime.today() + timedelta(days=1)).strftime("%d_%m_%Y")
-            full_path = os.path.join(forecast.models_filepath, "optimizations/"+tomorrow_date+".pkl")
+            if today:
+                save_date = datetime.today().strftime("%d_%m_%Y")
+            else:
+                save_date = (datetime.today() + timedelta(days=1)).strftime("%d_%m_%Y")
+            full_path = os.path.join(forecast.models_filepath, "optimizations/"+save_date+".pkl")
             os.makedirs(forecast.models_filepath + 'optimizations', exist_ok=True)
             if os.path.exists(full_path):
                 logger.warning("Eliminant arxiu antic d'optimització ")
@@ -774,14 +780,6 @@ def optimize():
             schedule.clear('device_config_tasks')
             schedule.every().hour.at(":00").do(config_optimized_devices_HA).tag('device_config_tasks')
             logger.info("📅 Job programat per executar-se un cop cada hora (als minuts :00)")
-
-            # interval_minuts = horizon_min
-            # minuts_exec = list(range(0, 60, interval_minuts))
-            #
-            # for m in minuts_exec:
-            #     hour_format = f"{m:02d}:00"
-            #     schedule.every().hour.at(hour_format).do(config_optimized_devices_HA).tag('device_config_tasks')
-            #     logger.info(f"📅 Job programat cada hora a les {hour_format}")
 
     except Exception as e:
         logger.error(f"❌ Error optimitzant: {str(e)}: {traceback.format_exc()}")
@@ -944,7 +942,7 @@ def daily_task():
         database.clean_database_hourly_average(all_sensors=True)
 
         logger.warning(f"📈 [{hora_actual}] - INICIANT PROCÉS D'OPTIMITZACIÓ")
-        optimize()
+        optimize(today=False)
     except Exception as e:
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
         logger.error(f" ❌ [{hora_actual}] - ERROR al daily task : {e}")
@@ -1067,7 +1065,7 @@ def config_optimized_devices_HA():
         today = datetime.today().strftime("%d_%m_%Y")
         full_path = os.path.join(forecast.models_filepath, "optimizations/" + today + ".pkl")
         if not os.path.exists(full_path):
-            can_optimize = optimize()
+            can_optimize = optimize(today=True)
             if can_optimize == "Empty": return
 
         optimization_db = joblib.load(full_path)

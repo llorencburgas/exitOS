@@ -78,7 +78,7 @@
     const device_entities = {{!device_entities}}
 
     function TestOptimization() {
-        fetch('optimize')
+        fetch('run_optimization')
             .then(response => response.text())
             .then(data => console.log("Optimization pressed"))
     }
