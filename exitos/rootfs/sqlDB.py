@@ -314,7 +314,7 @@ class SqlDB():
                     con.commit()
                 except Exception as e:
                     con.rollback()
-                    logger.error(f"❌ Error processant {s_id}: {e}")
+                    logger.error(f"❌ Error processant {sensor_id}: {e}")
         logger.info("🧹 NETEJA COMPLETADA")
         self.vacuum()
 
