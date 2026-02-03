@@ -359,7 +359,7 @@ def graphs_view():
 @app.route('/force_update_database')
 def force_update_database():
     database.update_database("all")
-    database.clean_database_hourly_average()
+    database.clean_database_hourly_average(all_sensors=True)
     return "ok"
 
 #endregion PÀGINA DATABASE
@@ -941,7 +941,7 @@ def daily_task():
     try:
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
         database.update_database("all")
-        database.clean_database_hourly_average()
+        database.clean_database_hourly_average(all_sensors=True)
 
         logger.warning(f"📈 [{hora_actual}] - INICIANT PROCÉS D'OPTIMITZACIÓ")
         optimize()
@@ -1004,6 +1004,7 @@ def certificate_hourly_task():
 
             if  database.get_sensor_active(generation) == 1 and generation != "None":
                 database.update_database(generation)
+                database.clean_database_hourly_average(sensor_id=generation, all_sensors=False)
                 generation_data = database.get_latest_data_from_sensor(sensor_id=generation)
                 generation_timestamp = to_datetime(generation_data[0]).strftime("%Y-%m-%d %H:%M")
                 generation_value = generation_data[1]
@@ -1014,6 +1015,7 @@ def certificate_hourly_task():
 
             if database.get_sensor_active(consumption) == 1 and consumption != 'None':
                 database.update_database(consumption)
+                database.clean_database_hourly_average(sensor_id=consumption, all_sensors=False)
                 consumption_data = database.get_latest_data_from_sensor(sensor_id=consumption)
                 consumption_timestamp = to_datetime(consumption_data[0]).strftime("%Y-%m-%d %H:%M")
                 consumption_value = consumption_data[1]

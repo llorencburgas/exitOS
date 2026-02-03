@@ -71,7 +71,7 @@ class SqlDB():
         logger.info("Base de dades creada correctament.")
 
         self.update_database("all")
-        self.clean_database_hourly_average()
+        self.clean_database_hourly_average(all_sensors=True)
 
     def _get_connection(self):
         return sqlite3.connect(self.database_file)
@@ -256,20 +256,33 @@ class SqlDB():
             con.execute("DELETE FROM dades WHERE sensor_id = ?", (sensor_id,))
             con.commit()
 
-    def clean_database_hourly_average(self):
-        logger.info("🧹 INICIANT NETEJA DE LA BASE DE DADES")
+    def clean_database_hourly_average(self, sensor_id=None, all_sensors=True):
+        """
+        Neteja dades promediant per hora.
+        Si all_sensors=True, processa tots els sensors.
+        Si all_sensors=False, requereix un sensor_id específic.
+        """
+
+        mode = "TOTAL" if all_sensors else f"SENSOR: {sensor_id}"
+        logger.info(f"🧹 INICIANT NETEJA ({mode})")
+
         with self._get_connection() as con:
-            # Comprovar si la taula 'dades' està buida
+            # Mirem quins sensors hem de processar
             cur = con.cursor()
-            cur.execute("SELECT COUNT(*) FROM dades")
-            count = cur.fetchone()[0]
-            if count == 0:
-                logger.info("❗La base de dades està buida. No s'executa la neteja.")
+
+            if all_sensors:
+                sensor_ids = [row[0] for row in con.execute("SELECT DISTINCT sensor_id FROM dades").fetchall()]
+            else:
+                if not sensor_id:
+                    logger.warning("⚠️ S'ha demanat neteja individual però no s'ha passat sensor_id.")
+                    return
+                sensor_ids = [sensor_id]
+
+            if not sensor_ids:
+                logger.error("❗ No s'han trobat sensors per processar.")
                 return
-            cur.close()
 
-            sensor_ids = [row[0] for row in con.execute("SELECT DISTINCT sensor_id FROM dades").fetchall()]
-
+            # Bucle de processament de dades
             limit_date = (datetime.now() - timedelta(days=21)).isoformat()
 
             for sensor_id in sensor_ids:
@@ -288,16 +301,20 @@ class SqlDB():
                 #Agrupem horariament, mantenint NaN si no hi ha valors vàlids
                 df_grouped = df.groupby('hour', as_index=False)['value'].mean()
 
-                con.execute("DELETE FROM dades WHERE sensor_id = ? AND timestamp >= ?", (sensor_id, limit_date))
+                try:
+                    con.execute("DELETE FROM dades WHERE sensor_id = ? AND timestamp >= ?", (sensor_id, limit_date))
 
-                rows_to_insert = [
-                    (sensor_id, row['hour'].isoformat(), None if pd.isna(row['value']) else row['value'])
-                    for _, row in df_grouped.iterrows()
-                ]
-                con.executemany(
-                    "INSERT INTO dades (sensor_id, timestamp, value) VALUES (?, ?, ?)", rows_to_insert
-                )
-                con.commit()
+                    rows_to_insert = [
+                        (sensor_id, row['hour'].isoformat(), None if pd.isna(row['value']) else row['value'])
+                        for _, row in df_grouped.iterrows()
+                    ]
+                    con.executemany(
+                        "INSERT INTO dades (sensor_id, timestamp, value) VALUES (?, ?, ?)", rows_to_insert
+                    )
+                    con.commit()
+                except Exception as e:
+                    con.rollback()
+                    logger.error(f"❌ Error processant {s_id}: {e}")
         logger.info("🧹 NETEJA COMPLETADA")
         self.vacuum()
 
