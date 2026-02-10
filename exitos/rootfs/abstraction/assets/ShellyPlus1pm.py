@@ -83,40 +83,31 @@ class ShellyPlus1pm(AbsConsumer):
         if self.name not in optimization_data['devices_config']:
             return None
             
-        device_result = optimization_data['devices_config'][self.name]
         timestamps = optimization_data['timestamps']
-        
-        # Shelly retorna 'consumption_profile' (0 o self.consumption) a 'return_dict' de simula
-        # A 'save_optimization', devices_config[name] guarda el return_dict.
-        
-        consumption_profile = device_result['consumption_profile']
-        # Schedule (0 o 1)
-        schedule = device_result['schedule'] 
-        
-        min_len = min(len(timestamps), len(consumption_profile))
+        plan = optimization_data['devices_config'][self.name]
+
+        min_len = min(len(timestamps), len(plan))
         
         fup = []
         fdown = []
+        power_profile = []
         
         for t in range(min_len):
-            con = consumption_profile[t]
-            # Si està ON (consumint), tenim flex_down (podem apagar-lo) -> Potència que deixem de consumir
-            # Si està OFF (no consumint), tenim flex_up (podem encendre'l) -> Potència que podem consumir
-            
-            # Flex Up: Capacitat d'augmentar consum. Si està OFF, podem consumir self.consumption. Si ON, 0.
-            if con == 0:
-                flex_up = self.consumption
-            else:
-                flex_up = 0
+
+            start_state = plan[t]
+            if start_state == 0: p_val = 0
+            else:  p_val = self.consumption
+
+            #
+            # # Flex Down: Capacitat de reduir consum. Si està ON, podem reduir self.consumption. Si OFF, 0.
+            # if start_state > 0:
+            #     flex_down = 0 #self.consumption
+            # else:
+            #     flex_down = 0
                 
-            # Flex Down: Capacitat de reduir consum. Si està ON, podem reduir self.consumption. Si OFF, 0.
-            if con > 0:
-                flex_down = con
-            else:
-                flex_down = 0
-                
-            fup.append(flex_up)
-            fdown.append(flex_down)
+            fup.append(1)
+            fdown.append(0)
+            power_profile.append(p_val)
             
-        return fup, fdown, consumption_profile, timestamps[:min_len]
+        return fup, fdown, power_profile, timestamps[:min_len]
 

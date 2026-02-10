@@ -856,80 +856,6 @@ def optimize(today = False):
     except Exception as e:
         logger.error(f"❌ Error optimitzant: {str(e)}: {traceback.format_exc()}")
 
-def flexibility():
-    """
-    Calcula la flexibilitat de l'optimització realitzada.
-    Ara cerca quin dispositiu s'ha optimitzat i delega el càlcul a la classe del dispositiu.
-    """
-    today_str = datetime.today().strftime("%d_%m_%Y")
-    tomorrow_str = (datetime.today() + timedelta(days=1)).strftime("%d_%m_%Y")
-    
-    base_path = os.path.join(forecast.models_filepath, "optimizations/")
-    full_path_today = os.path.join(base_path, today_str + ".pkl")
-    full_path_tomorrow = os.path.join(base_path, tomorrow_str + ".pkl")
-
-    optimization_db = None
-    if os.path.exists(full_path_today):
-        optimization_db = joblib.load(full_path_today)
-    elif os.path.exists(full_path_tomorrow):
-        optimization_db = joblib.load(full_path_tomorrow)
-
-    if optimization_db is None:
-        return [], [], [], []
-
-
-    all_devices = list(optimalScheduler.consumers.values()) + \
-                  list(optimalScheduler.generators.values()) + \
-                  list(optimalScheduler.energy_storages.values())
-                  
-
-    for device in all_devices:
-        if device.name in optimization_db['devices_config']:
-            try:
-                result = device.get_flexibility(optimization_db)
-                if result:
-                    fup, fdown, power, timestamps = result
-                    return fup, fdown, power, timestamps
-            except Exception as e:
-                logger.error(f"❌ Error calculating flexibility for {device.name}: {e}")
-                continue
-                
-    # Si no trobem cap dispositiu conegut o cap té flexibilitat implementada:
-    return [], [], [], []
-
-def generate_plotly_flexibility():
-    Fup, Fdown, consum, timestamps = flexibility()
-
-    fup_line = [consum[t] + Fup[t] for t in range(len(timestamps))]
-    fdown_line = [consum[t] - Fdown[t] for t in range(len(timestamps))]
-
-    graph_df = pd.DataFrame({
-        "hora": pd.to_datetime(timestamps),
-        "optimitzacio": consum,
-        "Fup": fup_line,
-        "Fdown": fdown_line
-    })
-
-    graph_long = graph_df.melt(
-        id_vars=["hora"],  # columna que es manté tal qual
-        value_vars=["optimitzacio", "Fdown", "Fup"],  # columnes que es transformen
-        var_name="Serie",  # nom de la columna nova per als noms de les sèries
-        value_name="Valor"  # nom dels valors
-    )
-
-    fig = px.line(
-        graph_long,
-        x="hora",
-        y="Valor",
-        color="Serie",
-        markers=True,
-        title="Gràfica de Flexibilitat"
-    )
-
-    fig.update_xaxes(dtick=3600000)  # 3600000 ms = 1 hora
-    fig.update_xaxes(tickformat="%H:%M")
-    fig.update_xaxes(tickangle=45)
-
 @app.post('/get_config_file_names')
 def get_config_file_names():
     # CONFIGURACIONS CREADES
@@ -995,14 +921,149 @@ def get_device_config_data(file_name):
     device_config_path = os.path.join(forecast.models_filepath, "optimizations/" + today + ".pkl")
     if not os.path.exists(device_config_path):
         return {"status": "ok", "device_config": device_config}
+
     optimization_db = joblib.load(device_config_path)
     fixed_name = file_name.removesuffix(".json")
     device_config['hourly_config'] = optimization_db['devices_config'][fixed_name].tolist()
     device_config['timestamps'] = pd.to_datetime(optimization_db['timestamps']).strftime('%Hh').tolist()
 
+    #OBTENIR FLEXIBILITAT
+    flex_path = forecast.models_filepath + "flexibility/" + file_name
+    if not os.path.exists(flex_path):
+        return {"status": "ok", "device_config": device_config}
+
+    with open(flex_path, 'r', encoding='utf-8') as f:
+        flexi_data = json.load(f)
+
+    device_config['f_up'] = flexi_data['f_up']
+    device_config['f_down'] = flexi_data['f_down']
+    device_config['flexi_timestamps'] = flexi_data['timestamps']
+
     return {"status": "ok", "device_config": device_config}
 
 #endregion PÀGINA OPTIMITZACIÓ
+
+#region FLEXIBILITY
+def flexibility():
+    """
+    Calcula la flexibilitat de l'optimització realitzada.
+    Ara cerca quin dispositiu s'ha optimitzat i delega el càlcul a la classe del dispositiu.
+    """
+
+    today_str = datetime.today().strftime("%d_%m_%Y")
+    tomorrow_str = (datetime.today() + timedelta(days=1)).strftime("%d_%m_%Y")
+
+    base_path = os.path.join(forecast.models_filepath, "optimizations/")
+    full_path_today = os.path.join(base_path, today_str + ".pkl")
+    full_path_tomorrow = os.path.join(base_path, tomorrow_str + ".pkl")
+
+    optimization_db = None
+    if os.path.exists(full_path_today):
+        optimization_db = joblib.load(full_path_today)
+    elif os.path.exists(full_path_tomorrow):
+        optimization_db = joblib.load(full_path_tomorrow)
+
+    if optimization_db is None:
+        return [], [], [], []
+
+    all_devices = list(optimalScheduler.consumers.values()) + \
+                  list(optimalScheduler.generators.values()) + \
+                  list(optimalScheduler.energy_storages.values())
+
+    # Variables per acumular resultats de flexibilitat totals
+    total_fup = []
+    total_fdown = []
+    total_power = []
+    final_timestamps = None
+
+    for device in all_devices:
+        if device.name in optimization_db['devices_config']:
+            try:
+                result = device.get_flexibility(optimization_db)
+                if result:
+                    fup, fdown, power, timestamps = result
+
+                    # Guardem resultats individuals
+                    # Convertim timestamps a string per a JSON
+                    timestamps_str = [str(t) for t in timestamps]
+                    
+                    flexi_result = {
+                        "f_up": convert_to_json_serializable(fup),
+                        "f_down": convert_to_json_serializable(fdown),
+                        "power": convert_to_json_serializable(power),
+                        "timestamps": timestamps_str
+                    }
+
+                    full_path = os.path.join(forecast.models_filepath, "flexibility/" + device.name + ".json")
+                    os.makedirs(forecast.models_filepath + 'flexibility', exist_ok=True)
+
+                    if os.path.exists(full_path):
+                        logger.warning(f"Eliminant arxiu antic de flexibilitat ->  {device.name}")
+                        os.remove(full_path)
+
+                    with open(full_path, 'w', encoding='utf-8') as f:
+                        json.dump(flexi_result, f, indent=4)
+                    
+                    logger.info(f"✏️ Flexibilitat de {device.name} guardada al fitxer {full_path}")
+
+                    # Acumulem al total
+                    if final_timestamps is None:
+                        final_timestamps = timestamps
+                        total_fup = [0] * len(timestamps)
+                        total_fdown = [0] * len(timestamps)
+                        total_power = [0] * len(timestamps)
+
+                    # Sumem valors si els timestamps coincideixen (assumim que sí per simplicitat al mateix run)
+                    min_len = min(len(total_fup), len(fup))
+                    for i in range(min_len):
+                        total_fup[i] += fup[i]
+                        total_fdown[i] += fdown[i]
+                        total_power[i] += power[i]
+
+            except Exception as e:
+                logger.error(f"❌ Error calculating flexibility for {device.name}: {e}")
+                continue
+
+    # Retornem els totals acumulats
+    if final_timestamps is not None:
+        return total_fup, total_fdown, total_power, final_timestamps
+
+    return [], [], [], []
+
+
+def generate_plotly_flexibility():
+    Fup, Fdown, consum, timestamps = flexibility()
+
+    fup_line = [consum[t] + Fup[t] for t in range(len(timestamps))]
+    fdown_line = [consum[t] - Fdown[t] for t in range(len(timestamps))]
+
+    graph_df = pd.DataFrame({
+        "hora": pd.to_datetime(timestamps),
+        "optimitzacio": consum,
+        "Fup": fup_line,
+        "Fdown": fdown_line
+    })
+
+    graph_long = graph_df.melt(
+        id_vars=["hora"],  # columna que es manté tal qual
+        value_vars=["optimitzacio", "Fdown", "Fup"],  # columnes que es transformen
+        var_name="Serie",  # nom de la columna nova per als noms de les sèries
+        value_name="Valor"  # nom dels valors
+    )
+
+    fig = px.line(
+        graph_long,
+        x="hora",
+        y="Valor",
+        color="Serie",
+        markers=True,
+        title="Gràfica de Flexibilitat"
+    )
+
+    fig.update_xaxes(dtick=3600000)  # 3600000 ms = 1 hora
+    fig.update_xaxes(tickformat="%H:%M")
+    fig.update_xaxes(tickangle=45)
+#endregion FLEXIBILITY
 
 #region DAILY TASKS
 
@@ -1186,10 +1247,8 @@ scheduler_thread.start()
 #region DEBUG REGION
 @app.route('/panik_function')
 def panik_function():
-
-    config_optimized_devices_HA()
-    # database.set_sensor_value_HA("number", "number.sonnenbatterie_79259_number_charge", 300)
-    # database.set_sensor_value_HA("number", "number.sonnenbatterie_79259_number_discharge", 300)
+    optimize()
+    flexibility()
 
 #endregion DEBUG REGION
 

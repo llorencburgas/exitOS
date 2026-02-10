@@ -20,11 +20,10 @@ class AbsDevice(ABC):
     def controla(self, *args, **kwargs):
         pass
 
-    @abstractmethod
     def get_flexibility(self, optimization_data):
         """
         Calcula la flexibilitat del dispositiu basant-se en les dades d'optimització.
         Retorna (flex_up, flex_down, power_data, timestamps) o None si no aplica.
         """
-        pass
+        return None
 

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Control energètic eXIT</title>
@@ -13,64 +14,69 @@
     <script src="https://cdn.plot.ly/plotly-3.1.0.min.js" charset="utf-8"></script>
     <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
 </head>
+
 <body>
-<!--    NAVBAR     -->
-% rebase('./www/base.html', title='Exitos')
+    <!--    NAVBAR     -->
+    % rebase('./www/base.html', title='Exitos')
 
-<div class="container">
-    <!--    PAGE NAME AND DATE  -->
-    <div class="content-section">
-        <h1>Optimització</h1>
-        <h4>{{current_date}}</h4>
-        <button class="btn" id="test-optimization" onclick="TestOptimization()"><i style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-ghost"></i> Forçar Optimització</button>
-        <button class="btn" id="new-device-config" onclick="NewDeviceConfig()"><i style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-plus"></i> Nova Configuració de Dispositiu</button>
-    </div>
+    <div class="container">
+        <!--    PAGE NAME AND DATE  -->
+        <div class="content-section">
+            <h1>Optimització</h1>
+            <h4>{{current_date}}</h4>
+            <button class="btn" id="test-optimization" onclick="TestOptimization()"><i
+                    style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-ghost"></i> Forçar
+                Optimització</button>
+            <button class="btn" id="new-device-config" onclick="NewDeviceConfig()"><i
+                    style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-plus"></i> Nova Configuració de
+                Dispositiu</button>
+        </div>
 
-    <!-- GRÀFICA OPTIMITZACIÓ -->
-    <div id="scheduler-grid" class="scheduler-grid"> </div>
+        <!-- GRÀFICA OPTIMITZACIÓ -->
+        <div id="scheduler-grid" class="scheduler-grid"> </div>
 
-    <!--    PLANIFICACIÓ  -->
-    <div class="scheduler-container">
-        <div class="optimization-graphs-container" id="optimization-graphs-container">
-            <!-- AQUI ES POSEN LES CONFIGURACIONS GUARDADES -->
+        <!--    PLANIFICACIÓ  -->
+        <div class="scheduler-container">
+            <div class="optimization-graphs-container" id="optimization-graphs-container">
+                <!-- AQUI ES POSEN LES CONFIGURACIONS GUARDADES -->
+            </div>
         </div>
     </div>
-</div>
 
 
-<div id="new-optimization-modal" class="modal hidden">
-    <!--  FORMULARI DINÀMIC PER CREAR UNA NOVA OPTIMITZACIÓ  -->
-    <div class="modal-content">
-        <span class="modal-close" onclick="CloseModal()"></span>
-        <h2>Nova Configuració de Dispositiu</h2>
+    <div id="new-optimization-modal" class="modal hidden">
+        <!--  FORMULARI DINÀMIC PER CREAR UNA NOVA OPTIMITZACIÓ  -->
+        <div class="modal-content">
+            <span class="modal-close" onclick="CloseModal()"></span>
+            <h2>Nova Configuració de Dispositiu</h2>
 
-        <!--   TIPUS DE DISPOSITIU     -->
-        <div class="new-config-section">
-            <label for="device-type">Tipus de dispositiu: </label>
-            <select name="deviceType" id="device-type" onchange="UpdateRestrictions()"></select>
-        </div>
+            <!--   TIPUS DE DISPOSITIU     -->
+            <div class="new-config-section">
+                <label for="device-type">Tipus de dispositiu: </label>
+                <select name="deviceType" id="device-type" onchange="UpdateRestrictions()"></select>
+            </div>
 
-        <!--   DISPOSITIU     -->
-        <div class="new-config-section">
-            <label for="device-name">Dispositiu:</label>
-            <select name="device-name" id="device-name" onchange="UpdateAssociatedVariables()"></select>
-        </div>
+            <!--   DISPOSITIU     -->
+            <div class="new-config-section">
+                <label for="device-name">Dispositiu:</label>
+                <select name="device-name" id="device-name" onchange="UpdateAssociatedVariables()"></select>
+            </div>
 
-        <!--   RESTRICCIONS     -->
-        <div class="new-config-section" id="restrictionsContainer"></div>
+            <!--   RESTRICCIONS     -->
+            <div class="new-config-section" id="restrictionsContainer"></div>
 
-        <!--   VARIABLES ASSOCIADES     -->
-        <div class="new-config-section" id="vars-config-section"></div>
+            <!--   VARIABLES ASSOCIADES     -->
+            <div class="new-config-section" id="vars-config-section"></div>
 
-        <!--   VARIABLES ASSOCIADES     -->
-        <div class="new-config-section" id="control-vars-config-section"></div>
+            <!--   VARIABLES ASSOCIADES     -->
+            <div class="new-config-section" id="control-vars-config-section"></div>
 
-        <div style="margin-top: 20px;">
-            <button class="btn" onclick="SubmitOptimization()"> Guardar </button>
-            <button class="btn secondary" onclick="CloseModal()"> Cancel·lar </button>
+            <div style="margin-top: 20px;">
+                <button class="btn" onclick="SubmitOptimization()"> Guardar </button>
+                <button class="btn secondary" onclick="CloseModal()"> Cancel·lar </button>
+            </div>
         </div>
     </div>
-</div>
 
 
 </body>
@@ -90,45 +96,45 @@
      * Funció que es crida en carregar la pàgina.
      * Genera la gràfica d'optimització i crida la funció per a mostrar les configuracions guardades
      */
-    function onLoadPage(){
+    function onLoadPage() {
         const parent_div_scheduler = document.getElementById("scheduler-grid");
         fetch('get_scheduler_data')
-        .then(response => response.json())
-        .then(data => {
-            if (data !== "ERROR"){
-                const container = document.createElement("div");
-                container.className = "scheduler-card";
-                parent_div_scheduler.appendChild(container);
+            .then(response => response.json())
+            .then(data => {
+                if (data !== "ERROR") {
+                    const container = document.createElement("div");
+                    container.className = "scheduler-card";
+                    parent_div_scheduler.appendChild(container);
 
-                Plotly.newPlot(
-                    container,
-                    data.data,
-                    PlotlyTheme.mergeLayout(data.layout)
-                );
-            }
-        })
+                    Plotly.newPlot(
+                        container,
+                        data.data,
+                        PlotlyTheme.mergeLayout(data.layout)
+                    );
+                }
+            })
         LoadConfigsSaved();
     }
 
     /**
      * Obre el formulari per a crear una nova configuració i l'omple dinàmicament.
      */
-    function NewDeviceConfig(){
-          const modal = document.getElementById('new-optimization-modal');
-          modal.classList.add("opening");
-          modal.classList.remove('hidden');
+    function NewDeviceConfig() {
+        const modal = document.getElementById('new-optimization-modal');
+        modal.classList.add("opening");
+        modal.classList.remove('hidden');
 
-          const select = document.getElementById('device-type');
-          select.innerHTML = '';
+        const select = document.getElementById('device-type');
+        select.innerHTML = '';
 
-          for (const type in device_types){
-              const opt = document.createElement('option');
-              opt.value = type;
-              opt.textContent = device_types[type].nom;
-              select.appendChild(opt);
-          }
-          UpdateRestrictions();
-          LoadDevicesEntities();
+        for (const type in device_types) {
+            const opt = document.createElement('option');
+            opt.value = type;
+            opt.textContent = device_types[type].nom;
+            select.appendChild(opt);
+        }
+        UpdateRestrictions();
+        LoadDevicesEntities();
     }
 
     /**
@@ -141,7 +147,7 @@
         container.innerHTML = '';
 
         restrictions.forEach(restriction => {
-            if(typeof restriction === 'object'){
+            if (typeof restriction === 'object') {
                 container.innerHTML += `
                 <label>${restriction.nom}: </label>
                 <input type="number"
@@ -166,22 +172,22 @@
     /**
      * Crea select i option per als paràmetres entrats
      */
-    function CreateSelectOption(container, varId, varName, dev, isControllVar ){
+    function CreateSelectOption(container, varId, varName, dev, isControllVar) {
         const label = document.createElement("label");
         label.for = varId;
         label.textContent = varName;
         label.id = varId;
 
         const select = document.createElement("select");
-        select.innerHTML  = '<option value="">-- Selecciona un sensor --</option>';
+        select.innerHTML = '<option value="">-- Selecciona un sensor --</option>';
         select.name = varId;
         select.id = varId;
 
         // if (!device_name || !device_entities[device_name]) return;
         dev.entities.forEach(ent => {
 
-            if(isControllVar && ent.entity_id.startsWith("sensor.") )return;
-            if(!isControllVar && !ent.entity_id.startsWith("sensor.") )return;
+            if (isControllVar && ent.entity_id.startsWith("sensor.")) return;
+            if (!isControllVar && !ent.entity_id.startsWith("sensor.")) return;
 
             const opt = document.createElement("option");
             opt.value = ent.entity_id;
@@ -196,7 +202,7 @@
     /**
      * Modifica els inputs per a les variables associades segons el tipus de dispositiu i entitats d'aquest
      */
-    function UpdateAssociatedVariables(){
+    function UpdateAssociatedVariables() {
         const device_type = document.getElementById('device-type').value;
         const device_name = document.getElementById('device-name').value;
 
@@ -221,7 +227,7 @@
      * Busca tots els <select> dins aquest div, i per a cadascun recull
      * totes les opcions seleccionades (amb id i friendly_name).
      */
-    function GetSelectedVariables(){
+    function GetSelectedVariables() {
         const container = document.getElementById("vars-config-section");
         const allSelects = container.querySelectorAll('select');
 
@@ -234,15 +240,15 @@
             const groupLabel = label ? label.textContent.trim() : "Sense nom";
 
             Array.from(select.selectedOptions).forEach(opt => {
-                if(opt.value.startsWith("sensor.")){
+                if (opt.value.startsWith("sensor.")) {
                     selectedExtraVars[label.id] = {
                         "sensor_id": opt.value,
                         "friendly_name": opt.text,
                         "label_name": label.textContent,
-                        "function_name":groupLabel
+                        "function_name": groupLabel
                     };
                 }
-                else{
+                else {
                     selectedControlVars[label.id] = {
                         "sensor_id": opt.value,
                         "friendly_name": opt.text,
@@ -252,7 +258,7 @@
                 }
             })
         })
-        return[selectedExtraVars, selectedControlVars];
+        return [selectedExtraVars, selectedControlVars];
     }
 
     /**
@@ -260,11 +266,11 @@
      * @param element element html que està buit al moment de guardar
      * @param message Missatge que es mostrarà sota l'element
      */
-    function showErroratSubmit(element, message){
+    function showErroratSubmit(element, message) {
         element.classList.add('error');
 
         //Si ja hi ha un missatge d'error, no el dupliquem
-        if(element.nextElementSibling && element.nextElementSibling.classList.contains('error-msg')) {
+        if (element.nextElementSibling && element.nextElementSibling.classList.contains('error-msg')) {
             return;
         }
 
@@ -278,7 +284,7 @@
      * Elimina els missatges d'error si l'usuari canvia el valor
      */
     document.addEventListener('input', (e) => {
-        if (e.target.classList.contains('error') && e.target.value.trim() !== ''){
+        if (e.target.classList.contains('error') && e.target.value.trim() !== '') {
             e.target.classList.remove('error');
 
             const msg = e.target.nextElementSibling;
@@ -293,7 +299,7 @@
      * @async
      * @returns {Promise<void>}  Si tot ha anat bé recarrega la pàgina amb les configuracions noves.
      */
-    async function SubmitOptimization(){
+    async function SubmitOptimization() {
 
         const name = document.getElementById('device-name');
         const type = document.getElementById('device-type');
@@ -308,20 +314,20 @@
         document.querySelectorAll('.error').forEach(e => e.classList.remove('error'));
 
         // Validar camp "Dispositiu"
-        if (name.value.trim() === ''){
+        if (name.value.trim() === '') {
             showErroratSubmit(name, "Selecciona un Dispositiu");
             valid = false;
         }
 
         // Validar camp "Tipus de Dispositiu"
-        if(type.value.trim() === ''){
+        if (type.value.trim() === '') {
             showErroratSubmit(type, "Seleccione el tipus de Dispositiu");
             valid = false;
         }
 
         //Validar restriccions
         restrictionInputs.forEach(inp => {
-            if(inp.value.trim() === ''){
+            if (inp.value.trim() === '') {
                 showErroratSubmit(inp, "Aquest camp és obligatori");
                 valid = false;
             }
@@ -329,10 +335,10 @@
 
         // validació variables extra
         all_selects.forEach(select => {
-           if(select.value.trim() === ''){
-               showErroratSubmit(select, "Seleccione una entitat per a aquesta variable");
-               valid = false;
-           }
+            if (select.value.trim() === '') {
+                showErroratSubmit(select, "Seleccione una entitat per a aquesta variable");
+                valid = false;
+            }
         });
 
         // Si hi ha algun error, eturem l'enviament
@@ -364,7 +370,7 @@
             "control_vars": controlVars
         };
 
-        const res = await fetch('save_optimization_config',{
+        const res = await fetch('save_optimization_config', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -372,28 +378,28 @@
 
         const result = await res.json();
         if (result.status === 'ok') {
-          document.getElementById('new-optimization-modal').classList.add('hidden');
-          const parent_config_div = document.getElementById("optimization-graphs-container");
-          parent_config_div.innerHTML = '';
-          await LoadConfigsSaved();
+            document.getElementById('new-optimization-modal').classList.add('hidden');
+            const parent_config_div = document.getElementById("optimization-graphs-container");
+            parent_config_div.innerHTML = '';
+            await LoadConfigsSaved();
         }
         else {
-          console.error(result.status);
+            console.error(result.status);
         }
     }
 
     /**
      * Tanca el formulari
      */
-    function CloseModal(){
-          document.getElementById("new-optimization-modal").classList.add('hidden');
-          document.getElementById("new-optimization-modal").classList.remove('opening');
+    function CloseModal() {
+        document.getElementById("new-optimization-modal").classList.add('hidden');
+        document.getElementById("new-optimization-modal").classList.remove('opening');
     }
 
     /**
      * Omple el select amb els dispositius
      */
-    function LoadDevicesEntities(){
+    function LoadDevicesEntities() {
         const devices = {};
         device_entities.forEach(item => {
             const name = item.device_name;
@@ -401,12 +407,12 @@
         });
 
         const deviceSelect = document.getElementById('device-name');
-        deviceSelect.innerHTML  = '<option value="">-- Selecciona un dispositiu --</option>';
+        deviceSelect.innerHTML = '<option value="">-- Selecciona un dispositiu --</option>';
 
         const sortedDevices = Object.keys(devices).sort((a, b) =>
-                                a.localeCompare(b, 'ca', { sensitivity: 'base' }));
+            a.localeCompare(b, 'ca', { sensitivity: 'base' }));
 
-        for (const dev of sortedDevices){
+        for (const dev of sortedDevices) {
             const opt = document.createElement('option');
             opt.value = dev;
             opt.textContent = dev;
@@ -418,11 +424,11 @@
      * Carrega des del back-end les configuracions guardades
      * @returns {Promise<void>} Si les obté correctament les mostra a la pàgina.
      */
-    async function LoadConfigsSaved(){
+    async function LoadConfigsSaved() {
         let saved_configs = ""
         const res = await fetch('get_config_file_names', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'}
+            headers: { 'Content-Type': 'application/json' }
         });
         const result = await res.json();
         if (result.status === 'ok') {
@@ -432,145 +438,167 @@
 
         saved_configs.forEach((config_name) => {
             fetch('get_device_config_data/' + config_name)
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'ok') {
-                    const dev = data["device_config"];
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'ok') {
+                        const dev = data["device_config"];
 
-                    const container = document.createElement('div');
-                    container.className = "device-config-container";
+                        const container = document.createElement('div');
+                        container.className = "device-config-container";
 
-                    //region NOM DEL DISPOSITIU
-                    const name = document.createElement('h3');
-                    name.className = "device-config-title";
-                    name.textContent = dev.device_name;
-                    container.appendChild(name);
-                    //endregion
+                        //region NOM DEL DISPOSITIU
+                        const name = document.createElement('h3');
+                        name.className = "device-config-title";
+                        name.textContent = dev.device_name;
+                        container.appendChild(name);
+                        //endregion
 
-                    //region TIPUS DE DISPOSITIU
-                    const type = document.createElement('span');
-                    type.innerHTML = dev.friendly_name;
-                    type.className = "device-config-type";
-                    container.appendChild(type);
-                    //endregion
+                        //region TIPUS DE DISPOSITIU
+                        const type = document.createElement('span');
+                        type.innerHTML = dev.friendly_name;
+                        type.className = "device-config-type";
+                        container.appendChild(type);
+                        //endregion
 
-                    //region RESTRICCIONS
-                    const restricctions = document.createElement('ul');
-                    restricctions.className = "device-config-ul";
-                    restricctions.innerHTML = ' ';
-                    for (const r in dev.restrictions) {
-                        const restriction = document.createElement('li');
-                        restriction.className = "device-config-li";
-                        restriction.innerHTML = `<b class="device-config-boldText">${dev.restrictions[r].name}: </b> ${dev.restrictions[r].value}`;
-                        // restriction.innerHTML = r + ": " + dev.restrictions[r];
-                        restricctions.appendChild(restriction);
-                    }
-                    container.appendChild(restricctions);
-                    //endregion
-
-                    //region VARIABLES (entitats)
-                    const extra_vars = document.createElement('ul');
-                    extra_vars.className = "device-config-ul"
-                    extra_vars.innerHTML = '';
-                    for (const r in dev.extra_vars) {
-                        const extra_var = document.createElement('li');
-                        extra_var.className = "device-config-li";
-                        extra_var.innerHTML = `<b class="device-config-boldText"> ${dev.extra_vars[r].function_name}: </b> ${dev.extra_vars[r].friendly_name}`;
-                        extra_vars.appendChild(extra_var);
-                    }
-                    for (const r in dev.control_vars) {
-                        const restriction_var = document.createElement('li');
-                        restriction_var.className = "device-config-li";
-                        restriction_var.innerHTML = `<b class="device-config-boldText"> ${dev.control_vars[r].function_name}: </b> ${dev.control_vars[r].friendly_name}`;
-                        extra_vars.appendChild(restriction_var);
-                    }
-                    container.appendChild(extra_vars);
-                    //endregion
-
-                    //region BOTÓ ELIMINAR
-                    const delete_button = document.createElement('button');
-                    delete_button.className = "btn secondary";
-                    delete_button.innerHTML = 'Eliminar Configuració';
-                    delete_button.onclick = async () => {
-                        const res = await fetch('delete_optimization_config/' + config_name, {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'}
-                        });
-
-                        const result = await res.json();
-                        if (result.status === 'ok') {
-                            parent_config_div.innerHTML = '';
-                            await LoadConfigsSaved();
-                        } else {
-                            console.error(result.status);
+                        //region RESTRICCIONS
+                        const restricctions = document.createElement('ul');
+                        restricctions.className = "device-config-ul";
+                        restricctions.innerHTML = ' ';
+                        for (const r in dev.restrictions) {
+                            const restriction = document.createElement('li');
+                            restriction.className = "device-config-li";
+                            restriction.innerHTML = `<b class="device-config-boldText">${dev.restrictions[r].name}: </b> ${dev.restrictions[r].value}`;
+                            // restriction.innerHTML = r + ": " + dev.restrictions[r];
+                            restricctions.appendChild(restriction);
                         }
+                        container.appendChild(restricctions);
+                        //endregion
+
+                        //region VARIABLES (entitats)
+                        const extra_vars = document.createElement('ul');
+                        extra_vars.className = "device-config-ul"
+                        extra_vars.innerHTML = '';
+                        for (const r in dev.extra_vars) {
+                            const extra_var = document.createElement('li');
+                            extra_var.className = "device-config-li";
+                            extra_var.innerHTML = `<b class="device-config-boldText"> ${dev.extra_vars[r].function_name}: </b> ${dev.extra_vars[r].friendly_name}`;
+                            extra_vars.appendChild(extra_var);
+                        }
+                        for (const r in dev.control_vars) {
+                            const restriction_var = document.createElement('li');
+                            restriction_var.className = "device-config-li";
+                            restriction_var.innerHTML = `<b class="device-config-boldText"> ${dev.control_vars[r].function_name}: </b> ${dev.control_vars[r].friendly_name}`;
+                            extra_vars.appendChild(restriction_var);
+                        }
+                        container.appendChild(extra_vars);
+                        //endregion
+
+                        //region BOTÓ ELIMINAR
+                        const delete_button = document.createElement('button');
+                        delete_button.className = "btn secondary";
+                        delete_button.innerHTML = 'Eliminar Configuració';
+                        delete_button.onclick = async () => {
+                            const res = await fetch('delete_optimization_config/' + config_name, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' }
+                            });
+
+                            const result = await res.json();
+                            if (result.status === 'ok') {
+                                parent_config_div.innerHTML = '';
+                                await LoadConfigsSaved();
+                            } else {
+                                console.error(result.status);
+                            }
+                        }
+                        container.appendChild(delete_button);
+                        //endregion
+
+                        //region GRÀFICA
+                        const graph_container = document.createElement('div');
+                        graph_container.className = "scheduler-card";
+
+                        graph_container.style.width = "100%";
+                        graph_container.style.maxWidth = "100%";
+                        graph_container.style.boxSizing = "border-box";
+                        graph_container.style.marginTop = "20px";
+                        graph_container.style.paddingRight = "10px";
+
+                        const trace = {
+                            x: dev.timestamps,
+                            y: dev.hourly_config,
+                            mode: "lines+markers",
+                            name: "Configuració Optimitzada",
+                            line: { color: 'green', width: 3 }
+                        };
+
+                        const fUpTrace = {
+                            x: dev.timestamps,
+                            y: dev.f_up,
+                            mode: "lines+markers",
+                            name: "Flexibilitat (+)",
+                            line: { color: 'red', width: 2, dash: 'dot' }
+                        };
+                        const fDownTrace = {
+                            x: dev.timestamps,
+                            y: dev.f_down,
+                            mode: "lines+markers",
+                            name: "Flexibilitat (-)",
+                            line: { color: 'cyan', width: 2, dash: 'dot' }
+                        };
+
+                        const traces = [trace];
+                        if (dev.f_up && dev.f_up.length > 0) traces.push(fUpTrace);
+                        if (dev.f_down && dev.f_down.length > 0) traces.push(fDownTrace);
+
+                        const layout = {
+                            title: "Configuració i Flexibilitat",
+                            autosize: true,
+                            // Posem els fons transparents perquè no es vegi el "div" que sobresurt
+                            paper_bgcolor: 'rgba(0,0,0,0)',
+                            plot_bgcolor: 'rgba(0,0,0,0)',
+                            margin: { l: 50, r: 20, t: 40, b: 60 }, // Marges més ajustats
+                            xaxis: {
+                                title: "Hora",
+                                tickangle: -45,
+                                gridcolor: '#444' // Color de graella suau per al mode fosc
+                            },
+                            yaxis: {
+                                title: "Valor",
+                                gridcolor: '#444'
+                            },
+                            legend: { orientation: "h", y: -0.3 },
+                            height: 350 // Una mica més baixet queda millor en targetes
+                        };
+                        const config = {
+                            responsive: true
+                        }
+                        container.appendChild(graph_container);
+                        parent_config_div.appendChild(container);
+
+                        setTimeout(() => {
+                            Plotly.newPlot(
+                                graph_container,
+                                traces,
+                                PlotlyTheme.mergeLayout(layout),
+                                { responsive: true, displayModeBar: false }
+                            );
+                        }, 10);
+                        //endregion
+
                     }
-                    container.appendChild(delete_button);
-                    //endregion
 
-                    //region GRÀFICA
-                    const graph_container = document.createElement('div');
-                    graph_container.className = "scheduler-card";
-
-                    graph_container.style.width = "100%";
-                    graph_container.style.maxWidth = "100%";
-                    graph_container.style.boxSizing = "border-box";
-                    graph_container.style.marginTop = "20px";
-                    graph_container.style.paddingRight = "10px";
-
-                    const trace = {
-                        x: dev.timestamps,
-                        y: dev.hourly_config,
-                        mode: "lines+markers",
-                        name: "configuració",
-                        line: {color: 'green'}
-                    };
-                    const layout = {
-                        title: "Configuració d'avui",
-                        autosize: true,
-                        // Posem els fons transparents perquè no es vegi el "div" que sobresurt
-                        paper_bgcolor: 'rgba(0,0,0,0)',
-                        plot_bgcolor: 'rgba(0,0,0,0)',
-                        margin: { l: 50, r: 20, t: 40, b: 60 }, // Marges més ajustats
-                        xaxis: {
-                            title: "Hora",
-                            tickangle: -45,
-                            gridcolor: '#444' // Color de graella suau per al mode fosc
-                        },
-                        yaxis: {
-                            title: "Configuració",
-                            gridcolor: '#444'
-                        },
-                        height: 350 // Una mica més baixet queda millor en targetes
-                    };
-                    const config = {
-                        responsive: true
-                    }
-                    container.appendChild(graph_container);
-                    parent_config_div.appendChild(container);
-
-                    setTimeout(() => {
-                        Plotly.newPlot(
-                            graph_container,
-                            [trace],
-                            PlotlyTheme.mergeLayout(layout),
-                            { responsive: true, displayModeBar: false }
-                        );
-                    }, 10);
-                    //endregion
-
-                }
-
-            })
+                })
         })
 
     }
 
-    function ChangeOptimizationStatus(){
+    function ChangeOptimizationStatus() {
         console.log("ChangeOptimizationStatus");
         //TODO: encendre o apagar l'optimització automàtica del dispositiu.
     }
 
     onLoadPage();
 </script>
+
 </html>
