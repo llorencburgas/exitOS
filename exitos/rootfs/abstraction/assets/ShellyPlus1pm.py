@@ -75,3 +75,48 @@ class ShellyPlus1pm(AbsConsumer):
         median = round(aggregated / counter, 3)
         return median
 
+    def get_flexibility(self, optimization_data):
+        """
+        Calcula la flexibilitat del dispositiu Shelly.
+        Flexibilitat es basa en si està ON o OFF.
+        """
+        if self.name not in optimization_data['devices_config']:
+            return None
+            
+        device_result = optimization_data['devices_config'][self.name]
+        timestamps = optimization_data['timestamps']
+        
+        # Shelly retorna 'consumption_profile' (0 o self.consumption) a 'return_dict' de simula
+        # A 'save_optimization', devices_config[name] guarda el return_dict.
+        
+        consumption_profile = device_result['consumption_profile']
+        # Schedule (0 o 1)
+        schedule = device_result['schedule'] 
+        
+        min_len = min(len(timestamps), len(consumption_profile))
+        
+        fup = []
+        fdown = []
+        
+        for t in range(min_len):
+            con = consumption_profile[t]
+            # Si està ON (consumint), tenim flex_down (podem apagar-lo) -> Potència que deixem de consumir
+            # Si està OFF (no consumint), tenim flex_up (podem encendre'l) -> Potència que podem consumir
+            
+            # Flex Up: Capacitat d'augmentar consum. Si està OFF, podem consumir self.consumption. Si ON, 0.
+            if con == 0:
+                flex_up = self.consumption
+            else:
+                flex_up = 0
+                
+            # Flex Down: Capacitat de reduir consum. Si està ON, podem reduir self.consumption. Si OFF, 0.
+            if con > 0:
+                flex_down = con
+            else:
+                flex_down = 0
+                
+            fup.append(flex_up)
+            fdown.append(flex_down)
+            
+        return fup, fdown, consumption_profile, timestamps[:min_len]
+

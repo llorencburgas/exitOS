@@ -858,41 +858,44 @@ def optimize(today = False):
 
 def flexibility():
     """
-    Calcula la flexibilitat de l'optimització realitzada dins OptimalScheduler.SolucioFinal
+    Calcula la flexibilitat de l'optimització realitzada.
+    Ara cerca quin dispositiu s'ha optimitzat i delega el càlcul a la classe del dispositiu.
     """
+    today_str = datetime.today().strftime("%d_%m_%Y")
+    tomorrow_str = (datetime.today() + timedelta(days=1)).strftime("%d_%m_%Y")
+    
+    base_path = os.path.join(forecast.models_filepath, "optimizations/")
+    full_path_today = os.path.join(base_path, today_str + ".pkl")
+    full_path_tomorrow = os.path.join(base_path, tomorrow_str + ".pkl")
 
-    full_path = os.path.join(forecast.models_filepath, "optimizations/sonnen_opt.pkl")
+    optimization_db = None
+    if os.path.exists(full_path_today):
+        optimization_db = joblib.load(full_path_today)
+    elif os.path.exists(full_path_tomorrow):
+        optimization_db = joblib.load(full_path_tomorrow)
 
-    # if not os.path.exists(full_path): optimize()
+    if optimization_db is None:
+        return [], [], [], []
 
-    sonnen_db = joblib.load(full_path)
 
-    SoC_max = 25 # Capacitat màxima de la bateria
-    SoC_min = 0  # Capacitat mínima per protegir la bateria
-    Pc_max = 2.5  # Potència màxima de la bateria Kw  (especificat a la bateria)
-    Pd_max = 2.5  # Potència màxima de descàrrega Kw (especificat a la bateria)
-    eff = 0.95   # Eficiència de càrrega
-    delta_t = 1  # Interval horari (hora)
+    all_devices = list(optimalScheduler.consumers.values()) + \
+                  list(optimalScheduler.generators.values()) + \
+                  list(optimalScheduler.energy_storages.values())
+                  
 
-    fup = []
-    fdown = []
-
-    for t in range(len(sonnen_db['timestamps'])):
-        SoC_t = sonnen_db['SoC'][t]  # Estat de càrrega de la bateria a hora T
-        Pb_t = sonnen_db['Power'][t]     # Potència actual de la bateria
-
-        flex_up = max(0,
-                       min(Pc_max,
-                            (SoC_max - SoC_t) / (eff * delta_t)) - Pb_t)
-
-        flex_down = max(0,
-                        Pb_t + min(Pd_max,
-                                   SoC_t - SoC_min) / delta_t)
-
-        fup.append(flex_up)
-        fdown.append(flex_down)
-
-    return fup, fdown, sonnen_db['Power'], sonnen_db['timestamps']
+    for device in all_devices:
+        if device.name in optimization_db['devices_config']:
+            try:
+                result = device.get_flexibility(optimization_db)
+                if result:
+                    fup, fdown, power, timestamps = result
+                    return fup, fdown, power, timestamps
+            except Exception as e:
+                logger.error(f"❌ Error calculating flexibility for {device.name}: {e}")
+                continue
+                
+    # Si no trobem cap dispositiu conegut o cap té flexibilitat implementada:
+    return [], [], [], []
 
 def generate_plotly_flexibility():
     Fup, Fdown, consum, timestamps = flexibility()

@@ -84,3 +84,63 @@ class SonnenBattery(AbsEnergyStorage):
             return value_to_HA, self.control_discharge_sensor, 'number'
 
         return None
+
+    def get_flexibility(self, optimization_data):
+        """
+        Calcula la flexibilitat de la bateria Sonnen.
+        Necessita que 'optimization_data' contingui 'SoC', 'Power', 'timestamps'.
+        """
+        if self.name not in optimization_data['devices_config']:
+             logger.warning(f"Device {self.name} not found in optimization data")
+             return None
+
+
+        timestamps = optimization_data['timestamps']
+            
+        device_result = optimization_data['devices_config'][self.name]
+        
+        # Mapeig de variables
+        SoC_list = device_result['consumed_Kwh'] # Això és kWh acumulats
+        Power_list = device_result['schedule'] # Això és kW
+        
+        # Si la llista de timestamps és diferent de la de dades, igualar-les
+        min_len = min(len(timestamps), len(SoC_list), len(Power_list))
+        
+        SoC_max = self.max
+        SoC_min = self.min
+        Pc_max = 2.5 # Hauria de venir de config, però el posarem hardcoded com a l'original si no hi és
+        Pd_max = 2.5
+        eff = 0.95
+        # Recuperar eficiència real si la tenim
+        # self.efficiency es calcula al init amb sensor, aquí potser millor usar self.efficiency si està disponible o 0.95
+        if hasattr(self, 'efficiency') and self.efficiency:
+             eff = float(self.efficiency)
+
+        delta_t = 1 # Hora
+        
+        fup = []
+        fdown = []
+        
+        for t in range(min_len):
+            SoC_t = SoC_list[t]
+            Pb_t = Power_list[t]
+            
+            # Flex Up (Carregar més / Reduir descàrrega)
+            # max(0, min(Pc_max, (SoC_max - SoC_t)/eff) - Pb_t)
+            # Nota: la fórmula original era (SoC_max - SoC_t) / (eff * delta_t) - Pb_t
+            
+            flex_up = max(0,
+                           min(Pc_max,
+                                (SoC_max - SoC_t) / (eff * delta_t)) - Pb_t)
+
+            # Flex Down (Descarregar més / Reduir càrrega)
+            # max(0, Pb_t + min(Pd_max, (SoC_t - SoC_min))/delta_t)
+            
+            flex_down = max(0,
+                            Pb_t + min(Pd_max,
+                                       (SoC_t - SoC_min) / delta_t))
+                                       
+            fup.append(flex_up)
+            fdown.append(flex_down)
+            
+        return fup, fdown, Power_list, timestamps[:min_len]

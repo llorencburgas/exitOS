@@ -6,6 +6,8 @@
     <link rel="stylesheet" href="resources/mainStyle.css">
     <link rel="icon" type="image/x-icon" href="static/favicon.ico">
 
+    <script src="resources/spinner.js"></script>
+
     <!-- llibreria d'icones per al navbar-->
     <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
     <!--  PLOTLY: gràfiques  -->
@@ -220,9 +222,10 @@
     }
 
     function UpdateDatabase(){
+        LoadingSpinner.show();
         fetch('force_update_database')
             .then(response => response.text())
-            .then(data => console.log("Database updated"))
+            .then(data => LoadingSpinner.hide());
     }
 
     //#endregion graph generation

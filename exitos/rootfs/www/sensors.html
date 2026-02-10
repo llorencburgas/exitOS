@@ -8,6 +8,8 @@
 
     <!-- llibreria d'icontes per al navbar-->
     <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
+
+    <script src="resources/spinner.js"></script>
 </head>
 
 <body>
@@ -290,6 +292,7 @@
      * Envia les dades seleccionades al backend per a guardar-les a la base de dades
      */
     async function SaveDevices(){
+        LoadingSpinner.show();
         const selectedEntities = [];
 
         Object.keys(devices).forEach(deviceName => {
@@ -319,6 +322,7 @@
         else {
           console.error("ERROR", result.status);
         }
+        LoadingSpinner.hide();
     }
 
     /**

@@ -7,6 +7,8 @@
     <link rel="icon" type="image/x-icon" href="static/favicon.ico">
     <!--    <link rel="stylesheet" href="../resources/mainStyle.css">-->
 
+    <script src="resources/spinner.js"></script>
+
     <!-- llibreria d'icontes per al navbar-->
     <script src="https://cdn.plot.ly/plotly-3.1.0.min.js" charset="utf-8"></script>
     <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
@@ -78,9 +80,10 @@
     const device_entities = {{!device_entities}}
 
     function TestOptimization() {
+        LoadingSpinner.show();
         fetch('run_optimization')
             .then(response => response.text())
-            .then(data => console.log("Optimization pressed"))
+            .then(data => LoadingSpinner.hide());
     }
 
     /**
