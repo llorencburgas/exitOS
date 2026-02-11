@@ -1,0 +1,123 @@
+{
+    "navbar": {
+        "home": "Home",
+        "devices": "Devices",
+        "database": "Database",
+        "create_model": "Create Model",
+        "optimization": "Optimization",
+        "config": "Configuration"
+    },
+    "optimization": {
+        "title": "Optimization",
+        "force_opt": "Force Optimization",
+        "new_config": "New Device Configuration",
+        "graphs_title": "Planning",
+        "modal_title": "New Device Configuration",
+        "device_type": "Device Type:",
+        "device_name": "Device:",
+        "save": "Save",
+        "cancel": "Cancel",
+        "select_sensor_placeholder": "-- Select a sensor --",
+        "select_device_placeholder": "-- Select a device --",
+        "error_select_device": "Select a Device",
+        "error_select_type": "Select the Device type",
+        "error_required_field": "This field is required",
+        "error_select_entity": "Select an entity for this variable",
+        "delete_config_btn": "Delete Configuration",
+        "chart": {
+            "title": "Configuration and Flexibility",
+            "hour": "Hour",
+            "value": "Value",
+            "opt_config": "Optimized Configuration",
+            "flex_up": "Flexibility (+)",
+            "flex_down": "Flexibility (-)"
+        }
+    },
+    "footer": {
+        "created_by": "Created by: Grup Exit | Copyright &copy; 2024"
+    },
+    "main": {
+        "hero_title": "Welcome to eXiT Energy Control",
+        "hero_subtitle": "Manage, visualize and optimize your energy",
+        "panik_button": "PANIK BUTTON",
+        "card_devices_title": "Devices",
+        "card_devices_desc": "Select devices and entities to monitor and collect data from.",
+        "card_database_title": "Database",
+        "card_database_desc": "Visualize data in a custom time range.",
+        "card_model_title": "Create Model",
+        "card_model_desc": "Train predictive energy usage models for specific sensors and perform predictions with them.",
+        "card_optimization_title": "Optimization",
+        "card_optimization_desc": "Select assets to optimize and visualize configurations created for the next 24 hours.",
+        "card_config_title": "Configuration",
+        "card_config_desc": "Adjust user parameters. Join or leave a community.",
+        "scheduler_title": "Configured Schedules",
+        "forecast_title": "Saved Forecasts",
+        "config_devices_title": "Device Hourly Configuration"
+    },
+    "sensors": {
+        "title": "Device and Entity Configuration",
+        "lead": "Select which devices and entities you want to save, and assign the type for each entity.",
+        "all_devices": "All devices",
+        "only_saved": "Only saved",
+        "save_changes": "Save changes",
+        "select_all": "Select all",
+        "deselect_all": "Deselect all",
+        "table_save": "Save",
+        "table_device_name": "Device Name"
+    },
+    "database": {
+        "title": "Data Viewer",
+        "date_label": "Date to show:",
+        "sensors_label": "Sensors to show:",
+        "search_placeholder": "Search and select sensors...",
+        "show_graphs": "Show Graphs",
+        "update_db": "Update Database",
+        "delete_db": "Delete Database",
+        "modal_title": "SELF DESTRUCT",
+        "modal_text": "You are about to delete the entire Database!!",
+        "modal_delete": "Delete",
+        "modal_cancel": "Cancel"
+    },
+    "model": {
+        "title": "Forecast",
+        "step1_title": "1. Select trained model",
+        "optional": "Optional...",
+        "new_model_option": "New Model",
+        "model_name_label": "Model Name:",
+        "model_name_help": "If left blank, the name will be that of the target sensor.",
+        "model_name_placeholder": "Type the name...",
+        "step2_title": "2. Select target sensor",
+        "step3_title": "3. Select extra variables",
+        "step4_title": "4. Configure model",
+        "algorithm_label": "Algorithm:",
+        "algo_auto": "Automatic",
+        "scaled_label": "Scaling",
+        "windowing_label": "Windowing:",
+        "windowing_options": {
+            "default": "Default [25-48]",
+            "prev_day": "[24-48] - Previous Day",
+            "prev_2_days": "[48-72] - Previous 2 Days",
+            "last_24h": "[1-24] - Last 24h",
+            "custom": "Custom"
+        },
+        "window_start": "Window Start:",
+        "window_end": "Window End:",
+        "meteo_data": "Meteorological Data",
+        "btn_train": "Train",
+        "btn_forecast": "Forecast",
+        "btn_delete": "Delete"
+    },
+    "config": {
+        "title": "User Configuration",
+        "name_label": "Name:",
+        "name_placeholder": "Enter your name",
+        "global_consumption": "Global Consumption:",
+        "global_generation": "Global Generation:",
+        "location": "Location:",
+        "address": "Current address:",
+        "address_help": "This location is obtained from Home Assistant data. If incorrect, modify it in Home Assistant settings.",
+        "join_community": "Join Community",
+        "leave_community": "Leave Community",
+        "last_certificates": "Last certificates:"
+    }
+}

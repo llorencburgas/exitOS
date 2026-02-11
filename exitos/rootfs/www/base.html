@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ca">
+
 <head>
     <meta charset="UTF-8">
     <title>eXiT Control Energètic</title>
@@ -8,6 +9,7 @@
     <!--  ICONES NAVBAR  -->
     <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
     <script src="resources/plotly-theme.js"></script>
+    <script src="resources/i18n.js"></script>
 </head>
 
 <body>
@@ -18,32 +20,43 @@
         </div>
 
         <ul>
-            <li><a href="./"><i class="fa-solid fa-house"></i> Inici</a></li>
-            <li><a href="./sensors"> <i class="fa-solid fa-square-check"></i> Dispositius</a></li>
-            <li><a href="./databaseView"> <i class="fa-solid fa-database"></i>  Base de Dades</a></li>
-            <li><a href="./model"><i class="fa-solid fa-brain"></i> Crear Model</a></li>
-            <li><a href="./optimization"><i class="fa-solid fa-clock"></i> Optimització</a> </li>
-            <li><a href="./config_page"><i class="fa-solid fa-user-gear"></i> Configuració</a></li>
+            <li><a href="./"><i class="fa-solid fa-house"></i> <span data-i18n="navbar.home">Inici</span></a></li>
+            <li><a href="./sensors"> <i class="fa-solid fa-square-check"></i> <span
+                        data-i18n="navbar.devices">Dispositius</span></a></li>
+            <li><a href="./databaseView"> <i class="fa-solid fa-database"></i> <span data-i18n="navbar.database">Base de
+                        Dades</span></a></li>
+            <li><a href="./model"><i class="fa-solid fa-brain"></i> <span data-i18n="navbar.create_model">Crear
+                        Model</span></a></li>
+            <li><a href="./optimization"><i class="fa-solid fa-clock"></i> <span
+                        data-i18n="navbar.optimization">Optimització</span></a> </li>
+            <li><a href="./config_page"><i class="fa-solid fa-user-gear"></i> <span
+                        data-i18n="navbar.config">Configuració</span></a></li>
         </ul>
 
-         <button onclick="toggleTheme()" class="theme-toggle" id="theme-toggle" title="Toggles light & dark" aria-label="auto" aria-live="polite">
-          <svg class="sun-and-moon" aria-hidden="true" width="24" height="24" viewBox="0 0 24 24">
-            <mask class="moon" id="moon-mask">
-              <rect x="0" y="0" width="100%" height="100%" fill="white" />
-              <circle cx="24" cy="10" r="6" fill="black" />
-            </mask>
-            <circle class="sun" cx="12" cy="12" r="6" mask="url(#moon-mask)" fill="currentColor" />
-            <g class="sun-beams" stroke="currentColor">
-              <line x1="12" y1="1" x2="12" y2="3" />
-              <line x1="12" y1="21" x2="12" y2="23" />
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-              <line x1="1" y1="12" x2="3" y2="12" />
-              <line x1="21" y1="12" x2="23" y2="12" />
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-             </g>
-          </svg>
+        <div class="lang-selector">
+            <a href="#" class="lang-switch" data-lang="ca">CA</a> |
+            <a href="#" class="lang-switch" data-lang="es">ES</a> |
+            <a href="#" class="lang-switch" data-lang="en">EN</a>
+        </div>
+        <button onclick="toggleTheme()" class="theme-toggle" id="theme-toggle" title="Toggles light & dark"
+            aria-label="auto" aria-live="polite">
+            <svg class="sun-and-moon" aria-hidden="true" width="24" height="24" viewBox="0 0 24 24">
+                <mask class="moon" id="moon-mask">
+                    <rect x="0" y="0" width="100%" height="100%" fill="white" />
+                    <circle cx="24" cy="10" r="6" fill="black" />
+                </mask>
+                <circle class="sun" cx="12" cy="12" r="6" mask="url(#moon-mask)" fill="currentColor" />
+                <g class="sun-beams" stroke="currentColor">
+                    <line x1="12" y1="1" x2="12" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" />
+                    <line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </g>
+            </svg>
         </button>
     </div>
 
@@ -51,8 +64,9 @@
     {{!base}}
 
     <footer class="footer">
-        <p>Created by: Grup Exit | Copyright &copy; 2024</p>
-        <p><a href="mailto:comunitatenergeticaexit@gmail.com" class="mail-text">comunitatenergeticaexit@gmail.com</a></p>
+        <p data-i18n="footer.created_by">Created by: Grup Exit | Copyright &copy; 2024</p>
+        <p><a href="mailto:comunitatenergeticaexit@gmail.com" class="mail-text">comunitatenergeticaexit@gmail.com</a>
+        </p>
     </footer>
 
 </body>
@@ -71,7 +85,7 @@
 
     applyTheme(loadTheme());
 
-    window.toggleTheme = function(){
+    window.toggleTheme = function () {
         const current = loadTheme();
         const next = current === 'dark' ? 'light' : 'dark';
 
@@ -80,4 +94,5 @@
 
 
 </script>
+
 </html>

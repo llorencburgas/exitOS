@@ -186,7 +186,7 @@ def optimization_page():
     current_date = datetime.now().strftime('%d-%m-%Y')
     return template("./www/optimization.html",
                     current_date = current_date,
-                    device_types = json.dumps(devices_data),
+                    device_types=json.dumps(devices_data),
                     device_entities = devices_entities)
 
 #endregion PAGE CREATIONS
@@ -1253,7 +1253,6 @@ scheduler_thread.start()
 #region DEBUG REGION
 @app.route('/panik_function')
 def panik_function():
-    optimize()
     flexibility()
 
 #endregion DEBUG REGION

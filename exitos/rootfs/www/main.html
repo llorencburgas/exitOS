@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ca">
+
 <head>
     <meta charset="UTF-8">
     <title>Control energètic eXIT</title>
@@ -15,91 +16,99 @@
 </head>
 
 <body>
-<!--    NAVBAR     -->
-% rebase('./www/base.html', title='Exitos')
+    <!--    NAVBAR     -->
+    % rebase('./www/base.html', title='Exitos')
 
-<!--    HERO    -->
-<div class="hero">
-    <h1>Benvingut/da a eXiT Control Energètic</h1>
-    <p>Gestiona, visualitza i optimitza la teva energia</p>
-</div>
-
-<!--    PANIK BUTTON    -->
-<div style="display: flex; justify-content: center; align-items: center;">
-    <button class="btn" onclick="panikButtonTest()" style="padding: 10px 20px;"><i class="fa-solid fa-skull"></i> PANIK BUTTON</button>
-</div>
-
-<!--    INFO CARDS    -->
-<div class="container">
-    <!--   DISPOSITIUS    -->
-    <div class="info-cards-container">
-        <a href="./sensors" class="info-card">
-            <i class="fa-solid fa-square-check"></i>
-            <h3>Dispositius</h3>
-            <p>Selecciona els dispositius i entitats de les que vols monitoritzar i recollir dades.</p>
-        </a>
-    <!--     DATABASE       -->
-        <a href="./databaseView" class="info-card">
-                <i class="fa-solid fa-database"></i>
-                <h3>Base de Dades</h3>
-                <p>Visualitza les dades en un rang de temps personalitzat.</p>
-        </a>
-        <!--   MODEL     -->
-        <a href="./model" class="info-card">
-            <i class="fa-solid fa-brain"></i>
-            <h3>Crear Model</h3>
-            <p>Entrena models predictius d'ús energètic per sensors específics i realitza les prediccions amb aquests.</p>
-        </a>
-        <!--   OPTIMITZACIÓ     -->
-        <a href="./optimization" class="info-card">
-            <i class="fa-solid fa-clock"></i>
-            <h3>Optimització</h3>
-            <p>Selecciona assets per optimitzar i visualitza les configuracions creades per a les pròximes 24 hores.</p>
-        </a>
-        <!--   CONFIG   -->
-        <a href="./config_page" class="info-card">
-            <i class="fa-solid fa-user-gear"></i>
-            <h3>Configuració</h3>
-            <p>Ajusta paràmetres d'usuari. Uneix-te o abandona una comunitat.</p>
-        </a>
+    <!--    HERO    -->
+    <div class="hero">
+        <h1 data-i18n="main.hero_title">Benvingut/da a eXiT Control Energètic</h1>
+        <p data-i18n="main.hero_subtitle">Gestiona, visualitza i optimitza la teva energia</p>
     </div>
 
-</div>
+    <!--    PANIK BUTTON    -->
+    <div style="display: flex; justify-content: center; align-items: center;">
+        <button class="btn" onclick="panikButtonTest()" style="padding: 10px 20px;"><i class="fa-solid fa-skull"></i>
+            <span data-i18n="main.panik_button">PANIK BUTTON</span></button>
+    </div>
+
+    <!--    INFO CARDS    -->
+    <div class="container">
+        <!--   DISPOSITIUS    -->
+        <div class="info-cards-container">
+            <a href="./sensors" class="info-card">
+                <i class="fa-solid fa-square-check"></i>
+                <h3 data-i18n="main.card_devices_title">Dispositius</h3>
+                <p data-i18n="main.card_devices_desc">Selecciona els dispositius i entitats de les que vols monitoritzar
+                    i recollir dades.</p>
+            </a>
+            <!--     DATABASE       -->
+            <a href="./databaseView" class="info-card">
+                <i class="fa-solid fa-database"></i>
+                <h3 data-i18n="main.card_database_title">Base de Dades</h3>
+                <p data-i18n="main.card_database_desc">Visualitza les dades en un rang de temps personalitzat.</p>
+            </a>
+            <!--   MODEL     -->
+            <a href="./model" class="info-card">
+                <i class="fa-solid fa-brain"></i>
+                <h3 data-i18n="main.card_model_title">Crear Model</h3>
+                <p data-i18n="main.card_model_desc">Entrena models predictius d'ús energètic per sensors específics i
+                    realitza les prediccions amb aquests.</p>
+            </a>
+            <!--   OPTIMITZACIÓ     -->
+            <a href="./optimization" class="info-card">
+                <i class="fa-solid fa-clock"></i>
+                <h3 data-i18n="main.card_optimization_title">Optimització</h3>
+                <p data-i18n="main.card_optimization_desc">Selecciona assets per optimitzar i visualitza les
+                    configuracions creades per a les pròximes 24 hores.</p>
+            </a>
+            <!--   CONFIG   -->
+            <a href="./config_page" class="info-card">
+                <i class="fa-solid fa-user-gear"></i>
+                <h3 data-i18n="main.card_config_title">Configuració</h3>
+                <p data-i18n="main.card_config_desc">Ajusta paràmetres d'usuari. Uneix-te o abandona una comunitat.</p>
+            </a>
+        </div>
+
+    </div>
 
 
-<!--    OPTIMITZACIÓ GENERAL -->
-<div class="scheduler-container">
-    <h2>Horaris Configurats</h2>
-    <div id="scheduler-grid" class="scheduler-grid"> <!--AQUI ES POSA EL PLOTLY--> </div>
-</div>
+    <!--    OPTIMITZACIÓ GENERAL -->
+    <div class="scheduler-container">
+        <h2 data-i18n="main.scheduler_title">Horaris Configurats</h2>
+        <div id="scheduler-grid" class="scheduler-grid"> <!--AQUI ES POSA EL PLOTLY--> </div>
+    </div>
 
 
-<!--    FORECASTS     -->
-<div class="forecasts-container">
-    <h2>Forecastings Guardats</h2>
-    <div id="forecast-grid" class="forecast-grid"> <!--AQUI ES POSEN ELS FORECASTS--> </div>
-</div>
+    <!--    FORECASTS     -->
+    <div class="forecasts-container">
+        <h2 data-i18n="main.forecast_title">Forecastings Guardats</h2>
+        <div id="forecast-grid" class="forecast-grid"> <!--AQUI ES POSEN ELS FORECASTS--> </div>
+    </div>
 
 
-<!--    CONFIGURACIÓ DISPOSITIUS     -->
-<div class="forecasts-container">
-    <h2>Configuració Horària Dispositius</h2>
-    <div id="device-config-grid" class="forecast-grid"> <!--AQUI ES POSEN ELS CONFIGS--> </div>
-</div>
+    <!--    CONFIGURACIÓ DISPOSITIUS     -->
+    <div class="forecasts-container">
+        <h2 data-i18n="main.config_devices_title">Configuració Horària Dispositius</h2>
+        <div id="device-config-grid" class="forecast-grid"> <!--AQUI ES POSEN ELS CONFIGS--> </div>
+    </div>
 
 
 </body>
 
+
+
+
 <script>
+
     /**
      * Funció purament per testejar. ELIMINAR QUAN ACABI DE DEBUGAR
      * **/
     function panikButtonTest() {
         fetch('panik_function')
-                .then(response => response.json())
-                .then(data => {
-                    console.log("OK");
-                });
+            .then(response => response.json())
+            .then(data => {
+                console.log("OK");
+            });
     }
 
     /**
@@ -112,7 +121,7 @@
         const parent_div_device_config = document.getElementById("device-config-grid");
 
         sensors_list.forEach((sensor_id) => {
-            loadForecastsData(sensor_id, parent_div_forecast, );
+            loadForecastsData(sensor_id, parent_div_forecast,);
         });
 
         loadSchedulerData(parent_div_scheduler);
@@ -124,7 +133,7 @@
     /**
      * Carrega des del Backend el forecast per al sensor indicat i genera el plotly
      * **/
-    function loadForecastsData(sensor_id, parent_div_forecast){
+    function loadForecastsData(sensor_id, parent_div_forecast) {
         const fixed_name = sensor_id.replace(".pkl", "")
         fetch('get_forecast_data/' + fixed_name)
             .then(response => response.json())
@@ -152,7 +161,7 @@
                         y: realValues,
                         mode: "lines",
                         name: "Dades Reals",
-                        line: {color: 'orange', dash: 'dot'}
+                        line: { color: 'orange', dash: 'dot' }
                     };
 
                     const tracePrediction = {
@@ -168,32 +177,32 @@
                         y: yesterday,
                         mode: 'lines',
                         name: 'Predicció Ahir',
-                        line: {color: 'red', dash: 'dot'}
+                        line: { color: 'red', dash: 'dot' }
                     }
 
                     const layout = {
                         title: 'Predicció vs Dades Reals',
-                        xaxis: {title: 'Temps', range:[startTimestamps, endTimestamps]},
-                        yaxis: {title: 'Consum (Kw)'},
+                        xaxis: { title: 'Temps', range: [startTimestamps, endTimestamps] },
+                        yaxis: { title: 'Consum (Kw)' },
                         autosize: true,
-                        margin: {t: 40, r: 20, b: 50, l: 50},
+                        margin: { t: 40, r: 20, b: 50, l: 50 },
                         height: 300,
                         dragmode: 'pan',
                         showlegend: false,
                     };
 
-                    const config = {responsive: true};
-                    if(yesterday === "" && predictions === ""){
-                        container.innerHTML = 'No hi ha dades a mostrar pel model ' + sensor_id;
+                    const config = { responsive: true };
+                    if (yesterday === "" && predictions === "") {
+                        container.innerHTML = sensor_id;
                     }
-                    else if(yesterday === ""){
-                        Plotly.newPlot(container,[traceReal, tracePrediction], PlotlyTheme.mergeLayout(layout), config);
+                    else if (yesterday === "") {
+                        Plotly.newPlot(container, [traceReal, tracePrediction], PlotlyTheme.mergeLayout(layout), config);
                     }
-                    else if(predictions === ""){
-                        Plotly.newPlot(container,[traceYesterday], PlotlyTheme.mergeLayout(layout),config);
+                    else if (predictions === "") {
+                        Plotly.newPlot(container, [traceYesterday], PlotlyTheme.mergeLayout(layout), config);
                     }
-                    else{
-                        Plotly.newPlot(container,[traceReal, tracePrediction, traceYesterday], PlotlyTheme.mergeLayout(layout),config);
+                    else {
+                        Plotly.newPlot(container, [traceReal, tracePrediction, traceYesterday], PlotlyTheme.mergeLayout(layout), config);
                     }
 
                 }
@@ -207,7 +216,7 @@
         fetch('get_scheduler_data')
             .then(response => response.json())
             .then(data => {
-                if (data !== "ERROR"){
+                if (data !== "ERROR") {
                     const container = document.createElement("div");
                     container.className = "scheduler-card";
 
@@ -223,13 +232,13 @@
     }
 
     /**
-     * Carrega les gràfiques de configuració horàries dels dispositius optimitzats
-     * **/
-    async function loadDevicesConfigData(parent_div_config){
+        * Carrega les gràfiques de configuració horàries dels dispositius optimitzats
+        * **/
+    async function loadDevicesConfigData(parent_div_config) {
         let saved_configs = ""
         const res = await fetch('get_config_file_names', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'}
+            headers: { 'Content-Type': 'application/json' }
         });
         const result = await res.json();
         if (result.status === 'ok') {
@@ -238,53 +247,53 @@
 
         saved_configs.forEach((config_name) => {
             fetch('get_device_config_data/' + config_name)
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'ok') {
-                    const dev = data["device_config"];
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'ok') {
+                        const dev = data["device_config"];
 
-                    const graph_container = document.createElement('div');
-                    graph_container.className = "scheduler-card";
-                    graph_container.innerHTML = dev.device_name;
-                    graph_container.innerText = dev.device_name;
+                        const graph_container = document.createElement('div');
+                        graph_container.className = "scheduler-card";
+                        graph_container.innerHTML = dev.device_name;
+                        graph_container.innerText = dev.device_name;
 
-                    const trace = {
+                        const trace = {
                             x: dev.timestamps,
                             y: dev.hourly_config,
                             mode: "lines+markers",
                             name: "configuració",
-                            line: {color: 'green'}
+                            line: { color: 'green' }
                         };
 
-                    const layout = {
-                        title: 'Configuració Horària',
-                        xaxis: {title: 'Hora'},
-                        yaxis: {title: 'Config'},
-                        autosize: true,
-                        margin: {t: 40, r: 20, b: 50, l: 50},
-                        height: 300,
-                        dragmode: 'pan',
-                        showlegend: false,
-                    };
+                        const layout = {
+                            title: 'Configuració Horària',
+                            xaxis: { title: 'Hora' },
+                            yaxis: { title: 'Config' },
+                            autosize: true,
+                            margin: { t: 40, r: 20, b: 50, l: 50 },
+                            height: 300,
+                            dragmode: 'pan',
+                            showlegend: false,
+                        };
 
-                    const config = {
-                        responsive: true
+                        const config = {
+                            responsive: true
+                        }
+
+                        parent_div_config.appendChild(graph_container);
+
+                        setTimeout(() => {
+                            Plotly.newPlot(
+                                graph_container,
+                                [trace],
+                                PlotlyTheme.mergeLayout(layout),
+                                { responsive: true, displayModeBar: false }
+                            );
+                        }, 10);
                     }
 
-                    parent_div_config.appendChild(graph_container);
 
-                    setTimeout(() => {
-                        Plotly.newPlot(
-                            graph_container,
-                            [trace],
-                            PlotlyTheme.mergeLayout(layout),
-                            { responsive: true, displayModeBar: false }
-                        );
-                    }, 10);
-                }
-
-
-            });
+                });
         })
     }
 

@@ -1,0 +1,123 @@
+{
+    "navbar": {
+        "home": "Inicio",
+        "devices": "Dispositivos",
+        "database": "Base de Datos",
+        "create_model": "Crear Modelo",
+        "optimization": "Optimización",
+        "config": "Configuración"
+    },
+    "optimization": {
+        "title": "Optimización",
+        "force_opt": "Forzar Optimización",
+        "new_config": "Nueva Configuración de Dispositivo",
+        "graphs_title": "Planificación",
+        "modal_title": "Nueva Configuración de Dispositivo",
+        "device_type": "Tipo de dispositivo:",
+        "device_name": "Dispositivo:",
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "select_sensor_placeholder": "-- Selecciona un sensor --",
+        "select_device_placeholder": "-- Selecciona un dispositivo --",
+        "error_select_device": "Selecciona un Dispositivo",
+        "error_select_type": "Seleccione el tipo de Dispositivo",
+        "error_required_field": "Este campo es obligatorio",
+        "error_select_entity": "Seleccione una entidad para esta variable",
+        "delete_config_btn": "Eliminar Configuración",
+        "chart": {
+            "title": "Configuración y Flexibilidad",
+            "hour": "Hora",
+            "value": "Valor",
+            "opt_config": "Configuración Optimizada",
+            "flex_up": "Flexibilidad (+)",
+            "flex_down": "Flexibilidad (-)"
+        }
+    },
+    "footer": {
+        "created_by": "Creado por: Grup Exit | Copyright &copy; 2024"
+    },
+    "main": {
+        "hero_title": "Bienvenido/a a eXiT Control Energético",
+        "hero_subtitle": "Gestiona, visualiza y optimiza tu energía",
+        "panik_button": "BOTÓN DE PÁNICO",
+        "card_devices_title": "Dispositivos",
+        "card_devices_desc": "Selecciona los dispositivos y entidades que quieres monitorizar y recoger datos.",
+        "card_database_title": "Base de Datos",
+        "card_database_desc": "Visualiza los datos en un rango de tiempo personalizado.",
+        "card_model_title": "Crear Modelo",
+        "card_model_desc": "Entrena modelos predictivos de uso energético para sensores específicos y realiza predicciones con ellos.",
+        "card_optimization_title": "Optimización",
+        "card_optimization_desc": "Selecciona assets para optimizar y visualiza las configuraciones creadas para las próximas 24 horas.",
+        "card_config_title": "Configuración",
+        "card_config_desc": "Ajusta parámetros de usuario. Únete o abandona una comunidad.",
+        "scheduler_title": "Horarios Configurados",
+        "forecast_title": "Forecastings Guardados",
+        "config_devices_title": "Configuración Horaria Dispositivos"
+    },
+    "sensors": {
+        "title": "Configuración de Dispositivos y Entidades",
+        "lead": "Selecciona qué dispositivos y entidades quieres guardar, y asigna el tipo de cada entidad.",
+        "all_devices": "Todos los dispositivos",
+        "only_saved": "Solo guardados",
+        "save_changes": "Guardar cambios",
+        "select_all": "Seleccionar todos",
+        "deselect_all": "Deseleccionar todos",
+        "table_save": "Guardar",
+        "table_device_name": "Nombre del Dispositivo"
+    },
+    "database": {
+        "title": "Visualizador de Datos",
+        "date_label": "Fecha a mostrar:",
+        "sensors_label": "Sensores a mostrar:",
+        "search_placeholder": "Busca y selecciona sensores...",
+        "show_graphs": "Mostrar Gráficas",
+        "update_db": "Actualizar Base de Datos",
+        "delete_db": "Eliminar Base de Datos",
+        "modal_title": "AUTODESTRUCCIÓN",
+        "modal_text": "¡Estás a punto de eliminar toda la Base de Datos!",
+        "modal_delete": "Eliminar",
+        "modal_cancel": "Cancelar"
+    },
+    "model": {
+        "title": "Forecast",
+        "step1_title": "1. Selecciona el modelo entrenado",
+        "optional": "Opcional...",
+        "new_model_option": "Modelo Nuevo",
+        "model_name_label": "Nombre del Modelo:",
+        "model_name_help": "En caso de dejar en blanco, el nombre será el del sensor objetivo.",
+        "model_name_placeholder": "Escribe el nombre...",
+        "step2_title": "2. Selecciona el sensor objetivo",
+        "step3_title": "3. Selecciona variables extra",
+        "step4_title": "4. Configura el modelo",
+        "algorithm_label": "Algoritmo:",
+        "algo_auto": "Automático",
+        "scaled_label": "Escaldo",
+        "windowing_label": "Windowing:",
+        "windowing_options": {
+            "default": "Por defecto [25-48]",
+            "prev_day": "[24-48] - Día anterior",
+            "prev_2_days": "[48-72] - 2 días anteriores",
+            "last_24h": "[1-24] - Últimas 24h",
+            "custom": "Personalizado"
+        },
+        "window_start": "Inicio ventana:",
+        "window_end": "Fin ventana:",
+        "meteo_data": "Datos Meteorológicos",
+        "btn_train": "Entrenar",
+        "btn_forecast": "Forecast",
+        "btn_delete": "Eliminar"
+    },
+    "config": {
+        "title": "Configuración de usuario",
+        "name_label": "Nombre:",
+        "name_placeholder": "Introduce tu nombre",
+        "global_consumption": "Consumo Global:",
+        "global_generation": "Generación Global:",
+        "location": "Localización:",
+        "address": "Dirección actual:",
+        "address_help": "Esta ubicación se obtiene de los datos de Home Assistant. En caso de ser incorrecta modifícala desde la configuración del programa Home Assistant.",
+        "join_community": "Unirse Comunidad",
+        "leave_community": "Abandonar Comunidad",
+        "last_certificates": "Últimos certificados:"
+    }
+}

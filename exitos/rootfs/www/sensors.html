@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ca">
+
 <head>
     <meta charset="UTF-8">
     <title>Control energètic eXIT</title>
@@ -19,23 +20,27 @@
 
 
         <div class="devices-table-container" id="mainContainer">
-            <h2>Configuració de Dispositius i Entitats</h2>
-            <p class="lead">Selecciona quins dispositius i entitats vols guardar, i assigna el tipus de cada entitat.</p>
+            <h2 data-i18n="sensors.title">Configuració de Dispositius i Entitats</h2>
+            <p class="lead" data-i18n="sensors.lead">Selecciona quins dispositius i entitats vols guardar, i assigna el
+                tipus de cada entitat.</p>
 
             <div class="button-div">
                 <div class="switch-wrap">
-                    <span class="muted">Tots els dispositius</span>
+                    <span class="muted" data-i18n="sensors.all_devices">Tots els dispositius</span>
                     <div id="onlySavedSwitch" class="switch" title="Mostra només dispositius guardats">
                         <div class="knob"></div>
                     </div>
-                    <span class="muted">Només guardats</span>
+                    <span class="muted" data-i18n="sensors.only_saved">Només guardats</span>
                 </div>
             </div>
             <div class="button-div">
 
-                <button class="btn" id="saveBtn"><i class="fa-regular fa-floppy-disk"></i> Guardar canvis</button>
-                <button class="btn secondary" id="selectAllBtn"><i class="fa-regular fa-square-check"></i> Seleccionar tots</button>
-                <button class="btn secondary" id="deselectAllBtn"><i class="fa-regular fa-square-minus"></i> Desseleccionar tots</button>
+                <button class="btn" id="saveBtn"><i class="fa-regular fa-floppy-disk"></i> <span
+                        data-i18n="sensors.save_changes">Guardar canvis</span></button>
+                <button class="btn secondary" id="selectAllBtn"><i class="fa-regular fa-square-check"></i> <span
+                        data-i18n="sensors.select_all">Seleccionar tots</span></button>
+                <button class="btn secondary" id="deselectAllBtn"><i class="fa-regular fa-square-minus"></i> <span
+                        data-i18n="sensors.deselect_all">Desseleccionar tots</span></button>
             </div>
 
 
@@ -43,8 +48,8 @@
                 <table id="devices-table">
                     <thead>
                         <tr>
-                            <th style="width: 4px;">Guardar</th>
-                            <th>Nom del Dispositiu</th>
+                            <th style="width: 4px;" data-i18n="sensors.table_save">Guardar</th>
+                            <th data-i18n="sensors.table_device_name">Nom del Dispositiu</th>
                         </tr>
                     </thead>
                     <tbody id="devices-table-body"></tbody>
@@ -55,79 +60,79 @@
             <div id="saveResult" class="muted"></div>
         </div>
 
-        <button id = "back-to-top-btn" onclick="ScrollToTop()" class="fa-solid fa-circle-up"></button>
+        <button id="back-to-top-btn" onclick="ScrollToTop()" class="fa-solid fa-circle-up"></button>
 
     </main>
 </body>
 
 <script>
     /* === PARÀMETRES I HELPERS === */
-     const ENTITY_TYPES = ["No especificat", "Energy Storage", "Generator", "Consumer"];
-     let onlySaved = false;
-     let devices = {};
+    const ENTITY_TYPES = ["No especificat", "Energy Storage", "Generator", "Consumer"];
+    let onlySaved = false;
+    let devices = {};
 
-     const devicesTableBody = document.getElementById('devices-table-body');
-     const onlySavedSwitch = document.getElementById('onlySavedSwitch');
-     const saveBtn = document.getElementById('saveBtn');
-     const selectAllBtn = document.getElementById('selectAllBtn');
-     const deselectAllBtn = document.getElementById('deselectAllBtn');
-     const saveResult = document.getElementById('saveResult');
+    const devicesTableBody = document.getElementById('devices-table-body');
+    const onlySavedSwitch = document.getElementById('onlySavedSwitch');
+    const saveBtn = document.getElementById('saveBtn');
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    const deselectAllBtn = document.getElementById('deselectAllBtn');
+    const saveResult = document.getElementById('saveResult');
 
     /**
      * Carrega dispositius amb un fetch i els renderitza en pantalla.
      * Assumim que fetch retorna format { "<device name>": [ {entity_id, friendly_name}, ... ], ... }
      */
-     async function LoadDevices(){
-         try{
-             const res = await fetch('get_sensors');
-             const json = await res.json();
+    async function LoadDevices() {
+        try {
+            const res = await fetch('get_sensors');
+            const json = await res.json();
 
-             const raw = json.devices || json;
+            const raw = json.devices || json;
 
-             devices = {};
+            devices = {};
 
-             raw.sort((a,b) => a.device_name
-                 .localeCompare(b.device_name, 'ca', {sensitivity:'base'}))
-                 .forEach(device => {
-                 const deviceName = device.device_name;
-                 const ents = device.entities || [];
+            raw.sort((a, b) => a.device_name
+                .localeCompare(b.device_name, 'ca', { sensitivity: 'base' }))
+                .forEach(device => {
+                    const deviceName = device.device_name;
+                    const ents = device.entities || [];
 
-                 devices[deviceName] = ents.map(e => {
-                     return {
-                         entity_id: e.entity_id || e.id || (typeof e === 'string' ? e: ''),
-                         friendly_name: e.entity_name || e.name || (e.entity_id || ''),
-                         save: e.save ? 1: 0,
-                         type: e.type || "No especificat"
-                     };
-                 });
-             });
-             RenderDevices();
-         }catch(err){
-             console.error('Error carregant dispositius: ', err);
-             saveResult.textContent = "Error carregant dispositius"
-         }
-     }
+                    devices[deviceName] = ents.map(e => {
+                        return {
+                            entity_id: e.entity_id || e.id || (typeof e === 'string' ? e : ''),
+                            friendly_name: e.entity_name || e.name || (e.entity_id || ''),
+                            save: e.save ? 1 : 0,
+                            type: e.type || "No especificat"
+                        };
+                    });
+                });
+            RenderDevices();
+        } catch (err) {
+            console.error('Error carregant dispositius: ', err);
+            saveResult.textContent = "Error carregant dispositius"
+        }
+    }
 
     /**
      * Renderitza creant una fila per a cada dispositiu i una subtaula per les entitats.
      */
-    function RenderDevices(){
-         devicesTableBody.innerHTML = '';
-         const deviceNames = Object.keys(devices);
+    function RenderDevices() {
+        devicesTableBody.innerHTML = '';
+        const deviceNames = Object.keys(devices);
 
-         deviceNames.forEach((deviceName, idx) => {
-             const entities = devices[deviceName];
-             const anySaved = entities.some(e => e.save === 1);
-             if(onlySaved && !anySaved) return;
+        deviceNames.forEach((deviceName, idx) => {
+            const entities = devices[deviceName];
+            const anySaved = entities.some(e => e.save === 1);
+            if (onlySaved && !anySaved) return;
 
-            CreateDeviceRow(idx+1, deviceName, entities);
-         });
+            CreateDeviceRow(idx + 1, deviceName, entities);
+        });
     }
 
     /**
      * Crea una fila per a cada dispositiu + files per a la subtaula d'entitats
      */
-    function CreateDeviceRow(index, deviceName, entities){
+    function CreateDeviceRow(index, deviceName, entities) {
         const row = document.createElement('tr');
         row.className = 'device-row';
 
@@ -170,7 +175,7 @@
 
 
         //ordenar entitats per friendly_name
-        const sortedEntities = entities.slice().sort((a,b) => (a.friendly_name || a.entity_id).localeCompare(b.friendly_name || b.entity_id, 'ca', {sensitivity: 'base'}));
+        const sortedEntities = entities.slice().sort((a, b) => (a.friendly_name || a.entity_id).localeCompare(b.friendly_name || b.entity_id, 'ca', { sensitivity: 'base' }));
         sortedEntities.forEach((ent, entIdx) => {
             const entRow = CreateEntityRow(ent, entIdx, devCheckbox);
             subTable.appendChild(entRow);
@@ -207,7 +212,7 @@
     /**
      * Crea la fila per a cada entitat
      */
-    function CreateEntityRow(ent, entIdx, devCheckbox){
+    function CreateEntityRow(ent, entIdx, devCheckbox) {
         const entRow = document.createElement('tr');
         entRow.className = 'entity-row';
 
@@ -231,7 +236,7 @@
         select.className = 'entity-type-select';
         ENTITY_TYPES.forEach(t => {
             const opt = new Option(t, t);
-            if(t === ent.type) opt.selected = true;
+            if (t === ent.type) opt.selected = true;
             select.appendChild(opt);
         });
 
@@ -241,14 +246,14 @@
         //INTERACCIONS
         // Quan canvii checkbox d'entitat: habilita/deshabilita select i actualitza objecte local
         entCheck.addEventListener('change', () => {
-          select.disabled = !entCheck.checked;
-          // si queda desmarcada i el dispositiu estava completament marcat, actualitzem checkbox del dispositiu
-          devCheckbox.checked = GetAllEntityCheckboxes(entRow.parentElement).every(cb => cb.checked);
+            select.disabled = !entCheck.checked;
+            // si queda desmarcada i el dispositiu estava completament marcat, actualitzem checkbox del dispositiu
+            devCheckbox.checked = GetAllEntityCheckboxes(entRow.parentElement).every(cb => cb.checked);
         });
 
         // Quan canvii select, actualitzem l'objecte local
         select.addEventListener('change', () => {
-          ent.type = select.value;
+            ent.type = select.value;
 
         });
 
@@ -260,7 +265,7 @@
         return entRow;
     }
 
-    function GetAllEntityCheckboxes(tbodyElem){
+    function GetAllEntityCheckboxes(tbodyElem) {
         if (!tbodyElem) return [];
         return Array.from(tbodyElem.querySelectorAll('.entity-checkbox'));
     }
@@ -268,7 +273,7 @@
     /**
      * Marca o desmarca totes les entitats i dispositius
      */
-    function ToggleAll(select){
+    function ToggleAll(select) {
         document.querySelectorAll('.device-checkbox').forEach(checkbox => {
             checkbox.checked = select;
             checkbox.dispatchEvent(new Event('change'));
@@ -282,7 +287,7 @@
     /**
      * Alterna la vista entre tots els dispositius o només aquells guardats.
      */
-    function ToggleOnlySaved(){
+    function ToggleOnlySaved() {
         onlySaved = !onlySaved;
         onlySavedSwitch.classList.toggle('on', onlySaved);
         RenderDevices();
@@ -291,16 +296,16 @@
     /**
      * Envia les dades seleccionades al backend per a guardar-les a la base de dades
      */
-    async function SaveDevices(){
+    async function SaveDevices() {
         LoadingSpinner.show();
         const selectedEntities = [];
 
         Object.keys(devices).forEach(deviceName => {
             devices[deviceName].forEach(ent => {
-                if(ent.save){
+                if (ent.save) {
                     selectedEntities.push({
-                        device:deviceName,
-                        entityId:ent.entity_id,
+                        device: deviceName,
+                        entityId: ent.entity_id,
                         friendly_name: ent.friendly_name,
                         type: ent.type,
                     });
@@ -309,7 +314,7 @@
         });
 
 
-        const res = await fetch('update_sensors',{
+        const res = await fetch('update_sensors', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(selectedEntities),
@@ -317,10 +322,10 @@
 
         const result = await res.json();
         if (result.status === 'ok') {
-          await LoadDevices();
+            await LoadDevices();
         }
         else {
-          console.error("ERROR", result.status);
+            console.error("ERROR", result.status);
         }
         LoadingSpinner.hide();
     }
@@ -328,8 +333,8 @@
     /**
      * Petita funcionalitat per retornar la pàgina a la part superior en premer el botó
      */
-    function ScrollToTop(){
-        window.scrollTo({top: 0, behavior: 'smooth'});
+    function ScrollToTop() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     //EVENTS I INICI
@@ -338,7 +343,7 @@
     onlySavedSwitch.addEventListener('click', ToggleOnlySaved);
     saveBtn.addEventListener('click', (e) => { e.preventDefault(); SaveDevices(); });
 
-     window.onscroll = function () {
+    window.onscroll = function () {
         let button = document.getElementById("back-to-top-btn");
         if (document.documentElement.scrollTop > 300) {
             button.classList.add("show");

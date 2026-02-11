@@ -1,21 +1,22 @@
 <!DOCTYPE html>
 <html lang="ca">
+
 <head>
-    <meta charset="UTF-8">
-    <title>Control energètic eXIT</title>
-    <link rel="stylesheet" href="resources/mainStyle.css">
-    <link rel="icon" type="image/x-icon" href="static/favicon.ico">
+  <meta charset="UTF-8">
+  <title>Control energètic eXIT</title>
+  <link rel="stylesheet" href="resources/mainStyle.css">
+  <link rel="icon" type="image/x-icon" href="static/favicon.ico">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
-        <!-- llibreria d'icontes per al navbar-->
-    <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
+  <!-- llibreria d'icontes per al navbar-->
+  <script src="https://kit.fontawesome.com/d259d5cefc.js" crossorigin="anonymous"></script>
 
   <style>
     /*h1{margin-bottom: 2%;}*/
     /*label{margin-top: 20px;}*/
 
 
-    #info{
+    #info {
       max-height: 200px;
       max-width: 300px;
       overflow: auto;
@@ -23,95 +24,114 @@
       padding: 10px;
       border: 1px solid #ccc;
       display: none;
-        border-radius: 5px;
+      border-radius: 5px;
     }
-    #last-link-div{
-        max-height: 200px;
-        overflow: auto;
-        margin-top: 20px;
-        padding: 10px;
-        border: 1px solid #ccc;
-        display: none;
-        border-radius: 5px;
+
+    #last-link-div {
+      max-height: 200px;
+      overflow: auto;
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      display: none;
+      border-radius: 5px;
     }
-    .map-container{
+
+    .map-container {
       display: flex;
       flex-direction: row;
       align-items: flex-start;
       gap: 1rem;
       margin-bottom: 10px;
     }
-    #user-name:disabled{
-        color:gray;
-        opacity: 0.5;
+
+    #user-name:disabled {
+      color: gray;
+      opacity: 0.5;
     }
   </style>
 </head>
+
 <body>
-    <main>
-        <!--    NAVBAR     -->
-        % rebase('./www/base.html', title='Exitos')
+  <main>
+    <!--    NAVBAR     -->
+    % rebase('./www/base.html', title='Exitos')
 
-        <div class="container">
-            <div class="content-section">
-              <h1 style="margin-bottom: 15px">Configuració d'usuari</h1>
+    <div class="container">
+      <div class="content-section">
+        <h1 style="margin-bottom: 15px" data-i18n="config.title">Configuració d'usuari</h1>
 
-                <div class="model-checkbox-div">
-                    <label for="user-name" class="config-label">Nom:
-                        <input class="config-input" type="text" name="user-name" id="user-name" placeholder="Entra el teu nom"
-                               value ="{{user_data['name']}}" {{'disabled' if user_data['locked'] else ''}} >
-                    </label>
-                </div>
-
-                <label for="global-consumption" class="config-label"> Consum Global:
-                    <select class="config-input" name="global-consumption" id="global-consumption"
-                        {{'disabled' if user_data['locked'] else ''}}>
-                        <option value="None">None</option>
-                        %for sensor in sensors:
-                        <option value="{{sensor}}" {{'selected' if sensor == user_data['consumption'] else ''}}> {{sensor}} </option>
-                        %end
-                    </select>
-                </label>
-
-                <label for="global-generation" class="config-label"> Generació Global:
-                  <select class="config-input" name="global-generation" id="global-generation"
-                        {{'disabled' if user_data['locked'] else ''}}>
-                        <option value="None">None</option>
-                        %for sensor in sensors:
-                            <option value="{{sensor}}" {{'selected' if sensor == user_data['generation'] else ''}} >{{sensor}}</option>
-                        %end
-                  </select>
-                </label>
-
-                <label for="map" class="config-label">Localització: </label>
-                <div class="map-container">
-                  <div id="map"></div>
-                  <div id="info" style="display:none;" class="config-map-info">
-                    <p><strong>Direcció actual:</strong> <span id="address"></span></p>
-                    <small>Aquesta ubicació s'obté a partir de les dades de Home Assistant.
-                    En cas de ser incorrectes modifica-les des de la configuració del programa Home Assistant.</small>
-                  </div>
-                </div>
-
-                <div>
-                    <button class="btn" type="button" id="lockBtn" onclick="lockForm()"><i style="font-size: medium" class="fa-solid fa-arrow-right-to-bracket"></i> Unir Comunitat </button>
-                    <button class="btn" type="button" id="unlockBtn" onclick="unlockForm()"><i style="font-size: medium" class="fa-solid fa-arrow-right-from-bracket"></i> Abandonar Comunitat </button>
-                </div>
-                <div id="last-link-div">
-                    <h3 style="margin-bottom:3px">Últims certificats: </h3>
-                </div>
-            </div>
+        <div class="model-checkbox-div">
+          <label for="user-name" class="config-label"><span data-i18n="config.name_label">Nom:</span>
+            <input class="config-input" type="text" name="user-name" id="user-name" data-i18n="config.name_placeholder"
+              placeholder="Entra el teu nom" value="{{user_data['name']}}" {{'disabled' if user_data['locked'] else ''
+              }}>
+          </label>
         </div>
 
-    </main>
+        <label for="global-consumption" class="config-label"> <span data-i18n="config.global_consumption">Consum
+            Global:</span>
+          <select class="config-input" name="global-consumption" id="global-consumption" {{'disabled' if
+            user_data['locked'] else '' }}>
+            <option value="None">None</option>
+            %for sensor in sensors:
+            <option value="{{sensor}}" {{'selected' if sensor==user_data['consumption'] else '' }}> {{sensor}} </option>
+            %end
+          </select>
+        </label>
+
+        <label for="global-generation" class="config-label"> <span data-i18n="config.global_generation">Generació
+            Global:</span>
+          <select class="config-input" name="global-generation" id="global-generation" {{'disabled' if
+            user_data['locked'] else '' }}>
+            <option value="None">None</option>
+            %for sensor in sensors:
+            <option value="{{sensor}}" {{'selected' if sensor==user_data['generation'] else '' }}>{{sensor}}</option>
+            %end
+          </select>
+        </label>
+
+        <label for="map" class="config-label" data-i18n="config.location">Localització: </label>
+        <div class="map-container">
+          <div id="map"></div>
+          <div id="info" style="display:none;" class="config-map-info">
+            <p><strong data-i18n="config.address">Direcció actual:</strong> <span id="address"></span></p>
+            <small data-i18n="config.address_help">Aquesta ubicació s'obté a partir de les dades de Home Assistant.
+              En cas de ser incorrectes modifica-les des de la configuració del programa Home Assistant.</small>
+          </div>
+        </div>
+
+        <div>
+          <button class="btn" type="button" id="lockBtn" onclick="lockForm()"><i style="font-size: medium"
+              class="fa-solid fa-arrow-right-to-bracket"></i> <span data-i18n="config.join_community">Unir
+              Comunitat</span> </button>
+          <button class="btn" type="button" id="unlockBtn" onclick="unlockForm()"><i style="font-size: medium"
+              class="fa-solid fa-arrow-right-from-bracket"></i> <span data-i18n="config.leave_community">Abandonar
+              Comunitat</span> </button>
+        </div>
+        <div id="last-link-div">
+          <h3 style="margin-bottom:3px" data-i18n="config.last_certificates">Últims certificats: </h3>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script id="user-locked-data" type="application/json">
+{{ 'true' if user_data['locked'] else 'false' }}
+</script>
 </body>
 
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script id="location-data" type="application/json">
+{{!location}}
+</script>
 <script>
-//#region Map
-  var lat = {{location['lat']}};
-  var lon = {{location['lon']}};
+  //#region Map
+  const locationData = JSON.parse(document.getElementById('location-data').textContent);
+  var lat = locationData['lat'];
+  var lon = locationData['lon'];
   console.log("lat:", lat, "\nlong", lon);
 
   var map = L.map('map').setView([lat, lon], 15); // Coordenades per centrar el mapa
@@ -123,21 +143,21 @@
 
   //obtenir direcció
   fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
-  .then(response => response.json())
-  .then(data =>{
-    if(data.display_name){
-      document.getElementById('address').innerHTML += data.display_name;
-      document.getElementById('info').style.display = 'block';
-    }
-  });
-//#endregion
+    .then(response => response.json())
+    .then(data => {
+      if (data.display_name) {
+        document.getElementById('address').innerHTML += data.display_name;
+        document.getElementById('info').style.display = 'block';
+      }
+    });
+  //#endregion
 
-  function lockForm(){
+  function lockForm() {
     const form = document.querySelector('.content-section');
     const elements = form.querySelectorAll('input, select, text, button');
     console.log(elements);
     elements.forEach(el => {
-      if( el.id !== 'unlockBtn') el.disabled = true;
+      if (el.id !== 'unlockBtn') el.disabled = true;
     });
 
     const consumption = document.getElementById('global-consumption').value;
@@ -147,76 +167,77 @@
 
     fetch('save_config', {
       method: 'POST',
-      headers: {'Content-Type' : 'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         consumption: consumption,
         generation: generation,
         name: name
       })
     }).then(response => response.text())
-  .then(data => console.log('Config saved:', data))
-  .catch(err => console.error('Error saving config:', err));
+      .then(data => console.log('Config saved:', data))
+      .catch(err => console.error('Error saving config:', err));
   }
 
-  function unlockForm(){
+  function unlockForm() {
     const form = document.querySelector('.content-section');
     const elements = form.querySelectorAll('input, select, text, button');
     elements.forEach(el => el.disabled = false);
 
     fetch('delete_config', {
-        method: 'DELETE'
+      method: 'DELETE'
     }).then(response => response.text())
-    .then(data => console.log('Config deleted:', data))
-    .catch(err => console.error('Error deleting config:', err));
+      .then(data => console.log('Config deleted:', data))
+      .catch(err => console.error('Error deleting config:', err));
   }
 
-  function lockButtons(){
-      const button = document.getElementById('lockBtn');
+  function lockButtons() {
+    const button = document.getElementById('lockBtn');
+    const isLocked = JSON.parse(document.getElementById('user-locked-data').textContent);
 
-      if ({{ 'true' if user_data['locked'] else 'false' }}) {
-            button.disabled = true;
+    if (isLocked) {
+      button.disabled = true;
+    }
+  }
+
+  function get_res_certify_data() {
+    fetch('get_res_certify_data')
+      .then(response => response.json())
+      .then(data => {
+        const info_box = document.getElementById('last-link-div');
+        if (data.status === "OK") {
+          info_box.style.display = 'block';
+          info_box.style.width = '80%';
+
+          console.log(data.data);
+
+          Object.entries(data.data).reverse().forEach(([timestamp, value]) => {
+            const link_header = "http://magiinterface.udg.edu:3000/certificationVerified/getCertificate/"
+            const line = document.createElement('p');
+            const date = document.createElement('strong');
+            const link = document.createElement('a');
+            link.className = 'config-link';
+
+            date.innerHTML = timestamp + ": ";
+
+            if (value === "Error") {
+              link.innerHTML = "  Error en el certificat";
+              link.className = 'config-link-error';
+            }
+            else {
+              link.innerHTML = "  Rebut Correctament";
+              link.href = link_header + value;
+              link.target = '_blank';
+            }
+
+            line.appendChild(date);
+            line.appendChild(link);
+            info_box.appendChild(line);
+          });
         }
-  }
-
-  function get_res_certify_data(){
-      fetch('get_res_certify_data')
-          .then(response => response.json())
-          .then(data => {
-              const info_box = document.getElementById('last-link-div');
-              if(data.status === "OK"){
-                  info_box.style.display = 'block';
-                  info_box.style.width = '80%';
-
-                  console.log(data.data);
-
-                  Object.entries(data.data).reverse().forEach(([timestamp, value]) => {
-                      const link_header = "http://magiinterface.udg.edu:3000/certificationVerified/getCertificate/"
-                      const line = document.createElement('p');
-                      const date = document.createElement('strong');
-                      const link = document.createElement('a');
-                      link.className = 'config-link';
-
-                      date.innerHTML = timestamp + ": ";
-
-                      if(value === "Error"){
-                        link.innerHTML = "  Error en el certificat";
-                        link.className = 'config-link-error';
-                      }
-                      else{
-                        link.innerHTML = "  Rebut Correctament";
-                        link.href = link_header + value;
-                        link.target = '_blank';
-                      }
-
-                      line.appendChild(date);
-                      line.appendChild(link);
-                      info_box.appendChild(line);
-                  });
-              }
-              else{
-                  info_box.style.display = 'None';
-              }
-          })
+        else {
+          info_box.style.display = 'None';
+        }
+      })
   }
 
   get_res_certify_data();

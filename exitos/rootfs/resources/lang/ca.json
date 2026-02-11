@@ -1,0 +1,123 @@
+{
+    "navbar": {
+        "home": "Inici",
+        "devices": "Dispositius",
+        "database": "Base de Dades",
+        "create_model": "Crear Model",
+        "optimization": "Optimització",
+        "config": "Configuració"
+    },
+    "optimization": {
+        "title": "Optimització",
+        "force_opt": "Forçar Optimització",
+        "new_config": "Nova Configuració de Dispositiu",
+        "graphs_title": "Planificació",
+        "modal_title": "Nova Configuració de Dispositiu",
+        "device_type": "Tipus de dispositiu:",
+        "device_name": "Dispositiu:",
+        "save": "Guardar",
+        "cancel": "Cancel·lar",
+        "select_sensor_placeholder": "-- Selecciona un sensor --",
+        "select_device_placeholder": "-- Selecciona un dispositiu --",
+        "error_select_device": "Selecciona un Dispositiu",
+        "error_select_type": "Seleccione el tipus de Dispositiu",
+        "error_required_field": "Aquest camp és obligatori",
+        "error_select_entity": "Seleccione una entitat per a aquesta variable",
+        "delete_config_btn": "Eliminar Configuració",
+        "chart": {
+            "title": "Configuració i Flexibilitat",
+            "hour": "Hora",
+            "value": "Valor",
+            "opt_config": "Configuració Optimitzada",
+            "flex_up": "Flexibilitat (+)",
+            "flex_down": "Flexibilitat (-)"
+        }
+    },
+    "footer": {
+        "created_by": "Creat per: Grup Exit | Copyright &copy; 2024"
+    },
+    "main": {
+        "hero_title": "Benvingut/da a eXiT Control Energètic",
+        "hero_subtitle": "Gestiona, visualitza i optimitza la teva energia",
+        "panik_button": "PANIK BUTTON",
+        "card_devices_title": "Dispositius",
+        "card_devices_desc": "Selecciona els dispositius i entitats de les que vols monitoritzar i recollir dades.",
+        "card_database_title": "Base de Dades",
+        "card_database_desc": "Visualitza les dades en un rang de temps personalitzat.",
+        "card_model_title": "Crear Model",
+        "card_model_desc": "Entrena models predictius d'ús energètic per sensors específics i realitza les prediccions amb aquests.",
+        "card_optimization_title": "Optimització",
+        "card_optimization_desc": "Selecciona assets per optimitzar i visualitza les configuracions creades per a les pròximes 24 hores.",
+        "card_config_title": "Configuració",
+        "card_config_desc": "Ajusta paràmetres d'usuari. Uneix-te o abandona una comunitat.",
+        "scheduler_title": "Horaris Configurats",
+        "forecast_title": "Forecastings Guardats",
+        "config_devices_title": "Configuració Horària Dispositius"
+    },
+    "sensors": {
+        "title": "Configuració de Dispositius i Entitats",
+        "lead": "Selecciona quins dispositius i entitats vols guardar, i assigna el tipus de cada entitat.",
+        "all_devices": "Tots els dispositius",
+        "only_saved": "Només guardats",
+        "save_changes": "Guardar canvis",
+        "select_all": "Seleccionar tots",
+        "deselect_all": "Desseleccionar tots",
+        "table_save": "Guardar",
+        "table_device_name": "Nom del Dispositiu"
+    },
+    "database": {
+        "title": "Visualitzador de Dades",
+        "date_label": "Data a mostrar:",
+        "sensors_label": "Sensors a mostrar:",
+        "search_placeholder": "Cerca i selecciona sensors...",
+        "show_graphs": "Mostrar Gràfiques",
+        "update_db": "Actualitzar Base de Dades",
+        "delete_db": "Eliminar Base de Dades",
+        "modal_title": "SELF DESTRUCT",
+        "modal_text": "Estàs a punt d'eliminar tota la Base de Dades!!",
+        "modal_delete": "Eliminar",
+        "modal_cancel": "Cancel·lar"
+    },
+    "model": {
+        "title": "Forecast",
+        "step1_title": "1. Selecciona el model entrenat",
+        "optional": "Opcional...",
+        "new_model_option": "Model Nou",
+        "model_name_label": "Nom del Model:",
+        "model_name_help": "En cas de deixar en blanc el nom serà el del sensor objectiu.",
+        "model_name_placeholder": "Escriu el nom...",
+        "step2_title": "2. Selecciona el sensor objectiu",
+        "step3_title": "3. Selecciona variables extra",
+        "step4_title": "4. Configura el model",
+        "algorithm_label": "Algorisme:",
+        "algo_auto": "Automàtic",
+        "scaled_label": "Escalat",
+        "windowing_label": "Windowing:",
+        "windowing_options": {
+            "default": "Per defecte [25-48]",
+            "prev_day": "[24-48] - Dia anterior",
+            "prev_2_days": "[48-72] - 2 dies anteriors",
+            "last_24h": "[1-24] - Últimes 24h",
+            "custom": "Personalitzat"
+        },
+        "window_start": "Inici finestra:",
+        "window_end": "Fi finestra:",
+        "meteo_data": "Dades Meteorològiques",
+        "btn_train": "Train",
+        "btn_forecast": "Forecast",
+        "btn_delete": "Eliminar"
+    },
+    "config": {
+        "title": "Configuració d'usuari",
+        "name_label": "Nom:",
+        "name_placeholder": "Entra el teu nom",
+        "global_consumption": "Consum Global:",
+        "global_generation": "Generació Global:",
+        "location": "Localització:",
+        "address": "Direcció actual:",
+        "address_help": "Aquesta ubicació s'obté a partir de les dades de Home Assistant. En cas de ser incorrectes modifica-les des de la configuració del programa Home Assistant.",
+        "join_community": "Unir Comunitat",
+        "leave_community": "Abandonar Comunitat",
+        "last_certificates": "Últims certificats:"
+    }
+}

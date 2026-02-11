@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ca">
+
 <head>
     <meta charset="UTF-8">
     <title>Control energètic eXIT</title>
@@ -16,9 +17,10 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 
 </head>
+
 <body>
     <!--    NAVBAR     -->
     % rebase('./www/base.html', title='Exitos')
@@ -27,21 +29,21 @@
     <div class="container">
         <div class="content-section">
             <form action="./graphsView" method="POST" id="graphs-form">
-                <h1>Visualitzador de Dades</h1>
+                <h1 data-i18n="database.title">Visualitzador de Dades</h1>
 
-                <h2 style="margin-top: 20px;">Data a mostrar:</h2>
+                <h2 style="margin-top: 20px;" data-i18n="database.date_label">Data a mostrar:</h2>
 
-                <input class="database-date-input" type="text" name="datetimes"/>
+                <input class="database-date-input" type="text" name="datetimes" />
 
                 <div id="sensor-data" data-sensors="{{sensors_id}}"></div>
 
                 <div class="sensor-container">
-                    <h2>Sensors a mostrar:</h2>
+                    <h2 data-i18n="database.sensors_label">Sensors a mostrar:</h2>
                     <div class="tag-container" id="selected-sensors"></div>
 
                     <div class="dropdown">
-                        <input type="text" class="search-box" id="sensor-search"
-                               placeholder="Cerca i selecciona sensors...">
+                        <input type="text" class="search-box" id="sensor-search" data-i18n="database.search_placeholder"
+                            placeholder="Cerca i selecciona sensors...">
                         <ul class="sensor-list" id="sensor-list"></ul>
                     </div>
                 </div>
@@ -50,9 +52,14 @@
                 <input type="hidden" name="sensors_id" id="sensors-input" value="">
 
             </form>
-            <button class="btn" id="fetch-data" onclick="FetchGraph()"><i class="fa-solid fa-chart-line"></i> Mostrar Gràfiques</button>
-            <button class="btn secondary" id="update-database" onclick="UpdateDatabase()" style="margin-bottom: 100px;"><i class="fa-solid fa-arrows-rotate"></i> Actualitzar Base de Dades</button>
-            <button class="btn self-destruct" id="delete-database" onclick="OpenModal()" style="margin-bottom: 30px;"><i class="fa-solid fa-ban"></i> Eliminar Base de Dades </button>
+            <button class="btn" id="fetch-data" onclick="FetchGraph()"><i class="fa-solid fa-chart-line"></i> <span
+                    data-i18n="database.show_graphs">Mostrar Gràfiques</span></button>
+            <button class="btn secondary" id="update-database" onclick="UpdateDatabase()"
+                style="margin-bottom: 100px;"><i class="fa-solid fa-arrows-rotate"></i> <span
+                    data-i18n="database.update_db">Actualitzar Base de Dades</span></button>
+            <button class="btn self-destruct" id="delete-database" onclick="OpenModal()" style="margin-bottom: 30px;"><i
+                    class="fa-solid fa-ban"></i> <span data-i18n="database.delete_db">Eliminar Base de Dades</span>
+            </button>
 
             % for sensor_id, graph_html in graphs.items():
             <h2>Sensor {{ sensor_id }}</h2>
@@ -68,14 +75,15 @@
 
     <div id="self-destruct-modal" class="modal hidden">
         <div id="modal-box" class="modal-content">
-            <h2 id="modal-title">SELF DESTRUCT</h2>
+            <h2 id="modal-title" data-i18n="database.modal_title">SELF DESTRUCT</h2>
             <div style="margin-top: 20px; display: flex; justify-content: center; gap: 12px;">
-                <p id="modal-text" style="justify-content: center">Estàs a punt d'eliminar tota la Base de Dades!!</p>
+                <p id="modal-text" style="justify-content: center" data-i18n="database.modal_text">Estàs a punt
+                    d'eliminar tota la Base de Dades!!</p>
             </div>
 
             <div style="margin-top: 20px; display: flex; justify-content: center; gap: 12px;">
-                <button class="btn self-destruct" id="btn-yes"> Eliminar </button>
-                <button class="btn secondary" id="btn-no"> Cancel·lar </button>
+                <button class="btn self-destruct" id="btn-yes" data-i18n="database.modal_delete"> Eliminar </button>
+                <button class="btn secondary" id="btn-no" data-i18n="database.modal_cancel"> Cancel·lar </button>
             </div>
 
             <div id="explosion-container" class="explosion"></div>
@@ -208,11 +216,11 @@
                         y: graph.values,
                         mode: 'lines',
                         name: 'sensorId',
-                        line: {color: 'green'}
+                        line: { color: 'green' }
                     }
                     const layout = PlotlyTheme.mergeLayout({
-                        xaxis: {title: 'Timestamp'},
-                        yaxis: {title: 'Value'},
+                        xaxis: { title: 'Timestamp' },
+                        yaxis: { title: 'Value' },
                         dragmode: 'pan'
                     });
 
@@ -221,7 +229,7 @@
             });
     }
 
-    function UpdateDatabase(){
+    function UpdateDatabase() {
         LoadingSpinner.show();
         fetch('force_update_database')
             .then(response => response.text())
@@ -292,7 +300,7 @@
         }
     }
 
-    function ResetTextSelfDestruct(){
+    function ResetTextSelfDestruct() {
         selfDestructCounter = 3;
         modalTitle.textContent = "SELF DESTRUCT";
         modalText.textContent = "Estàs a punt d'eliminar tota la Base de Dades!!";
@@ -324,11 +332,11 @@
         }, 800);
     }
 
-    async function SelfDestructBackend(){
+    async function SelfDestructBackend() {
         console.log("AAAAAAA")
         const res = await fetch('self_destruct', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'}
+            headers: { 'Content-Type': 'application/json' }
         });
         const result = await res.json();
         if (result.status === 'ok') {
@@ -358,7 +366,7 @@
                 "1"
             );
         }
-        else{
+        else {
             setTimeout(() => {
                 DestroyModal();
             }, 300);
@@ -404,4 +412,5 @@
         });
     });
 </script>
+
 </html>

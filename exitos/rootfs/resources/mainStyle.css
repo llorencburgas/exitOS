@@ -1456,3 +1456,22 @@ p.lead{
 
 /*#endregion CONFIG PAGE*/
 
+/*#region LANGUAGE SELECTOR*/
+.lang-selector {
+    margin-right: 15px;
+    display: inline-block;
+}
+
+.lang-switch {
+    color: var(--text-color);
+    text-decoration: none;
+    font-weight: bold;
+    padding: 0 5px;
+    cursor: pointer;
+}
+
+.lang-switch.active-lang {
+    text-decoration: none;
+    color: var(--text-hover-color);
+}
+/*#endregion LANGUAGE SELECTOR*/
