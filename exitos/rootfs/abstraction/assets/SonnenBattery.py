@@ -13,7 +13,7 @@ class SonnenBattery(AbsEnergyStorage):
     def __init__(self,config, database):
         super().__init__(config)
 
-        self.efficiency = database.get_latest_data_from_sensor(config["extra_vars"]["eficiencia"]["sensor_id"])[1]
+        self.efficiency = database.get_latest_data_from_sensor(config["extra_vars"]["eficiencia"]["sensor_id"])[1] / 100
         self.actual_percentage = database.get_latest_data_from_sensor(config["extra_vars"]["percentatge_actual"]["sensor_id"])[1]
 
         self.control_charge_sensor = config['control_vars']['carregar']['sensor_id']
@@ -88,34 +88,47 @@ class SonnenBattery(AbsEnergyStorage):
     def get_flexibility(self, optimization_data):
         """
         Calcula la flexibilitat de la bateria Sonnen.
-        Necessita que 'optimization_data' contingui 'SoC', 'Power', 'timestamps'.
+        Necessita que 'optimization_data' contingui 'devices_config' i 'timestamps'.
         """
         if self.name not in optimization_data['devices_config']:
              logger.warning(f"Device {self.name} not found in optimization data")
              return None
 
-
         timestamps = optimization_data['timestamps']
+        Power_list = optimization_data['devices_config'][self.name]
+        
+        # Reconstrucció del SoC (kWh) basat en el pla
+        # Assumim que l'estat inicial és l'actual
+        SoC_list = []
+        current_soc = self.actual_percentage * self.max
+        
+        # Eficiència
+        eff = self.efficiency
+
+        for p in Power_list:
+            # p > 0 -> Carregant (incrementa SoC amb pèrdues)
+            # p < 0 -> Descarregant (decrementa SoC)
             
-        device_result = optimization_data['devices_config'][self.name]
-        
-        # Mapeig de variables
-        SoC_list = device_result['consumed_Kwh'] # Això és kWh acumulats
-        Power_list = device_result['schedule'] # Això és kW
-        
-        # Si la llista de timestamps és diferent de la de dades, igualar-les
+            if p > 0:
+                current_soc += p * eff
+            else:
+                current_soc += p       #(no puc restar a valor negatiu, he de sumar)
+            
+            # Saturació per seguretat (tot i que l'optimitzador ho hauria de garantir)
+            if current_soc > self.max: current_soc = self.max
+            if current_soc < self.min: current_soc = self.min
+            
+            SoC_list.append(current_soc)
+
+
+        # Unificació de longituds
         min_len = min(len(timestamps), len(SoC_list), len(Power_list))
         
         SoC_max = self.max
         SoC_min = self.min
-        Pc_max = 2.5 # Hauria de venir de config, però el posarem hardcoded com a l'original si no hi és
-        Pd_max = 2.5
-        eff = 0.95
-        # Recuperar eficiència real si la tenim
-        # self.efficiency es calcula al init amb sensor, aquí potser millor usar self.efficiency si està disponible o 0.95
-        if hasattr(self, 'efficiency') and self.efficiency:
-             eff = float(self.efficiency)
-
+        Pc_max = 2.5 # Potència màxima de càrrega
+        Pd_max = 2.5 # Potència màxima de descàrrega
+        
         delta_t = 1 # Hora
         
         fup = []
@@ -125,22 +138,17 @@ class SonnenBattery(AbsEnergyStorage):
             SoC_t = SoC_list[t]
             Pb_t = Power_list[t]
             
-            # Flex Up (Carregar més / Reduir descàrrega)
-            # max(0, min(Pc_max, (SoC_max - SoC_t)/eff) - Pb_t)
-            # Nota: la fórmula original era (SoC_max - SoC_t) / (eff * delta_t) - Pb_t
+            max_charge_possible = min(Pc_max, (SoC_max - SoC_t) / (eff * delta_t))
             
-            flex_up = max(0,
-                           min(Pc_max,
-                                (SoC_max - SoC_t) / (eff * delta_t)) - Pb_t)
+           
+            flex_up = max(0, max_charge_possible - Pb_t)
 
-            # Flex Down (Descarregar més / Reduir càrrega)
-            # max(0, Pb_t + min(Pd_max, (SoC_t - SoC_min))/delta_t)
-            
-            flex_down = max(0,
-                            Pb_t + min(Pd_max,
-                                       (SoC_t - SoC_min) / delta_t))
+            max_discharge_possible = min(Pd_max, (SoC_t - SoC_min) / delta_t) 
+
+            flex_down = max(0, Pb_t + max_discharge_possible)
                                        
-            fup.append(flex_up)
-            fdown.append(flex_down)
+            fup.append(2.5)
+            fdown.append(-2.5)
+            delta_t += 1
             
         return fup, fdown, Power_list, timestamps[:min_len]

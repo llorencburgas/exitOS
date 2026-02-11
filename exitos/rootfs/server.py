@@ -587,10 +587,12 @@ def train_model():
 
     return model_name
 
-def forecast_model(selected_forecast):
+def forecast_model(selected_forecast, today = True):
     forecast_df, real_values, sensor_id = ForecasterManager.predict_consumption_production(model_name=selected_forecast)
 
-    forecasted_done_time = datetime.today().strftime('%d-%m-%Y')
+    if today:  forecasted_done_time = datetime.today().strftime('%d-%m-%Y')
+    else: forecasted_done_time = (datetime.today() + timedelta(days=1)).strftime("%d_%m_%Y")
+
     timestamps = forecast_df.index.tolist()
     predictions = forecast_df['value'].tolist()
 
@@ -1075,9 +1077,13 @@ def daily_task():
         database.update_database("all")
         database.clean_database_hourly_average(all_sensors=True)
 
+        #forecast
+        daily_forecast_task()
+
         # Optimització
         logger.warning(f"📈 [{hora_actual}] - INICIANT PROCÉS D'OPTIMITZACIÓ")
         optimize(today=False)
+
     except Exception as e:
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
         logger.error(f" ❌ [{hora_actual}] - ERROR al daily task : {e}")
@@ -1105,7 +1111,6 @@ def monthly_task():
 def daily_forecast_task():
     try:
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
-        database.update_database("all")
         logger.debug(f"📈 [{hora_actual}] - STARTING DAILY FORECASTING")
         models_saved = [os.path.basename(f) for f in glob.glob(forecast.models_filepath + "forecastings/*.pkl")]
         for model in models_saved:
@@ -1116,8 +1121,10 @@ def daily_forecast_task():
             if aux != '':
                 # daily_train_model(config, model)
                 logger.debug(f"     Running daily forecast for {model}")
-                forecast_model(model)
-        logger.debug("ENDING DAILY FORECASTS")
+                forecast_model(model, today=False)
+
+        hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
+        logger.debug(f"📈 [{hora_actual}] -ENDING DAILY FORECASTS")
         
     except Exception as e:
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
@@ -1224,7 +1231,6 @@ def config_optimized_devices_HA():
         logger.error(f"❌ [{datetime.now().strftime('%d:%m:%Y %H:%m')}] -  Error configurant horariament un dispositiu a H.A {e}")
 
 schedule.every().day.at("23:30").do(daily_task)
-schedule.every().day.at("23:45").do(daily_forecast_task)
 schedule.every().day.at("02:00").do(monthly_task)
 schedule.every().hour.at(":00").do(certificate_hourly_task)
 
