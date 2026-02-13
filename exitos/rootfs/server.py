@@ -1267,5 +1267,21 @@ def main():
 # Executem la funció main
 if __name__ == "__main__":
     logger.info("🌳 ExitOS Iniciat")
-    llm_engine.init_routes(app, logger)
+    
+    # Debug: Verificar importació i inicialització LLM
+    try:
+        logger.info("📦 Verificant mòdul llm_engine...")
+        logger.info(f"   - Mòdul llm_engine: {llm_engine}")
+        logger.info(f"   - Funció init_routes: {llm_engine.init_routes}")
+        logger.info("🔌 Cridant llm_engine.init_routes(app, logger)...")
+        llm_engine.init_routes(app, logger)
+        logger.info("✅ llm_engine.init_routes completat amb èxit")
+    except AttributeError as e:
+        logger.error(f"❌ Error: init_routes no existeix al mòdul llm_engine: {e}")
+        logger.error(traceback.format_exc())
+    except Exception as e:
+        logger.error(f"❌ Error inicialitzant rutes LLM: {e}")
+        logger.error(traceback.format_exc())
+    
     main()
+
