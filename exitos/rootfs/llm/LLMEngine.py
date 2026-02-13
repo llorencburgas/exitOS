@@ -153,14 +153,24 @@ def init_routes(app, external_logger):
     global logger
     logger = external_logger
     
+    if logger:
+        logger.info("🔌 Inicialitzant rutes LLM...")
+    
     @app.route('/llmChat')
     def llm_chat_page():
+        if logger:
+            logger.info("📄 Servint pàgina llmChat")
         return template('./www/llmChat.html')
 
     @app.route('/llm_response', method='POST')
     def llm_response():
+        if logger:
+            logger.info("🔵 Endpoint /llm_response cridat")
         try:
             data = request.json
+            if logger:
+                logger.info(f"   - Dades rebudes: {data}")
+            
             if not data:
                 response.status = 400
                 return json.dumps({'status': 'error', 'message': 'Dades buides'})
@@ -175,10 +185,16 @@ def init_routes(app, external_logger):
             # Cridem el LLM amb historial
             response_text = llm_engine.get_response(user_message, session_id)
             
-            return json.dumps({
+            result = json.dumps({
                 'status': 'ok',
                 'response': response_text
             })
+            
+            # Afegir headers CORS per si de cas
+            response.content_type = 'application/json'
+            response.headers['Access-Control-Allow-Origin'] = '*'
+            
+            return result
             
         except Exception as e:
             if logger:
@@ -201,3 +217,23 @@ def init_routes(app, external_logger):
         except Exception as e:
             if logger: logger.error(f" Error esborrant conversa: {e}")
             return json.dumps({'status': 'error', 'message': 'Error esborrant conversa'})
+    
+    # Endpoint de test per verificar connectivitat
+    @app.route('/llm_test', method='GET')
+    def llm_test():
+        if logger:
+            logger.info("🧪 Test endpoint cridat")
+        return json.dumps({
+            'status': 'ok',
+            'message': 'LLM routes are working!',
+            'ollama_url': llm_engine.ollama_base_url,
+            'model': llm_engine.model
+        })
+    
+    if logger:
+        logger.info("✅ Rutes LLM registrades:")
+        logger.info("   - GET  /llmChat")
+        logger.info("   - POST /llm_response")
+        logger.info("   - POST /llm_clear")
+        logger.info("   - GET  /llm_test")
+
