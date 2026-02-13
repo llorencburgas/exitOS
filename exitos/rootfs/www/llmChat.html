@@ -1,0 +1,297 @@
+% rebase('./www/base.html', title='eXiT Control Energètic - Chat LLM')
+
+<style>
+    .chat-container {
+        max-width: 1000px;
+        margin: 20px auto;
+        background: var(--card-background-color);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        height: 75vh;
+        overflow: hidden;
+        width: 95%;
+    }
+
+    .chat-header {
+        background: var(--color-primary-green);
+        color: white;
+        padding: 15px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .chat-header h2 {
+        margin: 0;
+        color: white;
+        font-size: 1.2rem;
+    }
+
+    .chat-messages {
+        flex-grow: 1;
+        padding: 20px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        background: var(--box-bg-color);
+    }
+
+    .message {
+        max-width: 70%;
+        padding: 12px 16px;
+        border-radius: 15px;
+        font-size: 0.95rem;
+        line-height: 1.4;
+        position: relative;
+        word-wrap: break-word;
+    }
+
+    .message.user {
+        align-self: flex-end;
+        background: var(--color-primary-green);
+        color: white;
+        border-bottom-right-radius: 2px;
+    }
+
+    .message.llm {
+        align-self: flex-start;
+        background: var(--color-primary-white);
+        color: var(--text-color);
+        border: 1px solid var(--box-border-color);
+        border-bottom-left-radius: 2px;
+    }
+
+    .chat-input-area {
+        padding: 15px 20px;
+        background: var(--color-primary-white);
+        border-top: 1px solid var(--box-border-color);
+        display: flex;
+        gap: 10px;
+        border-radius: 0 0 12px 12px;
+    }
+
+    .chat-input {
+        flex-grow: 1;
+        border: 1px solid var(--box-border-color);
+        border-radius: 25px;
+        padding: 10px 20px;
+        outline: none;
+        transition: border-color 0.2s;
+        background: var(--card-background-color);
+        color: var(--text-color);
+        font-size: 0.95rem;
+    }
+
+    .chat-input:focus {
+        border-color: var(--color-primary-green);
+    }
+
+    .send-btn {
+        background: var(--color-primary-green);
+        color: white;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s, background 0.2s;
+    }
+
+    .send-btn:hover {
+        background: var(--button-bg-hover-color);
+        transform: scale(1.05);
+    }
+
+    .send-btn:active {
+        transform: scale(0.95);
+    }
+
+    .send-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .loading-indicator {
+        display: none;
+        align-self: flex-start;
+        max-width: 70%;
+        padding: 12px 16px;
+        background: var(--color-primary-white);
+        border: 1px solid var(--box-border-color);
+        border-radius: 15px;
+        border-bottom-left-radius: 2px;
+    }
+
+    .loading-indicator.show {
+        display: block;
+    }
+
+    .typing-dots {
+        display: inline-flex;
+        gap: 4px;
+    }
+
+    .typing-dots span {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--color-primary-green);
+        animation: typing 1.4s infinite;
+    }
+
+    .typing-dots span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .typing-dots span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+    @keyframes typing {
+
+        0%,
+        60%,
+        100% {
+            transform: translateY(0);
+        }
+
+        30% {
+            transform: translateY(-10px);
+        }
+    }
+
+    /* Scrollbar personalitzat pel tema */
+    .chat-messages::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .chat-messages::-webkit-scrollbar-track {
+        background: var(--box-bg-color);
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+        background: var(--box-border-color);
+        border-radius: 4px;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb:hover {
+        background: var(--color-primary-green);
+    }
+</style>
+
+<div class="container">
+    <h2 data-i18n="chat.title">Assistent Virtual eXiT</h2>
+    <p style="text-align: center; color: var(--text-muted); margin-bottom: 20px;" data-i18n="chat.subtitle">
+        Pregunta qualsevol dubte sobre la teva configuració o optimització energètica.
+    </p>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <i class="fa-solid fa-robot"></i>
+            <h2 data-i18n="chat.header">eXiT AI</h2>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message llm" data-i18n="chat.welcome_message">
+                Hola! Soc l'assistent virtual d'eXiT. En què et puc ajudar avui?
+            </div>
+        </div>
+
+        <div class="loading-indicator" id="loadingIndicator">
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="userInput" class="chat-input" placeholder="Escriu el teu missatge aquí..."
+                data-i18n="chat.input_placeholder"
+                onkeypress="handleKeyPress(event)" autocomplete="off">
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function sendMessage() {
+        const input = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const messageText = input.value.trim();
+
+        if (messageText === "") return;
+
+        // Afegir missatge de l'usuari
+        addMessage(messageText, 'user');
+        input.value = "";
+
+        // Deshabilitar controls mentre es processa
+        sendBtn.disabled = true;
+        input.disabled = true;
+        loadingIndicator.classList.add('show');
+
+        // Enviar al backend
+        fetch('/llm_response', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: messageText })
+        })
+            .then(response => response.json())
+            .then(data => {
+                loadingIndicator.classList.remove('show');
+
+                if (data.status === 'ok') {
+                    addMessage(data.response, 'llm');
+                } else {
+                    addMessage((I18n.get('chat.error_process') || "Error: No s'ha pogut processar la sol·licitud.") + " " + (data.message || ""), 'llm');
+                }
+            })
+            .catch(error => {
+                loadingIndicator.classList.remove('show');
+                console.error('Error:', error);
+                addMessage(I18n.get('chat.error_contact') || "Error: No s'ha pogut contactar amb el servidor.", 'llm');
+            })
+            .finally(() => {
+                // Reactivar controls
+                sendBtn.disabled = false;
+                input.disabled = false;
+                input.focus();
+            });
+    }
+
+    function addMessage(text, type) {
+        const chatMessages = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}`;
+        messageDiv.textContent = text;
+        chatMessages.appendChild(messageDiv);
+
+        // Scroll automàtic al final
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
+    // Focus automàtic a l'input quan es carrega la pàgina
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('userInput').focus();
+    });
+</script>

@@ -5,6 +5,7 @@
         "database": "Base de Dades",
         "create_model": "Crear Model",
         "optimization": "Optimització",
+        "llm_chat": "Xat LLM",
         "config": "Configuració"
     },
     "optimization": {
@@ -119,5 +120,14 @@
         "join_community": "Unir Comunitat",
         "leave_community": "Abandonar Comunitat",
         "last_certificates": "Últims certificats:"
+    },
+    "chat": {
+        "title": "Assistent Virtual eXiT",
+        "subtitle": "Pregunta qualsevol dubte sobre la teva configuració o optimització energètica.",
+        "header": "eXiT AI",
+        "welcome_message": "Hola! Soc l'assistent virtual d'eXiT. En què et puc ajudar avui?",
+        "input_placeholder": "Escriu el teu missatge aquí...",
+        "error_process": "Error: No s'ha pogut processar la sol·licitud.",
+        "error_contact": "Error: No s'ha pogut contactar amb el servidor."
     }
 }

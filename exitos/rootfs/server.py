@@ -29,6 +29,7 @@ import forecast.OptimalScheduler as OptimalScheduler
 import sqlDB as db
 import blockchain as Blockchain
 import numpy as np
+import llm.LLMEngine as llm_engine
 
 
 # LOGGER COLORS
@@ -1266,4 +1267,5 @@ def main():
 # Executem la funció main
 if __name__ == "__main__":
     logger.info("🌳 ExitOS Iniciat")
+    llm_engine.init_routes(app, logger)
     main()
