@@ -9,15 +9,19 @@ logger = None
 
 class LLMEngine:
     """
-    Class to handle communication with the local Ollama LLM with conversation history.
+    Class to handle communication with Ollama LLM with conversation history.
     """
-    def __init__(self, model="llama3.1:latest", api_url=None):
+    def __init__(self, model=None, ollama_url=None):
+        # Get model from environment variable or use default
+        if model is None:
+            model = os.getenv("OLLAMA_MODEL", "llama3.1:latest")
         self.model = model
-        # Use environment variable if set, otherwise default to host.docker.internal for Docker Desktop
-        # This allows the container to access services running on the Windows host
-        if api_url is None:
-            api_url = os.getenv("OLLAMA_API_URL", "http://host.docker.internal:11434/api/generate")
-        self.api_url = api_url
+        # Get Ollama URL from environment variable or use default
+        if ollama_url is None:
+            ollama_url = os.getenv("OLLAMA_URL", "http://host.docker.internal:11434")
+        # Assegurar que la URL base no té /api/chat al final
+        self.ollama_base_url = ollama_url.rstrip('/')
+        self.api_url = f"{self.ollama_base_url}/api/chat"
         self.system_prompt = (
             "Ets un expert en gestió energètica de la plataforma eXiT. "
             "La teva missió és ajudar l'usuari a entendre la seva configuració d'autoconsum, "
@@ -29,7 +33,7 @@ class LLMEngine:
 
     def get_response(self, user_input, session_id="default"):
         """
-        Obté resposta del LLM mantenint l'historial de conversa per sessió.
+        Obté resposta d'Ollama mantenint l'historial de conversa per sessió.
         """
         try:
             # Inicialitzar conversa si no existeix
@@ -44,34 +48,22 @@ class LLMEngine:
                 "content": user_input
             })
             
-            # Construir el prompt amb tot l'historial de conversa
-            # /api/generate necessita un prompt de text, no un array de missatges
-            prompt_parts = []
-            for msg in self.conversations[session_id]:
-                if msg["role"] == "system":
-                    prompt_parts.append(f"System: {msg['content']}")
-                elif msg["role"] == "user":
-                    prompt_parts.append(f"User: {msg['content']}")
-                elif msg["role"] == "assistant":
-                    prompt_parts.append(f"Assistant: {msg['content']}")
-            
-            full_prompt = "\n\n".join(prompt_parts) + "\n\nAssistant:"
-            
+            # Preparar payload per Ollama API
             payload = {
                 "model": self.model,
-                "prompt": full_prompt,
+                "messages": self.conversations[session_id],
                 "stream": False
             }
             
             if logger:
                 logger.info(f"🤖 Enviant petició a Ollama: {self.api_url}")
             
-            res = requests.post(self.api_url, json=payload, timeout=60)
+            res = requests.post(self.api_url, json=payload, timeout=120)
             res.raise_for_status()
             
             data = res.json()
-            # /api/generate retorna la resposta en el camp 'response'
-            assistant_message = data.get("response", "No he rebut cap resposta vàlida del model.").strip()
+            # Ollama /api/chat retorna la resposta en data["message"]["content"]
+            assistant_message = data.get("message", {}).get("content", "No he rebut cap resposta vàlida del model.")
             
             # Afegir resposta de l'assistent a l'historial
             self.conversations[session_id].append({
@@ -84,15 +76,22 @@ class LLMEngine:
         except requests.exceptions.ConnectionError as e:
             if logger: 
                 logger.error(f"❌ Error de connexió amb Ollama a {self.api_url}: {e}")
-            return f"Ho sento, no puc connectar amb Ollama a {self.api_url}. Assegura't que Ollama està executant-se al host."
+            return f"❌ No puc connectar amb Ollama a {self.ollama_base_url}. Verifica que Ollama està executant-se i que la URL és correcta."
         except requests.exceptions.HTTPError as e:
             if logger: 
-                logger.error(f"❌ Error HTTP {e.response.status_code} de Ollama: {e}")
-            return f"Error HTTP {e.response.status_code}: {e.response.text if hasattr(e.response, 'text') else str(e)}"
+                logger.error(f"❌ Error HTTP {e.response.status_code} d'Ollama: {e}")
+            if e.response.status_code == 404:
+                return f"❌ Model '{self.model}' no trobat. Assegura't que el model està descarregat a Ollama."
+            else:
+                return f"Error HTTP {e.response.status_code}: {e.response.text if hasattr(e.response, 'text') else str(e)}"
+        except requests.exceptions.Timeout:
+            if logger:
+                logger.error(f"❌ Timeout esperant resposta d'Ollama")
+            return "⏱️ El servidor Ollama està trigant massa. Pot ser que el model sigui massa gran o el servidor estigui ocupat."
         except requests.exceptions.RequestException as e:
             if logger: 
                 logger.error(f"❌ Error connectant amb Ollama: {e}")
-            return "Ho sento, no puc connectar amb el motor d'IA local. Certifica que Ollama està funcionant."
+            return "Ho sento, no puc connectar amb el servidor Ollama. Verifica la configuració."
         except Exception as e:
             if logger: 
                 logger.error(f"❌ Error inesperat al LLM: {e}")
