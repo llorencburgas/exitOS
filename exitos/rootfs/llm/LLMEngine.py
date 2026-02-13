@@ -13,9 +13,10 @@ class LLMEngine:
     """
     def __init__(self, model="llama3.1:latest", api_url=None):
         self.model = model
-        # Use environment variable if set, otherwise default to localhost (works with network_mode: host)
+        # Use environment variable if set, otherwise default to host.docker.internal for Docker Desktop
+        # This allows the container to access services running on the Windows host
         if api_url is None:
-            api_url = os.getenv("OLLAMA_API_URL", "http://localhost:11434/api/chat")
+            api_url = os.getenv("OLLAMA_API_URL", "http://host.docker.internal:11434/api/generate")
         self.api_url = api_url
         self.system_prompt = (
             "Ets un expert en gestió energètica de la plataforma eXiT. "
@@ -43,9 +44,22 @@ class LLMEngine:
                 "content": user_input
             })
             
+            # Construir el prompt amb tot l'historial de conversa
+            # /api/generate necessita un prompt de text, no un array de missatges
+            prompt_parts = []
+            for msg in self.conversations[session_id]:
+                if msg["role"] == "system":
+                    prompt_parts.append(f"System: {msg['content']}")
+                elif msg["role"] == "user":
+                    prompt_parts.append(f"User: {msg['content']}")
+                elif msg["role"] == "assistant":
+                    prompt_parts.append(f"Assistant: {msg['content']}")
+            
+            full_prompt = "\n\n".join(prompt_parts) + "\n\nAssistant:"
+            
             payload = {
                 "model": self.model,
-                "messages": self.conversations[session_id],
+                "prompt": full_prompt,
                 "stream": False
             }
             
@@ -56,7 +70,8 @@ class LLMEngine:
             res.raise_for_status()
             
             data = res.json()
-            assistant_message = data.get("message", {}).get("content", "No he rebut cap resposta vàlida del model.")
+            # /api/generate retorna la resposta en el camp 'response'
+            assistant_message = data.get("response", "No he rebut cap resposta vàlida del model.").strip()
             
             # Afegir resposta de l'assistent a l'historial
             self.conversations[session_id].append({
