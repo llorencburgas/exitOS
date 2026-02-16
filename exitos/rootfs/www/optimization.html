@@ -22,14 +22,16 @@
     <div class="container">
         <!--    PAGE NAME AND DATE  -->
         <div class="content-section">
-            <h1>Optimització</h1>
+            <h1 data-i18n="optimization.title">Optimització</h1>
             <h4>{{current_date}}</h4>
             <button class="btn" id="test-optimization" onclick="TestOptimization()"><i
-                    style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-ghost"></i> Forçar
-                Optimització</button>
+                    style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-ghost"></i> <span
+                    data-i18n="optimization.force_opt">Forçar
+                    Optimització</span></button>
             <button class="btn" id="new-device-config" onclick="NewDeviceConfig()"><i
-                    style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-plus"></i> Nova Configuració de
-                Dispositiu</button>
+                    style="font-size: medium; margin-bottom: 5px;" class="fa-solid fa-plus"></i> <span
+                    data-i18n="optimization.new_config">Nova Configuració de
+                    Dispositiu</span></button>
         </div>
 
         <!-- GRÀFICA OPTIMITZACIÓ -->
@@ -48,17 +50,17 @@
         <!--  FORMULARI DINÀMIC PER CREAR UNA NOVA OPTIMITZACIÓ  -->
         <div class="modal-content">
             <span class="modal-close" onclick="CloseModal()"></span>
-            <h2>Nova Configuració de Dispositiu</h2>
+            <h2 data-i18n="optimization.modal_title">Nova Configuració de Dispositiu</h2>
 
             <!--   TIPUS DE DISPOSITIU     -->
             <div class="new-config-section">
-                <label for="device-type">Tipus de dispositiu: </label>
+                <label for="device-type" data-i18n="optimization.device_type">Tipus de dispositiu: </label>
                 <select name="deviceType" id="device-type" onchange="UpdateRestrictions()"></select>
             </div>
 
             <!--   DISPOSITIU     -->
             <div class="new-config-section">
-                <label for="device-name">Dispositiu:</label>
+                <label for="device-name" data-i18n="optimization.device_name">Dispositiu:</label>
                 <select name="device-name" id="device-name" onchange="UpdateAssociatedVariables()"></select>
             </div>
 
@@ -72,8 +74,10 @@
             <div class="new-config-section" id="control-vars-config-section"></div>
 
             <div style="margin-top: 20px;">
-                <button class="btn" onclick="SubmitOptimization()"> Guardar </button>
-                <button class="btn secondary" onclick="CloseModal()"> Cancel·lar </button>
+                <button class="btn" onclick="SubmitOptimization()"><span
+                        data-i18n="optimization.save">Guardar</span></button>
+                <button class="btn secondary" onclick="CloseModal()"><span
+                        data-i18n="optimization.cancel">Cancel·lar</span></button>
             </div>
         </div>
     </div>
@@ -82,8 +86,28 @@
 </body>
 
 <script>
-    const device_types = {{!device_types}}
+    let device_types = {}; // Will be loaded dynamically based on language
     const device_entities = {{!device_entities}}
+
+    /**
+     * Carrega les configuracions dels dispositius segons l'idioma seleccionat
+     */
+    async function loadDeviceTypes(locale) {
+        try {
+            const response = await fetch(`get_device_types/${locale}`);
+            if (!response.ok) {
+                throw new Error(`Failed to load device types for locale ${locale}`);
+            }
+            device_types = await response.json();
+            console.log(`Device types loaded for locale: ${locale}`);
+        } catch (error) {
+            console.error('Error loading device types:', error);
+            // Fallback to Catalan if there's an error
+            if (locale !== 'ca') {
+                await loadDeviceTypes('ca');
+            }
+        }
+    }
 
     function TestOptimization() {
         LoadingSpinner.show();
@@ -96,7 +120,11 @@
      * Funció que es crida en carregar la pàgina.
      * Genera la gràfica d'optimització i crida la funció per a mostrar les configuracions guardades
      */
-    function onLoadPage() {
+    async function onLoadPage() {
+        // Load device types based on current language
+        const currentLocale = localStorage.getItem('locale') || 'ca';
+        await loadDeviceTypes(currentLocale);
+
         const parent_div_scheduler = document.getElementById("scheduler-grid");
         fetch('get_scheduler_data')
             .then(response => response.json())
@@ -179,7 +207,7 @@
         label.id = varId;
 
         const select = document.createElement("select");
-        select.innerHTML = '<option value="">-- Selecciona un sensor --</option>';
+        select.innerHTML = `<option value="">${I18n.get('optimization.select_sensor_placeholder')}</option>`;
         select.name = varId;
         select.id = varId;
 
@@ -315,20 +343,20 @@
 
         // Validar camp "Dispositiu"
         if (name.value.trim() === '') {
-            showErroratSubmit(name, "Selecciona un Dispositiu");
+            showErroratSubmit(name, I18n.get('optimization.error_select_device'));
             valid = false;
         }
 
         // Validar camp "Tipus de Dispositiu"
         if (type.value.trim() === '') {
-            showErroratSubmit(type, "Seleccione el tipus de Dispositiu");
+            showErroratSubmit(type, I18n.get('optimization.error_select_type'));
             valid = false;
         }
 
         //Validar restriccions
         restrictionInputs.forEach(inp => {
             if (inp.value.trim() === '') {
-                showErroratSubmit(inp, "Aquest camp és obligatori");
+                showErroratSubmit(inp, I18n.get('optimization.error_required_field'));
                 valid = false;
             }
         });
@@ -336,7 +364,7 @@
         // validació variables extra
         all_selects.forEach(select => {
             if (select.value.trim() === '') {
-                showErroratSubmit(select, "Seleccione una entitat per a aquesta variable");
+                showErroratSubmit(select, I18n.get('optimization.error_select_entity'));
                 valid = false;
             }
         });
@@ -407,7 +435,7 @@
         });
 
         const deviceSelect = document.getElementById('device-name');
-        deviceSelect.innerHTML = '<option value="">-- Selecciona un dispositiu --</option>';
+        deviceSelect.innerHTML = `<option value="">${I18n.get('optimization.select_device_placeholder')}</option>`;
 
         const sortedDevices = Object.keys(devices).sort((a, b) =>
             a.localeCompare(b, 'ca', { sensitivity: 'base' }));
@@ -496,7 +524,7 @@
                         //region BOTÓ ELIMINAR
                         const delete_button = document.createElement('button');
                         delete_button.className = "btn secondary";
-                        delete_button.innerHTML = 'Eliminar Configuració';
+                        delete_button.innerHTML = I18n.get('optimization.delete_config_btn');
                         delete_button.onclick = async () => {
                             const res = await fetch('delete_optimization_config/' + config_name, {
                                 method: 'POST',
@@ -528,7 +556,7 @@
                             x: dev.timestamps,
                             y: dev.hourly_config,
                             mode: "lines+markers",
-                            name: "Configuració Optimitzada",
+                            name: I18n.get('optimization.chart.opt_config'),
                             line: { color: 'green', width: 3 }
                         };
 
@@ -536,14 +564,14 @@
                             x: dev.timestamps,
                             y: dev.f_up,
                             mode: "lines+markers",
-                            name: "Flexibilitat (+)",
+                            name: I18n.get('optimization.chart.flex_up'),
                             line: { color: 'red', width: 2, dash: 'dot' }
                         };
                         const fDownTrace = {
                             x: dev.timestamps,
                             y: dev.f_down,
                             mode: "lines+markers",
-                            name: "Flexibilitat (-)",
+                            name: I18n.get('optimization.chart.flex_down'),
                             line: { color: 'cyan', width: 2, dash: 'dot' }
                         };
 
@@ -552,19 +580,19 @@
                         if (dev.f_down && dev.f_down.length > 0) traces.push(fDownTrace);
 
                         const layout = {
-                            title: "Configuració i Flexibilitat",
+                            title: I18n.get('optimization.chart.title'),
                             autosize: true,
                             // Posem els fons transparents perquè no es vegi el "div" que sobresurt
                             paper_bgcolor: 'rgba(0,0,0,0)',
                             plot_bgcolor: 'rgba(0,0,0,0)',
                             margin: { l: 50, r: 20, t: 40, b: 60 }, // Marges més ajustats
                             xaxis: {
-                                title: "Hora",
+                                title: I18n.get('optimization.chart.hour'),
                                 tickangle: -45,
                                 gridcolor: '#444' // Color de graella suau per al mode fosc
                             },
                             yaxis: {
-                                title: "Valor",
+                                title: I18n.get('optimization.chart.value'),
                                 gridcolor: '#444'
                             },
                             legend: { orientation: "h", y: -0.3 },
@@ -599,6 +627,21 @@
     }
 
     onLoadPage();
+
+    // Reload configurations when language changes
+    I18n.onLanguageChange(async function (newLocale) {
+        console.log("Language changed to:", newLocale);
+
+        // Reload device types for the new language
+        await loadDeviceTypes(newLocale);
+
+        // Reload saved configurations with new translations
+        const parent_config_div = document.getElementById("optimization-graphs-container");
+        if (parent_config_div) {
+            parent_config_div.innerHTML = '';
+            LoadConfigsSaved();
+        }
+    });
 </script>
 
 </html>
