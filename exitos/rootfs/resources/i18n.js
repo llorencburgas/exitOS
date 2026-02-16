@@ -69,6 +69,15 @@ var I18n = (function () {
                 return null;
             }
         }
+
+        // Support for string formatting with arguments {0}, {1}, etc.
+        if (value && arguments.length > 1) {
+            for (var i = 1; i < arguments.length; i++) {
+                var reg = new RegExp("\\{" + (i - 1) + "\\}", "g");
+                value = value.replace(reg, arguments[i]);
+            }
+        }
+
         return value;
     }
 
