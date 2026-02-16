@@ -129,5 +129,118 @@
         "input_placeholder": "Escribe tu mensaje aquí...",
         "error_process": "Error: No se ha podido procesar la solicitud.",
         "error_contact": "Error: No se ha podido contactar con el servidor."
+    },
+    "forecast_metrics": {
+        "step_name": {
+            "dataframe_preparation": "Preparación DataFrames",
+            "windowing": "Windowing",
+            "temporal_features": "Variables Temporales",
+            "colinearity_removal": "Eliminación Colinearidades",
+            "nan_handling": "Gestión de NaN",
+            "scaling": "Escalado de Datos",
+            "feature_selection": "Selección de Atributos",
+            "model_training": "Entrenamiento del Modelo",
+            "forecast_validation": "Validación Predicciones",
+            "baseline_comparison": "Comparación con Baselines"
+        },
+        "category": {
+            "rows": "Registros",
+            "columns": "Columnas",
+            "nulls": "Nulos",
+            "duplicates": "Duplicados",
+            "coverage": "Cobertura Temporal",
+            "features_created": "Features Nuevas",
+            "features_removed": "Features Eliminadas",
+            "correlation_max": "Correlación Máxima",
+            "mae": "Error Absoluto (MAE)",
+            "rmse": "Error Cuad. (RMSE)",
+            "r2": "Coef. Determinación (R²)",
+            "mape": "Error Percentual (MAPE)",
+            "time": "Tiempo",
+            "reduction": "Reducción",
+            "range": "Rango",
+            "metric": "Métrica"
+        },
+        "status": {
+            "ok": "Estado: OK",
+            "warning": "Estado: WARNING - Revisar este paso"
+        },
+        "warnings": {
+            "too_many_nulls": "Demasiados valores nulos: {0}%",
+            "data_loss": "Posibles datos perdidos: {0} filas por {1} días",
+            "features_diff": "Features creadas ({0}) difieren de lo esperado ({1})",
+            "windowing_nan": "Windowing ha introducido muchos NaN: {0}%",
+            "invalid_day": "Valores incorrectos en 'Día': {0}",
+            "invalid_hour": "Valores incorrectos en 'Hora': {0}",
+            "invalid_month": "Valores incorrectos en 'Mes': {0}",
+            "holiday_percentage": "Porcentaje de festivos inusual: {0}%",
+            "target_removed": "La variable objetivo '{0}' ha sido eliminada!",
+            "correlation_remaining": "Todavía hay correlaciones > {0}: {1}",
+            "too_many_features_removed": "Se han eliminado demasiadas features: {0}%",
+            "excessive_data_loss": "Se han perdido demasiados datos: {0}%",
+            "remaining_nan": "Todavía quedan {0} valores NaN!",
+            "minmax_range": "MinMaxScaler fuera del rango [0,1]: {0}",
+            "standard_mean": "StandardScaler mean != 0: {0}",
+            "standard_std": "StandardScaler std != 1: {0}",
+            "no_features": "No quedan features después de la selección!",
+            "high_reduction": "Reducción muy alta: {0}%",
+            "few_features": "Muy pocas features seleccionadas: {0}",
+            "negative_r2": "R² negativo: el modelo es peor que la media!",
+            "low_r2": "R² bajo: {0} - Modelo poco predictivo",
+            "high_mape": "MAPE muy alto: {0}%",
+            "nan_metrics": "Métricas con valores NaN!",
+            "forecast_rows_mismatch": "Forecast no tiene las filas esperadas: {0} vs {1}",
+            "forecast_outliers": "Muchos outliers en las predicciones: {0}%",
+            "forecast_nan": "Hay valores NaN en las predicciones!",
+            "baseline_fail": "El modelo no supera los baselines simples!",
+            "baseline_improvement_persistence": "Modelo {0}% mejor que persistencia",
+            "baseline_improvement_ma": "Modelo {0}% mejor que media móvil"
+        },
+        "summary": {
+            "title": "RESUMEN DEL PROCESO DE FORECASTING",
+            "steps_completed": "Pasos completados: {0}/{1}",
+            "warnings_count": "Warnings: {0}",
+            "success_rate": "Tasa de éxito: {0}%",
+            "exported": "Métricas exportadas a {0}"
+        },
+        "ui": {
+            "metrics_title": "5. Métricas del Modelo",
+            "performance_title": "Rendimiento del Modelo",
+            "th_metric": "Métrica",
+            "th_value": "Valor",
+            "th_description": "Descripción",
+            "dataset_info_title": "Información del Dataset",
+            "validation_warnings_title": "Validaciones del Proceso",
+            "baselines_title": "Comparación con Baselines:",
+            "improvement_persistence": "Mejora vs Persistencia",
+            "improvement_ma": "Mejora vs Media Móvil",
+            "data_split": "División de datos:",
+            "train_samples": "Train: {0} muestras ({1}%)",
+            "val_samples": "Validation: {0} muestras ({1}%)",
+            "test_samples": "Test: {0} muestras ({1}%)",
+            "merged_dataset": "Dataset fusionado:",
+            "rows": "Filas: {0}",
+            "columns": "Columnas: {0}",
+            "temporal_coverage": "Cobertura temporal: {0} días",
+            "all_validations_passed": "Todas las validaciones han pasado correctamente",
+            "check_step": "Revisar este paso - Puede afectar el rendimiento del modelo"
+        },
+        "labels": {
+            "mae": "MAE",
+            "rmse": "RMSE",
+            "r2": "R²",
+            "mape": "MAPE (%)",
+            "training_time": "Tiempo de entrenamiento"
+        },
+        "descriptions": {
+            "mae": "Mean Absolute Error - Error absoluto medio",
+            "rmse": "Root Mean Squared Error - Raíz del error cuadrático medio",
+            "r2": "Coeficiente de determinación (0-1, más alto mejor)",
+            "mape": "Mean Absolute Percentage Error - Error porcentual absoluto medio",
+            "training_time": "Tiempo total de entrenamiento del modelo"
+        }
+    },
+    "spinner": {
+        "loading": "Procesando...<br>Esto puede tardar un poco."
     }
 }
