@@ -635,7 +635,8 @@
             let modelMetrics = null;
             if (metrics.steps) {
                 for (let step of metrics.steps) {
-                    if (step.step_name === "Entrenament del Model") {
+                    // Check for step_id (new models) or fallback to name (legacy)
+                    if (step.step_id === "model_training" || step.step_name === "Entrenament del Model") {
                         modelMetrics = step.metrics;
                         break;
                     }
@@ -678,7 +679,8 @@
             let baselineMetrics = null;
             if (metrics.steps) {
                 for (let step of metrics.steps) {
-                    if (step.step_name === "Comparació amb Baselines") {
+                    // Check for step_id (new models) or fallback to name (legacy)
+                    if (step.step_id === "baseline_comparison" || step.step_name === "Comparació amb Baselines") {
                         baselineMetrics = step.metrics;
                         break;
                     }
@@ -713,7 +715,8 @@
             // Buscar info de preparació de dataframes
             if (metrics.steps) {
                 for (let step of metrics.steps) {
-                    if (step.step_name === "Preparació DataFrames") {
+                    // Check for step_id (new models) or fallback to name (legacy)
+                    if (step.step_id === "dataframe_preparation" || step.step_name === "Preparació DataFrames") {
                         const m = step.metrics;
                         html += `<li style="margin-top: 10px;"><strong> ${I18n.get('forecast_metrics.ui.merged_dataset') || 'Dataset fusionat:'}</strong></li>`;
                         html += `<li style="margin-left: 20px;">• ${I18n.get('forecast_metrics.ui.rows', m.merged_rows) || `Files: ${m.merged_rows}`}</li>`;
