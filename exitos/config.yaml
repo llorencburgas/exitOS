@@ -38,3 +38,6 @@ ports:
 #url i port de entrada a la webapp (true = /) - port ha de ser on corre el server de bottle
 ingress: true
 ingress_port: 55023
+
+# Network mode host per accedir a serveis del host
+network_mode: host

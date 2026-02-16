@@ -5,6 +5,7 @@
         "database": "Database",
         "create_model": "Create Model",
         "optimization": "Optimization",
+        "llm_chat": "LLM Chat",
         "config": "Configuration"
     },
     "optimization": {
@@ -119,5 +120,14 @@
         "join_community": "Join Community",
         "leave_community": "Leave Community",
         "last_certificates": "Last certificates:"
+    },
+    "chat": {
+        "title": "eXiT Virtual Assistant",
+        "subtitle": "Ask any questions about your configuration or energy optimization.",
+        "header": "eXiT AI",
+        "welcome_message": "Hello! I'm the eXiT virtual assistant. How can I help you today?",
+        "input_placeholder": "Type your message here...",
+        "error_process": "Error: Could not process the request.",
+        "error_contact": "Error: Could not contact the server."
     }
 }

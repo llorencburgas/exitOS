@@ -5,6 +5,7 @@
         "database": "Base de Datos",
         "create_model": "Crear Modelo",
         "optimization": "Optimización",
+        "llm_chat": "Chat LLM",
         "config": "Configuración"
     },
     "optimization": {
@@ -119,5 +120,14 @@
         "join_community": "Unirse Comunidad",
         "leave_community": "Abandonar Comunidad",
         "last_certificates": "Últimos certificados:"
+    },
+    "chat": {
+        "title": "Asistente Virtual eXiT",
+        "subtitle": "Pregunta cualquier duda sobre tu configuración u optimización energética.",
+        "header": "eXiT AI",
+        "welcome_message": "¡Hola! Soy el asistente virtual de eXiT. ¿En qué te puedo ayudar hoy?",
+        "input_placeholder": "Escribe tu mensaje aquí...",
+        "error_process": "Error: No se ha podido procesar la solicitud.",
+        "error_contact": "Error: No se ha podido contactar con el servidor."
     }
 }

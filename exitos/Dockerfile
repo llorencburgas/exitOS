@@ -18,6 +18,8 @@ COPY ./rootfs/www /www/
 COPY ./rootfs/images/ /images/
 COPY ./rootfs/resources/ /resources/
 
+#LLM chat
+COPY ./rootfs/llm /llm/
 
 COPY config.yaml config.yaml
 
