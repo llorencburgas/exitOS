@@ -171,36 +171,24 @@ def config_page():
 @app.route('/optimization')
 def optimization_page():
 
+    # RESTRICCIONS PER A DISPOSITIU
+    config_path = 'resources/optimization_devices.conf'
+    devices_data = {}
+
+    if not os.path.exists(config_path):
+        logger.warning(f"⚠️ - No s'ha trobat el fitxer de configuració: {config_path}")
+    else:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            devices_data = json.load(f)
+
     # DISPOSITIUS I ENTITATS ASSOCIADES
     devices_entities = database.get_devices_info()
 
     current_date = datetime.now().strftime('%d-%m-%Y')
     return template("./www/optimization.html",
                     current_date = current_date,
+                    device_types=json.dumps(devices_data),
                     device_entities = devices_entities)
-
-@app.route('/get_device_types/<locale>')
-def get_device_types(locale='ca'):
-    """Retorna el fitxer de configuració de dispositius segons l'idioma."""
-    # Validar locale per evitar path traversal
-    allowed_locales = ['ca', 'es', 'en']
-    if locale not in allowed_locales:
-        locale = 'ca'  # Default to Catalan
-    
-    config_path = f'resources/optimization_configs/optimization_devices_{locale}.conf'
-    
-    if not os.path.exists(config_path):
-        logger.warning(f"⚠️ - No s'ha trobat el fitxer de configuració: {config_path}")
-        # Fallback to default Catalan config
-        config_path = 'resources/optimization_configs/optimization_devices_ca.conf'
-    
-    try:
-        with open(config_path, 'r', encoding='utf-8') as f:
-            devices_data = json.load(f)
-        return devices_data  # Return dict directly, Bottle will serialize it
-    except Exception as e:
-        logger.error(f"Error carregant configuració de dispositius: {e}")
-        return {}
 
 #endregion PAGE CREATIONS
 
@@ -497,6 +485,7 @@ def train_model():
     sensors_id = config.get("sensorsId")
     scaled = config.get("scaled")
     model_name = config.get("modelName")
+    lang_code = request.forms.get("lang", "ca")
     
     # Obtenir configuració de windowing
     windowing_option = config.get("windowingOption", "default")
@@ -583,7 +572,8 @@ def train_model():
                               extra_sensors_df=extra_sensors_df if extra_sensors_id is not None else None,
                               lat=lat,
                               lon=lon,
-                              look_back=look_back)
+                              look_back=look_back,
+                              lang=lang_code)
     else:
         forecast.create_model(data=sensors_df,
                               sensors_id=sensors_id,
@@ -596,7 +586,8 @@ def train_model():
                               extra_sensors_df= extra_sensors_df if extra_sensors_id is not None else None,
                               lat=lat,
                               lon=lon,
-                              look_back=look_back)
+                              look_back=look_back,
+                              lang=lang_code)
 
     return model_name
 
