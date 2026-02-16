@@ -239,5 +239,8 @@
             "mape": "Mean Absolute Percentage Error",
             "training_time": "Total model training time"
         }
+    },
+    "spinner": {
+        "loading": "Processing...<br>This may take a while."
     }
 }
