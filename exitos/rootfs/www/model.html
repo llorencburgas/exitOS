@@ -50,7 +50,9 @@
             <div class="content-section">
                 <h1 data-i18n="model.title"> Forecast </h1>
 
-                <form action="./submit-model" method="POST" onsubmit="showLoadingSpinner()" class="model-form">
+                <form action="./submit-model" method="POST" onsubmit="return handleFormSubmit(this)" class="model-form">
+                    <!-- Hidden input for language -->
+                    <input type="hidden" name="lang" id="lang-input" value="ca">
 
                     <!--  MODEL ENTRENAT  -->
                     <!--  MODEL ENTRENAT  -->
@@ -321,6 +323,15 @@
 
         function hideLoadingSpinner() {
             LoadingSpinner.hide()
+        }
+
+        function handleFormSubmit(form) {
+            // Set language before submission
+            const currentLang = localStorage.getItem('locale') || 'ca';
+            document.getElementById('lang-input').value = currentLang;
+
+            showLoadingSpinner();
+            return true;
         }
 
         //MODEL CONFIG LOGIC
