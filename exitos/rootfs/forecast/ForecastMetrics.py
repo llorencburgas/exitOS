@@ -49,7 +49,7 @@ class ForecastMetrics:
             return value.format(*args)
         return value
         
-    def log_step(self, step_name, metrics_dict, level="INFO"):
+    def log_step(self, step_name, metrics_dict, level="INFO", step_id=None):
         """
         Registra les mètriques d'un pas específic
         """
@@ -59,6 +59,7 @@ class ForecastMetrics:
             'timestamp': datetime.now().isoformat(),
             'step_number': self.step_counter,
             'step_name': step_name,
+            'step_id': step_id,  # Stable ID for frontend
             'metrics': metrics_dict,
             'status': 'OK' if metrics_dict.get('valid', True) else 'WARNING'
         }
@@ -163,7 +164,7 @@ class ForecastMetrics:
                 metrics['valid'] = False
                 logger.warning(f"⚠️  {self.get_text('warnings.data_loss', metrics['merged_rows'], metrics['temporal_coverage_days'])}")
 
-        self.log_step(self.get_text('step_name.dataframe_preparation'), metrics)
+        self.log_step(self.get_text('step_name.dataframe_preparation'), metrics, step_id='dataframe_preparation')
         return metrics
     
     def validate_windowing(self, original_df, windowed_df, look_back):
@@ -205,7 +206,7 @@ class ForecastMetrics:
         if metrics['nan_percentage'] > 30:
             logger.warning(f"⚠️  {self.get_text('warnings.windowing_nan', metrics['nan_percentage'])}")
         
-        self.log_step(self.get_text('step_name.windowing'), metrics)
+        self.log_step(self.get_text('step_name.windowing'), metrics, step_id='windowing')
         return metrics
     
     def validate_temporal_features(self, df_with_temporal, extra_vars):
@@ -254,7 +255,7 @@ class ForecastMetrics:
             if festius_percentage > 40 or festius_percentage < 5:
                 logger.warning(f"⚠️  {self.get_text('warnings.holiday_percentage', festius_percentage)}")
         
-        self.log_step(self.get_text('step_name.temporal_features'), metrics)
+        self.log_step(self.get_text('step_name.temporal_features'), metrics, step_id='temporal_features')
         return metrics
     
     def validate_colinearity_removal(self, df_before, df_after, removed_cols, y_col, threshold):
@@ -289,7 +290,7 @@ class ForecastMetrics:
         if metrics['reduction_percentage'] > 70:
             logger.warning(f"⚠️  {self.get_text('warnings.too_many_features_removed', metrics['reduction_percentage'])}")
         
-        self.log_step(self.get_text('step_name.colinearity_removal'), metrics)
+        self.log_step(self.get_text('step_name.colinearity_removal'), metrics, step_id='colinearity_removal')
         return metrics
     
     def validate_nan_handling(self, df_before, df_after):
@@ -321,7 +322,7 @@ class ForecastMetrics:
             metrics['valid'] = False
             logger.warning(f"⚠️  {self.get_text('warnings.remaining_nan', nan_after)}")
         
-        self.log_step(self.get_text('step_name.nan_handling'), metrics)
+        self.log_step(self.get_text('step_name.nan_handling'), metrics, step_id='nan_handling')
         return metrics
     
     def validate_scaling(self, df_before, df_after, scaler_name):
@@ -358,7 +359,7 @@ class ForecastMetrics:
         else:
             metrics['status'] = 'No scaling applied'
         
-        self.log_step(self.get_text('step_name.scaling'), metrics)
+        self.log_step(self.get_text('step_name.scaling'), metrics, step_id='scaling')
         return metrics
     
     def validate_feature_selection(self, X_before, X_after, method):
@@ -388,7 +389,7 @@ class ForecastMetrics:
         if features_after < 5 and features_before > 20:
             logger.warning(f"⚠️  {self.get_text('warnings.few_features', features_after)}")
         
-        self.log_step(self.get_text('step_name.feature_selection'), metrics)
+        self.log_step(self.get_text('step_name.feature_selection'), metrics, step_id='feature_selection')
         return metrics
     
     def validate_model_training(self, X, y, y_pred, algorithm, score, training_time, iterations=None):
@@ -430,7 +431,7 @@ class ForecastMetrics:
             metrics['valid'] = False
             logger.error(f"❌ {self.get_text('warnings.nan_metrics')}")
         
-        self.log_step(self.get_text('step_name.model_training'), metrics)
+        self.log_step(self.get_text('step_name.model_training'), metrics, step_id='model_training')
         return metrics
     
     def validate_forecast_output(self, forecast_df, original_df, future_steps):
@@ -473,7 +474,7 @@ class ForecastMetrics:
             metrics['valid'] = False
             logger.error(f"❌ {self.get_text('warnings.forecast_nan')}")
         
-        self.log_step(self.get_text('step_name.forecast_validation'), metrics)
+        self.log_step(self.get_text('step_name.forecast_validation'), metrics, step_id='forecast_validation')
         return metrics
     
     def get_summary(self):
@@ -548,5 +549,5 @@ class ForecastMetrics:
             logger.info(f"✅ {self.get_text('warnings.baseline_improvement_persistence', metrics['improvement_vs_persistence'])}")
             logger.info(f"✅ {self.get_text('warnings.baseline_improvement_ma', metrics['improvement_vs_ma'])}")
         
-        self.log_step(self.get_text('step_name.baseline_comparison'), metrics)
+        self.log_step(self.get_text('step_name.baseline_comparison'), metrics, step_id='baseline_comparison')
         return metrics
