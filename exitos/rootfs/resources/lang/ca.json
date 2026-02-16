@@ -129,5 +129,79 @@
         "input_placeholder": "Escriu el teu missatge aquí...",
         "error_process": "Error: No s'ha pogut processar la sol·licitud.",
         "error_contact": "Error: No s'ha pogut contactar amb el servidor."
+    },
+    "forecast_metrics": {
+        "step_name": {
+            "dataframe_preparation": "Preparació DataFrames",
+            "windowing": "Windowing",
+            "temporal_features": "Variables Temporals",
+            "colinearity_removal": "Eliminació Colinearitats",
+            "nan_handling": "Gestió de NaN",
+            "scaling": "Escalat de Dades",
+            "feature_selection": "Selecció d'Atributs",
+            "model_training": "Entrenament del Model",
+            "forecast_validation": "Validació Prediccions",
+            "baseline_comparison": "Comparació amb Baselines"
+        },
+        "category": {
+            "rows": "Registres",
+            "columns": "Columnes",
+            "nulls": "Nuls",
+            "duplicates": "Duplicats",
+            "coverage": "Cobertura Temporal",
+            "features_created": "Features Noves",
+            "features_removed": "Features Eliminades",
+            "correlation_max": "Correlació Màxima",
+            "mae": "Error Absolut (MAE)",
+            "rmse": "Error Quad. (RMSE)",
+            "r2": "Coef. Determinació (R²)",
+            "mape": "Error Percentual (MAPE)",
+            "time": "Temps",
+            "reduction": "Reducció",
+            "range": "Rang",
+            "metric": "Mètrica"
+        },
+        "status": {
+            "ok": "Status: OK",
+            "warning": "Status: WARNING - Revisar aquest pas"
+        },
+        "warnings": {
+            "too_many_nulls": "Massa valors nuls: {0}%",
+            "data_loss": "Possibles dades perdudes: {0} files per {1} dies",
+            "features_diff": "Features creades ({0}) difereixen de l'esperat ({1})",
+            "windowing_nan": "Windowing ha introduït molts NaN: {0}%",
+            "invalid_day": "Valors incorrectes en 'Dia': {0}",
+            "invalid_hour": "Valors incorrectes en 'Hora': {0}",
+            "invalid_month": "Valors incorrectes en 'Mes': {0}",
+            "holiday_percentage": "Percentatge de festius inusual: {0}%",
+            "target_removed": "La variable objectiu '{0}' ha estat eliminada!",
+            "correlation_remaining": "Encara hi ha correlacions > {0}: {1}",
+            "too_many_features_removed": "S'han eliminat massa features: {0}%",
+            "excessive_data_loss": "S'han perdut massa dades: {0}%",
+            "remaining_nan": "Encara queden {0} valors NaN!",
+            "minmax_range": "MinMaxScaler fora del rang [0,1]: {0}",
+            "standard_mean": "StandardScaler mean != 0: {0}",
+            "standard_std": "StandardScaler std != 1: {0}",
+            "no_features": "No queden features després de la selecció!",
+            "high_reduction": "Reducció molt alta: {0}%",
+            "few_features": "Molt poques features seleccionades: {0}",
+            "negative_r2": "R² negatiu: el model és pitjor que la mitjana!",
+            "low_r2": "R² baix: {0} - Model poc predictiu",
+            "high_mape": "MAPE molt alt: {0}%",
+            "nan_metrics": "Mètriques amb valors NaN!",
+            "forecast_rows_mismatch": "Forecast no té les files esperades: {0} vs {1}",
+            "forecast_outliers": "Molts outliers en les prediccions: {0}%",
+            "forecast_nan": "Hi ha valors NaN en les prediccions!",
+            "baseline_fail": "El model no supera els baselines simples!",
+            "baseline_improvement_persistence": "Model {0}% millor que persistència",
+            "baseline_improvement_ma": "Model {0}% millor que mitjana mòbil"
+        },
+        "summary": {
+            "title": "RESUM DEL PROCÉS DE FORECASTING",
+            "steps_completed": "Passos completats: {0}/{1}",
+            "warnings_count": "Warnings: {0}",
+            "success_rate": "Taxa d'èxit: {0}%",
+            "exported": "Mètriques exportades a {0}"
+        }
     }
 }

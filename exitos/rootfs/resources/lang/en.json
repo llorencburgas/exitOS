@@ -129,5 +129,79 @@
         "input_placeholder": "Type your message here...",
         "error_process": "Error: Could not process the request.",
         "error_contact": "Error: Could not contact the server."
+    },
+    "forecast_metrics": {
+        "step_name": {
+            "dataframe_preparation": "DataFrame Preparation",
+            "windowing": "Windowing",
+            "temporal_features": "Temporal Features",
+            "colinearity_removal": "Colinearity Removal",
+            "nan_handling": "NaN Handling",
+            "scaling": "Data Scaling",
+            "feature_selection": "Feature Selection",
+            "model_training": "Model Training",
+            "forecast_validation": "Forecast Validation",
+            "baseline_comparison": "Baseline Comparison"
+        },
+        "category": {
+            "rows": "Rows",
+            "columns": "Columns",
+            "nulls": "Nulls",
+            "duplicates": "Duplicates",
+            "coverage": "Temporal Coverage",
+            "features_created": "New Features",
+            "features_removed": "Features Removed",
+            "correlation_max": "Max Correlation",
+            "mae": "Absolute Error (MAE)",
+            "rmse": "Squared Error (RMSE)",
+            "r2": "Det. Coefficient (R²)",
+            "mape": "Percentage Error (MAPE)",
+            "time": "Time",
+            "reduction": "Reduction",
+            "range": "Range",
+            "metric": "Metric"
+        },
+        "status": {
+            "ok": "Status: OK",
+            "warning": "Status: WARNING - Check this step"
+        },
+        "warnings": {
+            "too_many_nulls": "Too many null values: {0}%",
+            "data_loss": "Possible data loss: {0} rows for {1} days",
+            "features_diff": "Features created ({0}) differ from expected ({1})",
+            "windowing_nan": "Windowing introduced too many NaNs: {0}%",
+            "invalid_day": "Invalid values in 'Day': {0}",
+            "invalid_hour": "Invalid values in 'Hour': {0}",
+            "invalid_month": "Invalid values in 'Month': {0}",
+            "holiday_percentage": "Unusual holiday percentage: {0}%",
+            "target_removed": "Target variable '{0}' has been removed!",
+            "correlation_remaining": "Correlations > {0} still remain: {1}",
+            "too_many_features_removed": "Too many features removed: {0}%",
+            "excessive_data_loss": "Too much data loss: {0}%",
+            "remaining_nan": "There are still {0} NaN values!",
+            "minmax_range": "MinMaxScaler out of range [0,1]: {0}",
+            "standard_mean": "StandardScaler mean != 0: {0}",
+            "standard_std": "StandardScaler std != 1: {0}",
+            "no_features": "No features left after selection!",
+            "high_reduction": "Very high reduction: {0}%",
+            "few_features": "Very few features selected: {0}",
+            "negative_r2": "Negative R²: model is worse than average!",
+            "low_r2": "Low R²: {0} - Poor predictive model",
+            "high_mape": "Very high MAPE: {0}%",
+            "nan_metrics": "Metrics with NaN values!",
+            "forecast_rows_mismatch": "Forecast does not have expected rows: {0} vs {1}",
+            "forecast_outliers": "Many outliers in predictions: {0}%",
+            "forecast_nan": "NaN values in predictions!",
+            "baseline_fail": "Model does not beat simple baselines!",
+            "baseline_improvement_persistence": "Model {0}% better than persistence",
+            "baseline_improvement_ma": "Model {0}% better than moving average"
+        },
+        "summary": {
+            "title": "FORECASTING PROCESS SUMMARY",
+            "steps_completed": "Steps completed: {0}/{1}",
+            "warnings_count": "Warnings: {0}",
+            "success_rate": "Success rate: {0}%",
+            "exported": "Metrics exported to {0}"
+        }
     }
 }
