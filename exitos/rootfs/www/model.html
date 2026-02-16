@@ -55,7 +55,6 @@
                     <input type="hidden" name="lang" id="lang-input" value="ca">
 
                     <!--  MODEL ENTRENAT  -->
-                    <!--  MODEL ENTRENAT  -->
                     <h3 style="margin-bottom: 0" data-i18n="model.step1_title">1. Selecciona el model entrenat</h3>
                     <small data-i18n="model.optional"> Opcional... </small>
                     <select class="form-select" id="models" name="models" required>
@@ -66,7 +65,7 @@
                         % end
                     </select>
 
-                    <!--  NOM DEL MODEL -->
+
                     <!--  NOM DEL MODEL -->
                     <label class="model-name" for="modelName"><span data-i18n="model.model_name_label">Nom del
                             Model:</span>
@@ -77,7 +76,6 @@
                             placeholder="Escriu el nom...">
                     </label>
 
-                    <!--  SENSOR OBJECTIU  -->
                     <!--  SENSOR OBJECTIU  -->
                     <h3 data-i18n="model.step2_title"> 2. Selecciona el sensor objectiu</h3>
                     <select class="form-select" id="sensorsId" name="sensorsId" required>
@@ -104,7 +102,6 @@
                     <input type="hidden" name="sensors_id" id="sensors-input" value="">
 
 
-                    <!-- CONFIGURAR MODEL -->
                     <!-- CONFIGURAR MODEL -->
                     <h3 data-i18n="model.step4_title">4. Configura el model</h3>
                     <label for="modelSelect"><span data-i18n="model.algorithm_label">Algorisme:</span>
@@ -182,17 +179,20 @@
 
                     <!-- Secció de Mètriques -->
                     <div id="metrics-section" style="display:none; margin-top: 30px;">
-                        <h3>5. Mètriques del Model</h3>
+                        <h3 data-i18n="forecast_metrics.ui.metrics_title">5. Mètriques del Model</h3>
 
                         <!-- Mètriques principals -->
                         <div id="main-metrics" style="margin-bottom: 20px;">
-                            <h4>Rendiment del Model</h4>
+                            <h4 data-i18n="forecast_metrics.ui.performance_title">Rendiment del Model</h4>
                             <table style="width: 100%; border-collapse: collapse;">
                                 <thead>
                                     <tr style="background-color: #f0f0f0;">
-                                        <th style="padding: 8px; border: 1px solid #ddd;">Mètrica</th>
-                                        <th style="padding: 8px; border: 1px solid #ddd;">Valor</th>
-                                        <th style="padding: 8px; border: 1px solid #ddd;">Descripció</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;"
+                                            data-i18n="forecast_metrics.ui.th_metric">Mètrica</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;"
+                                            data-i18n="forecast_metrics.ui.th_value">Valor</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;"
+                                            data-i18n="forecast_metrics.ui.th_description">Descripció</th>
                                     </tr>
                                 </thead>
                                 <tbody id="metrics-table-body">
@@ -202,13 +202,13 @@
 
                         <!-- Informació del dataset -->
                         <div id="dataset-info" style="margin-bottom: 20px;">
-                            <h4>Informació del Dataset</h4>
+                            <h4 data-i18n="forecast_metrics.ui.dataset_info_title">Informació del Dataset</h4>
                             <div id="dataset-info-content"></div>
                         </div>
 
                         <!-- Warnings i errors -->
                         <div id="validation-warnings" style="margin-bottom: 20px;">
-                            <h4>Validacions del Procés</h4>
+                            <h4 data-i18n="forecast_metrics.ui.validation_warnings_title">Validacions del Procés</h4>
                             <div id="warnings-content"></div>
                         </div>
                     </div>
@@ -644,10 +644,10 @@
 
             if (modelMetrics) {
                 const metricsToShow = [
-                    { key: 'mae', label: 'MAE', description: 'Mean Absolute Error - Error absolut mitjà' },
-                    { key: 'rmse', label: 'RMSE', description: 'Root Mean Squared Error - Arrel de l\'error quadràtic mitjà' },
-                    { key: 'r2_score', label: 'R²', description: 'Coeficient de determinació (0-1, més alt millor)' },
-                    { key: 'mape', label: 'MAPE (%)', description: 'Mean Absolute Percentage Error - Error percentual absolut mitjà' }
+                    { key: 'mae', label: I18n.get('forecast_metrics.labels.mae') || 'MAE', description: I18n.get('forecast_metrics.descriptions.mae') || 'Mean Absolute Error' },
+                    { key: 'rmse', label: I18n.get('forecast_metrics.labels.rmse') || 'RMSE', description: I18n.get('forecast_metrics.descriptions.rmse') || 'Root Mean Squared Error' },
+                    { key: 'r2_score', label: I18n.get('forecast_metrics.labels.r2') || 'R²', description: I18n.get('forecast_metrics.descriptions.r2') || 'Coeficient de determinació' },
+                    { key: 'mape', label: I18n.get('forecast_metrics.labels.mape') || 'MAPE (%)', description: I18n.get('forecast_metrics.descriptions.mape') || 'Mean Absolute Percentage Error' }
                 ];
 
                 metricsToShow.forEach(metric => {
@@ -666,9 +666,9 @@
                 if (modelMetrics.training_time_seconds) {
                     const row = document.createElement("tr");
                     row.innerHTML = `
-                        <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Temps d'entrenament</td>
+                        <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">${I18n.get('forecast_metrics.labels.training_time') || "Temps d'entrenament"}</td>
                         <td style="padding: 8px; border: 1px solid #ddd;">${modelMetrics.training_time_seconds}s</td>
-                        <td style="padding: 8px; border: 1px solid #ddd; font-size: 0.9em;">Temps total d'entrenament del model</td>
+                        <td style="padding: 8px; border: 1px solid #ddd; font-size: 0.9em;">${I18n.get('forecast_metrics.descriptions.training_time') || "Temps total d'entrenament del model"}</td>
                     `;
                     tableBody.appendChild(row);
                 }
@@ -690,9 +690,9 @@
                 row.style.backgroundColor = "#e8f5e9";
                 row.innerHTML = `
                     <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;" colspan="3">
-                        <strong>Comparació amb Baselines:</strong><br>
-                            Millora vs Persistència: ${baselineMetrics.improvement_vs_persistence}%<br>
-                            Millora vs Mitjana Mòbil: ${baselineMetrics.improvement_vs_ma}%
+                        <strong>${I18n.get('forecast_metrics.ui.baselines_title') || 'Comparació amb Baselines:'}</strong><br>
+                            ${I18n.get('forecast_metrics.ui.improvement_persistence') || 'Millora vs Persistència'}: ${baselineMetrics.improvement_vs_persistence}%<br>
+                            ${I18n.get('forecast_metrics.ui.improvement_ma') || 'Millora vs Mitjana Mòbil'}: ${baselineMetrics.improvement_vs_ma}%
                     </td>
                 `;
                 tableBody.appendChild(row);
@@ -704,10 +704,10 @@
             let html = "<ul style='list-style: none; padding-left: 0;'>";
 
             if (trainValTest) {
-                html += `<li><strong>  Divisió de dades:</strong></li>`;
-                html += `<li style="margin-left: 20px;">• Train: ${trainValTest.train_size} mostres (60%)</li>`;
-                html += `<li style="margin-left: 20px;">• Validation: ${trainValTest.val_size} mostres (20%)</li>`;
-                html += `<li style="margin-left: 20px;">• Test: ${trainValTest.test_size} mostres (20%)</li>`;
+                html += `<li><strong>  ${I18n.get('forecast_metrics.ui.data_split') || 'Divisió de dades:'}</strong></li>`;
+                html += `<li style="margin-left: 20px;">• ${I18n.get('forecast_metrics.ui.train_samples', trainValTest.train_size, 60) || `Train: ${trainValTest.train_size} mostres (60%)`}</li>`;
+                html += `<li style="margin-left: 20px;">• ${I18n.get('forecast_metrics.ui.val_samples', trainValTest.val_size, 20) || `Validation: ${trainValTest.val_size} mostres (20%)`}</li>`;
+                html += `<li style="margin-left: 20px;">• ${I18n.get('forecast_metrics.ui.test_samples', trainValTest.test_size, 20) || `Test: ${trainValTest.test_size} mostres (20%)`}</li>`;
             }
 
             // Buscar info de preparació de dataframes
@@ -715,10 +715,10 @@
                 for (let step of metrics.steps) {
                     if (step.step_name === "Preparació DataFrames") {
                         const m = step.metrics;
-                        html += `<li style="margin-top: 10px;"><strong> Dataset fusionat:</strong></li>`;
-                        html += `<li style="margin-left: 20px;">• Files: ${m.merged_rows}</li>`;
-                        html += `<li style="margin-left: 20px;">• Columnes: ${m.merged_columns}</li>`;
-                        html += `<li style="margin-left: 20px;">• Cobertura temporal: ${m.temporal_coverage_days} dies</li>`;
+                        html += `<li style="margin-top: 10px;"><strong> ${I18n.get('forecast_metrics.ui.merged_dataset') || 'Dataset fusionat:'}</strong></li>`;
+                        html += `<li style="margin-left: 20px;">• ${I18n.get('forecast_metrics.ui.rows', m.merged_rows) || `Files: ${m.merged_rows}`}</li>`;
+                        html += `<li style="margin-left: 20px;">• ${I18n.get('forecast_metrics.ui.columns', m.merged_columns) || `Columnes: ${m.merged_columns}`}</li>`;
+                        html += `<li style="margin-left: 20px;">• ${I18n.get('forecast_metrics.ui.temporal_coverage', m.temporal_coverage_days) || `Cobertura temporal: ${m.temporal_coverage_days} dies`}</li>`;
                         break;
                     }
                 }
@@ -739,7 +739,7 @@
                         hasWarnings = true;
                         html += `<div style="background-color: #fff3cd; padding: 10px; margin-bottom: 10px; border-left: 4px solid #ffc107;">`;
                         html += `<strong>⚠️ ${step.step_name}</strong><br>`;
-                        html += `<small>Revisar aquest pas - Pot afectar el rendiment del model</small>`;
+                        html += `<small>${I18n.get('forecast_metrics.ui.check_step') || 'Revisar aquest pas - Pot afectar el rendiment del model'}</small>`;
                         html += `</div>`;
                     }
                 });
@@ -747,7 +747,7 @@
 
             if (!hasWarnings) {
                 html = `<div style="background-color: #d4edda; padding: 10px; border-left: 4px solid #28a745;">`;
-                html += `<strong>Totes les validacions han passat correctament</strong>`;
+                html += `<strong>${I18n.get('forecast_metrics.ui.all_validations_passed') || 'Totes les validacions han passat correctament'}</strong>`;
                 html += `</div>`;
             }
 
