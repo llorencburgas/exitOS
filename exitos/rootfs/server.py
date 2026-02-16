@@ -513,6 +513,7 @@ def train_model():
     if 'windowingOption' in config: config.pop('windowingOption')
     if 'windowStart' in config: config.pop('windowStart')
     if 'windowEnd' in config: config.pop('windowEnd')
+    if 'lang' in config: config.pop('lang')
 
     if "meteoData" in config:
         meteo_data = True
