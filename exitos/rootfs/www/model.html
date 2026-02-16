@@ -761,6 +761,16 @@
             displayMetrics(modelPath);
         };
 
+        // Re-render metrics when language changes
+        I18n.onLanguageChange(function (lang) {
+            const currentModel = document.getElementById("models").value;
+            // Remove extension for displayMetrics if present, as it expects filename
+            const modelName = currentModel.replace('.pkl', '');
+            if (modelName && modelName !== 'newModel') {
+                displayMetrics(modelName);
+            }
+        });
+
 
 
 
