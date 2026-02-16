@@ -171,36 +171,24 @@ def config_page():
 @app.route('/optimization')
 def optimization_page():
 
+    # RESTRICCIONS PER A DISPOSITIU
+    config_path = 'resources/optimization_devices.conf'
+    devices_data = {}
+
+    if not os.path.exists(config_path):
+        logger.warning(f"⚠️ - No s'ha trobat el fitxer de configuració: {config_path}")
+    else:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            devices_data = json.load(f)
+
     # DISPOSITIUS I ENTITATS ASSOCIADES
     devices_entities = database.get_devices_info()
 
     current_date = datetime.now().strftime('%d-%m-%Y')
     return template("./www/optimization.html",
                     current_date = current_date,
+                    device_types=json.dumps(devices_data),
                     device_entities = devices_entities)
-
-@app.route('/get_device_types/<locale>')
-def get_device_types(locale='ca'):
-    """Retorna el fitxer de configuració de dispositius segons l'idioma."""
-    # Validar locale per evitar path traversal
-    allowed_locales = ['ca', 'es', 'en']
-    if locale not in allowed_locales:
-        locale = 'ca'  # Default to Catalan
-    
-    config_path = f'resources/optimization_configs/optimization_devices_{locale}.conf'
-    
-    if not os.path.exists(config_path):
-        logger.warning(f"⚠️ - No s'ha trobat el fitxer de configuració: {config_path}")
-        # Fallback to default Catalan config
-        config_path = 'resources/optimization_configs/optimization_devices_ca.conf'
-    
-    try:
-        with open(config_path, 'r', encoding='utf-8') as f:
-            devices_data = json.load(f)
-        return devices_data  # Return dict directly, Bottle will serialize it
-    except Exception as e:
-        logger.error(f"Error carregant configuració de dispositius: {e}")
-        return {}
 
 #endregion PAGE CREATIONS
 
@@ -497,6 +485,7 @@ def train_model():
     sensors_id = config.get("sensorsId")
     scaled = config.get("scaled")
     model_name = config.get("modelName")
+    lang_code = request.forms.get("lang", "ca")
     
     # Obtenir configuració de windowing
     windowing_option = config.get("windowingOption", "default")
@@ -524,6 +513,7 @@ def train_model():
     if 'windowingOption' in config: config.pop('windowingOption')
     if 'windowStart' in config: config.pop('windowStart')
     if 'windowEnd' in config: config.pop('windowEnd')
+    if 'lang' in config: config.pop('lang')
 
     if "meteoData" in config:
         meteo_data = True
@@ -583,7 +573,8 @@ def train_model():
                               extra_sensors_df=extra_sensors_df if extra_sensors_id is not None else None,
                               lat=lat,
                               lon=lon,
-                              look_back=look_back)
+                              look_back=look_back,
+                              lang=lang_code)
     else:
         forecast.create_model(data=sensors_df,
                               sensors_id=sensors_id,
@@ -596,7 +587,8 @@ def train_model():
                               extra_sensors_df= extra_sensors_df if extra_sensors_id is not None else None,
                               lat=lat,
                               lon=lon,
-                              look_back=look_back)
+                              look_back=look_back,
+                              lang=lang_code)
 
     return model_name
 
@@ -1279,5 +1271,21 @@ def main():
 # Executem la funció main
 if __name__ == "__main__":
     logger.info("🌳 ExitOS Iniciat")
-    llm_engine.init_routes(app, logger)
+    
+    # Debug: Verificar importació i inicialització LLM
+    try:
+        logger.info("📦 Verificant mòdul llm_engine...")
+        logger.info(f"   - Mòdul llm_engine: {llm_engine}")
+        logger.info(f"   - Funció init_routes: {llm_engine.init_routes}")
+        logger.info("🔌 Cridant llm_engine.init_routes(app, logger)...")
+        llm_engine.init_routes(app, logger)
+        logger.info("✅ llm_engine.init_routes completat amb èxit")
+    except AttributeError as e:
+        logger.error(f"❌ Error: init_routes no existeix al mòdul llm_engine: {e}")
+        logger.error(traceback.format_exc())
+    except Exception as e:
+        logger.error(f"❌ Error inicialitzant rutes LLM: {e}")
+        logger.error(traceback.format_exc())
+    
     main()
+

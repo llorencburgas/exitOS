@@ -39,5 +39,15 @@ ports:
 ingress: true
 ingress_port: 55023
 
-# Network mode host per accedir a serveis del host
+# Network mode host per accedir a serveis del host (com Ollama)
 network_mode: host
+
+# Opcions configurables per l'usuari
+options:
+  ollama_url: "http://localhost:11434"
+  ollama_model: "llama3.1:latest"
+
+# Schema per validar les opcions
+schema:
+  ollama_url: str?
+  ollama_model: str?

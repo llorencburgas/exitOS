@@ -215,8 +215,7 @@
 
         <div class="chat-input-area">
             <input type="text" id="userInput" class="chat-input" placeholder="Escriu el teu missatge aquí..."
-                data-i18n="chat.input_placeholder"
-                onkeypress="handleKeyPress(event)" autocomplete="off">
+                data-i18n="chat.input_placeholder" onkeypress="handleKeyPress(event)" autocomplete="off">
             <button class="send-btn" id="sendBtn" onclick="sendMessage()">
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
@@ -242,6 +241,9 @@
         input.disabled = true;
         loadingIndicator.classList.add('show');
 
+        console.log('🚀 Enviant missatge:', messageText);
+        console.log('📍 URL:', '/llm_response');
+
         // Enviar al backend
         fetch('/llm_response', {
             method: 'POST',
@@ -250,8 +252,15 @@
             },
             body: JSON.stringify({ message: messageText })
         })
-            .then(response => response.json())
+            .then(response => {
+                console.log('📡 Resposta rebuda:', response.status, response.statusText);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log('✅ Dades processades:', data);
                 loadingIndicator.classList.remove('show');
 
                 if (data.status === 'ok') {
@@ -262,8 +271,16 @@
             })
             .catch(error => {
                 loadingIndicator.classList.remove('show');
-                console.error('Error:', error);
-                addMessage(I18n.get('chat.error_contact') || "Error: No s'ha pogut contactar amb el servidor.", 'llm');
+                console.error('❌ Error complet:', error);
+                console.error('   - Tipus:', error.name);
+                console.error('   - Missatge:', error.message);
+                console.error('   - Stack:', error.stack);
+
+                let errorMsg = I18n.get('chat.error_contact') || "Error: No s'ha pogut contactar amb el servidor.";
+                if (error.message.includes('HTTP error')) {
+                    errorMsg += ` (${error.message})`;
+                }
+                addMessage(errorMsg, 'llm');
             })
             .finally(() => {
                 // Reactivar controls

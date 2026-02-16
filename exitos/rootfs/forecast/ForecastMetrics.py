@@ -13,12 +13,43 @@ class ForecastMetrics:
     Sistema de mètriques i validació per al procés de forecasting
     """
     
-    def __init__(self, debug=True):
+    def __init__(self, debug=True, lang='ca'):
         self.debug = debug
         self.metrics_log = []
         self.step_counter = 0
+        self.lang = lang
+        self.translations = self.load_locale(lang)
+
+    def load_locale(self, lang):
+        """
+        Carrega el fitxer d'idioma corresponent
+        """
+        try:
+            # Assumim que la ruta és relativa a on s'executa el server
+            with open(f"resources/lang/{lang}.json", 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get('forecast_metrics', {})
+        except Exception as e:
+            logger.warning(f"⚠️ No s'ha pogut carregar l'idioma {lang}: {e}. Usant valors per defecte.")
+            return {}
+
+    def get_text(self, key, *args):
+        """
+        Recupera el text traduït segons la clau (dot notation)
+        """
+        keys = key.split('.')
+        value = self.translations
         
-    def log_step(self, step_name, metrics_dict, level="INFO"):
+        for k in keys:
+            value = value.get(k, None)
+            if value is None:
+                return key # Retorna la clau si no troba traducció
+        
+        if args:
+            return value.format(*args)
+        return value
+        
+    def log_step(self, step_name, metrics_dict, level="INFO", step_id=None):
         """
         Registra les mètriques d'un pas específic
         """
@@ -28,6 +59,7 @@ class ForecastMetrics:
             'timestamp': datetime.now().isoformat(),
             'step_number': self.step_counter,
             'step_name': step_name,
+            'step_id': step_id,  # Stable ID for frontend
             'metrics': metrics_dict,
             'status': 'OK' if metrics_dict.get('valid', True) else 'WARNING'
         }
@@ -80,27 +112,27 @@ class ForecastMetrics:
         Retorna la categoria apropiada segons la mètrica
         """
         category_map = {
-            'rows': 'Registres',
-            'columns': 'Columnes',
-            'nulls': 'Nuls',
-            'duplicates': 'Duplicats',
-            'coverage': 'Cobertura Temporal',
-            'features_created': 'Features Noves',
-            'features_removed': 'Features Eliminades',
-            'correlation_max': 'Correlació Màxima',
-            'mae': 'Error Absolut (MAE)',
-            'rmse': 'Error Quad. (RMSE)',
-            'r2': 'Coef. Determinació (R²)',
-            'mape': 'Error Percentual (MAPE)',
-            'time': 'Temps',
-            'reduction': 'Reducció',
-            'range': 'Rang'
+            'rows': self.get_text('category.rows'),
+            'columns': self.get_text('category.columns'),
+            'nulls': self.get_text('category.nulls'),
+            'duplicates': self.get_text('category.duplicates'),
+            'coverage': self.get_text('category.coverage'),
+            'features_created': self.get_text('category.features_created'),
+            'features_removed': self.get_text('category.features_removed'),
+            'correlation_max': self.get_text('category.correlation_max'),
+            'mae': self.get_text('category.mae'),
+            'rmse': self.get_text('category.rmse'),
+            'r2': self.get_text('category.r2'),
+            'mape': self.get_text('category.mape'),
+            'time': self.get_text('category.time'),
+            'reduction': self.get_text('category.reduction'),
+            'range': self.get_text('category.range')
         }
         
         for key, category in category_map.items():
             if key in metric_name.lower():
                 return category
-        return 'Mètrica'
+        return self.get_text('category.metric')
     
     def validate_dataframe_preparation(self, sensor_df, meteo_df, extra_sensors, merged_df):
         """
@@ -120,7 +152,7 @@ class ForecastMetrics:
         # Validacions
         if metrics['null_percentage'] > 50:
             metrics['valid'] = False
-            logger.warning(f"⚠️  Massa valors nuls: {metrics['null_percentage']}%")
+            logger.warning(f"⚠️  {self.get_text('warnings.too_many_nulls', metrics['null_percentage'])}")
         
         # Validació ajustada per suportar resampling (e.g. minuts -> hores)
         # En lloc de mirar rows bruts, mirem si tenim prou files per la cobertura temporal (aprox 24 per dia)
@@ -130,9 +162,9 @@ class ForecastMetrics:
              # Només disparem warning si també es perd molt respecte l'original (per si l'original ja era horari)
              if metrics['merged_rows'] < metrics['sensor_rows'] * 0.5:
                 metrics['valid'] = False
-                logger.warning(f"⚠️  Possibles dades perdudes: {metrics['merged_rows']} files per {metrics['temporal_coverage_days']} dies")
+                logger.warning(f"⚠️  {self.get_text('warnings.data_loss', metrics['merged_rows'], metrics['temporal_coverage_days'])}")
 
-        self.log_step("Preparació DataFrames", metrics)
+        self.log_step(self.get_text('step_name.dataframe_preparation'), metrics, step_id='dataframe_preparation')
         return metrics
     
     def validate_windowing(self, original_df, windowed_df, look_back):
@@ -169,12 +201,12 @@ class ForecastMetrics:
         # Validacions
         if abs(new_features - expected_features) > 5:
             metrics['valid'] = False
-            logger.warning(f"⚠️  Features creades ({new_features}) difereixen de l'esperat ({expected_features})")
+            logger.warning(f"⚠️  {self.get_text('warnings.features_diff', new_features, expected_features)}")
         
         if metrics['nan_percentage'] > 30:
-            logger.warning(f"⚠️  Windowing ha introduït molts NaN: {metrics['nan_percentage']}%")
+            logger.warning(f"⚠️  {self.get_text('warnings.windowing_nan', metrics['nan_percentage'])}")
         
-        self.log_step("Windowing", metrics)
+        self.log_step(self.get_text('step_name.windowing'), metrics, step_id='windowing')
         return metrics
     
     def validate_temporal_features(self, df_with_temporal, extra_vars):
@@ -197,21 +229,21 @@ class ForecastMetrics:
                         metrics['dia_range'] = f"[{min(unique_vals)}, {max(unique_vals)}]"
                         if not all(0 <= v <= 6 for v in unique_vals):
                             metrics['valid'] = False
-                            logger.warning(f"⚠️  Valors incorrectes en 'Dia': {unique_vals}")
+                            logger.warning(f"⚠️  {self.get_text('warnings.invalid_day', unique_vals)}")
                     
                     elif var == 'Hora':
                         unique_vals = df_with_temporal['Hora'].unique()
                         metrics['hora_range'] = f"[{min(unique_vals)}, {max(unique_vals)}]"
                         if not all(0 <= v <= 23 for v in unique_vals):
                             metrics['valid'] = False
-                            logger.warning(f"⚠️  Valors incorrectes en 'Hora': {unique_vals}")
+                            logger.warning(f"⚠️  {self.get_text('warnings.invalid_hour', unique_vals)}")
                     
                     elif var == 'Mes':
                         unique_vals = df_with_temporal['Mes'].unique()
                         metrics['mes_range'] = f"[{min(unique_vals)}, {max(unique_vals)}]"
                         if not all(1 <= v <= 12 for v in unique_vals):
                             metrics['valid'] = False
-                            logger.warning(f"⚠️  Valors incorrectes en 'Mes': {unique_vals}")
+                            logger.warning(f"⚠️  {self.get_text('warnings.invalid_month', unique_vals)}")
         
         # Validar festius
         if 'festius' in extra_vars and 'festius' in df_with_temporal.columns:
@@ -221,9 +253,9 @@ class ForecastMetrics:
             metrics['festius_percentage'] = festius_percentage
             
             if festius_percentage > 40 or festius_percentage < 5:
-                logger.warning(f"⚠️  Percentatge de festius inusual: {festius_percentage}%")
+                logger.warning(f"⚠️  {self.get_text('warnings.holiday_percentage', festius_percentage)}")
         
-        self.log_step("Variables Temporals", metrics)
+        self.log_step(self.get_text('step_name.temporal_features'), metrics, step_id='temporal_features')
         return metrics
     
     def validate_colinearity_removal(self, df_before, df_after, removed_cols, y_col, threshold):
@@ -250,15 +282,15 @@ class ForecastMetrics:
         # Validacions
         if not metrics['y_preserved']:
             metrics['valid'] = False
-            logger.error(f"❌ La variable objectiu '{y_col}' ha estat eliminada!")
+            logger.error(f"❌ {self.get_text('warnings.target_removed', y_col)}")
         
         if max_corr_remaining > threshold:
-            logger.warning(f"⚠️  Encara hi ha correlacions > {threshold}: {max_corr_remaining:.4f}")
+            logger.warning(f"⚠️  {self.get_text('warnings.correlation_remaining', threshold, f'{max_corr_remaining:.4f}')}")
         
         if metrics['reduction_percentage'] > 70:
-            logger.warning(f"⚠️  S'han eliminat massa features: {metrics['reduction_percentage']}%")
+            logger.warning(f"⚠️  {self.get_text('warnings.too_many_features_removed', metrics['reduction_percentage'])}")
         
-        self.log_step("Eliminació Colinearitats", metrics)
+        self.log_step(self.get_text('step_name.colinearity_removal'), metrics, step_id='colinearity_removal')
         return metrics
     
     def validate_nan_handling(self, df_before, df_after):
@@ -284,13 +316,13 @@ class ForecastMetrics:
         # Validacions
         if metrics['data_loss_percentage'] > 30:
             metrics['valid'] = False
-            logger.warning(f"⚠️  S'han perdut massa dades: {metrics['data_loss_percentage']}%")
+            logger.warning(f"⚠️  {self.get_text('warnings.excessive_data_loss', metrics['data_loss_percentage'])}")
         
         if nan_after > 0:
             metrics['valid'] = False
-            logger.warning(f"⚠️  Encara queden {nan_after} valors NaN!")
+            logger.warning(f"⚠️  {self.get_text('warnings.remaining_nan', nan_after)}")
         
-        self.log_step("Gestió de NaN", metrics)
+        self.log_step(self.get_text('step_name.nan_handling'), metrics, step_id='nan_handling')
         return metrics
     
     def validate_scaling(self, df_before, df_after, scaler_name):
@@ -317,17 +349,17 @@ class ForecastMetrics:
             if scaler_name == 'minmax':
                 if metrics['min'] < -0.01 or metrics['max'] > 1.01:
                     metrics['valid'] = False
-                    logger.warning(f"⚠️  MinMaxScaler fora del rang [0,1]: {metrics['range']}")
+                    logger.warning(f"⚠️  {self.get_text('warnings.minmax_range', metrics['range'])}")
             
             elif scaler_name == 'standard':
                 if abs(metrics['mean']) > 0.1:
-                    logger.warning(f"⚠️  StandardScaler mean != 0: {metrics['mean']}")
+                    logger.warning(f"⚠️  {self.get_text('warnings.standard_mean', metrics['mean'])}")
                 if abs(metrics['std'] - 1.0) > 0.1:
-                    logger.warning(f"⚠️  StandardScaler std != 1: {metrics['std']}")
+                    logger.warning(f"⚠️  {self.get_text('warnings.standard_std', metrics['std'])}")
         else:
             metrics['status'] = 'No scaling applied'
         
-        self.log_step("Escalat de Dades", metrics)
+        self.log_step(self.get_text('step_name.scaling'), metrics, step_id='scaling')
         return metrics
     
     def validate_feature_selection(self, X_before, X_after, method):
@@ -349,15 +381,15 @@ class ForecastMetrics:
         # Validacions
         if features_after == 0:
             metrics['valid'] = False
-            logger.error(f"❌ No queden features després de la selecció!")
+            logger.error(f"❌ {self.get_text('warnings.no_features')}")
         
         if metrics['reduction_percentage'] > 90:
-            logger.warning(f"⚠️  Reducció molt alta: {metrics['reduction_percentage']}%")
+            logger.warning(f"⚠️  {self.get_text('warnings.high_reduction', metrics['reduction_percentage'])}")
         
         if features_after < 5 and features_before > 20:
-            logger.warning(f"⚠️  Molt poques features seleccionades: {features_after}")
+            logger.warning(f"⚠️  {self.get_text('warnings.few_features', features_after)}")
         
-        self.log_step("Selecció d'Atributs", metrics)
+        self.log_step(self.get_text('step_name.feature_selection'), metrics, step_id='feature_selection')
         return metrics
     
     def validate_model_training(self, X, y, y_pred, algorithm, score, training_time, iterations=None):
@@ -387,19 +419,19 @@ class ForecastMetrics:
         # Validacions
         if r2 < 0:
             metrics['valid'] = False
-            logger.warning(f"⚠️  R² negatiu: el model és pitjor que la mitjana!")
+            logger.warning(f"⚠️  {self.get_text('warnings.negative_r2')}")
         
         if r2 < 0.3:
-            logger.warning(f"⚠️  R² baix: {r2:.4f} - Model poc predictiu")
+            logger.warning(f"⚠️  {self.get_text('warnings.low_r2', f'{r2:.4f}')}")
         
         if mape > 50:
-            logger.warning(f"⚠️  MAPE molt alt: {mape:.2f}%")
+            logger.warning(f"⚠️  {self.get_text('warnings.high_mape', f'{mape:.2f}')}")
         
         if np.isnan(mae) or np.isnan(rmse):
             metrics['valid'] = False
-            logger.error(f"❌ Mètriques amb valors NaN!")
+            logger.error(f"❌ {self.get_text('warnings.nan_metrics')}")
         
-        self.log_step("Entrenament del Model", metrics)
+        self.log_step(self.get_text('step_name.model_training'), metrics, step_id='model_training')
         return metrics
     
     def validate_forecast_output(self, forecast_df, original_df, future_steps):
@@ -433,16 +465,16 @@ class ForecastMetrics:
         # Validacions
         if len(forecast_df) != future_steps:
             metrics['valid'] = False
-            logger.warning(f"⚠️  Forecast no té les files esperades: {len(forecast_df)} vs {future_steps}")
+            logger.warning(f"⚠️  {self.get_text('warnings.forecast_rows_mismatch', len(forecast_df), future_steps)}")
         
         if metrics['outliers_percentage'] > 10:
-            logger.warning(f"⚠️  Molts outliers en les prediccions: {metrics['outliers_percentage']}%")
+            logger.warning(f"⚠️  {self.get_text('warnings.forecast_outliers', metrics['outliers_percentage'])}")
         
         if forecast_df.isnull().sum().sum() > 0:
             metrics['valid'] = False
-            logger.error(f"❌ Hi ha valors NaN en les prediccions!")
+            logger.error(f"❌ {self.get_text('warnings.forecast_nan')}")
         
-        self.log_step("Validació Prediccions", metrics)
+        self.log_step(self.get_text('step_name.forecast_validation'), metrics, step_id='forecast_validation')
         return metrics
     
     def get_summary(self):
@@ -461,11 +493,11 @@ class ForecastMetrics:
         }
         
         logger.info("\n" + "=" * 80)
-        logger.info("RESUM DEL PROCÉS DE FORECASTING")
+        logger.info(self.get_text('summary.title'))
         logger.info("=" * 80)
-        logger.info(f"  ✅ Passos completats: {valid_steps}/{total_steps}")
-        logger.info(f"  ⚠️  Warnings: {total_steps - valid_steps}")
-        logger.info(f"  🎯 Taxa d'èxit: {summary['success_rate']}%")
+        logger.info(f"  ✅ {self.get_text('summary.steps_completed', valid_steps, total_steps)}")
+        logger.info(f"  ⚠️  {self.get_text('summary.warnings_count', total_steps - valid_steps)}")
+        logger.info(f"  🎯 {self.get_text('summary.success_rate', summary['success_rate'])}")
         logger.info("=" * 80 + "\n")
         
         return summary
@@ -477,7 +509,7 @@ class ForecastMetrics:
         with open(filename, 'w') as f:
             json.dump(self.metrics_log, f, indent=2)
         
-        logger.info(f"📊 Mètriques exportades a {filename}")
+        logger.info(f"📊 {self.get_text('summary.exported', filename)}")
         
     def compare_with_baseline(self, y_true, y_pred_model, last_history_value=None):
         """
@@ -512,10 +544,10 @@ class ForecastMetrics:
         }
         
         if not metrics['valid']:
-            logger.warning(f"⚠️  El model no supera els baselines simples!")
+            logger.warning(f"⚠️  {self.get_text('warnings.baseline_fail')}")
         else:
-            logger.info(f"✅ Model {metrics['improvement_vs_persistence']}% millor que persistència")
-            logger.info(f"✅ Model {metrics['improvement_vs_ma']}% millor que mitjana mòbil")
+            logger.info(f"✅ {self.get_text('warnings.baseline_improvement_persistence', metrics['improvement_vs_persistence'])}")
+            logger.info(f"✅ {self.get_text('warnings.baseline_improvement_ma', metrics['improvement_vs_ma'])}")
         
-        self.log_step("Comparació amb Baselines", metrics)
+        self.log_step(self.get_text('step_name.baseline_comparison'), metrics, step_id='baseline_comparison')
         return metrics
