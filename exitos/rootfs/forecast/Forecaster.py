@@ -492,7 +492,7 @@ class Forecaster:
 
     def create_model(self, data, sensors_id, y, lat, lon, algorithm=None, params=None, escalat=None,
                          max_time=None, filename='newModel', meteo_data: pd.DataFrame = None, extra_sensors_df=None,
-                         look_back=None):
+                         look_back=None, lang='ca'):
         """
         Funció per crear, guardar i configurar el model de forecasting.
 
@@ -513,7 +513,7 @@ class Forecaster:
         """
         
         # Reiniciar mètriques per a aquest model
-        self.metrics = ForecastMetrics(debug=self.debug)
+        self.metrics = ForecastMetrics(debug=self.debug, lang=lang)
 
         extra_vars = {'variables': ['Dia', 'Hora', 'Mes'], 'festius': ['ES', 'CT']}
         feature_selection = 'Tree'
