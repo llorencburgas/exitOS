@@ -1,4 +1,4 @@
 *.pkl
 exitos/rootfs/dades.db
 /.idea
-/.idea
+/exitos/rootfs/share/

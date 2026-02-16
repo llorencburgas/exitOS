@@ -117,22 +117,16 @@
 
   </main>
 
-  <script id="user-locked-data" type="application/json">
-{{ 'true' if user_data['locked'] else 'false' }}
-</script>
 </body>
 
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script id="location-data" type="application/json">
-{{!location}}
-</script>
+
 <script>
   //#region Map
-  const locationData = JSON.parse(document.getElementById('location-data').textContent);
-  var lat = locationData['lat'];
-  var lon = locationData['lon'];
-  console.log("lat:", lat, "\nlong", lon);
+  var lat = {{location['lat']}};
+  var lon = {{location['lon']}};
+
 
   var map = L.map('map').setView([lat, lon], 15); // Coordenades per centrar el mapa
 
@@ -192,11 +186,10 @@
 
   function lockButtons() {
     const button = document.getElementById('lockBtn');
-    const isLocked = JSON.parse(document.getElementById('user-locked-data').textContent);
+     if ({{ 'true' if user_data['locked'] else 'false' }}) {
+            button.disabled = true;
+     }
 
-    if (isLocked) {
-      button.disabled = true;
-    }
   }
 
   function get_res_certify_data() {
