@@ -202,6 +202,42 @@
             "warnings_count": "Warnings: {0}",
             "success_rate": "Tasa de éxito: {0}%",
             "exported": "Métricas exportadas a {0}"
+        },
+        "ui": {
+            "metrics_title": "5. Métricas del Modelo",
+            "performance_title": "Rendimiento del Modelo",
+            "th_metric": "Métrica",
+            "th_value": "Valor",
+            "th_description": "Descripción",
+            "dataset_info_title": "Información del Dataset",
+            "validation_warnings_title": "Validaciones del Proceso",
+            "baselines_title": "Comparación con Baselines:",
+            "improvement_persistence": "Mejora vs Persistencia",
+            "improvement_ma": "Mejora vs Media Móvil",
+            "data_split": "División de datos:",
+            "train_samples": "Train: {0} muestras ({1}%)",
+            "val_samples": "Validation: {0} muestras ({1}%)",
+            "test_samples": "Test: {0} muestras ({1}%)",
+            "merged_dataset": "Dataset fusionado:",
+            "rows": "Filas: {0}",
+            "columns": "Columnas: {0}",
+            "temporal_coverage": "Cobertura temporal: {0} días",
+            "all_validations_passed": "Todas las validaciones han pasado correctamente",
+            "check_step": "Revisar este paso - Puede afectar el rendimiento del modelo"
+        },
+        "labels": {
+            "mae": "MAE",
+            "rmse": "RMSE",
+            "r2": "R²",
+            "mape": "MAPE (%)",
+            "training_time": "Tiempo de entrenamiento"
+        },
+        "descriptions": {
+            "mae": "Mean Absolute Error - Error absoluto medio",
+            "rmse": "Root Mean Squared Error - Raíz del error cuadrático medio",
+            "r2": "Coeficiente de determinación (0-1, más alto mejor)",
+            "mape": "Mean Absolute Percentage Error - Error porcentual absoluto medio",
+            "training_time": "Tiempo total de entrenamiento del modelo"
         }
     }
 }

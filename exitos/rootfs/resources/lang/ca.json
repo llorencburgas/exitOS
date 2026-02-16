@@ -202,6 +202,42 @@
             "warnings_count": "Warnings: {0}",
             "success_rate": "Taxa d'èxit: {0}%",
             "exported": "Mètriques exportades a {0}"
+        },
+        "ui": {
+            "metrics_title": "5. Mètriques del Model",
+            "performance_title": "Rendiment del Model",
+            "th_metric": "Mètrica",
+            "th_value": "Valor",
+            "th_description": "Descripció",
+            "dataset_info_title": "Informació del Dataset",
+            "validation_warnings_title": "Validacions del Procés",
+            "baselines_title": "Comparació amb Baselines:",
+            "improvement_persistence": "Millora vs Persistència",
+            "improvement_ma": "Millora vs Mitjana Mòbil",
+            "data_split": "Divisió de dades:",
+            "train_samples": "Train: {0} mostres ({1}%)",
+            "val_samples": "Validation: {0} mostres ({1}%)",
+            "test_samples": "Test: {0} mostres ({1}%)",
+            "merged_dataset": "Dataset fusionat:",
+            "rows": "Files: {0}",
+            "columns": "Columnes: {0}",
+            "temporal_coverage": "Cobertura temporal: {0} dies",
+            "all_validations_passed": "Totes les validacions han passat correctament",
+            "check_step": "Revisar aquest pas - Pot afectar el rendiment del model"
+        },
+        "labels": {
+            "mae": "MAE",
+            "rmse": "RMSE",
+            "r2": "R²",
+            "mape": "MAPE (%)",
+            "training_time": "Temps d'entrenament"
+        },
+        "descriptions": {
+            "mae": "Mean Absolute Error - Error absolut mitjà",
+            "rmse": "Root Mean Squared Error - Arrel de l'error quadràtic mitjà",
+            "r2": "Coeficient de determinació (0-1, més alt millor)",
+            "mape": "Mean Absolute Percentage Error - Error percentual absolut mitjà",
+            "training_time": "Temps total d'entrenament del model"
         }
     }
 }

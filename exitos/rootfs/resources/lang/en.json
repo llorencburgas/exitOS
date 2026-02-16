@@ -202,6 +202,42 @@
             "warnings_count": "Warnings: {0}",
             "success_rate": "Success rate: {0}%",
             "exported": "Metrics exported to {0}"
+        },
+        "ui": {
+            "metrics_title": "5. Model Metrics",
+            "performance_title": "Model Performance",
+            "th_metric": "Metric",
+            "th_value": "Value",
+            "th_description": "Description",
+            "dataset_info_title": "Dataset Information",
+            "validation_warnings_title": "Process Validations",
+            "baselines_title": "Baseline Comparison:",
+            "improvement_persistence": "Improvement vs Persistence",
+            "improvement_ma": "Improvement vs Moving Average",
+            "data_split": "Data Split:",
+            "train_samples": "Train: {0} samples ({1}%)",
+            "val_samples": "Validation: {0} samples ({1}%)",
+            "test_samples": "Test: {0} samples ({1}%)",
+            "merged_dataset": "Merged Dataset:",
+            "rows": "Rows: {0}",
+            "columns": "Columns: {0}",
+            "temporal_coverage": "Temporal coverage: {0} days",
+            "all_validations_passed": "All validations passed successfully",
+            "check_step": "Check this step - May affect model performance"
+        },
+        "labels": {
+            "mae": "MAE",
+            "rmse": "RMSE",
+            "r2": "R²",
+            "mape": "MAPE (%)",
+            "training_time": "Training Time"
+        },
+        "descriptions": {
+            "mae": "Mean Absolute Error",
+            "rmse": "Root Mean Squared Error",
+            "r2": "Determination Coefficient (0-1, higher is better)",
+            "mape": "Mean Absolute Percentage Error",
+            "training_time": "Total model training time"
         }
     }
 }
