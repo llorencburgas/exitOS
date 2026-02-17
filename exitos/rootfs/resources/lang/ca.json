@@ -119,7 +119,9 @@
         "address_help": "Aquesta ubicació s'obté a partir de les dades de Home Assistant. En cas de ser incorrectes modifica-les des de la configuració del programa Home Assistant.",
         "join_community": "Unir Comunitat",
         "leave_community": "Abandonar Comunitat",
-        "last_certificates": "Últims certificats:"
+        "last_certificates": "Últims certificats:",
+        "succes_certify_message": "Rebut Correctament",
+        "error_certify_message": "Error en el certificat"
     },
     "chat": {
         "title": "Assistent Virtual eXiT",

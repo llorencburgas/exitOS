@@ -111,6 +111,7 @@
         </div>
         <div id="last-link-div">
           <h3 style="margin-bottom:3px" data-i18n="config.last_certificates">Últims certificats: </h3>
+          <div id="certificates-container"></div>
         </div>
       </div>
     </div>
@@ -124,8 +125,8 @@
 
 <script>
   //#region Map
-  var lat = {{location['lat']}};
-  var lon = {{location['lon']}};
+  var lat = {{ location['lat']}};
+  var lon = {{ location['lon']}};
 
 
   var map = L.map('map').setView([lat, lon], 15); // Coordenades per centrar el mapa
@@ -146,13 +147,19 @@
     });
   //#endregion
 
-  function lockForm() {
+  function setFormLock(locked) {
     const form = document.querySelector('.content-section');
-    const elements = form.querySelectorAll('input, select, text, button');
-    console.log(elements);
+    const elements = form.querySelectorAll('input, select, textarea, button');
     elements.forEach(el => {
-      if (el.id !== 'unlockBtn') el.disabled = true;
+      if (el.id !== 'unlockBtn') el.disabled = locked;
     });
+
+    // El botó d'unir sempre ha de quedar bloquejat si ja estem bloquejats
+    if (locked) document.getElementById('lockBtn').disabled = true;
+  }
+
+  function lockForm() {
+    setFormLock(true);
 
     const consumption = document.getElementById('global-consumption').value;
     const generation = document.getElementById('global-generation').value;
@@ -173,9 +180,7 @@
   }
 
   function unlockForm() {
-    const form = document.querySelector('.content-section');
-    const elements = form.querySelectorAll('input, select, text, button');
-    elements.forEach(el => el.disabled = false);
+    setFormLock(false);
 
     fetch('delete_config', {
       method: 'DELETE'
@@ -185,11 +190,10 @@
   }
 
   function lockButtons() {
-    const button = document.getElementById('lockBtn');
-     if ({{ 'true' if user_data['locked'] else 'false' }}) {
-            button.disabled = true;
-     }
-
+    const isLocked = {{ 'true' if user_data['locked'] else 'false' }};
+    if (isLocked) {
+      setFormLock(true);
+    }
   }
 
   function get_res_certify_data() {
@@ -197,11 +201,11 @@
       .then(response => response.json())
       .then(data => {
         const info_box = document.getElementById('last-link-div');
+        const cert_container = document.getElementById('certificates-container');
         if (data.status === "OK") {
           info_box.style.display = 'block';
           info_box.style.width = '80%';
-
-          console.log(data.data);
+          cert_container.innerHTML = ''; // Netejar certificats anteriors
 
           Object.entries(data.data).reverse().forEach(([timestamp, value]) => {
             const link_header = "http://magiinterface.udg.edu:3000/certificationVerified/getCertificate/"
@@ -213,18 +217,19 @@
             date.innerHTML = timestamp + ": ";
 
             if (value === "Error") {
-              link.innerHTML = "  Error en el certificat";
+              link.innerHTML = I18n.get('config.error_certify_message') || "Error en el certificat";
+              console.log(I18n.get('config.error_certify_message'));
               link.className = 'config-link-error';
             }
             else {
-              link.innerHTML = "  Rebut Correctament";
+              link.innerHTML = I18n.get('config.succes_certify_message') || "Rebut Correctament";
               link.href = link_header + value;
               link.target = '_blank';
             }
 
             line.appendChild(date);
             line.appendChild(link);
-            info_box.appendChild(line);
+            cert_container.appendChild(line);
           });
         }
         else {
@@ -233,8 +238,14 @@
       })
   }
 
-  get_res_certify_data();
-  lockButtons()
+  // get_res_certify_data(); // Eliminate manual call, i18n.js will trigger it via onLanguageChange callback
+  lockButtons();
+
+  // Reload certificates when language changes
+  I18n.onLanguageChange(function (newLocale) {
+    console.log("Language changed to:", newLocale);
+    get_res_certify_data();
+  });
 
 </script>
 
