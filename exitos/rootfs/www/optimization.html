@@ -37,6 +37,11 @@
         <!-- GRÀFICA OPTIMITZACIÓ -->
         <div id="scheduler-grid" class="scheduler-grid"> </div>
 
+        <!-- GRÀFICA FLEXIBILITAT-->
+        <br>
+        <h2>Debug Flexi</h2>
+        <div id="global-flexi-grid" class="scheduler-grid"> </div>
+
         <!--    PLANIFICACIÓ  -->
         <div class="scheduler-container">
             <div class="optimization-graphs-container" id="optimization-graphs-container">
@@ -126,6 +131,7 @@
         await loadDeviceTypes(currentLocale);
 
         const parent_div_scheduler = document.getElementById("scheduler-grid");
+        const parent_div_flexi = document.getElementById("global-flexi-grid");
         fetch('get_scheduler_data')
             .then(response => response.json())
             .then(data => {
@@ -139,6 +145,23 @@
                         data.data,
                         PlotlyTheme.mergeLayout(data.layout)
                     );
+                }
+            })
+
+        fetch('get_flexi_data')
+            .then(response => response.json())
+            .then(data => {
+                if(data !== "ERROR"){
+                    const container = document.createElement("div");
+                    container.className = "scheduler-card";
+                    parent_div_flexi.appendChild(container);
+
+                    Plotly.newPlot(
+                        container,
+                        data.data,
+                        PlotlyTheme.mergeLayout(data.layout)
+                    );
+
                 }
             })
         LoadConfigsSaved();
