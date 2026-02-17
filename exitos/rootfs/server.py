@@ -845,7 +845,8 @@ def optimize(today = False):
             consumer_id = global_consumer_id,
             generator_id = global_generator_id,
             horizon = horizon,
-            horizon_min = horizon_min)
+            horizon_min = horizon_min,
+            today = today)
 
         if success:
             # GUARDAR A FITXER

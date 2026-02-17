@@ -56,7 +56,7 @@ class OptimalScheduler:
         self.electricity_prices = []
 
 
-    def start_optimization(self, consumer_id, generator_id, horizon, horizon_min):
+    def start_optimization(self, consumer_id, generator_id, horizon, horizon_min, today):
         try:
             self.horizon = horizon
             self.horizon_min = horizon_min
@@ -67,8 +67,8 @@ class OptimalScheduler:
                 self.global_consumer_id = consumer_id
                 self.global_generator_id = generator_id
 
-                self.global_consumer_forecast['forecast_data'], self.global_consumer_forecast['forecast_timestamps'] = self.get_sensor_forecast_data(consumer_id)
-                self.global_generator_forecast['forecast_data'], self.global_generator_forecast['forecast_timestamps'] = self.get_sensor_forecast_data(generator_id)
+                self.global_consumer_forecast['forecast_data'], self.global_consumer_forecast['forecast_timestamps'] = self.get_sensor_forecast_data(consumer_id, today)
+                self.global_generator_forecast['forecast_data'], self.global_generator_forecast['forecast_timestamps'] = self.get_sensor_forecast_data(generator_id, today)
 
                 self.varbound = self.configure_varbounds()
 
@@ -122,7 +122,7 @@ class OptimalScheduler:
 
         return True
 
-    def get_sensor_forecast_data(self,sensor_id):
+    def get_sensor_forecast_data(self,sensor_id, today):
         """
         Obté l'últim forecast del sensor i prepara les dades per a l'optimització
 
@@ -132,10 +132,16 @@ class OptimalScheduler:
         :return:
         """
 
-        sensor_forecast = self.database.get_data_from_forecast_from_date_and_sensorID(sensor_id=sensor_id, date= datetime.today().strftime('%d-%m-%Y'))
+        if today:
+            date_str = datetime.today().strftime('%d-%m-%Y')
+            forecast_date = datetime.now()
+        else:
+            date_str = (datetime.today() + timedelta(days=1)).strftime('%d-%m-%Y')
+            forecast_date = datetime.now() + timedelta(days=1)
 
-        today = datetime.now()
-        start_date = datetime(today.year, today.month, today.day, 0,0)
+        sensor_forecast = self.database.get_data_from_forecast_from_date_and_sensorID(sensor_id=sensor_id, date=date_str)
+
+        start_date = datetime(forecast_date.year, forecast_date.month, forecast_date.day, 0,0)
         end_date = start_date + timedelta(hours = self.horizon - 1)
         self.timestamps = pd.date_range(start=start_date, end=end_date, freq='h')
         hours = []
