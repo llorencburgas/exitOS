@@ -821,7 +821,7 @@ def train_model():
     return model_name
 
 def forecast_model(selected_forecast, today = True):
-    forecast_df, real_values, sensor_id = ForecasterManager.predict_consumption_production(model_name=selected_forecast)
+    forecast_df, real_values, sensor_id = ForecasterManager.predict_consumption_production(model_name=selected_forecast, database=database)
 
     if today:  forecasted_done_time = datetime.today().strftime('%d-%m-%Y')
     else: forecasted_done_time = (datetime.today() + timedelta(days=1)).strftime("%d-%m-%Y")
@@ -1634,3 +1634,4 @@ if __name__ == "__main__":
         logger.error(f"❌ Error inicialitzant LLM: {e}")
 
     main()
+
