@@ -59,17 +59,9 @@ def predict_consumption_production(model_name, database):
 
     first_timestamp_metric = initial_data.index[0] if not initial_data.empty else None 
 
-    # Filtrar dades històriques als últims 14 dies per al forecast
+    # Normalitzem timestamps a naive (sense timezone) per ser consistents amb Forecaster.prepare_dataframes
     if not initial_data.empty and 'timestamp' in initial_data.columns:
-        # Fem la comparació en UTC
-        #cutoff_date = pd.Timestamp.now(tz='UTC') - pd.Timedelta(days=14)
-        initial_data['timestamp'] = pd.to_datetime(initial_data['timestamp'])
-        
-        # Assegurar que tenim timezone UTC per comparar amb cutoff_date
-        if initial_data['timestamp'].dt.tz is None:
-            initial_data['timestamp'] = initial_data['timestamp'].dt.tz_localize('UTC')
-            
-        #initial_data = initial_data[initial_data['timestamp'] >= cutoff_date
+        initial_data['timestamp'] = pd.to_datetime(initial_data['timestamp']).dt.tz_localize(None)
 
 
     meteo_data_boolean = forecaster.db['meteo_data_is_selected']
@@ -82,10 +74,9 @@ def predict_consumption_production(model_name, database):
         extra_sensors_df = {}
         for s in original_extra_sensors.keys():
             aux = database.get_data_from_sensor(s)
+            # Normalitzem timestamps a naive per consistència
             if not aux.empty and 'timestamp' in aux.columns:
-                aux['timestamp'] = pd.to_datetime(aux['timestamp'])
-                if aux['timestamp'].dt.tz is None:
-                     aux['timestamp'] = aux['timestamp'].dt.tz_localize('UTC')
+                aux['timestamp'] = pd.to_datetime(aux['timestamp']).dt.tz_localize(None)
             extra_sensors_df[s] = aux
 
     data = forecaster.prepare_dataframes(initial_data, meteo_data, extra_sensors_df)
