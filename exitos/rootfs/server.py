@@ -231,14 +231,45 @@ def serve_resources(filepath):
 def serve_models(filepath):
     return static_file(filepath, root='./models/')
 
+# [DEBUG] Endpoint per simular el cicle de dos dies (ahir + avui) per provar les 3 línies
+@app.get('/debug_simulate_cycle/<model_name>')
+def debug_simulate_cycle(model_name):
+    try:
+        model_file = model_name + ".pkl"
+        yesterday_str = (datetime.today() - timedelta(days=1)).strftime('%d-%m-%Y')
+        today_str = datetime.today().strftime('%d-%m-%Y')
+
+        forecast_df, real_values, sensor_id = ForecasterManager.predict_consumption_production(
+            model_name=model_file, database=database
+        )
+
+        timestamps = forecast_df.index.tolist()
+        predictions = forecast_df['value'].tolist()
+        cutoff_date = (pd.Timestamp.now() - pd.Timedelta(days=14)).replace(tzinfo=None)
+
+        def build_rows(run_date):
+            rows = []
+            for i, ts in enumerate(timestamps):
+                ts_naive = ts.replace(tzinfo=None) if hasattr(ts, 'tzinfo') and ts.tzinfo else ts
+                if ts_naive >= cutoff_date:
+                    rows.append((model_file, sensor_id, run_date, ts.strftime("%Y-%m-%d %H:%M"),
+                                 predictions[i], real_values[i] if i < len(real_values) else None))
+            return rows
+
+        database.save_forecast(build_rows(yesterday_str))
+        database.save_forecast(build_rows(today_str))
+
+        logger.warning(f"🧪 [DEBUG] Cicle simulat per {model_name}: ahir={yesterday_str}, avui={today_str}")
+        return f"OK: Cicle simulat per '{model_name}'. Refresca el model per veure les 3 linies."
+
+    except Exception as e:
+        logger.error(f"❌ [DEBUG] Error simulant cicle: {e}", exc_info=True)
+        return f"ERROR: {e}"
+
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')
 def get_page(page):
-    # Ruta del fitxer HTML
-    # file_path = f'./www/{page}.html'
-    # Comprova si el fitxer existeix.
     if os.path.exists(f'./www/{page}.html'):
-        # Control de dades segons la pàgina
         return static_file(f'{page}.html', root='./www/')
     elif os.path.exists(f'./www/{page}.css'):
         return static_file(f'{page}.css', root='./www/')
@@ -1518,49 +1549,6 @@ scheduler_thread.start()
 def panik_function():
     flexibility()
 
-@app.route('/debug_simulate_cycle/<model_name>')
-def debug_simulate_cycle(model_name):
-    """
-    [NOMÉS DEBUG] Simula el cicle de dos dies per provar les tres línies de la gràfica.
-    1. Guarda un forecast amb la data d'AHIR (simula el tasker de la nit anterior)
-    2. Guarda un forecast amb la data d'AVUI (el forecast actual)
-    Accedeix a: /debug_simulate_cycle/nom_del_model
-    """
-    try:
-        model_file = model_name + ".pkl"
-        yesterday_str = (datetime.today() - timedelta(days=1)).strftime('%d-%m-%Y')
-        today_str = datetime.today().strftime('%d-%m-%Y')
-
-        # Generar la predicció (una sola crida al model real)
-        forecast_df, real_values, sensor_id = ForecasterManager.predict_consumption_production(
-            model_name=model_file, database=database
-        )
-
-        timestamps = forecast_df.index.tolist()
-        predictions = forecast_df['value'].tolist()
-        cutoff_date = (pd.Timestamp.now() - pd.Timedelta(days=14)).replace(tzinfo=None)
-
-        def build_rows(run_date):
-            rows = []
-            for i, ts in enumerate(timestamps):
-                ts_naive = ts.replace(tzinfo=None) if hasattr(ts, 'tzinfo') and ts.tzinfo else ts
-                if ts_naive >= cutoff_date:
-                    rows.append((model_file, sensor_id, run_date, ts.strftime("%Y-%m-%d %H:%M"),
-                                 predictions[i], real_values[i] if i < len(real_values) else None))
-            return rows
-
-        # Guardem primer com a "ahir" (simula el forecast de la nit anterior)
-        database.save_forecast(build_rows(yesterday_str))
-        # Guardem com a "avui" (el forecast d'avui)
-        database.save_forecast(build_rows(today_str))
-
-        logger.warning(f"🧪 [DEBUG] Cicle simulat per {model_name}: ahir={yesterday_str}, avui={today_str}")
-        return f"✅ Cicle simulat correctament per '{model_name}'. Refresca la pàgina del model per veure les tres línies."
-
-    except Exception as e:
-        logger.error(f"❌ [DEBUG] Error simulant cicle per {model_name}: {e}", exc_info=True)
-        return f"❌ Error: {e}"
-
 #endregion DEBUG REGION
 
 
@@ -1694,4 +1682,3 @@ if __name__ == "__main__":
         logger.error(f"❌ Error inicialitzant LLM: {e}")
 
     main()
-
