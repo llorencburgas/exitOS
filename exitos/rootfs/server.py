@@ -1357,24 +1357,36 @@ def monthly_task():
 def daily_forecast_task():
     try:
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
-        logger.debug(f"📈 [{hora_actual}] - STARTING DAILY FORECASTING")
+        logger.warning(f"📈 [{hora_actual}] - STARTING DAILY FORECASTING")
+
         models_saved = [os.path.basename(f) for f in glob.glob(forecast.models_filepath + "forecastings/*.pkl")]
+
+        if not models_saved:
+            logger.warning("⚠️ No s'han trobat models .pkl per al forecast automàtic!")
+            return
+
         for model in models_saved:
-            model_path = os.path.join(forecast.models_filepath, "forecastings/" ,f"{model}")
-            with open(model_path, 'rb') as f:
-                config = joblib.load(f)
-            aux = config.get('algorithm','')
-            if aux != '':
-                # daily_train_model(config, model)
-                logger.debug(f"     Running daily forecast for {model}")
+            model_path = os.path.join(forecast.models_filepath, "forecastings/", model)
+            try:
+                with open(model_path, 'rb') as f:
+                    config = joblib.load(f)
+                aux = config.get('algorithm', '')
+                if aux == '':
+                    logger.warning(f"⚠️ [{model}] no té 'algorithm' definit, s'omet.")
+                    continue
+                logger.warning(f"   📊 Running daily forecast for {model}")
                 forecast_model(model, today=False)
+                logger.warning(f"   ✅ Forecast completat per {model}")
+            except Exception as e_model:
+                # Error per model individual — no atura la resta de models
+                logger.error(f"   ❌ Error al forecast de {model}: {e_model}", exc_info=True)
 
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
-        logger.debug(f"📈 [{hora_actual}] -ENDING DAILY FORECASTS")
-        
+        logger.warning(f"📈 [{hora_actual}] - ENDING DAILY FORECASTS")
+
     except Exception as e:
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
-        logger.error(f" ❌ [{hora_actual}] - ERROR al daily forecast : {e}")
+        logger.error(f"❌ [{hora_actual}] - ERROR general al daily forecast: {e}", exc_info=True)
 
 def certificate_hourly_task():
     try:
@@ -1476,7 +1488,7 @@ def config_optimized_devices_HA():
     except Exception as e:
         logger.error(f"❌ [{datetime.now().strftime('%d:%m:%Y %H:%m')}] -  Error configurant horariament un dispositiu a H.A {e}")
 
-schedule.every().day.at("23:30").do(daily_task)
+schedule.every().day.at("10:53").do(daily_task)
 schedule.every().day.at("02:00").do(monthly_task)
 schedule.every().hour.at(":00").do(certificate_hourly_task)
 
