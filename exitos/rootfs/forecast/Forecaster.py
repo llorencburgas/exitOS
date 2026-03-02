@@ -791,7 +791,7 @@ class Forecaster:
             # 7. Selecció d'atributs
             if model_select:
                 try:
-                     current_step_array = model_select.transform(current_step_df)
+                     current_step_array = model_select.transform(current_step_df.values)
                 except:
                      current_step_array = current_step_df.values
             else:
@@ -834,7 +834,7 @@ class Forecaster:
         if scaler:
              df_fit = pd.DataFrame(scaler.transform(df_fit), index=df_fit.index, columns=df_fit.columns)
         if model_select:
-             df_fit = model_select.transform(df_fit)
+             df_fit = model_select.transform(df_fit.values)
              
         out = pd.DataFrame(model.predict(df_fit), index=real_values_column.index, columns=[y])
         
