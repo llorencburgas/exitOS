@@ -1061,7 +1061,7 @@ def optimize(today = False):
                 "devices_config": devices_config
             }
 
-            total_fup, total_fdown, _, _ = flexibility(optimization_result)
+            total_fup, total_fdown = flexibility(optimization_result)
 
             optimization_result["total_fup"] = total_fup
             optimization_result["total_fdown"] = total_fdown
@@ -1200,29 +1200,22 @@ def get_device_types(locale='ca'):
 #endregion PÀGINA OPTIMITZACIÓ
 
 #region FLEXIBILITY
-def flexibility(optimization_db=None):
+def flexibility(optimization_db):
     """
     Calcula la flexibilitat de l'optimització realitzada.
     Ara cerca quin dispositiu s'ha optimitzat i delega el càlcul a la classe del dispositiu.
     """
 
     if optimization_db is None:
-        today = datetime.today().strftime("%d_%m_%Y")
-        full_path = os.path.join(forecast.models_filepath, "optimizations/" + today + ".pkl")
-        if os.path.exists(full_path):
-            optimization_db = joblib.load(full_path)
-        else:
-            return [], [], [], []
+        return [], [], [], []
 
     all_devices = list(optimalScheduler.consumers.values()) + \
                   list(optimalScheduler.generators.values()) + \
                   list(optimalScheduler.energy_storages.values())
 
     # Variables per acumular resultats de flexibilitat totals
-    total_balance = optimization_db['total_balance']
-    timestamps = optimization_db['timestamps']
-    total_fup = total_balance.copy()
-    total_fdown = total_balance.copy()
+    total_fup = optimization_db['total_balance'].copy()
+    total_fdown = optimization_db['total_balance'].copy()
 
 
     for device in all_devices:
@@ -1264,14 +1257,17 @@ def flexibility(optimization_db=None):
                 logger.error(f"❌ Error calculating flexibility for {device.name}: {e}")
                 continue
 
-    # Retornem els totals acumulats, el consum/balanç i els timestamps
-    return total_fup, total_fdown, total_balance, timestamps
+    # Retornem els totals acumulats
+    return total_fup, total_fdown
 
 
 
 
 def generate_plotly_flexibility():
-    fup_line, fdown_line, consum, timestamps = flexibility()
+    Fup, Fdown, consum, timestamps = flexibility()
+
+    fup_line = [consum[t] + Fup[t] for t in range(len(timestamps))]
+    fdown_line = [consum[t] - Fdown[t] for t in range(len(timestamps))]
 
     graph_df = pd.DataFrame({
         "hora": pd.to_datetime(timestamps),
