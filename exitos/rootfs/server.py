@@ -1261,8 +1261,6 @@ def flexibility(optimization_db):
     return total_fup, total_fdown
 
 
-
-
 def generate_plotly_flexibility():
     Fup, Fdown, consum, timestamps = flexibility()
 
@@ -1500,6 +1498,120 @@ def panik_function():
 #endregion DEBUG REGION
 
 
+def register_llm_tools():
+    """Registra totes les eines (tools) disponibles per al motor LLM."""
+    if not hasattr(llm_engine.llm_engine, 'register_tool'):
+        logger.warning("❌ No puc registrar eines: register_tool no trobat")
+        return
+
+    llm_engine.llm_engine.register_tool(
+        name="get_current_time",
+        func=tool_get_current_time,
+        description="Obté la data i hora actuals del sistema.",
+        parameters={
+            "type": "object",
+            "properties": {
+                "dummy": {
+                    "type": "string",
+                    "description": "Ignoring this"
+                }
+            },
+            "required": []
+        }
+    )
+
+    llm_engine.llm_engine.register_tool(
+        name="get_sensor_value",
+        func=tool_get_sensor_value,
+        description="Obté l'últim valor registrat d'un sensor específic (ex: sensor.bateria_soc).",
+        parameters={
+            "type": "object",
+            "properties": {
+                "sensor_id": {
+                    "type": "string",
+                    "description": "L'identificador del sensor (entity_id)."
+                }
+            },
+            "required": ["sensor_id"]
+        }
+    )
+
+    llm_engine.llm_engine.register_tool(
+        name="get_current_day",
+        func=tool_get_current_day,
+        description="Obté la data d'avui (dia, mes i any).",
+        parameters={
+            "type": "object",
+            "properties": {
+                "dummy": {
+                    "type": "string",
+                    "description": "Ignoring this"
+                }
+            },
+            "required": []
+        }
+    )
+
+    llm_engine.llm_engine.register_tool(
+        name="get_current_year",
+        func=tool_get_current_year,
+        description="Obté l'any en el que estem.",
+        parameters={
+            "type": "object",
+            "properties": {
+                "dummy": {
+                    "type": "string",
+                    "description": "Ignoring this"
+                }
+            },
+            "required": []
+        }
+    )
+
+    llm_engine.llm_engine.register_tool(
+        name="get_optimization_configs",
+        func=tool_get_optimization_configs,
+        description=(
+            "Obté totes les configuracions d'optimització de dispositius que l'usuari té guardades. "
+            "Inclou el nom del dispositiu, el tipus, les restriccions (ex: capacitat màxima de la bateria) "
+            "i les variables de mesura i control associades. "
+            "Utilitza aquesta eina quan l'usuari pregunti per les seves configuracions actuals, "
+            "vulgui saber quins dispositius té configurats, o necessiti consells sobre optimització energètica."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "config_name": {
+                    "type": "string",
+                    "description": "Opcional. Si saps el nom del dispositiu, posa'l aquí. Si no, deixa-ho en blanc per llistar-los tots."
+                }
+            },
+            "required": []
+        }
+    )
+
+    llm_engine.llm_engine.register_tool(
+        name="get_available_device_types",
+        func=tool_get_available_device_types,
+        description=(
+            "Obté tots els tipus de dispositius disponibles per configurar a l'optimitzador, "
+            "incloent les seves restriccions (paràmetres a definir, com capacitat màxima) i variables "
+            "(sensors de mesura i actuadors de control). "
+            "Utilitza aquesta eina quan l'usuari vulgui saber quines opcions té per configurar un nou dispositiu, "
+            "o quan necessitis entendre les opcions disponibles per fer una recomanació de configuració."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "device_type_id": {
+                    "type": "string",
+                    "description": "Opcional. Si saps el tipus exacte de dispositiu, posa'l aquí. Si no, deixa-ho en blanc per llistar-los tots."
+                }
+            },
+            "required": []
+        }
+    )
+
 # Funció main que encén el servidor web.
 def main():
     run(app=app, host=HOSTNAME, port=PORT, quiet=True)
@@ -1509,123 +1621,11 @@ def main():
 if __name__ == "__main__":
     logger.info("🌳 ExitOS Iniciat")
 
-    # Inicialitzar rutes LLM
+    # Inicialitzar rutes LLM i registrar eines
     try:
         logger.info("🔌 Inicialitzant rutes LLM i Eines...")
         llm_engine.init_routes(app, logger)
-
-        # Registre d'eines
-        if hasattr(llm_engine.llm_engine, 'register_tool'):
-            llm_engine.llm_engine.register_tool(
-                name="get_current_time",
-                func=tool_get_current_time,
-                description="Obté la data i hora actuals del sistema.",
-                parameters={
-                    "type": "object",
-                    "properties": {
-                        "dummy": {
-                            "type": "string",
-                            "description": "Ignoring this"
-                        }
-                    },
-                    "required": []
-                }
-            )
-
-            llm_engine.llm_engine.register_tool(
-                name="get_sensor_value",
-                func=tool_get_sensor_value,
-                description="Obté l'últim valor registrat d'un sensor específic (ex: sensor.bateria_soc).",
-                parameters={
-                    "type": "object",
-                    "properties": {
-                        "sensor_id": {
-                            "type": "string",
-                            "description": "L'identificador del sensor (entity_id)."
-                        }
-                    },
-                    "required": ["sensor_id"]
-                }
-            )
-
-            llm_engine.llm_engine.register_tool(
-                name="get_current_day",
-                func=tool_get_current_day,
-                description="Obté la data d'avui (dia, mes i any).",
-                parameters={
-                    "type": "object",
-                    "properties": {
-                        "dummy": {
-                            "type": "string",
-                            "description": "Ignoring this"
-                        }
-                    },
-                    "required": []
-                }
-            )
-
-            llm_engine.llm_engine.register_tool(
-                name="get_current_year",
-                func=tool_get_current_year,
-                description="Obté l'any en el que estem.",
-                parameters={
-                    "type": "object",
-                    "properties": {
-                        "dummy": {
-                            "type": "string",
-                            "description": "Ignoring this"
-                        }
-                    },
-                    "required": []
-                }
-            )
-
-            llm_engine.llm_engine.register_tool(
-                name="get_optimization_configs",
-                func=tool_get_optimization_configs,
-                description=(
-                    "Obté totes les configuracions d'optimització de dispositius que l'usuari té guardades. "
-                    "Inclou el nom del dispositiu, el tipus, les restriccions (ex: capacitat màxima de la bateria) "
-                    "i les variables de mesura i control associades. "
-                    "Utilitza aquesta eina quan l'usuari pregunti per les seves configuracions actuals, "
-                    "vulgui saber quins dispositius té configurats, o necessiti consells sobre optimització energètica."
-                ),
-                parameters={
-                    "type": "object",
-                    "properties": {
-                        "config_name": {
-                            "type": "string",
-                            "description": "Opcional. Si saps el nom del dispositiu, posa'l aquí. Si no, deixa-ho en blanc per llistar-los tots."
-                        }
-                    },
-                    "required": []
-                }
-            )
-
-            llm_engine.llm_engine.register_tool(
-                name="get_available_device_types",
-                func=tool_get_available_device_types,
-                description=(
-                    "Obté tots els tipus de dispositius disponibles per configurar a l'optimitzador, "
-                    "incloent les seves restriccions (paràmetres a definir, com capacitat màxima) i variables "
-                    "(sensors de mesura i actuadors de control). "
-                    "Utilitza aquesta eina quan l'usuari vulgui saber quines opcions té per configurar un nou dispositiu, "
-                    "o quan necessitis entendre les opcions disponibles per fer una recomanació de configuració."
-                ),
-                parameters={
-                    "type": "object",
-                    "properties": {
-                        "device_type_id": {
-                            "type": "string",
-                            "description": "Opcional. Si saps el tipus exacte de dispositiu, posa'l aquí. Si no, deixa-ho en blanc per llistar-los tots."
-                        }
-                    },
-                    "required": []
-                }
-            )
-        else:
-            logger.warning("❌ No puc registrar eines: register_tool no trobat")
-
+        register_llm_tools()
     except Exception as e:
         logger.error(f"❌ Error inicialitzant LLM: {e}")
 
