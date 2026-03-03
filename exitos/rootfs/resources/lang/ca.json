@@ -130,7 +130,8 @@
         "welcome_message": "Hola! Soc l'assistent virtual d'eXiT. En què et puc ajudar avui?",
         "input_placeholder": "Escriu el teu missatge aquí...",
         "error_process": "Error: No s'ha pogut processar la sol·licitud.",
-        "error_contact": "Error: No s'ha pogut contactar amb el servidor."
+        "error_contact": "Error: No s'ha pogut contactar amb el servidor.",
+        "clear_btn": "Netejar vista"
     },
     "forecast_metrics": {
         "step_name": {
@@ -190,6 +191,8 @@
             "negative_r2": "R² negatiu: el model és pitjor que la mitjana!",
             "low_r2": "R² baix: {0} - Model poc predictiu",
             "high_mape": "MAPE molt alt: {0}%",
+            "high_wape": "WAPE molt alt: {0}%",
+            "bias_high": "Alta desviació sistemàtica (Bias): {0}",
             "nan_metrics": "Mètriques amb valors NaN!",
             "forecast_rows_mismatch": "Forecast no té les files esperades: {0} vs {1}",
             "forecast_outliers": "Molts outliers en les prediccions: {0}%",
@@ -225,13 +228,19 @@
             "columns": "Columnes: {0}",
             "temporal_coverage": "Cobertura temporal: {0} dies",
             "all_validations_passed": "Totes les validacions han passat correctament",
-            "check_step": "Revisar aquest pas - Pot afectar el rendiment del model"
+            "check_step": "Revisar aquest pas - Pot afectar el rendiment del model",
+            "correlation_title": "Correlació Features-Target:",
+            "max_correlation": "Màxima correlació:",
+            "features_with_signal": "Features amb senyal (Corr > 0.1):",
+            "top_features": "Millors variables:"
         },
         "labels": {
             "mae": "MAE",
             "rmse": "RMSE",
             "r2": "R²",
             "mape": "MAPE (%)",
+            "wape": "WAPE (%)",
+            "bias": "Bias",
             "training_time": "Temps d'entrenament"
         },
         "descriptions": {
@@ -239,6 +248,8 @@
             "rmse": "Root Mean Squared Error - Arrel de l'error quadràtic mitjà",
             "r2": "Coeficient de determinació (0-1, més alt millor)",
             "mape": "Mean Absolute Percentage Error - Error percentual absolut mitjà",
+            "wape": "Weighted Absolute Percentage Error - Més robust per a energia",
+            "bias": "Mean Error - Indica si el model sobreestima o infraestima",
             "training_time": "Temps total d'entrenament del model"
         }
     },

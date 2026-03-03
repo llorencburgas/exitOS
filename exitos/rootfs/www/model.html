@@ -648,7 +648,9 @@
                     { key: 'mae', label: I18n.get('forecast_metrics.labels.mae') || 'MAE', description: I18n.get('forecast_metrics.descriptions.mae') || 'Mean Absolute Error' },
                     { key: 'rmse', label: I18n.get('forecast_metrics.labels.rmse') || 'RMSE', description: I18n.get('forecast_metrics.descriptions.rmse') || 'Root Mean Squared Error' },
                     { key: 'r2_score', label: I18n.get('forecast_metrics.labels.r2') || 'R²', description: I18n.get('forecast_metrics.descriptions.r2') || 'Coeficient de determinació' },
-                    { key: 'mape', label: I18n.get('forecast_metrics.labels.mape') || 'MAPE (%)', description: I18n.get('forecast_metrics.descriptions.mape') || 'Mean Absolute Percentage Error' }
+                    { key: 'mape', label: I18n.get('forecast_metrics.labels.mape') || 'MAPE (%)', description: I18n.get('forecast_metrics.descriptions.mape') || 'Mean Absolute Percentage Error' },
+                    { key: 'wape', label: I18n.get('forecast_metrics.labels.wape') || 'WAPE (%)', description: I18n.get('forecast_metrics.descriptions.wape') || 'Weighted Absolute Percentage Error' },
+                    { key: 'bias', label: I18n.get('forecast_metrics.labels.bias') || 'Bias', description: I18n.get('forecast_metrics.descriptions.bias') || 'Mean Error (Bias)' }
                 ];
 
                 metricsToShow.forEach(metric => {
@@ -715,6 +717,23 @@
             // Buscar info de preparació de dataframes
             if (metrics.steps) {
                 for (let step of metrics.steps) {
+                    // Step de correlació de features (nou)
+                    if (step.step_id === "feature_correlation") {
+                        const m = step.metrics;
+                        const title = I18n.get('forecast_metrics.ui.correlation_title') || 'Correlació Features-Target:';
+                        const maxCorrLabel = I18n.get('forecast_metrics.ui.max_correlation') || 'Màxima correlació:';
+                        const signalLabel = I18n.get('forecast_metrics.ui.features_with_signal') || 'Features amb senyal (Corr > 0.1):';
+                        const topFeaturesLabel = I18n.get('forecast_metrics.ui.top_features') || 'Millors variables:';
+
+                        html += `<li style="margin-top: 10px;"><strong> ${title}</strong></li>`;
+                        html += `<li style="margin-left: 20px;">• ${maxCorrLabel} <span style="color: ${m.max_correlation < 0.1 ? 'red' : 'inherit'}">${m.max_correlation}</span></li>`;
+                        html += `<li style="margin-left: 20px;">• ${signalLabel} ${m.features_above_01}</li>`;
+
+                        if (m.top_features) {
+                            html += `<li style="margin-left: 20px; font-size: 0.85em; color: #666;"><em>${topFeaturesLabel} ${Object.keys(m.top_features).join(', ')}</em></li>`;
+                        }
+                    }
+
                     // Check for step_id (new models) or fallback to name (legacy)
                     if (step.step_id === "dataframe_preparation" || step.step_name === "Preparació DataFrames") {
                         const m = step.metrics;
@@ -722,7 +741,6 @@
                         html += `<li style="margin-left: 20px;">• ${I18n.get('forecast_metrics.ui.rows', m.merged_rows) || `Files: ${m.merged_rows}`}</li>`;
                         html += `<li style="margin-left: 20px;">• ${I18n.get('forecast_metrics.ui.columns', m.merged_columns) || `Columnes: ${m.merged_columns}`}</li>`;
                         html += `<li style="margin-left: 20px;">• ${I18n.get('forecast_metrics.ui.temporal_coverage', m.temporal_coverage_days) || `Cobertura temporal: ${m.temporal_coverage_days} dies`}</li>`;
-                        break;
                     }
                 }
             }

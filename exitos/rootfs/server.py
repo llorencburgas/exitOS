@@ -70,6 +70,145 @@ forecast = Forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler(database)
 blockchain = Blockchain.Blockchain()
 
+# --- DEFINICIÓ EINES LLM ---
+def tool_get_current_time():
+    """Retorna l'hora actual del servidor"""
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+def tool_get_current_day():
+    """Retorna la data actual (dia, mes i any)"""
+    return datetime.now().strftime("%d-%m-%Y")
+
+def tool_get_current_year():
+    """Retorna l'any actual"""
+    return datetime.now().strftime("%Y")
+
+def tool_get_sensor_value(sensor_id):
+    """Retorna l'últim valor conegut d'un sensor específic"""
+    try:
+        val = database.get_current_sensor_state(sensor_id)
+        if val is None:
+            data = database.get_latest_data_from_sensor(sensor_id)
+            if data:
+                return f"El valor de {sensor_id} és {data[1]} (a les {data[0]})"
+            else:
+                return f"No he trobat dades per al sensor {sensor_id}."
+        return f"El valor actual de {sensor_id} és {val}"
+    except Exception as e:
+        return f"Error llegint sensor: {e}"
+
+def tool_get_optimization_configs():
+    """Retorna totes les configuracions d'optimització guardades per l'usuari"""
+    try:
+        configs_path = os.path.join(forecast.models_filepath, "optimizations/configs")
+        if not os.path.exists(configs_path):
+            return "No hi ha cap configuració d'optimització guardada."
+
+        json_files = [f for f in os.listdir(configs_path) if f.endswith(".json")]
+        if not json_files:
+            return "No hi ha cap configuració d'optimització guardada."
+
+        result_lines = []
+        for filename in json_files:
+            filepath = os.path.join(configs_path, filename)
+            with open(filepath, 'r', encoding='utf-8') as f:
+                cfg = json.load(f)
+
+            device_name = cfg.get("device_name", filename.replace(".json", ""))
+            friendly_type = cfg.get("friendly_name", cfg.get("device_type", "Desconegut"))
+            category = cfg.get("device_category", "")
+
+            result_lines.append(f"--- Dispositiu: {device_name} ---")
+            result_lines.append(f"  Tipus: {friendly_type} (Categoria: {category})")
+
+            restrictions = cfg.get("restrictions", {})
+            if restrictions:
+                result_lines.append("  Restriccions:")
+                for r_id, r_data in restrictions.items():
+                    result_lines.append(f"    - {r_data.get('name', r_id)}: {r_data.get('value', '')}")
+
+            extra_vars = cfg.get("extra_vars", {})
+            if extra_vars:
+                result_lines.append("  Variables de mesura:")
+                for v_id, v_data in extra_vars.items():
+                    result_lines.append(f"    - {v_data.get('label_name', v_id)}: {v_data.get('friendly_name', v_data.get('sensor_id', ''))}")
+
+            control_vars = cfg.get("control_vars", {})
+            if control_vars:
+                result_lines.append("  Variables de control:")
+                for v_id, v_data in control_vars.items():
+                    result_lines.append(f"    - {v_data.get('label_name', v_id)}: {v_data.get('friendly_name', v_data.get('sensor_id', ''))}")
+
+        return "\n".join(result_lines)
+
+    except Exception as e:
+        return f"Error llegint les configuracions d'optimització: {e}"
+
+
+def tool_get_available_device_types():
+    """Retorna tots els tipus de dispositius disponibles per configurar a l'optimitzador, amb les seves restriccions i variables"""
+    try:
+        config_path = "resources/optimization_configs/optimization_devices_ca.conf"
+        if not os.path.exists(config_path):
+            config_path = "resources/optimization_devices_ca.conf"
+        if not os.path.exists(config_path):
+            return "No s'ha trobat el fitxer de tipus de dispositius."
+
+        with open(config_path, 'r', encoding='utf-8') as f:
+            device_types = json.load(f)
+
+        result_lines = [
+            "=== TIPUS DE DISPOSITIUS DISPONIBLES PER A L'OPTIMITZACIÓ ===",
+            "Aquests són els tipus de dispositius que l'usuari pot escollir quan crea una nova configuració d'optimització.",
+            ""
+        ]
+
+        for type_id, type_data in device_types.items():
+            nom = type_data.get("nom", type_id)
+            categoria = type_data.get("tipus", "Desconegut")
+            result_lines.append(f"--- {nom} (id: {type_id}, categoria: {categoria}) ---")
+
+            restriccions = type_data.get("restriccions", [])
+            if restriccions:
+                result_lines.append("  Restriccions a configurar:")
+                for r in restriccions:
+                    if isinstance(r, dict):
+                        desc = f"    - {r.get('nom', r.get('id', ''))}"
+                        if "min" in r:
+                            desc += f" (mínim: {r['min']})"
+                        if "max" in r:
+                            desc += f" (màxim: {r['max']})"
+                        if "step" in r:
+                            desc += f" (increment: {r['step']})"
+                        result_lines.append(desc)
+                    else:
+                        result_lines.append(f"    - {r}")
+
+            variables = type_data.get("variables", [])
+            if variables:
+                result_lines.append("  Variables de mesura (sensors de lectura):")
+                for v in variables:
+                    result_lines.append(f"    - {v.get('nom', v.get('id', ''))}")
+
+            variables_control = type_data.get("variables_control", [])
+            if variables_control:
+                result_lines.append("  Variables de control (actuadors):")
+                for v in variables_control:
+                    result_lines.append(f"    - {v.get('nom', v.get('id', ''))}")
+
+            result_lines.append("")
+
+        result_lines.append(
+            "NOTA: Les categories possibles són: 'Consumer' (consumidor d'energia), "
+            "'EnergyStorage' (emmagatzematge d'energia, com bateries) i 'Generator' (generador, com plaques solars)."
+        )
+
+        return "\n".join(result_lines)
+
+    except Exception as e:
+        return f"Error llegint els tipus de dispositius disponibles: {e}"
+
+
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')
 
@@ -670,10 +809,10 @@ def train_model():
     return model_name
 
 def forecast_model(selected_forecast, today = True):
-    forecast_df, real_values, sensor_id = ForecasterManager.predict_consumption_production(model_name=selected_forecast)
+    forecast_df, real_values, sensor_id = ForecasterManager.predict_consumption_production(model_name=selected_forecast, database=database)
 
     if today:  forecasted_done_time = datetime.today().strftime('%d-%m-%Y')
-    else: forecasted_done_time = (datetime.today() + timedelta(days=1)).strftime("%d_%m_%Y")
+    else: forecasted_done_time = (datetime.today() + timedelta(days=1)).strftime("%d-%m-%Y")
 
     timestamps = forecast_df.index.tolist()
     predictions = forecast_df['value'].tolist()
@@ -760,7 +899,7 @@ def get_forecast_data(model_name):
         real_values = []
         real_values_timestamps = []
         for i in range(len(forecasts['real_value'])):
-            if not math.isnan(forecasts['real_value'][i]):
+            if not pd.isna(forecasts['real_value'][i]):
                 real_values.append(forecasts['real_value'][i])
                 real_values_timestamps.append(forecasts['timestamp'].tolist()[i])
 
@@ -1122,8 +1261,6 @@ def flexibility(optimization_db):
     return total_fup, total_fdown
 
 
-
-
 def generate_plotly_flexibility():
     Fup, Fdown, consum, timestamps = flexibility()
 
@@ -1202,24 +1339,36 @@ def monthly_task():
 def daily_forecast_task():
     try:
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
-        logger.debug(f"📈 [{hora_actual}] - STARTING DAILY FORECASTING")
+        logger.warning(f"📈 [{hora_actual}] - STARTING DAILY FORECASTING")
+
         models_saved = [os.path.basename(f) for f in glob.glob(forecast.models_filepath + "forecastings/*.pkl")]
+
+        if not models_saved:
+            logger.warning("⚠️ No s'han trobat models .pkl per al forecast automàtic!")
+            return
+
         for model in models_saved:
-            model_path = os.path.join(forecast.models_filepath, "forecastings/" ,f"{model}")
-            with open(model_path, 'rb') as f:
-                config = joblib.load(f)
-            aux = config.get('algorithm','')
-            if aux != '':
-                # daily_train_model(config, model)
-                logger.debug(f"     Running daily forecast for {model}")
+            model_path = os.path.join(forecast.models_filepath, "forecastings/", model)
+            try:
+                with open(model_path, 'rb') as f:
+                    config = joblib.load(f)
+                aux = config.get('algorithm', '')
+                if aux == '':
+                    logger.warning(f"⚠️ [{model}] no té 'algorithm' definit, s'omet.")
+                    continue
+                logger.warning(f"   📊 Running daily forecast for {model}")
                 forecast_model(model, today=False)
+                logger.warning(f"   ✅ Forecast completat per {model}")
+            except Exception as e_model:
+                # Error per model individual — no atura la resta de models
+                logger.error(f"   ❌ Error al forecast de {model}: {e_model}", exc_info=True)
 
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
-        logger.debug(f"📈 [{hora_actual}] -ENDING DAILY FORECASTS")
-        
+        logger.warning(f"📈 [{hora_actual}] - ENDING DAILY FORECASTS")
+
     except Exception as e:
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
-        logger.error(f" ❌ [{hora_actual}] - ERROR al daily forecast : {e}")
+        logger.error(f"❌ [{hora_actual}] - ERROR general al daily forecast: {e}", exc_info=True)
 
 def certificate_hourly_task():
     try:
@@ -1349,6 +1498,120 @@ def panik_function():
 #endregion DEBUG REGION
 
 
+def register_llm_tools():
+    """Registra totes les eines (tools) disponibles per al motor LLM."""
+    if not hasattr(llm_engine.llm_engine, 'register_tool'):
+        logger.warning("❌ No puc registrar eines: register_tool no trobat")
+        return
+
+    llm_engine.llm_engine.register_tool(
+        name="get_current_time",
+        func=tool_get_current_time,
+        description="Obté la data i hora actuals del sistema.",
+        parameters={
+            "type": "object",
+            "properties": {
+                "dummy": {
+                    "type": "string",
+                    "description": "Ignoring this"
+                }
+            },
+            "required": []
+        }
+    )
+
+    llm_engine.llm_engine.register_tool(
+        name="get_sensor_value",
+        func=tool_get_sensor_value,
+        description="Obté l'últim valor registrat d'un sensor específic (ex: sensor.bateria_soc).",
+        parameters={
+            "type": "object",
+            "properties": {
+                "sensor_id": {
+                    "type": "string",
+                    "description": "L'identificador del sensor (entity_id)."
+                }
+            },
+            "required": ["sensor_id"]
+        }
+    )
+
+    llm_engine.llm_engine.register_tool(
+        name="get_current_day",
+        func=tool_get_current_day,
+        description="Obté la data d'avui (dia, mes i any).",
+        parameters={
+            "type": "object",
+            "properties": {
+                "dummy": {
+                    "type": "string",
+                    "description": "Ignoring this"
+                }
+            },
+            "required": []
+        }
+    )
+
+    llm_engine.llm_engine.register_tool(
+        name="get_current_year",
+        func=tool_get_current_year,
+        description="Obté l'any en el que estem.",
+        parameters={
+            "type": "object",
+            "properties": {
+                "dummy": {
+                    "type": "string",
+                    "description": "Ignoring this"
+                }
+            },
+            "required": []
+        }
+    )
+
+    llm_engine.llm_engine.register_tool(
+        name="get_optimization_configs",
+        func=tool_get_optimization_configs,
+        description=(
+            "Obté totes les configuracions d'optimització de dispositius que l'usuari té guardades. "
+            "Inclou el nom del dispositiu, el tipus, les restriccions (ex: capacitat màxima de la bateria) "
+            "i les variables de mesura i control associades. "
+            "Utilitza aquesta eina quan l'usuari pregunti per les seves configuracions actuals, "
+            "vulgui saber quins dispositius té configurats, o necessiti consells sobre optimització energètica."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "config_name": {
+                    "type": "string",
+                    "description": "Opcional. Si saps el nom del dispositiu, posa'l aquí. Si no, deixa-ho en blanc per llistar-los tots."
+                }
+            },
+            "required": []
+        }
+    )
+
+    llm_engine.llm_engine.register_tool(
+        name="get_available_device_types",
+        func=tool_get_available_device_types,
+        description=(
+            "Obté tots els tipus de dispositius disponibles per configurar a l'optimitzador, "
+            "incloent les seves restriccions (paràmetres a definir, com capacitat màxima) i variables "
+            "(sensors de mesura i actuadors de control). "
+            "Utilitza aquesta eina quan l'usuari vulgui saber quines opcions té per configurar un nou dispositiu, "
+            "o quan necessitis entendre les opcions disponibles per fer una recomanació de configuració."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "device_type_id": {
+                    "type": "string",
+                    "description": "Opcional. Si saps el tipus exacte de dispositiu, posa'l aquí. Si no, deixa-ho en blanc per llistar-los tots."
+                }
+            },
+            "required": []
+        }
+    )
+
 # Funció main que encén el servidor web.
 def main():
     run(app=app, host=HOSTNAME, port=PORT, quiet=True)
@@ -1357,21 +1620,13 @@ def main():
 # Executem la funció main
 if __name__ == "__main__":
     logger.info("🌳 ExitOS Iniciat")
-    
-    # Debug: Verificar importació i inicialització LLM
-    try:
-        logger.info("📦 Verificant mòdul llm_engine...")
-        logger.info(f"   - Mòdul llm_engine: {llm_engine}")
-        logger.info(f"   - Funció init_routes: {llm_engine.init_routes}")
-        logger.info("🔌 Cridant llm_engine.init_routes(app, logger)...")
-        llm_engine.init_routes(app, logger)
-        logger.info("✅ llm_engine.init_routes completat amb èxit")
-    except AttributeError as e:
-        logger.error(f"❌ Error: init_routes no existeix al mòdul llm_engine: {e}")
-        logger.error(traceback.format_exc())
-    except Exception as e:
-        logger.error(f"❌ Error inicialitzant rutes LLM: {e}")
-        logger.error(traceback.format_exc())
-    
-    main()
 
+    # Inicialitzar rutes LLM i registrar eines
+    try:
+        logger.info("🔌 Inicialitzant rutes LLM i Eines...")
+        llm_engine.init_routes(app, logger)
+        register_llm_tools()
+    except Exception as e:
+        logger.error(f"❌ Error inicialitzant LLM: {e}")
+
+    main()

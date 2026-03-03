@@ -44,7 +44,7 @@ network_mode: host
 
 # Opcions configurables per l'usuari
 options:
-  ollama_url: "http://localhost:11434"
+  ollama_url: "http://192.168.191.70:11434/"
   ollama_model: "llama3.1:latest"
 
 # Schema per validar les opcions

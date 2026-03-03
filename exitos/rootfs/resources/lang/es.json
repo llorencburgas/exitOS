@@ -130,7 +130,8 @@
         "welcome_message": "¡Hola! Soy el asistente virtual de eXiT. ¿En qué te puedo ayudar hoy?",
         "input_placeholder": "Escribe tu mensaje aquí...",
         "error_process": "Error: No se ha podido procesar la solicitud.",
-        "error_contact": "Error: No se ha podido contactar con el servidor."
+        "error_contact": "Error: No se ha podido contactar con el servidor.",
+        "clear_btn": "Limpiar vista"
     },
     "forecast_metrics": {
         "step_name": {
@@ -190,6 +191,8 @@
             "negative_r2": "R² negativo: el modelo es peor que la media!",
             "low_r2": "R² bajo: {0} - Modelo poco predictivo",
             "high_mape": "MAPE muy alto: {0}%",
+            "high_wape": "WAPE muy alto: {0}%",
+            "bias_high": "Alta desviación sistemática (Bias): {0}",
             "nan_metrics": "Métricas con valores NaN!",
             "forecast_rows_mismatch": "Forecast no tiene las filas esperadas: {0} vs {1}",
             "forecast_outliers": "Muchos outliers en las predicciones: {0}%",
@@ -225,13 +228,19 @@
             "columns": "Columnas: {0}",
             "temporal_coverage": "Cobertura temporal: {0} días",
             "all_validations_passed": "Todas las validaciones han pasado correctamente",
-            "check_step": "Revisar este paso - Puede afectar el rendimiento del modelo"
+            "check_step": "Revisar este paso - Puede afectar el rendimiento del modelo",
+            "correlation_title": "🔗 Correlación Features-Target:",
+            "max_correlation": "Máxima correlación:",
+            "features_with_signal": "Features con señal (Corr > 0.1):",
+            "top_features": "Mejores variables:"
         },
         "labels": {
             "mae": "MAE",
             "rmse": "RMSE",
             "r2": "R²",
             "mape": "MAPE (%)",
+            "wape": "WAPE (%)",
+            "bias": "Bias",
             "training_time": "Tiempo de entrenamiento"
         },
         "descriptions": {
@@ -239,6 +248,8 @@
             "rmse": "Root Mean Squared Error - Raíz del error cuadrático medio",
             "r2": "Coeficiente de determinación (0-1, más alto mejor)",
             "mape": "Mean Absolute Percentage Error - Error porcentual absoluto medio",
+            "wape": "Weighted Absolute Percentage Error - Más robusto para energía",
+            "bias": "Mean Error - Indica si el modelo sobreestima o infraestima",
             "training_time": "Tiempo total de entrenamiento del modelo"
         }
     },

@@ -403,6 +403,14 @@ class ForecastMetrics:
         # MAPE amb protecció per divisions per zero
         mape = np.mean(np.abs((y - y_pred) / np.where(y != 0, y, 1))) * 100
         
+        # WAPE (Weighted Absolute Percentage Error) - més robust que MAPE
+        total_abs_error = np.sum(np.abs(y - y_pred))
+        total_actual = np.sum(np.abs(y))
+        wape = (total_abs_error / total_actual * 100) if total_actual > 0 else 0
+        
+        # BIAS (Mean Error) - Indica si sobreestimem o infraestimem
+        bias = np.mean(y_pred - y)
+        
         metrics = {
             'algorithm': algorithm if algorithm else 'AUTO',
             'samples': len(X),
@@ -411,6 +419,8 @@ class ForecastMetrics:
             'rmse': round(rmse, 4),
             'r2_score': round(r2, 4),
             'mape': round(mape, 2),
+            'wape': round(wape, 2),
+            'bias': round(bias, 4),
             'training_time_seconds': round(training_time, 2),
             'iterations_tested': iterations if iterations else 'N/A',
             'valid': True
@@ -424,14 +434,46 @@ class ForecastMetrics:
         if r2 < 0.3:
             logger.warning(f"⚠️  {self.get_text('warnings.low_r2', f'{r2:.4f}')}")
         
-        if mape > 50:
-            logger.warning(f"⚠️  {self.get_text('warnings.high_mape', f'{mape:.2f}')}")
+        if wape > 50:
+            logger.warning(f"⚠️  {self.get_text('warnings.high_wape', f'{wape:.2f}')}")
+            
+        if abs(bias) > (np.mean(y) * 0.2) if len(y) > 0 and np.mean(y) != 0 else False:
+             logger.warning(f"⚠️ Alta desviació sistemàtica (Bias): {bias:.2f}")
         
         if np.isnan(mae) or np.isnan(rmse):
             metrics['valid'] = False
             logger.error(f"❌ {self.get_text('warnings.nan_metrics')}")
         
         self.log_step(self.get_text('step_name.model_training'), metrics, step_id='model_training')
+        return metrics
+
+    def validate_feature_target_correlation(self, df, y_col):
+        """
+        Analitza la correlació de cada feature amb el target per detectar si 
+        hi ha senyal real abans d'entrenar.
+        """
+        if df.empty or y_col not in df.columns:
+            return {'valid': False}
+            
+        correlations = df.corr()[y_col].abs().sort_values(ascending=False)
+        # Treiem el propi target
+        correlations = correlations.drop(labels=[y_col], errors='ignore')
+        
+        top_correlations = correlations.head(10).to_dict()
+        max_corr = correlations.max()
+        
+        metrics = {
+            'max_correlation': round(max_corr, 4),
+            'top_features': top_correlations,
+            'features_above_01': len(correlations[correlations > 0.1]),
+            'valid': True
+        }
+        
+        if max_corr < 0.1:
+            metrics['valid'] = False
+            logger.warning(f"⚠️ Molt baixa correlació detectada (Max: {max_corr:.4f}). El model probablement fallarà.")
+            
+        self.log_step("Correlació Features-Target", metrics, step_id='feature_correlation')
         return metrics
     
     def validate_forecast_output(self, forecast_df, original_df, future_steps):

@@ -43,7 +43,7 @@ def get_meteodata(latitude, longitude, archive_meteo:pd.DataFrame, days_foreward
     return meteo_data
 
 
-def predict_consumption_production(model_name:str='newModel.pkl'):
+def predict_consumption_production(model_name, database):
     """
     Prediu la consumició tenint en compte les hores actives dels assets
     """
@@ -52,28 +52,32 @@ def predict_consumption_production(model_name:str='newModel.pkl'):
 
     # Carreguem el model
     forecaster.load_model(model_filename=model_name)
-    initial_data = forecaster.db['initial_data']
+    
+    # Obtenim dades actualitzades
+    sensors_id = forecaster.db['sensors_id']
+    initial_data = database.get_data_from_sensor(sensors_id)
 
     first_timestamp_metric = initial_data.index[0] if not initial_data.empty else None 
 
-    # Filtrar dades històriques als últims 14 dies per al forecast
+    # Normalitzem timestamps a naive (sense timezone) per ser consistents amb Forecaster.prepare_dataframes
     if not initial_data.empty and 'timestamp' in initial_data.columns:
-        # Fem la comparació en UTC
-        #cutoff_date = pd.Timestamp.now(tz='UTC') - pd.Timedelta(days=14)
-        initial_data['timestamp'] = pd.to_datetime(initial_data['timestamp'])
-        
-        # Assegurar que tenim timezone UTC per comparar amb cutoff_date
-        if initial_data['timestamp'].dt.tz is None:
-            initial_data['timestamp'] = initial_data['timestamp'].dt.tz_localize('UTC')
-            
-        #initial_data = initial_data[initial_data['timestamp'] >= cutoff_date
+        initial_data['timestamp'] = pd.to_datetime(initial_data['timestamp']).dt.tz_localize(None)
 
 
     meteo_data_boolean = forecaster.db['meteo_data_is_selected']
     if meteo_data_boolean: meteo_data = get_meteodata(forecaster.db['lat'], forecaster.db['lon'], forecaster.db['meteo_data'],2)
     else: meteo_data = None
 
-    extra_sensors_df = forecaster.db['extra_sensors']
+    original_extra_sensors = forecaster.db['extra_sensors']
+    extra_sensors_df = None
+    if original_extra_sensors is not None and isinstance(original_extra_sensors, dict):
+        extra_sensors_df = {}
+        for s in original_extra_sensors.keys():
+            aux = database.get_data_from_sensor(s)
+            # Normalitzem timestamps a naive per consistència
+            if not aux.empty and 'timestamp' in aux.columns:
+                aux['timestamp'] = pd.to_datetime(aux['timestamp']).dt.tz_localize(None)
+            extra_sensors_df[s] = aux
 
     data = forecaster.prepare_dataframes(initial_data, meteo_data, extra_sensors_df)
 

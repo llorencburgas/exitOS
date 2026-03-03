@@ -151,7 +151,7 @@
         fetch('get_flexi_data')
             .then(response => response.json())
             .then(data => {
-                if(data !== "ERROR"){
+                if (data !== "ERROR") {
                     const container = document.createElement("div");
                     container.className = "scheduler-card";
                     parent_div_flexi.appendChild(container);
