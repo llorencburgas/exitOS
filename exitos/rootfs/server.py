@@ -421,18 +421,6 @@ def get_global_flexi_data():
 
         graph_timestamps = optimization_db['timestamps']
         graph_optimization = optimization_db['total_balance']
-
-        # Corregim KeyError si les claus no existeixen (per retrocompatibilitat o fallada prèvia)
-        if 'total_fup' not in optimization_db or 'total_fdown' not in optimization_db:
-            logger.warning("⚠️ Claus de flexibilitat no trobades. Recalculant...")
-            if not optimalScheduler.consumers:
-                optimalScheduler.prepare_data_for_optimization()
-
-            total_fup, total_fdown, _, _ = flexibility(optimization_db)
-            optimization_db['total_fup'] = total_fup
-            optimization_db['total_fdown'] = total_fdown
-            joblib.dump(optimization_db, full_path)
-
         graph_fup = optimization_db['total_fup']
         graph_fdown = optimization_db['total_fdown']
 
