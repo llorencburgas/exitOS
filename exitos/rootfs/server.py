@@ -448,12 +448,14 @@ def get_global_flexi_data():
             x=graph_df["hora"],
             y=graph_df["fup"],
             mode="lines+markers",
+            name="Fup",
             line=dict(color="red"),
         ))
 
         fig.add_trace(go.Scatter(
             x=graph_df["hora"],
             y=graph_df["fdown"],
+            name="Fdown",
             mode="lines+markers",
             line=dict(color="cyan"),
         ))
@@ -1261,38 +1263,6 @@ def flexibility(optimization_db):
     return total_fup, total_fdown
 
 
-def generate_plotly_flexibility():
-    Fup, Fdown, consum, timestamps = flexibility()
-
-    fup_line = [consum[t] + Fup[t] for t in range(len(timestamps))]
-    fdown_line = [consum[t] - Fdown[t] for t in range(len(timestamps))]
-
-    graph_df = pd.DataFrame({
-        "hora": pd.to_datetime(timestamps),
-        "optimitzacio": consum,
-        "Fup": fup_line,
-        "Fdown": fdown_line
-    })
-
-    graph_long = graph_df.melt(
-        id_vars=["hora"],  # columna que es manté tal qual
-        value_vars=["optimitzacio", "Fdown", "Fup"],  # columnes que es transformen
-        var_name="Serie",  # nom de la columna nova per als noms de les sèries
-        value_name="Valor"  # nom dels valors
-    )
-
-    fig = px.line(
-        graph_long,
-        x="hora",
-        y="Valor",
-        color="Serie",
-        markers=True,
-        title="Gràfica de Flexibilitat"
-    )
-
-    fig.update_xaxes(dtick=3600000)  # 3600000 ms = 1 hora
-    fig.update_xaxes(tickformat="%H:%M")
-    fig.update_xaxes(tickangle=45)
 #endregion FLEXIBILITY
 
 #region DAILY TASKS
