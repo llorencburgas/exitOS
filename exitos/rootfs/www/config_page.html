@@ -190,10 +190,11 @@
   }
 
   function lockButtons() {
-    const isLocked = {{ 'true' if user_data['locked'] else 'false' }};
-    if (isLocked) {
-      setFormLock(true);
-    }
+    const isLocked = {{ 'true' if user_data['locked'] else 'false' }
+  };
+  if (isLocked) {
+    setFormLock(true);
+  }
   }
 
   function get_res_certify_data() {
@@ -248,5 +249,6 @@
   });
 
 </script>
+
 
 </html>
