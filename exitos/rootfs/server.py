@@ -224,6 +224,57 @@ def tool_get_available_device_types(device_type_id=None, **kwargs):
         return f"Error llegint els tipus de dispositius disponibles: {e}"
 
 
+def tool_get_system_entities(query=None, **kwargs):
+    """Retorna la llista de dispositius i entitats (sensors/actuadors) reals del sistema."""
+    try:
+        devices = database.get_devices_info()
+        if not devices:
+            return "No he pogut carregar la informació de dispositius del sistema."
+
+        # Si hi ha una query, filtrem
+        if query:
+            query_clean = query.lower()
+            filtered_devices = []
+            for d in devices:
+                # Comprovem si el nom del dispositiu coincideix
+                if query_clean in d.get('device_name', '').lower():
+                    filtered_devices.append(d)
+                else:
+                    # Comprovem si alguna entitat del dispositiu coincideix
+                    entities_match = [e for e in d.get('entities', []) 
+                                    if query_clean in e.get('entity_id', '').lower() 
+                                    or query_clean in e.get('entity_name', '').lower()]
+                    if entities_match:
+                        # Creem una còpia amb només les entitats que coincideixen
+                        d_copy = d.copy()
+                        d_copy['entities'] = entities_match
+                        filtered_devices.append(d_copy)
+            
+            devices = filtered_devices
+
+        if not devices:
+            return f"No he trobat cap dispositiu o entitat que coincideixi amb '{query}'."
+
+        result_lines = ["=== DISPOSITIUS I ENTITATS DEL SISTEMA (Real-time) ==="]
+        for d in devices[:15]: # Limitem per no saturar el context
+            name = d.get('device_name', 'Desconegut')
+            result_lines.append(f"\n📍 Dispositiu: {name}")
+            entities = d.get('entities', [])
+            for e in entities[:10]: # Limitem entitats per dispositiu
+                e_id = e.get('entity_id', '')
+                e_name = e.get('entity_name', '')
+                result_lines.append(f"  - {e_name} ({e_id})")
+        
+        if len(devices) > 15:
+            result_lines.append("\n... hi ha més dispositius, sigues més específic si no has trobat el que buscaves.")
+
+        return "\n".join(result_lines)
+
+    except Exception as e:
+        logger.error(f"Error a tool_get_system_entities: {e}")
+        return f"Error consultant els dispositius: {e}"
+
+
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')
 
@@ -1422,6 +1473,27 @@ def register_llm_tools():
                 "config_name": {
                     "type": "string",
                     "description": "Opcional. Si saps el nom del dispositiu, posa'l aquí. Si no, deixa-ho en blanc per llistar-los tots."
+                }
+            },
+            "required": []
+        }
+    )
+
+    llm_engine.llm_engine.register_tool(
+        name="get_system_entities",
+        func=tool_get_system_entities,
+        description=(
+            "Llista els dispositius reals i les seves entitats (sensors i actuadors) disponibles al sistema Home Assistant. "
+            "Aquesta llista reflecteix exactament el que l'usuari veu a la pantalla de 'Configuració de Dispositius'. "
+            "Utilitza aquesta eina quan l'usuari pregunti 'quins dispositius tinc', 'busca el sensor de la rentadora', "
+            "o quan vulguis ajudar a configurar un nou dispositiu d'optimització i necessitis saber l'ID real de l'entitat."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Opcional. Paraula clau per filtrar dispositius o entitats (ex: 'placa', 'bateria', 'shelly')."
                 }
             },
             "required": []
