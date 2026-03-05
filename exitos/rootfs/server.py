@@ -71,19 +71,19 @@ optimalScheduler = OptimalScheduler.OptimalScheduler(database)
 blockchain = Blockchain.Blockchain()
 
 # --- DEFINICIÓ EINES LLM ---
-def tool_get_current_time():
+def tool_get_current_time(**kwargs):
     """Retorna l'hora actual del servidor"""
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-def tool_get_current_day():
+def tool_get_current_day(**kwargs):
     """Retorna la data actual (dia, mes i any)"""
     return datetime.now().strftime("%d-%m-%Y")
 
-def tool_get_current_year():
+def tool_get_current_year(**kwargs):
     """Retorna l'any actual"""
     return datetime.now().strftime("%Y")
 
-def tool_get_sensor_value(sensor_id):
+def tool_get_sensor_value(sensor_id, **kwargs):
     """Retorna l'últim valor conegut d'un sensor específic"""
     try:
         val = database.get_current_sensor_state(sensor_id)
@@ -97,7 +97,7 @@ def tool_get_sensor_value(sensor_id):
     except Exception as e:
         return f"Error llegint sensor: {e}"
 
-def tool_get_optimization_configs():
+def tool_get_optimization_configs(config_name=None, **kwargs):
     """Retorna totes les configuracions d'optimització guardades per l'usuari"""
     try:
         configs_path = os.path.join(forecast.models_filepath, "optimizations/configs")
@@ -105,7 +105,15 @@ def tool_get_optimization_configs():
             return "No hi ha cap configuració d'optimització guardada."
 
         json_files = [f for f in os.listdir(configs_path) if f.endswith(".json")]
+        
+        # Filtre opcional si l'LLM demana un per nom
+        if config_name:
+            config_name_clean = config_name.replace(".json", "").lower()
+            json_files = [f for f in json_files if config_name_clean in f.lower()]
+            
         if not json_files:
+            if config_name:
+                return f"No he trobat cap configuració que coincideixi amb '{config_name}'."
             return "No hi ha cap configuració d'optimització guardada."
 
         result_lines = []
@@ -145,7 +153,7 @@ def tool_get_optimization_configs():
         return f"Error llegint les configuracions d'optimització: {e}"
 
 
-def tool_get_available_device_types():
+def tool_get_available_device_types(device_type_id=None, **kwargs):
     """Retorna tots els tipus de dispositius disponibles per configurar a l'optimitzador, amb les seves restriccions i variables"""
     try:
         config_path = "resources/optimization_configs/optimization_devices_ca.conf"
@@ -156,6 +164,13 @@ def tool_get_available_device_types():
 
         with open(config_path, 'r', encoding='utf-8') as f:
             device_types = json.load(f)
+
+        # Filtre opcional
+        if device_type_id:
+            if device_type_id in device_types:
+                device_types = {device_type_id: device_types[device_type_id]}
+            else:
+                return f"El tipus de dispositiu '{device_type_id}' no existeix. Tipus vàlids: {', '.join(device_types.keys())}"
 
         result_lines = [
             "=== TIPUS DE DISPOSITIUS DISPONIBLES PER A L'OPTIMITZACIÓ ===",
