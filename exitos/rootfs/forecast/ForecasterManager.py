@@ -14,7 +14,7 @@ current_dir = os.getcwd()
 
 def get_meteodata(latitude, longitude, archive_meteo:pd.DataFrame, days_foreward):
     """
-    Obté les dades meteorològiques de les dates dins el dataframe i afageix 2 dies per predicció
+    Obté les dades meteorològiques de les dates dins el dataframe i afegeix 2 dies per predicció
     """
 
     today = datetime.today().strftime("%Y-%m-%d")
