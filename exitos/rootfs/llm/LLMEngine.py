@@ -292,10 +292,3 @@ def init_routes(app, external_logger):
             'ollama_url': llm_engine.ollama_base_url,
             'model': llm_engine.model
         })
-    
-    if logger:
-        logger.info("✅ Rutes LLM registrades:")
-        logger.info("   - GET  /llmChat")
-        logger.info("   - POST /llm_response")
-        logger.info("   - POST /llm_clear")
-        logger.info("   - GET  /llm_test")
