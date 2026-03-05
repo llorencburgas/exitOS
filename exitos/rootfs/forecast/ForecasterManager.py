@@ -14,7 +14,7 @@ current_dir = os.getcwd()
 
 def get_meteodata(latitude, longitude, archive_meteo:pd.DataFrame, days_foreward):
     """
-    Obté les dades meteorològiques de les dates dins el dataframe i afegeix 2 dies per predicció
+    Obté les dades meteorològiques de les dates dins el dataframe i afageix 2 dies per predicció
     """
 
     today = datetime.today().strftime("%Y-%m-%d")
@@ -223,8 +223,10 @@ def forecast_model(selected_forecast, database, models_filepath, today=True):
 
     timestamps  = forecast_df.index.tolist()
     predictions = forecast_df['value'].tolist()
+    real_vals = real_values.tolist() if hasattr(real_values, 'tolist') else real_values
 
     rows = []
+    # LIMITAR EL GRÀFIC: Només guardem les dades dels últims 14 dies (i futur)
     cutoff_date = pd.Timestamp.now() - pd.Timedelta(days=14)
     cutoff_date = cutoff_date.replace(tzinfo=None)
 
@@ -237,7 +239,7 @@ def forecast_model(selected_forecast, database, models_filepath, today=True):
                 forecasted_done_time,
                 ts.strftime("%Y-%m-%d %H:%M"),
                 predictions[i],
-                real_values[i] if i < len(real_values) else None,
+                real_vals[i] if i < len(real_vals) else None,
             ))
 
     logger.info("📈 Forecast realitzat correctament")
