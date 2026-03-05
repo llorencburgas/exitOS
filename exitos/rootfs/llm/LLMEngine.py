@@ -32,12 +32,13 @@ class LLMEngine:
             
             "## Ús d'Eines (Tools)\n"
             "Tens accés a eines per consultar dades en temps real. Segueix aquest protocol:\n"
-            "1. **Consulta abans de respondre**: Si l'usuari pregunta per dades específiques (preus, sensors, configuracions), UTILITZA l'eina corresponent primer.\n"
+            "1. **Consulta abans de respondre**: Si l'usuari pregunta per dades específiques (preus, sensors, configuracions, o quins dispositius té), UTILITZA l'eina corresponent primer.\n"
             "2. **Seqüència de Recomanació**:\n"
-            "   a. Crida `get_available_device_types` per conèixer les opcions i paràmetres.\n"
-            "   b. Crida `get_optimization_configs` per verificar què té configurat l'usuari actualment.\n"
-            "   c. Crida `get_sensor_value` si necessites l'estat actual d'algun dispositiu (ex: SOC de bateria).\n"
-            "   d. Crida `get_current_day` i `get_current_year` per saber la data actual corresponent.\n"
+            "   a. Crida `get_system_entities` per veure quins dispositius i entitats reals hi ha al sistema (Home Assistant). Allà trobaràs dispositius com 'Orphans', 'Backup', 'Consum', etc.\n"
+            "   b. Crida `get_available_device_types` per conèixer els models i paràmetres teòrics de l'optimitzador.\n"
+            "   c. Crida `get_optimization_configs` per verificar què té configurat l'usuari actualment.\n"
+            "   d. Crida `get_sensor_value` si necessites l'estat actual d'alguna entitat específica.\n"
+            "   e. Crida `get_current_day` i `get_current_year` per saber la data actual corresponent.\n"
             "3. **Robustesa**: NO t'inventis paràmetres. Si una eina no demana res, envia un objecte buit `{}`. Utilitza només els paràmetres definits a la documentació de cada tool.\n\n"
             
             "## Context de Recomanació d'Optimització\n"
