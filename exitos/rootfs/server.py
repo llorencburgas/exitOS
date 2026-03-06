@@ -1194,12 +1194,16 @@ def daily_task():
         database.update_database("all")
         database.clean_database_hourly_average(all_sensors=True)
 
+        # Si l'hora actual és anterior a les 18:00, l'objectiu és "avui".
+        # Si és posterior, suposem que el procés s'està preparant per "demà".
+        target_today = datetime.now().hour < 18
+        
         #forecast
-        daily_forecast_task()
+        daily_forecast_task(today=target_today)
 
         # Optimització
         logger.warning(f"📈 [{hora_actual}] - INICIANT PROCÉS D'OPTIMITZACIÓ")
-        optimize(today=False)
+        optimize(today=target_today)
 
     except Exception as e:
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
@@ -1225,7 +1229,7 @@ def monthly_task():
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
         logger.error(f" ❌ [{hora_actual}] - ERROR al monthly task : {e}")
 
-def daily_forecast_task():
+def daily_forecast_task(today=False):
     try:
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
         logger.warning(f"📈 [Forecast] [{hora_actual}] - STARTING DAILY FORECASTING")
@@ -1247,7 +1251,7 @@ def daily_forecast_task():
                     logger.warning(f"⚠️ [{model}] no té 'algorithm' definit, s'omet.")
                     continue
                 logger.warning(f"   📊 Running daily forecast for {model}")
-                forecast_model(model, today=False)
+                forecast_model(model, today=today)
                 logger.warning(f"   ✅ Forecast completat per {model}")
             except Exception as e_model:
                 # Error per model individual — no atura la resta de models
