@@ -51,10 +51,12 @@ def predict_consumption_production(model_name, database):
     forecaster = Forecast.Forecaster(debug=True)
 
     # Carreguem el model
+    logger.info(f"   📊 [Forecast] Carregant el model: {model_name}")
     forecaster.load_model(model_filename=model_name)
     
     # Obtenim dades actualitzades
     sensors_id = forecaster.db['sensors_id']
+    logger.info(f"   📊 [Forecast] Obtenint dades del sensor principal: {sensors_id}")
     initial_data = database.get_data_from_sensor(sensors_id)
 
     first_timestamp_metric = initial_data.index[0] if not initial_data.empty else None 
@@ -62,15 +64,24 @@ def predict_consumption_production(model_name, database):
     # Normalitzem timestamps a naive (sense timezone) per ser consistents amb Forecaster.prepare_dataframes
     if not initial_data.empty and 'timestamp' in initial_data.columns:
         initial_data['timestamp'] = pd.to_datetime(initial_data['timestamp']).dt.tz_localize(None)
+        logger.debug(f"   📊 [Forecast] Dades principals carregades. Files: {len(initial_data)}")
+    else:
+        logger.warning(f"   ⚠️ [Forecast] No s'han obtingut dades principals (buides) del sensor {sensors_id}")
+
 
 
     meteo_data_boolean = forecaster.db['meteo_data_is_selected']
-    if meteo_data_boolean: meteo_data = get_meteodata(forecaster.db['lat'], forecaster.db['lon'], forecaster.db['meteo_data'],2)
-    else: meteo_data = None
+    if meteo_data_boolean: 
+        logger.info(f"   📊 [Forecast] Obtenint dades meteorológiques per la predicció")
+        meteo_data = get_meteodata(forecaster.db['lat'], forecaster.db['lon'], forecaster.db['meteo_data'],2)
+    else: 
+        logger.info(f"   📊 [Forecast] El model no requereix dades meteorológiques.")
+        meteo_data = None
 
     original_extra_sensors = forecaster.db['extra_sensors']
     extra_sensors_df = None
     if original_extra_sensors is not None and isinstance(original_extra_sensors, dict):
+        logger.info(f"   📊 [Forecast] Obtenint dades de sensors extres: {list(original_extra_sensors.keys())}")
         extra_sensors_df = {}
         for s in original_extra_sensors.keys():
             aux = database.get_data_from_sensor(s)
@@ -79,14 +90,16 @@ def predict_consumption_production(model_name, database):
                 aux['timestamp'] = pd.to_datetime(aux['timestamp']).dt.tz_localize(None)
             extra_sensors_df[s] = aux
 
+    logger.info(f"   📊 [Forecast] Preparant dades per predir. Crida a forecaster.prepare_dataframes...")
     data = forecaster.prepare_dataframes(initial_data, meteo_data, extra_sensors_df)
 
     data = data.set_index('timestamp')
     data.index = pd.to_datetime(data.index)
     data.bfill(inplace=True)
 
-
+    logger.info(f"   📊 [Forecast] Realitzant la predicció: future_steps=48")
     prediction , real_values , sensor_id = forecaster.forecast(data, 'value', forecaster.db['model'], future_steps=48)
+    logger.info(f"   ✅ [Forecast] Predicció de {len(prediction)} passos completada correctament per {sensor_id}.")
 
     return prediction, real_values, sensor_id
 
@@ -216,10 +229,14 @@ def forecast_model(selected_forecast, database, models_filepath, today=True):
         model_name=selected_forecast, database=database
     )
 
+    logger.info(f"   📊 [Forecast] Dades de predicció obtingudes: {len(forecast_df)} files.")
+
     if today:
         forecasted_done_time = datetime.today().strftime('%d-%m-%Y')
     else:
         forecasted_done_time = (datetime.today() + timedelta(days=1)).strftime("%d-%m-%Y")
+
+    logger.debug(f"   📊 [Forecast] Guardant prediccions amb data objectiu: {forecasted_done_time} (Avui de referència: {today})")
 
     timestamps  = forecast_df.index.tolist()
     predictions = forecast_df['value'].tolist()
@@ -242,8 +259,9 @@ def forecast_model(selected_forecast, database, models_filepath, today=True):
                 real_vals[i] if i < len(real_vals) else None,
             ))
 
-    logger.info("📈 Forecast realitzat correctament")
+    logger.info(f"   📈 [Forecast] Guardant {len(rows)} files a la base de dades per a {selected_forecast}")
     database.save_forecast(rows)
+    logger.info("   ✅ [Forecast] Forecast realitzat correctament")
 
 
 def delete_model(model_name, database, models_filepath):
