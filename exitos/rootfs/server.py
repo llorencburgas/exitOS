@@ -1002,7 +1002,7 @@ def optimize(today = False):
 
             #Configurar Scheduler
             schedule.clear('device_config_tasks')
-            schedule.every().hour.at(":00").do(config_optimized_devices_HA).tag('device_config_tasks')
+            schedule.every().hour.at(":00").do(run_threaded, config_optimized_devices_HA).tag('device_config_tasks')
             logger.info("📅 Job programat per executar-se un cop cada hora (als minuts :00)")
 
 
@@ -1364,9 +1364,13 @@ def config_optimized_devices_HA():
     except Exception as e:
         logger.error(f"❌ [{datetime.now().strftime('%d:%m:%Y %H:%m')}] -  Error configurant horariament un dispositiu a H.A {e}")
 
-schedule.every().day.at("23:30").do(daily_task)
-schedule.every().day.at("02:00").do(monthly_task)
-schedule.every().hour.at(":00").do(certificate_hourly_task)
+def run_threaded(job_func):
+    job_thread = threading.Thread(target=job_func)
+    job_thread.start()
+
+schedule.every().day.at("23:30").do(run_threaded, daily_task)
+schedule.every().day.at("02:00").do(run_threaded, monthly_task)
+schedule.every().hour.at(":00").do(run_threaded, certificate_hourly_task)
 
 def run_scheduled_tasks():
     logger.debug("🗓️ SCHEDULER STARTED")
@@ -1527,9 +1531,21 @@ def register_llm_tools():
         }
     )
 
+from bottle import ServerAdapter
+from wsgiref.simple_server import make_server, WSGIServer
+from socketserver import ThreadingMixIn
+
+class ThreadingWSGIServer(ThreadingMixIn, WSGIServer):
+    daemon_threads = True
+
+class ThreadedServer(ServerAdapter):
+    def run(self, handler):
+        server = make_server(self.host, self.port, handler, server_class=ThreadingWSGIServer)
+        server.serve_forever()
+
 # Funció main que encén el servidor web.
 def main():
-    run(app=app, host=HOSTNAME, port=PORT, quiet=True)
+    run(app=app, host=HOSTNAME, port=PORT, quiet=True, server=ThreadedServer)
 
 
 # Executem la funció main
