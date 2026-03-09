@@ -55,7 +55,7 @@ class SqlDB():
         """
 
         logger.info("Iniciant creació de la Base de Dades")
-        with sqlite3.connect(self.database_file) as con:
+        with sqlite3.connect(self.database_file, timeout=60.0) as con:
             cur = con.cursor()
 
             #creant les taules
@@ -74,10 +74,10 @@ class SqlDB():
         self.clean_database_hourly_average(all_sensors=True)
 
     def _get_connection(self):
-        return sqlite3.connect(self.database_file)
+        return sqlite3.connect(self.database_file, timeout=60.0)
 
     def self_destruct(self):
-        with sqlite3.connect("dades.db") as con:
+        with sqlite3.connect("dades.db", timeout=60.0) as con:
             cur = con.cursor()
             cur.execute("DROP TABLE IF EXISTS dades")
             cur.execute("DROP TABLE IF EXISTS sensors")
