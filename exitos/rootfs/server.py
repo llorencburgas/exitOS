@@ -23,6 +23,7 @@ from collections import OrderedDict
 from forecast import Forecaster as Forecast
 import forecast.ForecasterManager as ForecasterManager
 import optimization.OptimalScheduler as OptimalScheduler
+import optimization.FlexibilityManager as FlexibilityManager
 import sqlDB as db
 import blockchain as Blockchain
 import numpy as np
@@ -67,7 +68,7 @@ forecast = Forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler(database)
 blockchain = Blockchain.Blockchain()
 
-# --- DEFINICIÓ EINES LLM ---
+#region DEFINICIÓ EINES LLM
 def tool_get_current_time(**kwargs):
     """Retorna l'hora actual del servidor"""
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -1142,43 +1143,24 @@ def flexibility(optimization_db):
         if device.name in optimization_db['devices_config']:
             try:
                 result = device.get_flexibility(optimization_db)
-                if result:
-                    fup, fdown, power, timestamps = result
-
-                    # Guardem resultats individuals
-                    # Convertim timestamps a string per a JSON
-                    timestamps_str = [str(t) for t in timestamps]
-                    
-                    flexi_result = {
-                        "f_up": convert_to_json_serializable(fup),
-                        "f_down": convert_to_json_serializable(fdown),
-                        "power": convert_to_json_serializable(power),
-                        "timestamps": timestamps_str
-                    }
-
-                    full_path = os.path.join(forecast.models_filepath, "flexibility/" + device.name + ".json")
-                    os.makedirs(forecast.models_filepath + 'flexibility', exist_ok=True)
-
-                    if os.path.exists(full_path):
-                        logger.warning(f"Eliminant arxiu antic de flexibilitat ->  {device.name}")
-                        os.remove(full_path)
-
-                    with open(full_path, 'w', encoding='utf-8') as f:
-                        json.dump(flexi_result, f, indent=4)
-                    
-                    logger.info(f"✏️ Flexibilitat de {device.name} guardada al fitxer {full_path}")
-
-
-                    for i in range(len(total_fup)):
-                        total_fup[i] += fup[i]
-                        total_fdown[i] += fdown[i]
-
+                FlexibilityManager.get_flexibility(device_flex=result,
+                                                   base_file_path=forecast.models_filepath,
+                                                   total_fup=total_fup,
+                                                   total_fdown=total_fdown,
+                                                   device_name=device.name)
             except Exception as e:
                 logger.error(f"❌ Error calculating flexibility for {device.name}: {e}")
                 continue
 
     # Retornem els totals acumulats
     return total_fup, total_fdown
+
+def daily_flex():
+    flexi_data = FlexibilityManager.send_flexibility(forecast.models_filepath)
+    response = FlexibilityManager.generate_fake_response(flexi_data)
+    logger.info(f"  📎{response['instructions_text'][0]}")
+
+    FlexibilityManager.dispatch_devices(response['flexibility_profile_requested'], forecast.models_filepath)
 
 
 #endregion FLEXIBILITY
@@ -1359,7 +1341,7 @@ def config_optimized_devices_HA():
         for collection in collections:
             for item in collection:
                 value, sensor_id, sensor_type = item.controla(config = optimization_db['devices_config'][item.name], current_hour = current_hour)
-                database.set_sensor_value_HA(sensor_type, sensor_id, value)
+                # database.set_sensor_value_HA(sensor_type, sensor_id, value)
     except Exception as e:
         logger.error(f"❌ [{datetime.now().strftime('%d:%m:%Y %H:%m')}] -  Error configurant horariament un dispositiu a H.A {e}")
 
@@ -1390,7 +1372,7 @@ scheduler_thread.start()
 #region DEBUG REGION
 @app.route('/panik_function')
 def panik_function():
-    flexibility()
+    daily_flex()
 
 #endregion DEBUG REGION
 
