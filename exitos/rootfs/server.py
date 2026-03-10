@@ -1543,9 +1543,8 @@ class ThreadingWSGIServer(ThreadingMixIn, WSGIServer):
 
 class ThreadedServer(ServerAdapter):
     def run(self, handler):
-        # Silencia els logs quan el paràmetre quiet és True
-        handler_class = NoLogRequestHandler if self.options.get('quiet') else WSGIRequestHandler
-        server = make_server(self.host, self.port, handler, server_class=ThreadingWSGIServer, handler_class=handler_class)
+        # Silencia els logs HTTP sempre (quiet de Bottle no arriba a l'adaptador)
+        server = make_server(self.host, self.port, handler, server_class=ThreadingWSGIServer, handler_class=NoLogRequestHandler)
         server.serve_forever()
 
 # Funció main que encén el servidor web.
