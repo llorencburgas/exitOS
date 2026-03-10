@@ -707,6 +707,11 @@ class Forecaster:
             'val_size': len(X_val),
             'test_size': len(X_test)
         }
+        
+        if len(X_test) > 0 and val_idx < len(X):
+            self.db['test_set_start_timestamp'] = X.index[val_idx]
+        else:
+            self.db['test_set_start_timestamp'] = X.index[-1] if len(X) > 0 else pd.Timestamp.now()
 
         self.save_model(filename)
 
@@ -837,6 +842,11 @@ class Forecaster:
              df_fit = model_select.transform(df_fit.values)
              
         out = pd.DataFrame(model.predict(df_fit), index=real_values_column.index, columns=[y])
+        
+        test_start = self.db.get('test_set_start_timestamp')
+        if test_start is not None:
+            out = out[out.index >= test_start]
+            real_values_column = real_values_column[real_values_column.index >= test_start]
         
         final_prediction = pd.concat([out, forecast_output])
         

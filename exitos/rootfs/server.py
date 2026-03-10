@@ -67,20 +67,20 @@ forecast = Forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler(database)
 blockchain = Blockchain.Blockchain()
 
-#region DEFINICIÓ EINES LLM
-def tool_get_current_time():
+# --- DEFINICIÓ EINES LLM ---
+def tool_get_current_time(**kwargs):
     """Retorna l'hora actual del servidor"""
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-def tool_get_current_day():
+def tool_get_current_day(**kwargs):
     """Retorna la data actual (dia, mes i any)"""
     return datetime.now().strftime("%d-%m-%Y")
 
-def tool_get_current_year():
+def tool_get_current_year(**kwargs):
     """Retorna l'any actual"""
     return datetime.now().strftime("%Y")
 
-def tool_get_sensor_value(sensor_id):
+def tool_get_sensor_value(sensor_id, **kwargs):
     """Retorna l'últim valor conegut d'un sensor específic"""
     try:
         val = database.get_current_sensor_state(sensor_id)
@@ -94,7 +94,7 @@ def tool_get_sensor_value(sensor_id):
     except Exception as e:
         return f"Error llegint sensor: {e}"
 
-def tool_get_optimization_configs():
+def tool_get_optimization_configs(config_name=None, **kwargs):
     """Retorna totes les configuracions d'optimització guardades per l'usuari"""
     try:
         configs_path = os.path.join(forecast.models_filepath, "optimizations/configs")
@@ -102,7 +102,15 @@ def tool_get_optimization_configs():
             return "No hi ha cap configuració d'optimització guardada."
 
         json_files = [f for f in os.listdir(configs_path) if f.endswith(".json")]
+        
+        # Filtre opcional si l'LLM demana un per nom
+        if config_name:
+            config_name_clean = config_name.replace(".json", "").lower()
+            json_files = [f for f in json_files if config_name_clean in f.lower()]
+            
         if not json_files:
+            if config_name:
+                return f"No he trobat cap configuració que coincideixi amb '{config_name}'."
             return "No hi ha cap configuració d'optimització guardada."
 
         result_lines = []
@@ -142,7 +150,7 @@ def tool_get_optimization_configs():
         return f"Error llegint les configuracions d'optimització: {e}"
 
 
-def tool_get_available_device_types():
+def tool_get_available_device_types(device_type_id=None, **kwargs):
     """Retorna tots els tipus de dispositius disponibles per configurar a l'optimitzador, amb les seves restriccions i variables"""
     try:
         config_path = "resources/optimization_configs/optimization_devices_ca.conf"
@@ -153,6 +161,13 @@ def tool_get_available_device_types():
 
         with open(config_path, 'r', encoding='utf-8') as f:
             device_types = json.load(f)
+
+        # Filtre opcional
+        if device_type_id:
+            if device_type_id in device_types:
+                device_types = {device_type_id: device_types[device_type_id]}
+            else:
+                return f"El tipus de dispositiu '{device_type_id}' no existeix. Tipus vàlids: {', '.join(device_types.keys())}"
 
         result_lines = [
             "=== TIPUS DE DISPOSITIUS DISPONIBLES PER A L'OPTIMITZACIÓ ===",
@@ -206,6 +221,57 @@ def tool_get_available_device_types():
         return f"Error llegint els tipus de dispositius disponibles: {e}"
 
 #endregion DEFINICIÓ EINES LLM
+
+
+def tool_get_system_entities(query=None, **kwargs):
+    """Retorna la llista de dispositius i entitats (sensors/actuadors) reals del sistema."""
+    try:
+        devices = database.get_devices_info()
+        if not devices:
+            return "No he pogut carregar la informació de dispositius del sistema."
+
+        # Si hi ha una query, filtrem
+        if query:
+            query_clean = query.lower()
+            filtered_devices = []
+            for d in devices:
+                # Comprovem si el nom del dispositiu coincideix
+                if query_clean in d.get('device_name', '').lower():
+                    filtered_devices.append(d)
+                else:
+                    # Comprovem si alguna entitat del dispositiu coincideix
+                    entities_match = [e for e in d.get('entities', []) 
+                                    if query_clean in e.get('entity_id', '').lower() 
+                                    or query_clean in e.get('entity_name', '').lower()]
+                    if entities_match:
+                        # Creem una còpia amb només les entitats que coincideixen
+                        d_copy = d.copy()
+                        d_copy['entities'] = entities_match
+                        filtered_devices.append(d_copy)
+            
+            devices = filtered_devices
+
+        if not devices:
+            return f"No he trobat cap dispositiu o entitat que coincideixi amb '{query}'."
+
+        result_lines = ["=== DISPOSITIUS I ENTITATS DEL SISTEMA (Real-time) ==="]
+        for d in devices[:15]: # Limitem per no saturar el context
+            name = d.get('device_name', 'Desconegut')
+            result_lines.append(f"\n📍 Dispositiu: {name}")
+            entities = d.get('entities', [])
+            for e in entities[:10]: # Limitem entitats per dispositiu
+                e_id = e.get('entity_id', '')
+                e_name = e.get('entity_name', '')
+                result_lines.append(f"  - {e_name} ({e_id})")
+        
+        if len(devices) > 15:
+            result_lines.append("\n... hi ha més dispositius, sigues més específic si no has trobat el que buscaves.")
+
+        return "\n".join(result_lines)
+
+    except Exception as e:
+        logger.error(f"Error a tool_get_system_entities: {e}")
+        return f"Error consultant els dispositius: {e}"
 
 
 # Ruta per servir fitxers estàtics i imatges des de 'www'
@@ -678,177 +744,30 @@ def get_model_metrics(model_name):
         return json.dumps({"status": "error", "message": str(e)})
 
 def train_model():
-    selected_model = request.forms.get("model")
-    extra_sensors_id = request.forms.get("sensors_id") if request.forms.get("sensors_id") else None
-    config = {}
+    form_data = {key: request.forms.get(key) for key in request.forms.keys()}
+    return ForecasterManager.train_model(
+        form_data=form_data,
+        database=database,
+        forecaster=forecast,
+        lat=optimalScheduler.latitude,
+        lon=optimalScheduler.longitude,
+    )
 
-    for key in request.forms.keys():
-        if key != "model" or key != "sensors_id" or key != 'action':
-            value = request.forms.get(key)
-            value = value.strip().lower()
-
-            if value in ["true", "false", "null", "none"]:
-                if value == "true": config[key] = True
-                elif value == "false": config[key] = False
-                else: config[key] = None
-            elif value.isdigit():
-                config[key] = int(value)
-            else:
-                try:
-                    config[key] = float(value)
-                except ValueError:
-                    config[key] = value
-
-    sensors_id = config.get("sensorsId")
-    scaled = config.get("scaled")
-    model_name = config.get("modelName")
-    lang_code = request.forms.get("lang", "ca")
-    
-    # Obtenir configuració de windowing
-    windowing_option = config.get("windowingOption", "default")
-    look_back = None
-    
-    if windowing_option == "24-48":
-        look_back = {-1: [24, 48]}
-    elif windowing_option == "48-72":
-        look_back = {-1: [48, 72]}
-    elif windowing_option == "1-24":
-        look_back = {-1: [1, 24]}
-    elif windowing_option == "custom":
-        window_start = config.get("windowStart", 25)
-        window_end = config.get("windowEnd", 48)
-        look_back = {-1: [window_start, window_end]}
-    # Si és "default" o None, es farà servir el valor per defecte {-1: [25, 48]}
-
-    config.pop("sensorsId")
-    config.pop("scaled")
-    config.pop("modelName")
-    config.pop('model')
-    config.pop("models")
-    config.pop("action")
-    if 'sensors_id' in config: config.pop('sensors_id')
-    if 'windowingOption' in config: config.pop('windowingOption')
-    if 'windowStart' in config: config.pop('windowStart')
-    if 'windowEnd' in config: config.pop('windowEnd')
-    if 'lang' in config: config.pop('lang')
-
-    if "meteoData" in config:
-        meteo_data = True
-        config.pop("meteoData")
-    else:
-        meteo_data = False
-
-    if model_name == "":
-        aux = sensors_id.split('.')
-        model_name = aux[1]
-    if scaled == 'None': scaled = None
-
-    # Filtrar dades d'entrenament als últims 14 dies
-    #cutoff_date = pd.Timestamp.now(tz='UTC') - pd.Timedelta(days=14)
-    
-    extra_sensors_df = {}
-    if extra_sensors_id is None:
-        extra_sensors_id = None
-    elif len(extra_sensors_id) == 1 and extra_sensors_id[0] == "None":
-        extra_sensors_id = None
-    else:
-        if "None" in extra_sensors_id: extra_sensors_id.remove('None')
-        extra_sensors_df = {}
-        extra_sensors_list = [s.strip() for s in extra_sensors_id.split(',') if s.strip()]
-        for s in extra_sensors_list:
-            aux = database.get_data_from_sensor(s)
-            # Filtrar dades
-            if not aux.empty and 'timestamp' in aux.columns:
-                aux['timestamp'] = pd.to_datetime(aux['timestamp'])
-                if aux['timestamp'].dt.tz is None:
-                     aux['timestamp'] = aux['timestamp'].dt.tz_localize('UTC')
-                #aux = aux[aux['timestamp'] >= cutoff_date]
-            extra_sensors_df[s] = aux
-
-
-    sensors_df = database.get_data_from_sensor(sensors_id)
-    # Filtrar dades
-    if not sensors_df.empty and 'timestamp' in sensors_df.columns:
-        sensors_df['timestamp'] = pd.to_datetime(sensors_df['timestamp'])
-        if sensors_df['timestamp'].dt.tz is None:
-             sensors_df['timestamp'] = sensors_df['timestamp'].dt.tz_localize('UTC')
-        #sensors_df = sensors_df[sensors_df['timestamp'] >= cutoff_date]
-
-    logger.info(f"Selected model: {selected_model}, Config: {config}, Windowing: {look_back}")
-
-    lat = optimalScheduler.latitude
-    lon = optimalScheduler.longitude
-
-    if selected_model == "AUTO":
-        forecast.create_model(data=sensors_df,
-                              sensors_id=sensors_id,
-                              y='value',
-                              escalat=scaled,
-                              max_time=config['max_time'],
-                              filename=model_name,
-                              meteo_data= meteo_data if meteo_data is True else None,
-                              extra_sensors_df=extra_sensors_df if extra_sensors_id is not None else None,
-                              lat=lat,
-                              lon=lon,
-                              look_back=look_back,
-                              lang=lang_code)
-    else:
-        forecast.create_model(data=sensors_df,
-                              sensors_id=sensors_id,
-                              y='value',
-                              algorithm=selected_model,
-                              params=config,
-                              escalat=scaled,
-                              filename=model_name,
-                              meteo_data=meteo_data if meteo_data is True else None,
-                              extra_sensors_df= extra_sensors_df if extra_sensors_id is not None else None,
-                              lat=lat,
-                              lon=lon,
-                              look_back=look_back,
-                              lang=lang_code)
-
-    return model_name
-
-def forecast_model(selected_forecast, today = True):
-    forecast_df, real_values, sensor_id = ForecasterManager.predict_consumption_production(model_name=selected_forecast, database=database)
-
-    if today:  forecasted_done_time = datetime.today().strftime('%d-%m-%Y')
-    else: forecasted_done_time = (datetime.today() + timedelta(days=1)).strftime("%d-%m-%Y")
-
-    timestamps = forecast_df.index.tolist()
-    predictions = forecast_df['value'].tolist()
-
-    rows = []
-    
-    # LIMITAR EL GRÀFIC: Només guardem les dades dels últims 14 dies (i futur)
-    cutoff_date = pd.Timestamp.now() - pd.Timedelta(days=14)
-    cutoff_date = cutoff_date.replace(tzinfo=None) # Comparació en 'naive' (sense zona horària) per evitar errors
-    
-    for i in range(len(timestamps)):
-        ts = timestamps[i]
-        # Normalitzem a naive per comparar
-        ts_naive = ts.replace(tzinfo=None) if hasattr(ts, 'tzinfo') and ts.tzinfo else ts
-
-        if ts_naive >= cutoff_date:
-            forecasted_time = ts.strftime("%Y-%m-%d %H:%M")
-            predicted = predictions[i]
-            actual = real_values[i] if i < len(real_values) else None
-    
-            rows.append((selected_forecast, sensor_id, forecasted_done_time, forecasted_time, predicted, actual))
-            
-    logger.info(f"📈 Forecast realitzat correctament")
-    database.save_forecast(rows)
+def forecast_model(selected_forecast, today=True):
+    ForecasterManager.forecast_model(
+        selected_forecast=selected_forecast,
+        database=database,
+        models_filepath=forecast.models_filepath,
+        today=today,
+    )
 
 def delete_model():
     selected_model = request.forms.get("models")
-    database.remove_forecast(selected_model)
-
-    model_path = forecast.models_filepath +'forecastings/'+ selected_model
-    if os.path.exists(model_path):
-        os.remove(model_path)
-        logger.info(f"Model deleted: {model_path}")
-    else:
-        logger.error(f"Model {selected_model} not found")
+    ForecasterManager.delete_model(
+        model_name=selected_model,
+        database=database,
+        models_filepath=forecast.models_filepath,
+    )
 
 @app.route('/submit-model', method="POST")
 def submit_model():
@@ -1082,7 +1001,7 @@ def optimize(today = False):
 
             #Configurar Scheduler
             schedule.clear('device_config_tasks')
-            schedule.every().hour.at(":00").do(config_optimized_devices_HA).tag('device_config_tasks')
+            schedule.every().hour.at(":00").do(run_threaded, config_optimized_devices_HA).tag('device_config_tasks')
             logger.info("📅 Job programat per executar-se un cop cada hora (als minuts :00)")
 
 
@@ -1274,12 +1193,16 @@ def daily_task():
         database.update_database("all")
         database.clean_database_hourly_average(all_sensors=True)
 
+        # Si l'hora actual és anterior a les 18:00, l'objectiu és "avui".
+        # Si és posterior, suposem que el procés s'està preparant per "demà".
+        target_today = datetime.now().hour < 18
+        
         #forecast
-        daily_forecast_task()
+        daily_forecast_task(today=target_today)
 
         # Optimització
         logger.warning(f"📈 [{hora_actual}] - INICIANT PROCÉS D'OPTIMITZACIÓ")
-        optimize(today=False)
+        optimize(today=target_today)
 
     except Exception as e:
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
@@ -1305,15 +1228,16 @@ def monthly_task():
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
         logger.error(f" ❌ [{hora_actual}] - ERROR al monthly task : {e}")
 
-def daily_forecast_task():
+def daily_forecast_task(today=False):
     try:
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
-        logger.warning(f"📈 [{hora_actual}] - STARTING DAILY FORECASTING")
+        logger.warning(f"📈 [Forecast] [{hora_actual}] - STARTING DAILY FORECASTING")
 
         models_saved = [os.path.basename(f) for f in glob.glob(forecast.models_filepath + "forecastings/*.pkl")]
+        logger.info(f"   🧩 [Forecast] Models trobats per processar: {models_saved}")
 
         if not models_saved:
-            logger.warning("⚠️ No s'han trobat models .pkl per al forecast automàtic!")
+            logger.warning("   ⚠️ [Forecast] No s'han trobat models .pkl per al forecast automàtic!")
             return
 
         for model in models_saved:
@@ -1326,18 +1250,18 @@ def daily_forecast_task():
                     logger.warning(f"⚠️ [{model}] no té 'algorithm' definit, s'omet.")
                     continue
                 logger.warning(f"   📊 Running daily forecast for {model}")
-                forecast_model(model, today=False)
+                forecast_model(model, today=today)
                 logger.warning(f"   ✅ Forecast completat per {model}")
             except Exception as e_model:
                 # Error per model individual — no atura la resta de models
-                logger.error(f"   ❌ Error al forecast de {model}: {e_model}", exc_info=True)
+                logger.error(f"   ❌ [Forecast] Error al forecast de {model}: {e_model}", exc_info=True)
 
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
-        logger.warning(f"📈 [{hora_actual}] - ENDING DAILY FORECASTS")
+        logger.warning(f"📈 [Forecast] [{hora_actual}] - ENDING DAILY FORECASTS")
 
     except Exception as e:
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
-        logger.error(f"❌ [{hora_actual}] - ERROR general al daily forecast: {e}", exc_info=True)
+        logger.error(f"❌ [Forecast] [{hora_actual}] - ERROR general al daily forecast: {e}", exc_info=True)
 
 def certificate_hourly_task():
     try:
@@ -1439,9 +1363,13 @@ def config_optimized_devices_HA():
     except Exception as e:
         logger.error(f"❌ [{datetime.now().strftime('%d:%m:%Y %H:%m')}] -  Error configurant horariament un dispositiu a H.A {e}")
 
-schedule.every().day.at("23:30").do(daily_task)
-schedule.every().day.at("02:00").do(monthly_task)
-schedule.every().hour.at(":00").do(certificate_hourly_task)
+def run_threaded(job_func):
+    job_thread = threading.Thread(target=job_func)
+    job_thread.start()
+
+schedule.every().day.at("23:30").do(run_threaded, daily_task)
+schedule.every().day.at("02:00").do(run_threaded, monthly_task)
+schedule.every().hour.at(":00").do(run_threaded, certificate_hourly_task)
 
 def run_scheduled_tasks():
     logger.debug("🗓️ SCHEDULER STARTED")
@@ -1560,6 +1488,27 @@ def register_llm_tools():
     )
 
     llm_engine.llm_engine.register_tool(
+        name="get_system_entities",
+        func=tool_get_system_entities,
+        description=(
+            "Llista els dispositius reals i les seves entitats (sensors i actuadors) disponibles al sistema Home Assistant. "
+            "Aquesta llista reflecteix exactament el que l'usuari veu a la pantalla de 'Configuració de Dispositius'. "
+            "Utilitza aquesta eina quan l'usuari pregunti 'quins dispositius tinc', 'busca el sensor de la rentadora', "
+            "o quan vulguis ajudar a configurar un nou dispositiu d'optimització i necessitis saber l'ID real de l'entitat."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Opcional. Paraula clau per filtrar dispositius o entitats (ex: 'placa', 'bateria', 'shelly')."
+                }
+            },
+            "required": []
+        }
+    )
+
+    llm_engine.llm_engine.register_tool(
         name="get_available_device_types",
         func=tool_get_available_device_types,
         description=(
@@ -1581,9 +1530,21 @@ def register_llm_tools():
         }
     )
 
+from bottle import ServerAdapter
+from wsgiref.simple_server import make_server, WSGIServer
+from socketserver import ThreadingMixIn
+
+class ThreadingWSGIServer(ThreadingMixIn, WSGIServer):
+    daemon_threads = True
+
+class ThreadedServer(ServerAdapter):
+    def run(self, handler):
+        server = make_server(self.host, self.port, handler, server_class=ThreadingWSGIServer)
+        server.serve_forever()
+
 # Funció main que encén el servidor web.
 def main():
-    run(app=app, host=HOSTNAME, port=PORT, quiet=True)
+    run(app=app, host=HOSTNAME, port=PORT, quiet=True, server=ThreadedServer)
 
 
 # Executem la funció main
