@@ -1,6 +1,8 @@
+import math
 import os
 import threading
 import traceback
+from sched import scheduler
 
 import joblib
 import plotly
@@ -11,6 +13,7 @@ import glob
 import random
 
 import plotly.graph_objs as go
+import plotly.express as px
 import pandas as pd
 from pandas import to_datetime
 
@@ -22,7 +25,7 @@ from collections import OrderedDict
 
 from forecast import Forecaster as Forecast
 import forecast.ForecasterManager as ForecasterManager
-import optimization.OptimalScheduler as OptimalScheduler
+import forecast.OptimalScheduler as OptimalScheduler
 import sqlDB as db
 import blockchain as Blockchain
 import numpy as np
@@ -219,8 +222,6 @@ def tool_get_available_device_types(device_type_id=None, **kwargs):
 
     except Exception as e:
         return f"Error llegint els tipus de dispositius disponibles: {e}"
-
-#endregion DEFINICIÓ EINES LLM
 
 
 def tool_get_system_entities(query=None, **kwargs):
@@ -1531,15 +1532,21 @@ def register_llm_tools():
     )
 
 from bottle import ServerAdapter
-from wsgiref.simple_server import make_server, WSGIServer
+from wsgiref.simple_server import make_server, WSGIServer, WSGIRequestHandler
 from socketserver import ThreadingMixIn
+
+class NoLogRequestHandler(WSGIRequestHandler):
+    def log_message(self, format, *args):
+        pass # Silencia els logs
 
 class ThreadingWSGIServer(ThreadingMixIn, WSGIServer):
     daemon_threads = True
 
 class ThreadedServer(ServerAdapter):
     def run(self, handler):
-        server = make_server(self.host, self.port, handler, server_class=ThreadingWSGIServer)
+        # Silencia els logs quan el paràmetre quiet és True
+        handler_class = NoLogRequestHandler if self.options.get('quiet') else WSGIRequestHandler
+        server = make_server(self.host, self.port, handler, server_class=ThreadingWSGIServer, handler_class=handler_class)
         server.serve_forever()
 
 # Funció main que encén el servidor web.
