@@ -8,10 +8,13 @@ ADD ./rootfs/sqlDB.py .
 ADD ./rootfs/logging_config.py .
 ADD ./rootfs/blockchain.py .
 
-#Forecast
+#Forecast i Optimizer
 COPY ./rootfs/forecast /forecast/
+COPY ./rootfs/optimization /optimization/
 COPY ./rootfs/abstraction /abstraction/
 COPY ./rootfs/abstraction/assets /assets/
+
+
 
 #HTML and images
 COPY ./rootfs/www /www/

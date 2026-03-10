@@ -1,8 +1,6 @@
-import math
 import os
 import threading
 import traceback
-from sched import scheduler
 
 import joblib
 import plotly
@@ -13,7 +11,6 @@ import glob
 import random
 
 import plotly.graph_objs as go
-import plotly.express as px
 import pandas as pd
 from pandas import to_datetime
 
@@ -25,7 +22,7 @@ from collections import OrderedDict
 
 from forecast import Forecaster as Forecast
 import forecast.ForecasterManager as ForecasterManager
-import forecast.OptimalScheduler as OptimalScheduler
+import optimization.OptimalScheduler as OptimalScheduler
 import sqlDB as db
 import blockchain as Blockchain
 import numpy as np
@@ -70,7 +67,7 @@ forecast = Forecast.Forecaster(debug=True)
 optimalScheduler = OptimalScheduler.OptimalScheduler(database)
 blockchain = Blockchain.Blockchain()
 
-# --- DEFINICIÓ EINES LLM ---
+#region DEFINICIÓ EINES LLM
 def tool_get_current_time():
     """Retorna l'hora actual del servidor"""
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -207,6 +204,8 @@ def tool_get_available_device_types():
 
     except Exception as e:
         return f"Error llegint els tipus de dispositius disponibles: {e}"
+
+#endregion DEFINICIÓ EINES LLM
 
 
 # Ruta per servir fitxers estàtics i imatges des de 'www'
