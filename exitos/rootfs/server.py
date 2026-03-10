@@ -1537,16 +1537,18 @@ from socketserver import ThreadingMixIn
 
 class NoLogRequestHandler(WSGIRequestHandler):
     def log_message(self, format, *args):
-        pass # Silencia els logs
+        pass # Silence logs
 
 class ThreadingWSGIServer(ThreadingMixIn, WSGIServer):
     daemon_threads = True
 
 class ThreadedServer(ServerAdapter):
     def run(self, handler):
-        # Silencia els logs quan el paràmetre quiet és True
+        # Silence els logs quan el paràmetre quiet=True
         handler_class = NoLogRequestHandler if self.options.get('quiet') else WSGIRequestHandler
-        server = make_server(self.host, self.port, handler, server_class=ThreadingWSGIServer, handler_class=handler_class)
+        server = make_server(self.host, self.port, handler, 
+                             server_class=ThreadingWSGIServer,
+                             handler_class=handler_class)
         server.serve_forever()
 
 # Funció main que encén el servidor web.
