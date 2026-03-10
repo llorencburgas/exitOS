@@ -1531,15 +1531,20 @@ def register_llm_tools():
     )
 
 from bottle import ServerAdapter
-from wsgiref.simple_server import make_server, WSGIServer
+from wsgiref.simple_server import make_server, WSGIServer, WSGIRequestHandler
 from socketserver import ThreadingMixIn
+
+class NoLogRequestHandler(WSGIRequestHandler):
+    def log_message(self, format, *args):
+        pass # Silencia els logs HTTP
 
 class ThreadingWSGIServer(ThreadingMixIn, WSGIServer):
     daemon_threads = True
 
 class ThreadedServer(ServerAdapter):
     def run(self, handler):
-        server = make_server(self.host, self.port, handler, server_class=ThreadingWSGIServer)
+        # Silencia els logs HTTP sempre (quiet de Bottle no arriba a l'adaptador)
+        server = make_server(self.host, self.port, handler, server_class=ThreadingWSGIServer, handler_class=NoLogRequestHandler)
         server.serve_forever()
 
 # Funció main que encén el servidor web.
