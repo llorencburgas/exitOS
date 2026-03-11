@@ -1118,6 +1118,41 @@ def get_device_types(locale='ca'):
         logger.error(f"Error carregant configuració de dispositius: {e}")
         return {}
 
+@app.route('/update_device_config',method='POST')
+def update_device_config():
+    data = request.json
+
+    if not data:
+        response.status = 400
+        return {"error": "No s'han rebut dades"}
+
+    device_name = data.get('device')
+    new_status = data.get('status')
+
+    file_path = os.path.join(forecast.models_filepath,"optimizations/configs/", device_name)
+
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            device_config = json.load(f)
+
+        device_config['controller_state'] = new_status
+
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(device_config, f, indent = 4)
+
+        response.status = 200
+        return {"status": "success"}
+    except FileNotFoundError:
+        response.status = 404
+        logger.error("❌ ERROR: No s'ha trobat l'arxiu")
+        return {"error": f"L'arxiu {device_name} no s'ha trobat."}
+    except Exception as e:
+        response.status = 500
+        logger.error(f"❌ ERROR: {e}")
+        return {"error": f"Error intern: {str(e)}"}
+
+
+
 #endregion PÀGINA OPTIMITZACIÓ
 
 #region FLEXIBILITY
@@ -1340,8 +1375,15 @@ def config_optimized_devices_HA():
         ]
         for collection in collections:
             for item in collection:
-                value, sensor_id, sensor_type = item.controla(config = optimization_db['devices_config'][item.name], current_hour = current_hour)
-                # database.set_sensor_value_HA(sensor_type, sensor_id, value)
+                file_path = os.path.join(forecast.models_filepath, "optimizations/configs/", f"{item.name}.json")
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    device_config = json.load(f)
+
+                if device_config['controller_state']:
+                    value, sensor_id, sensor_type = item.controla(config = optimization_db['devices_config'][item.name], current_hour = current_hour)
+                    database.set_sensor_value_HA(sensor_type, sensor_id, value)
+
+
     except Exception as e:
         logger.error(f"❌ [{datetime.now().strftime('%d:%m:%Y %H:%m')}] -  Error configurant horariament un dispositiu a H.A {e}")
 
@@ -1372,11 +1414,11 @@ scheduler_thread.start()
 #region DEBUG REGION
 @app.route('/panik_function')
 def panik_function():
-    daily_flex()
+    config_optimized_devices_HA()
 
 #endregion DEBUG REGION
 
-
+#region LLM
 def register_llm_tools():
     """Registra totes les eines (tools) disponibles per al motor LLM."""
     if not hasattr(llm_engine.llm_engine, 'register_tool'):
@@ -1512,6 +1554,9 @@ def register_llm_tools():
         }
     )
 
+#endregion LLM
+
+#region Threading
 from bottle import ServerAdapter
 from wsgiref.simple_server import make_server, WSGIServer, WSGIRequestHandler
 from socketserver import ThreadingMixIn
@@ -1529,6 +1574,7 @@ class ThreadedServer(ServerAdapter):
         server = make_server(self.host, self.port, handler, server_class=ThreadingWSGIServer, handler_class=NoLogRequestHandler)
         server.serve_forever()
 
+#endregion Threading
 # Funció main que encén el servidor web.
 def main():
     run(app=app, host=HOSTNAME, port=PORT, quiet=True, server=ThreadedServer)

@@ -127,8 +127,8 @@
      */
     async function onLoadPage() {
         // Load device types based on current language
-        const currentLocale = localStorage.getItem('locale') || 'ca';
-        await loadDeviceTypes(currentLocale);
+        // const currentLocale = localStorage.getItem('locale') || 'ca';
+        // await loadDeviceTypes(currentLocale);
 
         const parent_div_scheduler = document.getElementById("scheduler-grid");
         const parent_div_flexi = document.getElementById("global-flexi-grid");
@@ -164,7 +164,7 @@
 
                 }
             })
-        LoadConfigsSaved();
+        // LoadConfigsSaved();
     }
 
     /**
@@ -418,7 +418,8 @@
             "friendly_name": friendly_type,
             "restrictions": restrictions,
             "extra_vars": extraVars,
-            "control_vars": controlVars
+            "control_vars": controlVars,
+            "controller_state": true
         };
 
         const res = await fetch('save_optimization_config', {
@@ -486,6 +487,7 @@
             saved_configs = JSON.parse(JSON.stringify(result.names));
         }
         const parent_config_div = document.getElementById("optimization-graphs-container");
+        parent_config_div.innerHTML = "";
 
         saved_configs.forEach((config_name) => {
             fetch('get_device_config_data/' + config_name)
@@ -510,6 +512,63 @@
                         type.className = "device-config-type";
                         container.appendChild(type);
                         //endregion
+
+                        //region ON/OFF
+                        const button_div = document.createElement('div');
+                        const switch_wrap = document.createElement('div');
+                        const span_switch1 = document.createElement('span');
+                        const span_switch2 = document.createElement('span');
+                        const switch_controler = document.createElement('div');
+                        const knob = document.createElement('div');
+
+                        knob.className = "knob";
+
+                        switch_controler.className = "switch";
+                        if(dev.controller_state === true){switch_controler.classList.toggle('on', true);}
+                        switch_controler.appendChild(knob);
+
+                        switch_controler.addEventListener('click', async () => {
+                            switch_controler.classList.toggle('on');
+
+                            const isOn = switch_controler.classList.contains('on');
+
+                            try{
+                                const repsonse = await fetch('update_device_config', {
+                                    method: 'POST',
+                                    headers: {'Content-Type': 'application/json'},
+                                    body: JSON.stringify({
+                                        device: config_name,
+                                        status: isOn
+                                    })
+                                });
+
+                                if (!repsonse.ok){
+                                    console.error("Error al servidor al guardar l'estat");
+                                    switch_controler.classList.toggle('on');
+                                }
+                            } catch (error){
+                                console.error("Error de connexió", error);
+                                switch_controler.classList.toggle('on');
+                            }
+                        });
+
+                        span_switch1.className="muted";
+                        span_switch2.className="muted";
+                        span_switch1.innerHTML = "OFF";
+                        span_switch2.innerHTML = "ON";
+
+                        switch_wrap.className="switch-wrap";
+                        switch_wrap.appendChild(span_switch1);
+                        switch_wrap.appendChild(switch_controler);
+                        switch_wrap.appendChild(span_switch2);
+                        switch_wrap.style.marginBottom = "15px";
+
+                        button_div.className="button-div";
+                        button_div.appendChild(switch_wrap);
+
+                        container.appendChild(switch_wrap);
+
+                        //endregion ON/OFF
 
                         //region RESTRICCIONS
                         const restricctions = document.createElement('ul');
@@ -543,6 +602,7 @@
                         }
                         container.appendChild(extra_vars);
                         //endregion
+
 
                         //region BOTÓ ELIMINAR
                         const delete_button = document.createElement('button');
@@ -644,16 +704,10 @@
 
     }
 
-    function ChangeOptimizationStatus() {
-        console.log("ChangeOptimizationStatus");
-        //TODO: encendre o apagar l'optimització automàtica del dispositiu.
-    }
 
-    onLoadPage();
 
     // Reload configurations when language changes
     I18n.onLanguageChange(async function (newLocale) {
-        console.log("Language changed to:", newLocale);
 
         // Reload device types for the new language
         await loadDeviceTypes(newLocale);
@@ -665,6 +719,9 @@
             LoadConfigsSaved();
         }
     });
+
+    onLoadPage();
+
 </script>
 
 </html>

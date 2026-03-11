@@ -477,6 +477,8 @@ class SqlDB():
                 latitude = config['latitude'][0]
                 longitude = config['longitude'][0]
 
+                logger.debug(f"Latitude: {latitude}, Longitude: {longitude}")
+
                 return latitude, longitude
             else:
                 logger.error("Could not found the data in the response file")
