@@ -1,5 +1,8 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.1.27
+- Implementació selector On/Off per a escollir si es vol controlar o no un dispositiu amb el resultat de l'optimització.
+- Si un usuari ja tenia creades configuracions de dispositius, serà necessari eliminar-les i crear-les de nou.
 ## 1.1.17
 - New Base Docker Image implemented
 
