@@ -127,8 +127,8 @@
      */
     async function onLoadPage() {
         // Load device types based on current language
-        const currentLocale = localStorage.getItem('locale') || 'ca';
-        await loadDeviceTypes(currentLocale);
+        // const currentLocale = localStorage.getItem('locale') || 'ca';
+        // await loadDeviceTypes(currentLocale);
 
         const parent_div_scheduler = document.getElementById("scheduler-grid");
         const parent_div_flexi = document.getElementById("global-flexi-grid");
@@ -164,7 +164,7 @@
 
                 }
             })
-        LoadConfigsSaved();
+        // LoadConfigsSaved();
     }
 
     /**
@@ -703,7 +703,8 @@
         })
 
     }
-    onLoadPage();
+
+
 
     // Reload configurations when language changes
     I18n.onLanguageChange(async function (newLocale) {
@@ -718,6 +719,9 @@
             LoadConfigsSaved();
         }
     });
+
+    onLoadPage();
+
 </script>
 
 </html>
