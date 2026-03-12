@@ -268,6 +268,23 @@
     </div>
 </div>
 
+<!-- Modal confirmació d'eliminar conversa -->
+<div id="delete-conversation-modal" class="modal hidden">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeDeleteModal()"></span>
+        <h2 data-i18n="chat.delete_btn" style="color: var(--text-error-msg); margin-bottom: 15px;">Eliminar</h2>
+        <p data-i18n="chat.delete_confirm" style="text-align: center; margin-bottom: 25px; font-size: 1.05rem;">Segur que vols eliminar tota la conversa? El LLM no recordarà res del que heu parlat.</p>
+        <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
+            <button class="btn self-destruct" id="confirmDeleteBtn" onclick="confirmDeleteConversation()">
+                <i class="fa-solid fa-trash"></i> <span data-i18n="chat.delete_btn">Eliminar</span>
+            </button>
+            <button class="btn secondary" onclick="closeDeleteModal()">
+                <span data-i18n="optimization.cancel">Cancel·lar</span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
     // URL base del servidor eXiT (sempre port 55023, independentment d'on s'accedeixi)
     const SERVER_BASE_URL = `${window.location.protocol}//${window.location.hostname}:55023`;
@@ -367,9 +384,23 @@
         chatMessages.appendChild(welcomeDiv);
     }
 
-    // Elimina tota la conversa: borra l'historial del servidor i neteja la vista
-    async function deleteConversation() {
-        if (!confirm(I18n.get('chat.delete_confirm') || 'Segur que vols eliminar tota la conversa? El LLM no recordarà res del que heu parlat.')) return;
+    // Elimina tota la conversa: obre el modal de confirmació
+    function deleteConversation() {
+        const modal = document.getElementById('delete-conversation-modal');
+        modal.classList.add('opening');
+        modal.classList.remove('hidden');
+    }
+
+    // Tanca el modal de confirmació
+    function closeDeleteModal() {
+        const modal = document.getElementById('delete-conversation-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('opening');
+    }
+
+    // Confirma i executa l'eliminació (crida l'API)
+    async function confirmDeleteConversation() {
+        closeDeleteModal();
         try {
             const res = await fetch(`${SERVER_BASE_URL}/llm_clear`, { method: 'POST' });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
