@@ -131,7 +131,10 @@
         "input_placeholder": "Escriu el teu missatge aquí...",
         "error_process": "Error: No s'ha pogut processar la sol·licitud.",
         "error_contact": "Error: No s'ha pogut contactar amb el servidor.",
-        "clear_btn": "Netejar vista"
+        "clear_btn": "Netejar vista",
+        "delete_btn": "Eliminar",
+        "delete_confirm": "Segur que vols eliminar tota la conversa? El LLM no recordarà res del que heu parlat.",
+        "delete_error": "Error: No s'ha pogut eliminar la conversa."
     },
     "forecast_metrics": {
         "step_name": {

@@ -131,7 +131,10 @@
         "input_placeholder": "Type your message here...",
         "error_process": "Error: Could not process the request.",
         "error_contact": "Error: Could not contact the server.",
-        "clear_btn": "Clear view"
+        "clear_btn": "Clear view",
+        "delete_btn": "Delete",
+        "delete_confirm": "Are you sure you want to delete the entire conversation? The LLM will not remember anything you discussed.",
+        "delete_error": "Error: Could not delete the conversation."
     },
     "forecast_metrics": {
         "step_name": {
