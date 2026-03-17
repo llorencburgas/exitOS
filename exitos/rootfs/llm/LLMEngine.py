@@ -125,6 +125,7 @@ class LLMEngine:
                 
                 # Si no hi ha eines, hem acabat
                 if not tool_calls:
+                    if logger: logger.info(f"💬 Resposta: {content[:80]}{'...' if len(content) > 80 else ''}")
                     return content
                 
                 # Executar eines
