@@ -52,9 +52,7 @@ class LLMEngine:
         self.tools = {}
 
         if logger:
-            logger.info(f"🔧 LLMEngine inicialitzat (OLLAMA):")
-            logger.info(f"   - Model: {self.model}")
-            logger.info(f"   - API URL: {self.api_url}")
+            logger.info(f"🔧 LLMEngine inicialitzat | Model: {self.model} | URL: {self.api_url}")
 
     def register_tool(self, name, func, description, parameters):
         """
@@ -72,8 +70,7 @@ class LLMEngine:
             "definition": tool_definition,
             "func": func
         }
-        if logger:
-            logger.info(f"🛠️ Eina registrada: {name}")
+        pass  # Registre silenciós, eina afegida correctament
 
     def get_response(self, user_input, session_id="default"):
         """
@@ -106,8 +103,7 @@ class LLMEngine:
                 if available_tools:
                     payload["tools"] = available_tools
 
-                if logger:
-                    logger.info(f"🤖 Enviant petició a OLLAMA...")
+
 
                 res = requests.post(self.api_url, headers=self.headers, json=payload, timeout=120)
                 
@@ -129,10 +125,8 @@ class LLMEngine:
                 
                 # Si no hi ha eines, hem acabat
                 if not tool_calls:
-                    if logger: logger.info(f"✅ Resposta final: {content[:50]}...")
+                    if logger: logger.info(f"💬 Resposta: {content[:80]}{'...' if len(content) > 80 else ''}")
                     return content
-                
-                if logger: logger.info(f"🛠️ Executant {len(tool_calls)} eines...")
                 
                 # Executar eines
                 for tool_call in tool_calls:
@@ -140,7 +134,6 @@ class LLMEngine:
                     fn_args = tool_call["function"]["arguments"]
                     
                     if fn_name in self.tools:
-                        if logger: logger.info(f"   ▶️ {fn_name}({fn_args})")
                         try:
                             # Robustesa: Si l'eina no té paràmetres definits, ignorem els que enviï l'LLM (hallucinations)
                             tool_def = self.tools[fn_name]["definition"]["function"]
@@ -294,8 +287,6 @@ def init_routes(app, external_logger):
 
     @app.route('/llm_test', method='GET')
     def llm_test():
-        if logger:
-            logger.info("🧪 Test endpoint cridat")
         return json.dumps({
             'status': 'ok',
             'message': 'LLM routes are working!',

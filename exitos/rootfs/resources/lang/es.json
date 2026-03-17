@@ -131,7 +131,10 @@
         "input_placeholder": "Escribe tu mensaje aquí...",
         "error_process": "Error: No se ha podido procesar la solicitud.",
         "error_contact": "Error: No se ha podido contactar con el servidor.",
-        "clear_btn": "Limpiar vista"
+        "clear_btn": "Limpiar vista",
+        "delete_btn": "Eliminar",
+        "delete_confirm": "¿Seguro que quieres eliminar toda la conversación? El LLM no recordará nada de lo que habéis hablado.",
+        "delete_error": "Error: No se ha podido eliminar la conversación."
     },
     "forecast_metrics": {
         "step_name": {
