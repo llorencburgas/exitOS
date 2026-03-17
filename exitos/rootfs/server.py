@@ -1586,10 +1586,10 @@ if __name__ == "__main__":
 
     # Inicialitzar rutes LLM i registrar eines
     try:
-        logger.info("🔌 Inicialitzant rutes LLM i Eines...")
         llm_engine.init_routes(app, logger)
         register_llm_tools()
     except Exception as e:
         logger.error(f"❌ Error inicialitzant LLM: {e}")
 
     main()
+    
