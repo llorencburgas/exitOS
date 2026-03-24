@@ -242,8 +242,8 @@ class OptimalScheduler:
 
         total_balance = [0] * (self.horizon * self.horizon_min)
 
-        total_consumers = self.__calc_total_balance_consumer(config)
-        total_generators = self.__calc_total_balance_generator(config)
+        total_consumers, cost_consumers = self.__calc_total_balance_consumer(config)
+        total_generators, cost_generators = self.__calc_total_balance_generator(config)
 
         for hour in range(self.horizon * self.horizon_min):
             total_consumers[hour] += self.global_consumer_forecast['forecast_data'][hour]
@@ -251,13 +251,13 @@ class OptimalScheduler:
 
             total_balance[hour] = total_consumers[hour] - total_generators[hour]
 
-        balance_result = self.__calc_total_balance_energy(config, total_balance)
+        balance_result, cost_energy = self.__calc_total_balance_energy(config, total_balance)
 
         if not total: return balance_result
 
 
         # ajuntem el consum horari en una sola variable global.
-        total_price = 0
+        total_price = cost_consumers + cost_generators + cost_energy
 
         for hour in range(self.horizon * self.horizon_min):
             total_price += balance_result[hour] * (self.electricity_prices[hour]/1000)
@@ -269,32 +269,36 @@ class OptimalScheduler:
 
     def __calc_total_balance_consumer(self, config):
         total_consumption = [0] * (self.horizon * self.horizon_min)
+        total_cost = 0
         for consumer in self.consumers.values():
             start = consumer.vbound_start
             end = consumer.vbound_end
 
             res_dict = consumer.simula(config[start:end+1].copy(), self.horizon, self.horizon_min)
+            total_cost += res_dict.get('total_cost', 0)
             for hour in range(len(res_dict['consumption_profile'])):
                 total_consumption[hour] += res_dict['consumption_profile'][hour]
 
-        return total_consumption
+        return total_consumption, total_cost
 
     def __calc_total_balance_generator(self, config):
-        return [0] * (self.horizon * self.horizon_min)
+        return [0] * (self.horizon * self.horizon_min), 0
 
     def __calc_total_balance_energy(self, config, total_balance):
 
         total_energy_sources = list(total_balance)
+        total_cost = 0
         for energy_storage in self.energy_storages.values():
             start = energy_storage.vbound_start
             end = energy_storage.vbound_end
 
             res_dict = energy_storage.simula(config[start:end+1], self.horizon, self.horizon_min)
+            total_cost += res_dict.get('total_cost', 0)
 
             for hour in range(0, len(total_balance)):
                 total_energy_sources[hour] += res_dict['consumption_profile'][hour]
 
-        return total_energy_sources
+        return total_energy_sources, total_cost
 
     def get_hourly_electric_prices(self,):
         today = datetime.today().strftime('%Y%m%d')
