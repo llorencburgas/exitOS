@@ -87,7 +87,8 @@ def send_flexibility(base_file_path, today=True):
 
 def generate_fake_response(flexi_data):
     """
-    Simula el servidor central. Retorna, com a màxim, UNA sola instrucció al dia.
+    Simula el servidor central. Retorna UNA sola instrucció al dia,
+    aplicada a un RANG horari continu (ex: de 11h a 14h).
     """
     logger.warning("📎 REBENT INFO FLEXIBILITAT (simulat)")
 
@@ -109,38 +110,55 @@ def generate_fake_response(flexi_data):
         }
 
     # Si passem d'aquí, la xarxa necessita ajuda.
-    # 2. Triem a l'atzar QUIN problema hi ha avui: 50% Excés Solar, 50% Pic de Demanda
     event_type = random.choice(["solar", "peak"])
+    event_assigned = False
 
-    hour_selected = None
+    # Triem una durada per al bloc (entre 2 i 4 hores de petició)
+    durada_bloc = random.choice([2, 3, 4])
 
     if event_type == "solar":
-        # Busquem totes les hores entre les 11h i les 14h on ofereixis flexibilitat
-        valid_hours = [h for h in range(11, 15) if h < num_hours and f_up[h] > 0]
+        # Definim on pot començar el bloc (ex: entre les 10h i les 13h)
+        start_h = random.randint(10, 13)
+        end_h = min(start_h + durada_bloc, 16)  # Evitem que passi de les 16h
 
-        if valid_hours:
-            # Triem UNA SOLA hora a l'atzar d'entre les vàlides
-            hour_selected = random.choice(valid_hours)
-            demand = int(random.uniform(0.5, 1.0) * f_up[hour_selected])
-            requested_flex[hour_selected] = demand
-            instructions.append(f"A les {hour_selected}h: +{demand}W (Aprofita l'excés solar)")
+        # Mirem quanta flexibilitat positiva (f_up) oferia la casa en aquestes hores en concret
+        capacitats_disponibles = [f_up[h] for h in range(start_h, end_h) if h < num_hours and f_up[h] > 0]
+
+        if capacitats_disponibles:
+            # El servidor demana un valor basant-se en la mitjana del que la casa oferia en aquest bloc
+            mitjana_flex = sum(capacitats_disponibles) / len(capacitats_disponibles)
+            demand = int(random.uniform(0.5, 1.0) * mitjana_flex)
+
+            # Apliquem la mateixa petició a totes les hores del rang
+            for h in range(start_h, end_h):
+                requested_flex[h] = demand
+
+            instructions.append(f"De {start_h}h a {end_h}h: +{demand}W (Aprofita l'excés solar)")
+            event_assigned = True
 
     elif event_type == "peak":
-        # Busquem totes les hores entre les 18h i les 21h on ofereixis flexibilitat (f_down negatiu)
-        valid_hours = [h for h in range(18, 22) if h < num_hours and f_down[h] < 0]
+        # Definim on pot començar el bloc de tarda/vespre (ex: entre les 18h i les 20h)
+        start_h = random.randint(18, 20)
+        end_h = min(start_h + durada_bloc, 23)
 
-        if valid_hours:
-            # Triem UNA SOLA hora a l'atzar d'entre les vàlides
-            hour_selected = random.choice(valid_hours)
-            capacitat_reduccio = abs(f_down[hour_selected])
-            reduction = int(random.uniform(0.6, 1.0) * capacitat_reduccio)
-            requested_flex[hour_selected] = -reduction
-            instructions.append(f"A les {hour_selected}h: -{reduction}W (Redueix pel pic de demanda)")
+        # Mirem quanta flexibilitat negativa (f_down) oferia la casa
+        capacitats_disponibles = [abs(f_down[h]) for h in range(start_h, end_h) if h < num_hours and f_down[h] < 0]
 
-    # Si la xarxa necessitava ajuda però no tenies flexibilitat en el tipus d'esdeveniment triat
-    if hour_selected is None:
+        if capacitats_disponibles:
+            mitjana_flex = sum(capacitats_disponibles) / len(capacitats_disponibles)
+            reduction = int(random.uniform(0.6, 1.0) * mitjana_flex)
+
+            for h in range(start_h, end_h):
+                requested_flex[h] = -reduction
+
+            instructions.append(f"De {start_h}h a {end_h}h: -{reduction}W (Redueix pel pic de demanda)")
+            event_assigned = True
+
+    # Si l'esdeveniment no s'ha pogut assignar perquè just en aquelles hores no hi havia res de flexibilitat
+    if not event_assigned:
         instructions.append(
-            "Es necessitava ajuda, però la casa no oferia flexibilitat per a l'esdeveniment d'avui.")
+            "Es necessitava ajuda per blocs, però la casa no oferia cap flexibilitat en la franja requerida."
+        )
 
     response_from_server = {
         "status": "success",
@@ -152,7 +170,6 @@ def generate_fake_response(flexi_data):
     }
 
     return response_from_server
-
 
 def load_flexibility_data(folder_path):
     """
@@ -183,16 +200,16 @@ def load_flexibility_data(folder_path):
 
     return devices_db
 
-def dispatch_devices(requested_flex, folder_path):
+def dispatch_local_devices(requested_flex, folder_path):
     """
-    Llegeix els JSONs i reparteix la flexibilitat demanada.
+    Intenta complir la petició del servidor combinant dispositius hora a hora.
+    Calcula si hem aconseguit l'objectiu o ens hem quedat curts.
     """
-
     # 1. Carreguem les dades de la carpeta
     devices_db = load_flexibility_data(folder_path)
 
-    # 2. Fem el repartiment (mateixa lògica que abans)
     dispatch_plan = {}
+    compliance_report = {}  # Guardarem com de bé hem complert l'objectiu
 
     for hour in range(len(requested_flex)):
         req = requested_flex[hour]
@@ -201,35 +218,46 @@ def dispatch_devices(requested_flex, folder_path):
 
         hour_plan = {}
 
-        if req > 0:  # Augmentar consum
+        # --- AUGMENTAR CONSUM ---
+        if req > 0:
             remaining_to_allocate = req
+
             for device_name, device_info in devices_db.items():
+                # Llegim quanta flexibilitat positiva té aquest dispositiu en aquesta hora exacta
                 available_fup = device_info.get("f_up", [0] * 24)[hour]
+
                 if available_fup > 0 and remaining_to_allocate > 0:
                     allocated = min(remaining_to_allocate, available_fup)
                     hour_plan[device_name] = allocated
                     remaining_to_allocate -= allocated
 
-        elif req < 0:  # Reduir consum
+            # Guardem si hem complert l'objectiu o ens ha faltat potència
+            compliance_report[hour] = {
+                "demanat": req,
+                "aconseguit": req - remaining_to_allocate,
+                "falta": remaining_to_allocate
+            }
+
+        # --- REDUIR CONSUM ---
+        elif req < 0:
             remaining_to_reduce = abs(req)
+
             for device_name, device_info in devices_db.items():
-                available_fdown = device_info.get("f_down", [0] * 24)[hour]
+                # Llegim la flexibilitat negativa (i l'agafem en absolut per fer-ho fàcil)
+                available_fdown = abs(device_info.get("f_down", [0] * 24)[hour])
+
                 if available_fdown > 0 and remaining_to_reduce > 0:
                     allocated = min(remaining_to_reduce, available_fdown)
                     hour_plan[device_name] = -allocated
                     remaining_to_reduce -= allocated
 
+            compliance_report[hour] = {
+                "demanat": req,
+                "aconseguit": -(abs(req) - remaining_to_reduce),
+                "falta": -remaining_to_reduce
+            }
+
         if hour_plan:
-            dispatch_plan[device_name] = np.copy(device_info['power'])
-            dispatch_plan[device_name][hour] = hour_plan[device_name]
-        else:
-            dispatch_plan = "No hi ha flex disponible"
+            dispatch_plan[hour] = hour_plan
 
-    return dispatch_plan
-
-# --- EXEMPLE D'ÚS ---
-# requested_flex = [0, 0, 0, ... 1500, ...] (La llista de 24h que ens dona el servidor)
-# carpeta = "/config/flexibilitat/" # La ruta on tinguis els JSON a Home Assistant
-
-# pla = dispatch_devices(requested_flex, carpeta)
-# print(pla)
+    return dispatch_plan, compliance_report

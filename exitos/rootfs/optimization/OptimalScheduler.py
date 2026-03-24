@@ -180,8 +180,11 @@ class OptimalScheduler:
             for item in collection:
                 item.vbound_start = index
 
-                lb.extend([item.min] * num_steps)
-                ub.extend([item.max] * num_steps)
+                item_min = getattr(item, 'min_power', item.min) # mirem si te min_power (EnergyStorage) per agafar potència, si no te la variable agafem min
+                item_max = getattr(item, 'max_power', item.max)
+
+                lb.extend([item_min] * num_steps)
+                ub.extend([item_max] * num_steps)
                 index += num_steps
 
                 item.vbound_end = index - 1

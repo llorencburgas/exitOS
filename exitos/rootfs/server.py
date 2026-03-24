@@ -1195,7 +1195,7 @@ def daily_flex():
     response = FlexibilityManager.generate_fake_response(flexi_data)
     logger.info(f"  📎{response['instructions_text'][0]}")
 
-    FlexibilityManager.dispatch_devices(response['flexibility_profile_requested'], forecast.models_filepath)
+    FlexibilityManager.dispatch_local_devices(response['flexibility_profile_requested'], forecast.models_filepath)
 
 
 #endregion FLEXIBILITY
@@ -1410,11 +1410,10 @@ scheduler_thread.start()
 
 #endregion DAILY TASKS
 
-
 #region DEBUG REGION
 @app.route('/panik_function')
 def panik_function():
-    config_optimized_devices_HA()
+    daily_flex()
 
 #endregion DEBUG REGION
 

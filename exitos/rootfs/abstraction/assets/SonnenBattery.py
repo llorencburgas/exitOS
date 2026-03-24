@@ -14,7 +14,7 @@ class SonnenBattery(AbsEnergyStorage):
         super().__init__(config)
 
         self.efficiency = database.get_latest_data_from_sensor(config["extra_vars"]["eficiencia"]["sensor_id"])[1] / 100
-        self.actual_percentage = database.get_latest_data_from_sensor(config["extra_vars"]["percentatge_actual"]["sensor_id"])[1]
+        self.actual_percentage = database.get_latest_data_from_sensor(config["extra_vars"]["percentatge_actual"]["sensor_id"])[1] / 100
 
         self.control_charge_sensor = config['control_vars']['carregar']['sensor_id']
         self.control_discharge_sensor = config['control_vars']['descarregar']['sensor_id']
@@ -125,8 +125,8 @@ class SonnenBattery(AbsEnergyStorage):
         
         SoC_max = self.max
         SoC_min = self.min
-        Pc_max = 2500 # Potència màxima de càrrega
-        Pd_max = 2500 # Potència màxima de descàrrega
+        Pc_max = self.max_power # Potència màxima de càrrega
+        Pd_max = self.min_power # Potència màxima de descàrrega
         
         delta_t = 1 # Hora
         
@@ -134,20 +134,16 @@ class SonnenBattery(AbsEnergyStorage):
         fdown = []
         
         for t in range(min_len):
-            SoC_t = SoC_list[t]
-            Pb_t = Power_list[t]
+            # SoC_t = SoC_list[t]
+            # Pb_t = Power_list[t]
             
-            max_charge_possible = min(Pc_max, (SoC_max - SoC_t) / (eff * delta_t))
-            
-           
-            flex_up = max(0, max_charge_possible - Pb_t)
-
-            max_discharge_possible = min(Pd_max, (SoC_t - SoC_min) / delta_t) 
-
-            flex_down = max(0, Pb_t + max_discharge_possible)
+            # max_charge_possible = min(Pc_max, (SoC_max - SoC_t) / (eff * delta_t))
+            # flex_up = max(0, max_charge_possible - Pb_t)
+            # max_discharge_possible = min(Pd_max, (SoC_t - SoC_min) / delta_t)
+            # flex_down = max(0, Pb_t + max_discharge_possible)
                                        
-            fup.append(2500)
-            fdown.append(-2500)
-            delta_t += 1
+            fup.append(Pc_max)
+            fdown.append(Pd_max)
+            # delta_t += 1
             
         return fup, fdown, Power_list, timestamps[:min_len]
