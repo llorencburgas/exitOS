@@ -111,3 +111,19 @@ class ShellyPlus1pm(AbsConsumer):
             
         return fup, fdown, power_profile, timestamps[:min_len]
 
+    def initialize_flex_tracker(self, baseline_plan):
+        self.flex_plan = list(baseline_plan)
+
+    def reserve_flexibility(self, hour, requested_power):
+        if requested_power == 0: return 0
+        original_state = self.flex_plan[hour]
+        
+        if requested_power >= self.consumption and original_state == 0:
+            self.flex_plan[hour] = 1 
+            return self.consumption
+            
+        if requested_power <= -self.consumption and original_state == 1:
+            self.flex_plan[hour] = 0 
+            return -self.consumption
+            
+        return 0

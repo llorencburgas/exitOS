@@ -20,6 +20,8 @@ class SonnenBattery(AbsEnergyStorage):
         self.control_discharge_sensor = config['control_vars']['descarregar']['sensor_id']
         self.control_mode_sensor = config['control_vars']['mode_operar']['sensor_id']
 
+        self.max_hours_at_max_power = self.max / self.max_power
+
     def simula(self, config, horizon, horizon_min):
         kw_carrega = []  # Estat de càrrega (SoC) en cada moment
         consumption_profile = []  # El que realment consumeix/aporta la bateria
@@ -113,37 +115,123 @@ class SonnenBattery(AbsEnergyStorage):
             else:
                 current_soc += p       #(no puc restar a valor negatiu, he de sumar)
             
-            # Saturació per seguretat (tot i que l'optimitzador ho hauria de garantir)
             if current_soc > self.max: current_soc = self.max
             if current_soc < self.min: current_soc = self.min
             
             SoC_list.append(current_soc)
 
-
         # Unificació de longituds
         min_len = min(len(timestamps), len(SoC_list), len(Power_list))
         
-        SoC_max = self.max
-        SoC_min = self.min
         Pc_max = self.max_power # Potència màxima de càrrega
         Pd_max = self.min_power # Potència màxima de descàrrega
-        
-        delta_t = 1 # Hora
         
         fup = []
         fdown = []
         
+        def get_soc_contribution(p):
+            return p * eff if p > 0 else p
+        
         for t in range(min_len):
-            # SoC_t = SoC_list[t]
-            # Pb_t = Power_list[t]
+            original_power = Power_list[t]
             
-            # max_charge_possible = min(Pc_max, (SoC_max - SoC_t) / (eff * delta_t))
-            # flex_up = max(0, max_charge_possible - Pb_t)
-            # max_discharge_possible = min(Pd_max, (SoC_t - SoC_min) / delta_t)
-            # flex_down = max(0, Pb_t + max_discharge_possible)
+            # LÍMIT CAP AMUNT (augmentar consum / carregar més)
+            max_allowed_delta_up = float('inf')
+            for f_t in range(t, min_len):
+                allowed = self.max - SoC_list[f_t]
+                if allowed < max_allowed_delta_up:
+                    max_allowed_delta_up = allowed
+                    
+            target_soc_up = get_soc_contribution(original_power) + max_allowed_delta_up
+            actual_new_power_up = target_soc_up / eff if target_soc_up > 0 else target_soc_up
+            
+            fup_t = min(Pc_max, actual_new_power_up) - original_power
+            if fup_t < 0: fup_t = 0
+            
+            # LÍMIT CAP A BAIX (reduir consum / descarregar)
+            max_allowed_delta_down = float('-inf')
+            for f_t in range(t, min_len):
+                allowed = self.min - SoC_list[f_t]
+                if allowed > max_allowed_delta_down:
+                    max_allowed_delta_down = allowed
+                    
+            target_soc_down = get_soc_contribution(original_power) + max_allowed_delta_down
+            actual_new_power_down = target_soc_down / eff if target_soc_down > 0 else target_soc_down
+            
+            fdown_t = max(Pd_max, actual_new_power_down) - original_power
+            if fdown_t > 0: fdown_t = 0
                                        
-            fup.append(Pc_max)
-            fdown.append(Pd_max)
-            # delta_t += 1
+            fup.append(fup_t)
+            fdown.append(fdown_t)
             
         return fup, fdown, Power_list, timestamps[:min_len]
+
+    def initialize_flex_tracker(self, baseline_plan):
+        self.flex_plan = list(baseline_plan)
+        self.soc_plan = []
+        
+        current_soc = self.actual_percentage * self.max
+        eff = self.efficiency
+        
+        for p in self.flex_plan:
+            if p > 0: current_soc += p * eff
+            else: current_soc += p
+                
+            if current_soc > self.max: current_soc = self.max
+            if current_soc < self.min: current_soc = self.min
+            
+            self.soc_plan.append(current_soc)
+
+    def reserve_flexibility(self, hour, requested_power):
+        if requested_power == 0: return 0
+        
+        eff = self.efficiency
+        original_power = self.flex_plan[hour]
+        
+        # Comprovem els límits de hardware
+        new_power = original_power + requested_power
+        if new_power > self.max_power:
+            new_power = self.max_power
+        elif new_power < self.min_power: 
+            new_power = self.min_power
+            
+        actual_req = new_power - original_power
+        if actual_req == 0: return 0
+        
+        # Contribució al canvi del SOC
+        def get_soc_contribution(p):
+            return p * eff if p > 0 else p
+            
+        delta_soc = get_soc_contribution(new_power) - get_soc_contribution(original_power)
+        
+        max_allowed_delta = delta_soc
+        
+        # Validar si aquest canvi de SOC incompleix cap condició present o futura
+        if delta_soc > 0: # Ens apropem al límit màxim (max)
+            for t in range(hour, len(self.soc_plan)):
+                allowed = self.max - self.soc_plan[t]
+                if allowed < max_allowed_delta:
+                    max_allowed_delta = allowed
+        else: # Ens apropem al límit mínim (min)
+            for t in range(hour, len(self.soc_plan)):
+                allowed = self.min - self.soc_plan[t] # allowed serà negatiu o 0
+                if allowed > max_allowed_delta: # Ens quedem amb el més restrictiu envers a 0
+                    max_allowed_delta = allowed
+                    
+        # Reconvertim la variació permesa del SOC a l'increment de potència actual
+        target_soc_contribution = get_soc_contribution(original_power) + max_allowed_delta
+        
+        if target_soc_contribution > 0:
+            actual_new_power = target_soc_contribution / eff
+        else:
+            actual_new_power = target_soc_contribution
+            
+        actual_accepted_power = actual_new_power - original_power
+        
+        # Desem l'estat pel següent dispositiu/hora
+        self.flex_plan[hour] = actual_new_power
+        for t in range(hour, len(self.soc_plan)):
+            self.soc_plan[t] += max_allowed_delta
+            
+        return actual_accepted_power
+

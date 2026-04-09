@@ -200,13 +200,35 @@ def load_flexibility_data(folder_path):
 
     return devices_db
 
-def dispatch_local_devices(requested_flex, folder_path):
+def dispatch_local_devices(requested_flex, folder_path, optimal_scheduler):
     """
     Intenta complir la petició del servidor combinant dispositius hora a hora.
     Calcula si hem aconseguit l'objectiu o ens hem quedat curts.
+    Ara evalua els límits globals seqüencials utilitzant l'estat intern seqüencial
+    dels dispositius.
     """
-    # 1. Carreguem les dades de la carpeta
-    devices_db = load_flexibility_data(folder_path)
+    
+    # 1. Carreguem les dades de l'optimització base d'avui
+    today = datetime.today().strftime("%d_%m_%Y")
+    optimization_db_path = os.path.join(folder_path, "optimizations", f"{today}.pkl")
+    
+    if os.path.exists(optimization_db_path):
+        optimization_db = joblib.load(optimization_db_path)
+    else:
+        optimization_db = {"devices_config": {}}
+        
+    # Recollim tots els dispositius actius instanciats
+    active_devices = (
+        list(optimal_scheduler.consumers.values()) + 
+        list(optimal_scheduler.generators.values()) + 
+        list(optimal_scheduler.energy_storages.values())
+    )
+    
+    # 2. Inicialitzem el tracker de flexibilitat per cada dispositiu
+    # (aquí preparen la seva còpia interna del pla per fer l'avaluació seqüencial)
+    for device in active_devices:
+        baseline_plan = optimization_db.get("devices_config", {}).get(device.name, [0]*24)
+        device.initialize_flex_tracker(baseline_plan)
 
     dispatch_plan = {}
     compliance_report = {}  # Guardarem com de bé hem complert l'objectiu
@@ -217,45 +239,24 @@ def dispatch_local_devices(requested_flex, folder_path):
             continue
 
         hour_plan = {}
+        remaining_to_allocate = req
 
-        # --- AUGMENTAR CONSUM ---
-        if req > 0:
-            remaining_to_allocate = req
+        # Iterem sobre els dispositius demanant-los quanta flexibilitat poden aportar
+        for device in active_devices:
+            if remaining_to_allocate == 0:
+                break
+                
+            allocated = device.reserve_flexibility(hour, remaining_to_allocate)
+            if allocated != 0:
+                hour_plan[device.name] = allocated
+                remaining_to_allocate -= allocated
 
-            for device_name, device_info in devices_db.items():
-                # Llegim quanta flexibilitat positiva té aquest dispositiu en aquesta hora exacta
-                available_fup = device_info.get("f_up", [0] * 24)[hour]
-
-                if available_fup > 0 and remaining_to_allocate > 0:
-                    allocated = min(remaining_to_allocate, available_fup)
-                    hour_plan[device_name] = allocated
-                    remaining_to_allocate -= allocated
-
-            # Guardem si hem complert l'objectiu o ens ha faltat potència
-            compliance_report[hour] = {
-                "demanat": req,
-                "aconseguit": req - remaining_to_allocate,
-                "falta": remaining_to_allocate
-            }
-
-        # --- REDUIR CONSUM ---
-        elif req < 0:
-            remaining_to_reduce = abs(req)
-
-            for device_name, device_info in devices_db.items():
-                # Llegim la flexibilitat negativa (i l'agafem en absolut per fer-ho fàcil)
-                available_fdown = abs(device_info.get("f_down", [0] * 24)[hour])
-
-                if available_fdown > 0 and remaining_to_reduce > 0:
-                    allocated = min(remaining_to_reduce, available_fdown)
-                    hour_plan[device_name] = -allocated
-                    remaining_to_reduce -= allocated
-
-            compliance_report[hour] = {
-                "demanat": req,
-                "aconseguit": -(abs(req) - remaining_to_reduce),
-                "falta": -remaining_to_reduce
-            }
+        # Guardem si hem complert l'objectiu o ens ha faltat potència
+        compliance_report[hour] = {
+            "demanat": req,
+            "aconseguit": req - remaining_to_allocate,
+            "falta": remaining_to_allocate
+        }
 
         if hour_plan:
             dispatch_plan[hour] = hour_plan

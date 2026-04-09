@@ -1,0 +1,46 @@
+# exitOS Requirements
+# Generated for creating a new virtual environment
+
+# Core Data & Math
+numpy==2.3.0
+pandas==2.3.0
+scipy==1.15.3
+scikit-learn==1.7.0
+
+# API & Networking
+requests==2.32.4
+urllib3==2.5.0
+certifi==2025.6.15
+
+# Utilities
+tzlocal==5.3.1
+pytz==2025.2
+python-dateutil==2.9.0.post0
+joblib==1.5.1
+schedule==1.2.2
+holidays==0.75
+narwhals==1.43.1
+pydantic==2.11.7
+packaging==25.0
+typing-extensions==4.14.1
+
+# Visualization
+plotly==6.1.2
+kaleido==1.1.0
+
+# Blockchain / Crypto
+eth-hash==0.7.1
+eth-keys==0.7.0
+eth-typing==5.2.1
+eth-utils==5.3.0
+safe-pysha3==1.0.5
+
+# Serialization & Logging
+simplejson==3.20.2
+orjson==3.11.3
+colorlog==6.9.0
+
+# Web Framework
+# Note: The project currently uses a local 'bottle.py' (v0.14-dev).
+# You can install it via pip if you prefer:
+bottle>=0.13.0

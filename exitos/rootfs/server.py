@@ -1192,10 +1192,14 @@ def flexibility(optimization_db):
 
 def daily_flex():
     flexi_data = FlexibilityManager.send_flexibility(forecast.models_filepath)
-    response = FlexibilityManager.generate_fake_response(flexi_data)
-    logger.info(f"  📎{response['instructions_text'][0]}")
+    flexi_response = FlexibilityManager.generate_fake_response(flexi_data)
+    logger.info(f"  📎{flexi_response['instructions_text'][0]}")
 
-    FlexibilityManager.dispatch_local_devices(response['flexibility_profile_requested'], forecast.models_filepath)
+    FlexibilityManager.dispatch_local_devices(
+        flexi_response['flexibility_profile_requested'], 
+        forecast.models_filepath,
+        optimalScheduler
+    )
 
 
 #endregion FLEXIBILITY
@@ -1413,6 +1417,7 @@ scheduler_thread.start()
 #region DEBUG REGION
 @app.route('/panik_function')
 def panik_function():
+    optimize(today=True)
     daily_flex()
 
 #endregion DEBUG REGION

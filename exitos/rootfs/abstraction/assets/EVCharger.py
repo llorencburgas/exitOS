@@ -92,3 +92,12 @@ class EVCharger(AbsConsumer):
 
     def get_flexibility(self, optimization_data):
         return None
+
+    def initialize_flex_tracker(self, baseline_plan):
+        self.flex_plan = list(baseline_plan)
+
+    def reserve_flexibility(self, hour, requested_power):
+        """
+        De moment el EVCharger no aporta flexibilitat fins que definim un comportament.
+        """
+        return 0
