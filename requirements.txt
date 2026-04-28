@@ -1,5 +1,4 @@
 # exitOS Requirements
-# Generated for creating a new virtual environment
 
 # Core Data & Math
 numpy==2.3.0

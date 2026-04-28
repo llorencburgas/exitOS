@@ -1031,7 +1031,6 @@ class Bottle(object):
                 response['Content-Length'] = len(out)
             return [out]
         # HTTPError or HTTPException (recursive, because they may wrap anything)
-        # TODO: Handle these explicitly in handle() or make them iterable.
         if isinstance(out, HTTPError):
             out.apply(response)
             out = self.error_handler.get(out.status_code,
@@ -2043,7 +2042,7 @@ class TemplatePlugin(object):
             return callback
 
 
-#: Not a plugin, but part of the plugin API. TODO: Find a better place.
+#: Not a plugin, but part of the plugin API.
 class _ImportRedirect(object):
     def __init__(self, name, impmask):
         """ Create a virtual package that redirects imports (see PEP 302). """
@@ -2927,7 +2926,7 @@ def static_file(filename, root,
     return HTTPResponse(body, **headers)
 
 ###############################################################################
-# HTTP Utilities and MISC (TODO) ###############################################
+# HTTP Utilities and MISC
 ###############################################################################
 
 
@@ -3145,7 +3144,7 @@ def path_shift(script_name, path_info, shift=1):
 
 def auth_basic(check, realm="private", text="Access denied"):
     """ Callback decorator to require HTTP auth (basic).
-        TODO: Add route(check_auth=...) parameter. """
+        """
 
     def decorator(func):
 
@@ -4388,7 +4387,7 @@ class StplParser(object):
                 continue
             if _str:  # Python string
                 code_line += _str
-            elif _com:  # Python comment (up to EOL)
+            elif _com:
                 comment = _com
                 if multiline and _com.strip().endswith(self._tokens[1]):
                     multiline = False  # Allow end-of-block in comments

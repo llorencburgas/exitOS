@@ -38,6 +38,8 @@ def convert_to_json_serializable(obj):
     """
     Converteix recursivament objectes amb tipus NumPy/Pandas a tipus natius de Python
     per permetre la serialització JSON.
+    :param obj: obj que volem convertir de NumPy/Pandas a tipus natiu de Python.
+    :return: Retorna l'objecte convertit a tipus Python.
     """
     if isinstance(obj, dict):
         return {key: convert_to_json_serializable(value) for key, value in obj.items()}
@@ -150,7 +152,6 @@ def tool_get_optimization_configs(config_name=None, **kwargs):
     except Exception as e:
         return f"Error llegint les configuracions d'optimització: {e}"
 
-
 def tool_get_available_device_types(device_type_id=None, **kwargs):
     """Retorna tots els tipus de dispositius disponibles per configurar a l'optimitzador, amb les seves restriccions i variables"""
     try:
@@ -221,10 +222,9 @@ def tool_get_available_device_types(device_type_id=None, **kwargs):
     except Exception as e:
         return f"Error llegint els tipus de dispositius disponibles: {e}"
 
-#endregion DEFINICIÓ EINES LLM
-
-
 def tool_get_system_entities(query=None, **kwargs):
+
+
     """Retorna la llista de dispositius i entitats (sensors/actuadors) reals del sistema."""
     try:
         devices = database.get_devices_info()
@@ -274,6 +274,7 @@ def tool_get_system_entities(query=None, **kwargs):
         logger.error(f"Error a tool_get_system_entities: {e}")
         return f"Error consultant els dispositius: {e}"
 
+#endregion DEFINICIÓ EINES LLM
 
 # Ruta per servir fitxers estàtics i imatges des de 'www'
 @app.get('/static/<filepath:path>')
@@ -282,21 +283,39 @@ def tool_get_system_entities(query=None, **kwargs):
 
 #region core_paths
 def serve_static(filepath):
+    """
+    retorna la imatge sol·licitada del path /images/
+    :param filepath: path de la imatge desitjada
+    :return: static_file(filepath, root='./images/')
+    """
     return static_file(filepath, root='./images/')
 
 @app.get('/resources/<filepath:path>')
 def serve_resources(filepath):
+    """
+    retorna el resource sol·licitada del path /resources/
+    :param filepath: path del resource desitjat
+    :return: static_file(filepath, root='./resources/')
+    """
     return static_file(filepath, root='./resources/')
 
 @app.get('models/<filepath:path>')
 def serve_models(filepath):
+    """
+    retorna el model sol·licitat del path /models/
+    :param filepath: path del model
+    :return: static_file(filepath, root='./models/')
+    """
     return static_file(filepath, root='./models/')
 
 # Ruta dinàmica per a les pàgines HTML
 @app.get('/<page>')
 def get_page(page):
-    # Ruta del fitxer HTML
-    # file_path = f'./www/{page}.html'
+    """
+    Retorna la pàgina HTML sol·licitada
+    :param page: pàgina HTML a servir
+    :return: pàgina (static file) si existeix, HTTPError 404 en cas contrari
+    """
     # Comprova si el fitxer existeix.
     if os.path.exists(f'./www/{page}.html'):
         # Control de dades segons la pàgina
@@ -311,6 +330,10 @@ def get_page(page):
 # Ruta inicial
 @app.get('/')
 def get_init():
+    """
+    Obté la pàgina inicial del programa (main.html) i la retorna en format *template* juntament amb la llista de sensors actius.
+    :return: Retorna la pàgina inicial del programa en format *template*
+    """
     ip = request.environ.get('REMOTE_ADDR')
     token = database.supervisor_token
 
@@ -325,10 +348,18 @@ def get_init():
 
 @app.get('/sensors')
 def sensors_page():
+    """
+    Obté la pàgina HTML sensors.html
+    :return: pàgina sensors.html en format template
+    """
     return template('./www/sensors.html',)
 
 @app.get('/databaseView')
 def database_graph_page():
+    """
+    Obté tots els sensors guardats (ID) i prepara la *template* de graphs.html amb aquesta informació
+    :return: Retorna la pàgina graphs.html en format *template*.
+    """
     sensors_id = database.get_all_saved_sensors_id()
     graphs_html = {}
 
@@ -338,6 +369,17 @@ def database_graph_page():
 
 @app.get('/model')
 def create_model_page(active_model = "None"):
+    """
+    Prepara el *template* per a la pàgina model.html obtenint diferents dades que necessita la pàgina per a funcionar:\n
+    - **sensors_input**: llista de ID de tots els sensors guardats.\n
+    - **models_input**: llista de tots els models guardats en format .pkl a la carpeta forecastings del programa.\n
+    - **forecasts_id**: llista de ID dels forecasts guardats a la base de dades.\n
+    - **active_model**: nom del model actiu a la pàgina de model.\n
+
+    :param active_model: model de forecasting actiu a la pàgina model.html
+    :return: pàgina model.html en format *template* juntament amb sensors_id, els models guardats,
+     els id dels forecastings guardats i el model actiu.
+    """
     try:
         sensors_id = database.get_all_saved_sensors_id()
         models_saved = [os.path.basename(f)
@@ -362,6 +404,14 @@ def create_model_page(active_model = "None"):
 
 @app.route('/config_page')
 def config_page():
+    """
+    Prepara el template per a la pàgina config.html obtenint diferents dades que necessita la pàgina per a funcionar:\n
+    - **Sensors**: Llista de ID dels sensors guardats a la base de dades.\n
+    - **Location**: Diccionari amb Latitut i Longitud de l'ubicació del Home Asistant.\n
+    - **User_data**: Configuració guardada de l'usuari.
+
+    :return: Pàgina config_page.html en format *template*.
+    """
 
     sensors_id = database.get_all_saved_sensors_id(kw=True)
     user_lat = optimalScheduler.latitude
@@ -377,6 +427,12 @@ def config_page():
 
 @app.route('/optimization')
 def optimization_page():
+    """
+    Prepara el *template* per a la pàgina optimization.html obtenint diferents dades que necessita la pàgina per a funcionar:\n
+    - **Current_date**: data actual en format 'd-m-Y'\n
+    - **Device_entities**: Informació sobre els dispositius i entitats filles que conté Home Asistant vinculats.
+    :return: Pàgina optimization_page.html en format *template*.
+    """
 
     # DISPOSITIUS I ENTITATS ASSOCIADES
     devices_entities = database.get_devices_info()
@@ -392,6 +448,12 @@ def optimization_page():
 #region PÀGINA MAIN
 @app.route('/get_scheduler_data')
 def get_scheduler_data():
+    """
+    Obté les dades de l'optimització del dia actual per tal de generar una gràfica amb Plotly
+    on mostri el consum general previst per a cada hora segons l'optimització.
+
+    :return: figura Plotly codificada en json.dumps()
+    """
     try:
         today = datetime.today().strftime("%d_%m_%Y")
         full_path = os.path.join(forecast.models_filepath, "optimizations/"+today+".pkl")
@@ -476,6 +538,11 @@ def get_scheduler_data():
 
 @app.route('/get_flexi_data')
 def get_global_flexi_data():
+    """
+    Obté les dades de la flexibilitat del dia actual per tal de generar una gràfica amb Plotly on mostri
+    la flexibilitat global disponible per a cada hora.
+    :return: figura Plotly codificada en json.dumps()
+    """
     try:
         today = datetime.today().strftime("%d_%m_%Y")
         full_path = os.path.join(forecast.models_filepath, "optimizations/"+today+".pkl")
@@ -560,12 +627,51 @@ def get_global_flexi_data():
 
     except Exception as e:
         logger.exception(f"❌ Error obtenint scheduler': {e}")
+
+@app.route('/get_device_config_and_state/<file_name>')
+def get_device_config_and_state(file_name):
+    """
+    Mètode provisional amb únic proposit de debugar l'estat actual de la Sonnen vs el que hauria de fer segons l'optimització
+    :param file_name:
+    :return:
+    """
+    device_config = get_device_config_data(file_name)
+    sonnen_state_sensor_id = device_config['device_config']['extra_vars']['percentatge_actual']['sensor_id']
+
+    database.update_database(sonnen_state_sensor_id)
+    database.clean_database_hourly_average(sensor_id=sonnen_state_sensor_id, all_sensors=False)
+
+    start_time = device_config['device_config']['flexi_timestamps'][0]
+    end_time = device_config['device_config']['flexi_timestamps'][-1]
+
+    sonnen_state = database.get_all_saved_sensors_data(
+        sensors_saved = [sonnen_state_sensor_id,] ,
+        start_date = start_time,
+        end_date = end_time
+    )
+
+    # Extraiem la llista de tuples per al sensor específic
+    history = sonnen_state.get(sonnen_state_sensor_id, [])
+
+    # Afegim al diccionari de resposta de forma estructurada
+    device_config['device_config']['sonnen_history'] = {
+        'x': [item[0] for item in history],  # Timestamps
+        'y': [item[1] for item in history]  # Valors (%)
+    }
+
+    return device_config
 #endregion PÀGINA MAIN
 
 #region PÀGINA DEVICES
 
 @app.get('/get_sensors')
 def get_sensors():
+    """
+    Obté tota la informació disponible a la base de dades sobre cada un dels sensors.
+    Separant la informació entre dispositiu pare i entitats fills.
+
+    :return: diccionari amb dispositius pare i les seves entitats filles
+    """
     try:
         all_devices_data = database.get_all_sensors_data()
 
@@ -578,6 +684,10 @@ def get_sensors():
 
 @app.route('/update_sensors', method='POST')
 def update_sensors():
+    """
+    Actualitza les variables *save* i *type* de tots els sensors que han estat modificats al formulari.
+    :return: Status: ok si tot ha anat bé, error en cas contrari.
+    """
     data = request.json
     if not data:
         response.status = 400
@@ -593,6 +703,10 @@ def update_sensors():
 
 @app.route('/self_destruct', method='POST')
 def self_destruct_database():
+    """
+    Elimina completament la base de dades SQL del programa
+    :return: status: ok
+    """
     database.self_destruct()
     return {"status": "ok"}
 
@@ -602,6 +716,12 @@ def self_destruct_database():
 
 @app.route('/get_graph_info', method='POST')
 def graphs_view():
+    """
+    Genera un diccionari amb les dates d'inici i final indicades per l'usuari i les dades
+    dels sensors per a enviar al frontend i poder generar un plotly.
+
+    :return: Diccionari {Status, Range{Start, End,Label}, Graphs{...,...,}}
+    """
     try:
         selected_sensors = request.forms.get("sensors_id")
         selected_sensors_list = [sensor.strip() for sensor in selected_sensors.split(',')] if selected_sensors else []
@@ -609,7 +729,7 @@ def graphs_view():
 
         date_to_check_input = request.forms.getall("datetimes")
         if  not date_to_check_input:
-            # Mostrar per defecte els últims 14 dies (abans era de 30)
+            # Mostrar per defecte els últims 14 dies
             start_date = datetime.today() - timedelta(days=14)
             end_date = datetime.today()
             date_label = None
@@ -668,6 +788,11 @@ def graphs_view():
 
 @app.route('/force_update_database')
 def force_update_database():
+    """
+    Actua com a connexió entre en frontend (HTML) i la base de dades,
+     cridant al mètode per a actualitzar les dades dels sensors.
+    :return: "ok"
+    """
     database.update_database("all")
     database.clean_database_hourly_average(all_sensors=True)
     return "ok"
@@ -678,6 +803,11 @@ def force_update_database():
 
 @app.route('/get_model_config/<model_name>')
 def get_model_config(model_name):
+    """
+    Obté la configuració del model indicat
+    :param model_name: Nom del model a obtenir
+    :return: configuració del model *model_name* en format string.
+    """
     try:
         model_path = os.path.join(forecast.models_filepath,'forecastings/',f"{model_name}.pkl")
         config = dict()
@@ -714,7 +844,9 @@ def get_model_config(model_name):
 @app.route('/get_model_metrics/<model_name>')
 def get_model_metrics(model_name):
     """
-    Retorna les mètriques d'un model guardat
+    Obté les mètriques del model indicat.
+    :param model_name: nom del model a obtenir
+    :return: Diccionari amb Status(ok/error), metrics (mètriques del model) i train_val_test_split
     """
     try:
         model_path = os.path.join(forecast.models_filepath,'forecastings/',f"{model_name}.pkl")
@@ -745,6 +877,10 @@ def get_model_metrics(model_name):
         return json.dumps({"status": "error", "message": str(e)})
 
 def train_model():
+    """
+    Entrena el model per a forecastings futurs
+    :return: Model entrenat
+    """
     form_data = {key: request.forms.get(key) for key in request.forms.keys()}
     return ForecasterManager.train_model(
         form_data=form_data,
@@ -755,6 +891,12 @@ def train_model():
     )
 
 def forecast_model(selected_forecast, today=True):
+    """
+    Realitza forecast a partir d'un model entrenat.
+    :param selected_forecast: forecast a realitzar (model)
+    :param today: True si realitzem un forecast a data d'avui, False si el realitzem amb data de demà
+    :return: Forecasting realitzat.
+    """
     ForecasterManager.forecast_model(
         selected_forecast=selected_forecast,
         database=database,
@@ -763,6 +905,10 @@ def forecast_model(selected_forecast, today=True):
     )
 
 def delete_model():
+    """
+    Elimina el model indicat al formulari.
+    :return: None
+    """
     selected_model = request.forms.get("models")
     ForecasterManager.delete_model(
         model_name=selected_model,
@@ -772,6 +918,11 @@ def delete_model():
 
 @app.route('/submit-model', method="POST")
 def submit_model():
+    """
+    Actua com a pont entre el frontent (HTML) de model.html i el backend.
+     Cridant a la funció indicada segons el que ha seleccionat l'usuari (Entrentar, Forecasting o Eliminar model)
+    :return: Pàgina model.html actualitzada.
+    """
     try:
         action = request.forms.get('action')
 
@@ -794,6 +945,20 @@ def submit_model():
 
 @app.route('/get_forecast_data/<model_name>')
 def get_forecast_data(model_name):
+    """
+    Obté les dades del forecasting indicat *model_name*
+    :param model_name: nom del model de forecasting del qual obtenir les dades.
+    :return:
+    - Status
+    - Timestamps
+    - Predictions
+    - Valors reals
+    - Timestamps dels valors reals
+    - Predicció del dia anterior
+    - Timestamps de la predicció del dia anterior
+    - Timestamp inicial
+    - Timestamp final
+    """
     try:
         today_date = datetime.today().strftime('%d-%m-%Y')
         yesterday_date = (datetime.today() - timedelta(days = 1)).strftime('%d-%m-%Y')
@@ -849,6 +1014,10 @@ def get_forecast_data(model_name):
 #region PÀGINA CONFIGURACIÓ
 @app.post('/save_config')
 def save_config():
+    """
+    Guarda la configuració d'usuari entrat al formulari. Generant claus privades per al Blockchain.
+    :return: "OK"
+    """
     try:
 
         data = request.json
@@ -891,6 +1060,10 @@ def save_config():
 
 @app.route('/delete_config', method='DELETE')
 def delete_config():
+    """
+    Elimina l'arxiu de configuració d'usuari guardat a /config/user.config"
+    :return: String amb l'estat
+    """
     user_config_path = forecast.models_filepath + '/config/user.config'
     if os.path.exists(user_config_path):
         aux = joblib.load(user_config_path)
@@ -906,6 +1079,10 @@ def delete_config():
 
 @app.route('/get_res_certify_data')
 def get_res_certify_data():
+    """
+    Obté el document .pkl on es guarden els últim 10 missatges enviats al Blockchain.
+    :return: Diccionari amb status (OK / Error) i data que es troba dins el fitzer *res_certify.pkl*
+    """
     try:
         full_path = os.path.join(forecast.models_filepath, "config", "res_certify.pkl")
         status = "ERROR"
@@ -925,6 +1102,10 @@ def get_res_certify_data():
         return f"Error! : {str(e)}"
 
 def get_user_configuration_data():
+    """
+    Obté la configuració de l'usuari guardada al document *config/user.config*
+    :return: Informació guardada de l'usuari (nom, variable consum, variable generació, formulari bloquejat).
+    """
     config_dir = forecast.models_filepath + 'config/user.config'
     user_data = {
         'name': '',
@@ -948,10 +1129,21 @@ def get_user_configuration_data():
 
 @app.route('/run_optimization')
 def run_optimization():
+    """
+    Funció filtre que crida optimize amb paràmetre fixe de *today = True*
+    :return: None
+    """
     optimize(today=True)
 
 @app.route('/optimize')
 def optimize(today = False):
+    """
+    Realitza l'optimització per a la data indicada (Avui o demà).
+    En cas que funcioni correctament guarda timestamps, balanç total, preu total i configuració dels dispositius a un document .pkl
+    a amb nom *%d-%m-%YY* a la carpeta *share/exitos/optimizations/*
+    :param today: Booleana. True si l'optimització és del dia d'avui, False en cas que sigui per l'endemà.
+    :return:  None
+    """
     try:
         horizon = 24
         horizon_min = 1 # 1 = 60 minuts  | 2 = 30 minuts | 4 = 15 minuts
@@ -1012,6 +1204,10 @@ def optimize(today = False):
 
 @app.post('/get_config_file_names')
 def get_config_file_names():
+    """
+    Obté els noms de tots els documents de configuració de dispositius guardats a *share/exitos/optimizations/configs/*
+    :return: Diccionari {Status: ok / error, "names": [noms dels documents]
+    """
     # CONFIGURACIONS CREADES
     created_configs_path = forecast.models_filepath + "/optimizations/configs"
 
@@ -1025,6 +1221,12 @@ def get_config_file_names():
 
 @app.post('/save_optimization_config')
 def save_optimization_config():
+    """
+    Guarda la configuració entrada al formulari (optimization page -> New Device) com a arxiu .json a la carpeta */share/exitos/optimizations/configs/* \n
+    El nom de l'arxiu és el nom del dispositiu introduit. \n
+    En cas que ja existeixi una configuració amb el mateix nom elimina la config existent i guarda la nova.\n
+    :return: {status: ok / error, "msg": info de l'estat en format string}
+    """
     data = request.json
     if not data:
         response.status = 400
@@ -1050,6 +1252,11 @@ def save_optimization_config():
 
 @app.post('/delete_optimization_config/<file_name>')
 def delete_optimization_config(file_name):
+    """
+    Elimina l'arxiu de configuració del device indicat per paràmetre.
+    :param file_name: nom de l'arxiu que es vol eliminar.
+    :return: {status: ok / error}
+    """
     logger.debug(f"eliminant info {file_name}")
     full_path = os.path.join(forecast.models_filepath, "optimizations/configs/" + file_name)
     logger.debug(full_path)
@@ -1061,6 +1268,12 @@ def delete_optimization_config(file_name):
 
 @app.route('/get_device_config_data/<file_name>')
 def get_device_config_data(file_name):
+    """
+    Obté la configuració guardada al document indicat per paràmetre, guardat a */share/exitos/optimizations/configs/* \n
+
+    :param file_name: Nom de l'arxiu que es vol obtenir.
+    :return: {status: ok , device_config: { }} si ha anat bé, {status: error, msg: ""} en cas contrari
+    """
     config_path = forecast.models_filepath + "/optimizations/configs/" + file_name
     device_config = {}
 
@@ -1097,7 +1310,12 @@ def get_device_config_data(file_name):
 
 @app.route('/get_device_types/<locale>')
 def get_device_types(locale='ca'):
-    """Retorna el fitxer de configuració de dispositius segons l'idioma."""
+    """
+    Obté els tipus de Device del programa configurats a l'arxiu *optimization_devices.conf*\n
+    :param locale: idioma del programa, per trobar l'arxiu en l'idioma configurat actualment.
+    :return: {Tipus de dispositius guardats}
+    """
+
     # Validar locale per evitar path traversal
     allowed_locales = ['ca', 'es', 'en']
     if locale not in allowed_locales:
@@ -1120,6 +1338,10 @@ def get_device_types(locale='ca'):
 
 @app.route('/update_device_config',method='POST')
 def update_device_config():
+    """
+    Actualitza la configuració del dispositiu amb les noves dades entrades al formulari (només el paràmetre que indica si controlem o no el dispositiu)
+    :return: {status: success / error}
+    """
     data = request.json
 
     if not data:
@@ -1158,8 +1380,9 @@ def update_device_config():
 #region FLEXIBILITY
 def flexibility(optimization_db):
     """
-    Calcula la flexibilitat de l'optimització realitzada.
-    Ara cerca quin dispositiu s'ha optimitzat i delega el càlcul a la classe del dispositiu.
+    Calcula la flexibilitat de l'optimització realitzada.\n
+    Cerca quin dispositiu s'ha optimitzat i delega el càlcul a la classe del dispositiu.
+    Docu: Comentar funció quan estigui acabada
     """
 
     if optimization_db is None:
@@ -1191,6 +1414,10 @@ def flexibility(optimization_db):
     return total_fup, total_fdown
 
 def daily_flex():
+    """
+    Docu: Comentar funció quan estigui acabada
+    :return:
+    """
     flexi_data = FlexibilityManager.send_flexibility(forecast.models_filepath)
     flexi_response = FlexibilityManager.generate_fake_response(flexi_data)
     logger.info(f"  📎{flexi_response['instructions_text'][0]}")
@@ -1207,16 +1434,19 @@ def daily_flex():
 #region DAILY TASKS
 
 def daily_task():
-    
+    """
+    Funció que s'executa diariament per tal de realitzar els Forecasts i l'optimització.
+    :return:
+    """
     try:
         # Actualitzem la base de dades
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
         database.update_database("all")
         database.clean_database_hourly_average(all_sensors=True)
 
-        # Si l'hora actual és anterior a les 18:00, l'objectiu és "avui".
+        # Si l'hora actual és anterior a les 20:00, l'objectiu és "avui".
         # Si és posterior, suposem que el procés s'està preparant per "demà".
-        target_today = datetime.now().hour < 18
+        target_today = datetime.now().hour < 20
         
         #forecast
         daily_forecast_task(today=target_today)
@@ -1230,6 +1460,11 @@ def daily_task():
         logger.error(f" ❌ [{hora_actual}] - ERROR al daily task : {e}")
 
 def monthly_task():
+    """
+    Funció que executa l'últim dia del més a la nit per tal de netejar la base de dades. \n
+    Elimina de la base de dades *sensors* tots aquells que tingui guardats però ja no estiguin marcats per a guardar.
+    :return: None
+    """
     try:
         # Eliminació de dades sense cap activitat
         today = datetime.today()
@@ -1250,6 +1485,11 @@ def monthly_task():
         logger.error(f" ❌ [{hora_actual}] - ERROR al monthly task : {e}")
 
 def daily_forecast_task(today=False):
+    """
+    Funció que es crida diariament a la nit per tal de realitzar els forecastings de tots els models guardats.
+    :param today: True si es vol fer el forecasting a data d'avui, False en cas que sigui per l'endamà
+    :return: None
+    """
     try:
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
         logger.warning(f"📈 [Forecast] [{hora_actual}] - STARTING DAILY FORECASTING")
@@ -1285,6 +1525,10 @@ def daily_forecast_task(today=False):
         logger.error(f"❌ [Forecast] [{hora_actual}] - ERROR general al daily forecast: {e}", exc_info=True)
 
 def certificate_hourly_task():
+    """
+    Funció que es crida horariament. Envia amb Blockchain el consum i la generació de l'usuari d'aquella hora al sevidor de la comunitat.
+    :return: None
+    """
     try:
         logger.info(f"🕒 Running certificate hourly task at {datetime.now().strftime('%H:%M')}")
         config_dir = forecast.models_filepath + 'config/user.config'
@@ -1354,6 +1598,11 @@ def certificate_hourly_task():
         logger.error(f" ❌ [{datetime.now().strftime('%d:%m:%Y %H:%m')}] - ERROR sending hourly task: {e}")
 
 def config_optimized_devices_HA():
+    """
+    Configura els dispositius que han estat optimitzats al valor que tocaria cada hora per tal que segueixin el planing de l'optimització.\n
+    S'executa cada hora.
+    :return: None
+    """
     try:
         if (optimalScheduler.consumers == {} and
                 optimalScheduler.generators == {} and
@@ -1392,6 +1641,9 @@ def config_optimized_devices_HA():
         logger.error(f"❌ [{datetime.now().strftime('%d:%m:%Y %H:%m')}] -  Error configurant horariament un dispositiu a H.A {e}")
 
 def run_threaded(job_func):
+    """
+    Executa un thread secundari per no parar el programa en cas de fallada.
+    """
     job_thread = threading.Thread(target=job_func)
     job_thread.start()
 
@@ -1579,8 +1831,13 @@ class ThreadedServer(ServerAdapter):
         server.serve_forever()
 
 #endregion Threading
+
 # Funció main que encén el servidor web.
 def main():
+    """
+    Funció main que encén el servidor web.
+    :return:  None
+    """
     run(app=app, host=HOSTNAME, port=PORT, quiet=True, server=ThreadedServer)
 
 

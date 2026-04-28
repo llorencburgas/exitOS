@@ -19,10 +19,12 @@ logger = logging.getLogger("exitOS")
 
 
 class SqlDB():
+    # region PRIVATE METHODS
+
     def __init__(self):
         """
-        Constructor de la classe. \n
-        Crea la connexió a la base de dades
+        Constructor de la classe SqlDB. \n
+        Inicialitza les variables necessàries de la classe i crea la Base de dades en cas que aquesta no existeixi.
         """
         self.running_in_ha = "HASSIO_TOKEN" in os.environ
         self.database_file = "share/exitos/dades.db" if self.running_in_ha else "dades.db"
@@ -49,12 +51,12 @@ class SqlDB():
     def _init_db(self):
         """
         Crea les taules de la base de dades \n
-            -> DADES: conté els valors i timestamps de les dades \n
-            -> SENSORS: conté la info dels sensors
-            -> FORECASTS: conté les dades i timestamps de les prediccions realitzades per a cada model
+        - DADES: conté els valors i timestamps de les dades \n
+        - SENSORS: conté la info dels sensors
+        - FORECASTS: conté les dades i timestamps de les prediccions realitzades per a cada model
         """
 
-        logger.info("Iniciant creació de la Base de Dades")
+        logger.info("Iniciant creaciÃ³ de la Base de Dades")
         with sqlite3.connect(self.database_file, timeout=60.0) as con:
             cur = con.cursor()
 
@@ -74,9 +76,17 @@ class SqlDB():
         self.clean_database_hourly_average(all_sensors=True)
 
     def _get_connection(self):
+        """
+        Crea una connexió amb la base de dades indicada a la varaible *self.database_file*
+        :return: Connexió amb la base de dades
+        """
         return sqlite3.connect(self.database_file, timeout=60.0)
 
     def self_destruct(self):
+        """
+        Elimina completament tota la base de dades
+        :return: None
+        """
         with sqlite3.connect("dades.db", timeout=60.0) as con:
             cur = con.cursor()
             cur.execute("DROP TABLE IF EXISTS dades")
@@ -87,8 +97,14 @@ class SqlDB():
 
     def query_select(self, table:str, column:str, sensor_id: str, con = None) -> List[Any]:
         """
-        Executa una query SQL a la base de dades
+        Executa un query SQL bàsic a la base de dades
+        :param table: nom de la taula a la que es vol accedir
+        :param column: nom de la columna a la qual es col accedir
+        :param sensor_id: nom del sensor concret que es vol buscar
+        :param con: connexió amb la base de dades creada
+        :return:
         """
+
         close_con = False
         if con is None:
             con = self._get_connection()
@@ -103,7 +119,14 @@ class SqlDB():
 
         return result
 
+    # endregion
+
+    # region SENSORS - Getters
     def get_all_sensors(self) -> Optional[pd.DataFrame]:
+        """
+        Obté una llista amb el ID i Friendly Name de tots els sensors
+        :return: [[ID, FriendlyName], [ID, FriendlyName], ...] // None si no troba l'API
+        """
         response = get(f"{self.base_url}states", headers=self.headers)
         if response.ok:
             sensors_list = pd.json_normalize(response.json())
@@ -112,55 +135,22 @@ class SqlDB():
         return None
 
     def get_current_sensor_state(self, sensor_id: str):
-        """ Retorna el valor de l'última hora obtinguda del sensor"""
+        """
+        Obté l'estat actual del sensor indicat (valor actual)
+        :param sensor_id: ID del sensor que volem obtenir
+        :return: Valor actual del sensor que marca l'API
+        """
         response = get(f"{self.base_url}states/{sensor_id}", headers=self.headers)
         if response.ok:
             aux = pd.json_normalize(response.json())
             return aux['state']
         return None
 
-    def clean_sensors_db(self):
-        logger.debug("Iniciant neteja de la Base de Dades de Sensors")
-        all_sensors = self.get_all_sensors()
-        if all_sensors is None:
-            logger.warning("No s'ha pogut obtenir la llista de sensors.")
-            return
-
-        all_sensors_list = set(all_sensors['entity_id'].tolist())
-
-        with self._get_connection() as con:
-            cur = con.cursor()
-            cur.execute("select sensor_id from sensors")
-            sensors_in_db = {row[0] for row in cur.fetchall()}
-
-            deleted = 0
-            for sensor_id in sensors_in_db - all_sensors_list:
-                cur.execute("DELETE FROM sensors WHERE sensor_id = ?", (sensor_id,))
-                logger.debug(f"··· Eliminant sensor {sensor_id} ···")
-                deleted += 1
-            con.commit()
-
-        logger.debug(f"La base de dades creada correctament. {deleted} sensors eliminats.")
-        self.vacuum()
-
-    def get_sensors_save(self, sensors: List[str]) -> List[Any]:
-        results = []
-        with self._get_connection() as con:
-            for sensor_id in sensors:
-                res = self.query_select("sensors", "save_sensor", sensor_id, con)
-                results.append(res[0] if res else 0)
-
-        return results
-
-    def get_sensors_type(self, sensors: List[str]) -> List[Any]:
-        results = []
-        with self._get_connection() as con:
-            for sensor_id in sensors:
-                res = self.query_select("sensors", "sensor_type", sensor_id, con)
-                results.append(res[0] if res else 0)
-        return results
-
     def get_all_sensors_data(self):
+        """
+        Obté informació de tots els devices i entitats guardats a la base de dades.
+        :return: { **"device_name"**, **"entities"**: {  { "entity_id", "entity_name", "save", "type"}...}
+        """
         with self._get_connection() as con:
             cur = con.cursor()
             cur.execute("select * from sensors")
@@ -195,26 +185,27 @@ class SqlDB():
 
         return result
 
-    def get_all_saved_sensors_data(self, sensors_saved: List[str], start_date: str, end_date: str) -> Dict[str, List[tuple]]:
-        data: List[tuple] = []
+    def get_sensors_save(self, sensors: List[str]) -> List[Any]:
+        """
+
+        :param sensors:
+        :return:
+        """
+        results = []
         with self._get_connection() as con:
-            cur = con.cursor()
-            for sensor_id in sensors_saved:
-                cur.execute("""
-                SELECT sensor_id, timestamp, value
-                FROM dades
-                WHERE sensor_id = ?
-                AND timestamp BETWEEN ? AND ?
-                """, (sensor_id, start_date, end_date))
-                data.extend(cur.fetchall())
+            for sensor_id in sensors:
+                res = self.query_select("sensors", "save_sensor", sensor_id, con)
+                results.append(res[0] if res else 0)
 
-        sensors_data: Dict[str, List[tuple]] = {}
-        for sensor_id, timestamp, value in data:
-            if sensor_id not in sensors_data:
-                sensors_data[sensor_id] = []
-            sensors_data[sensor_id].append((timestamp, value))
+        return results
 
-        return sensors_data
+    def get_sensors_type(self, sensors: List[str]) -> List[Any]:
+        results = []
+        with self._get_connection() as con:
+            for sensor_id in sensors:
+                res = self.query_select("sensors", "sensor_type", sensor_id, con)
+                results.append(res[0] if res else 0)
+        return results
 
     def get_data_from_sensor(self, sensor_id: str) -> pd.DataFrame:
         query = """SELECT timestamp, value FROM dades WHERE sensor_id = ? """
@@ -224,11 +215,94 @@ class SqlDB():
         con.close()
         return df.sort_values('timestamp').reset_index(drop=True)
 
+    def get_all_saved_sensors_data(self, sensors_saved: List[str], start_date: str, end_date: str) -> Dict[str, List[tuple]]:
+        """
+
+        :param sensors_saved:
+        :param start_date:
+        :param end_date:
+        :return:
+        """
+
+        # Normalitzem el format de les dates per assegurar que coincideixen amb la "T" de la DB
+        # Això converteix "2026-04-28 23:00:00" en "2026-04-28T23:00:00"
+        start_date_iso = start_date.replace(" ", "T")
+        end_date_iso = end_date.replace(" ", "T")
+
+        sensors_data: Dict[str, List[tuple]] = {sensor_id: [] for sensor_id in sensors_saved}
+        with self._get_connection() as con:
+            placeholders = ', '.join(['?'] * len(sensors_saved))
+            query = f"""
+                SELECT sensor_id, timestamp, value
+                FROM dades
+                WHERE sensor_id IN ({placeholders})
+                AND timestamp BETWEEN ? AND ?
+                ORDER BY timestamp ASC
+            """
+
+            # Preparem els paràmetres: primer la llista de sensors, després les dues dates
+            params = sensors_saved + [start_date_iso, end_date_iso]
+
+            cursor = con.execute(query, params)
+
+            # Omplim el diccionari directament mentre recorrem els resultats
+            for sensor_id, timestamp, value in cursor.fetchall():
+                sensors_data[sensor_id].append((timestamp, value))
+
+        return sensors_data
+
     def get_all_saved_sensors_id(self, kw: bool = False) -> List[str]:
 
         query = "SELECT sensor_id FROM sensors WHERE units IN ('W', 'kW')" if kw else "SELECT sensor_id FROM sensors WHERE save_sensor = 1"
         with self._get_connection() as con:
             return [row[0] for row in con.execute(query).fetchall()]
+
+    def get_sensor_active(self, sensor: str) -> int:
+        with self._get_connection() as con:
+            cur = con.cursor()
+            cur.execute("SELECT save_sensor FROM sensors WHERE sensor_id = ?", (sensor,))
+            result = cur.fetchone()
+            return result[0] if result else 0
+
+    def get_latest_data_from_sensor(self, sensor_id):
+        with self._get_connection() as con:
+            cursor = con.cursor()
+            cursor.execute(""" SELECT timestamp, value 
+                               FROM dades 
+                               WHERE sensor_id = ? 
+                               ORDER BY timestamp DESC
+                                LIMIT 1""", (sensor_id,))
+            aux = cursor.fetchone()
+            cursor.close()
+            return aux
+
+    # endregion
+
+    # region SENSORS - Setters
+
+    def clean_sensors_db(self):
+        logger.debug("Iniciant neteja de la Base de Dades de Sensors")
+        all_sensors = self.get_all_sensors()
+        if all_sensors is None:
+            logger.warning("No s'ha pogut obtenir la llista de sensors.")
+            return
+
+        all_sensors_list = set(all_sensors['entity_id'].tolist())
+
+        with self._get_connection() as con:
+            cur = con.cursor()
+            cur.execute("select sensor_id from sensors")
+            sensors_in_db = {row[0] for row in cur.fetchall()}
+
+            deleted = 0
+            for sensor_id in sensors_in_db - all_sensors_list:
+                cur.execute("DELETE FROM sensors WHERE sensor_id = ?", (sensor_id,))
+                logger.debug(f"Â·Â·Â· Eliminant sensor {sensor_id} Â·Â·Â·")
+                deleted += 1
+            con.commit()
+
+        logger.debug(f"La base de dades creada correctament. {deleted} sensors eliminats.")
+        self.vacuum()
 
     def reset_all_sensors_save(self):
         with self._get_connection() as con:
@@ -244,102 +318,10 @@ class SqlDB():
             con.execute("UPDATE sensors SET sensor_type = ? WHERE sensor_id = ?", (new_type, sensor))
             con.commit()
 
-    def get_sensor_active(self, sensor: str) -> int:
-        with self._get_connection() as con:
-            cur = con.cursor()
-            cur.execute("SELECT save_sensor FROM sensors WHERE sensor_id = ?", (sensor,))
-            result = cur.fetchone()
-            return result[0] if result else 0
-
     def remove_sensor_data(self, sensor_id: str):
         with self._get_connection() as con:
             con.execute("DELETE FROM dades WHERE sensor_id = ?", (sensor_id,))
             con.commit()
-
-    def clean_database_hourly_average(self, sensor_id=None, all_sensors=True):
-        """
-        Neteja dades promediant per hora o agrupant pel valor més freqüent si són textos.
-        Si all_sensors=True, processa tots els sensors.
-        Si all_sensors=False, requereix un sensor_id específic.
-        """
-
-        mode = "TOTAL" if all_sensors else f"SENSOR: {sensor_id}"
-        logger.info(f"🧹 INICIANT NETEJA ({mode})")
-        with self._get_connection() as con:
-            cur = con.cursor()
-            if all_sensors:
-                sensor_ids = [row[0] for row in con.execute("SELECT DISTINCT sensor_id FROM dades").fetchall()]
-            else:
-                if not sensor_id:
-                    logger.warning("⚠️ S'ha demanat neteja individual però no s'ha passat sensor_id.")
-                    return
-                sensor_ids = [sensor_id]
-
-            if not sensor_ids:
-                logger.error("❗ No s'han trobat sensors per processar.")
-                return
-
-            limit_date = (datetime.now() - timedelta(days=21)).isoformat()
-
-            for sensor_id in sensor_ids:
-                logger.debug(f"      Processant sensor: {sensor_id}")
-                df = pd.read_sql_query(
-                    f"SELECT timestamp, value FROM dades WHERE sensor_id = ? AND timestamp >= ?", con,
-                    params=(sensor_id, limit_date)
-                )
-                if df.empty:
-                    logger.info(f"           ❌ No hi ha dades per al sensor {sensor_id} dins el període. S'omet.")
-                    continue
-
-                # Convertim només el timestamp d'entrada
-                df['timestamp'] = pd.to_datetime(df['timestamp'], format='ISO8601', errors='coerce')
-                df['hour'] = df['timestamp'].dt.floor('h')
-
-                # 1. Intentem convertir els valors a numèrics temporalment
-                numeric_values = pd.to_numeric(df['value'], errors='coerce')
-
-                # 2. Determinem si el sensor és numèric:
-                # Si un cop convertit hi ha algun número vàlid, considerem que és un sensor de números.
-                # També cobrim el cas en què estigui 100% buit.
-                is_numeric = numeric_values.notna().any() or df['value'].isna().all()
-
-                if is_numeric:
-                    # 3a. Sensor numèric: mode tradicional amb la mitjana
-                    df['value'] = numeric_values
-                    df_grouped = df.groupby('hour', as_index=False)['value'].mean()
-                else:
-                    # 3b. Sensor de text (ex: "Charging"): mode categòric
-                    # Agafem la moda (el valor que més estona ha estat actiu durant aquesta hora).
-                    # Nota: Si vols l'últim estat en lloc del més freqüent, canvia lambda per: lambda x: x.iloc[-1]
-                    df_grouped = df.groupby('hour', as_index=False)['value'].agg(
-                        lambda x: x.mode().iloc[0] if not x.mode().empty else None
-                    )
-
-                try:
-                    con.execute("DELETE FROM dades WHERE sensor_id = ? AND timestamp >= ?", (sensor_id, limit_date))
-
-                    rows_to_insert = [
-                        (sensor_id, row['hour'].isoformat(), None if pd.isna(row['value']) else row['value'])
-                        for _, row in df_grouped.iterrows()
-                    ]
-                    con.executemany(
-                        "INSERT INTO dades (sensor_id, timestamp, value) VALUES (?, ?, ?)", rows_to_insert
-                    )
-                    con.commit()
-                except Exception as e:
-                    con.rollback()
-                    logger.error(f"❌ Error processant {sensor_id}: {e}")
-
-        logger.info("🧹 NETEJA COMPLETADA")
-        self.vacuum()
-
-    def get_parent_device_from_sensor_id(self, sensor_id: str, devices_dict) -> str:
-        for device in devices_dict:
-            for entity in device['entities']:
-                if entity['entity_id'] == sensor_id:
-                    return device['device_name']
-
-        return "None"
 
     def update_database(self, sensor_to_update):
         """
@@ -377,7 +359,7 @@ class SqlDB():
 
                 sensor_info = self.query_select("sensors", "*", sensor_id, con)
 
-                #si no hem obtingut cap sensor ( és a dir, no existeix a la nosta BD)
+                #si no hem obtingut cap sensor ( Ã©s a dir, no existeix a la nosta BD)
                 if sensor_info is None:
                     cur = con.cursor()
                     columns = [col[1] for col in cur.execute("PRAGMA table_info(sensors)")]
@@ -401,7 +383,7 @@ class SqlDB():
                     cur.close()
                     con.commit()
                     logger.debug(f"     [ {current_date.strftime('%d-%b-%Y   %X')} ] Afegit un nou sensor a la base de dades: {sensor_id}")
-                else: # TODO: eliminar tot el else quan tots els usuaris tinguin friendly_name dins sensors
+                else:
                     cur = con.cursor()
 
                     cur.execute("PRAGMA table_info(sensors)")
@@ -458,12 +440,12 @@ class SqlDB():
                             logger.error(f"          Request failed with status code: {response.status_code}")
                             sensor_data_historic = pd.DataFrame()
 
-                        #actualitzem el valor obtingut de l'històric del sensor
+                        #actualitzem el valor obtingut de l'histÃ²ric del sensor
                         cur = con.cursor()
                         for column in sensor_data_historic.columns:
                             value = sensor_data_historic[column][0]['state']
 
-                            #mirem si el valor és vàlid
+                            #mirem si el valor Ã©s vÃ lid
                             if value == 'unknown' or value == 'unavailable' or value == '':
                                 value = np.nan
                             if last_value != value:
@@ -481,50 +463,33 @@ class SqlDB():
         if all_sensors_debug:
             logger.info(f"🗃️ [ {current_date.strftime('%d-%b-%Y   %X')} ] TOTS ELS SENSORS HAN ESTAT ACTUALITZATS")
 
-    def get_lat_long(self):
-        """
-        Retorna la lat i long del home assistant
-        """
-        try:
-            response = get(self.base_url + "config", headers=self.headers)
-            config = pd.json_normalize(response.json())
 
-            if 'latitude' in config.columns and 'longitude' in config.columns:
-                latitude = config['latitude'][0]
-                longitude = config['longitude'][0]
 
-                return latitude, longitude
-            else:
-                logger.error("Could not found the data in the response file")
-                logger.info(f"Available columns: {config.columns.tolist()}")
+    # endregion
 
-                return -1
-        except Exception as e:
-            return f"Error! : {str(e)}"
+    # region SENSORS - Home Asistant
+    def set_sensor_value_HA(self, sensor_mode, sensor_id, value):
+        if sensor_mode == 'select':
+            url = f"{self.base_url}services/select/select_option"
+            data = {'entity_id': sensor_id,
+                    'option': value}
+        elif sensor_mode == 'number':
+            url = f"{self.base_url}services/number/set_value"
+            data = {'entity_id': sensor_id, "value": value}
+        elif sensor_mode == 'button':
+            url = f"{self.base_url}services/button/press"
+            data = {'entity_id': sensor_id}
+        elif sensor_mode == 'switch':
+            url = f"{self.base_url}services/switch/turn_on"
+            data = {'entity_id': sensor_id}
 
-    def save_forecast(self, data):
-        forecast_name = data[0][0]
-        forecast_run_time = data[0][2]
+        response = requests.post(url, headers=self.headers, json=data)
 
-        with self._get_connection() as con:
-            cur = con.cursor()
+        logger.info(f"resposta {sensor_id}: {response.status_code} - {response.text}")
 
-            #eliminem forecast amb mateix data i nom per evitar duplicats en un sol dia
-            cur.execute("""
-            DELETE FROM forecasts
-                WHERE forecast_name = ?
-                AND forecast_run_time = ?
-            """, (forecast_name, forecast_run_time))
+    # endregion
 
-            #inserim el nou forecast
-            cur.executemany("""
-                INSERT INTO forecasts (forecast_name, sensor_forecasted, forecast_run_time, forecasted_time, predicted_value, real_value) 
-                VALUES (?,?,?,?,?,?)
-            """, data)
-
-            con.commit()
-            cur.close()
-
+    # region FORECASTS
     def get_forecasts_name(self):
         with self._get_connection() as con:
             cur = con.cursor()
@@ -568,25 +533,146 @@ class SqlDB():
             con.commit()
             cur.close()
 
+    def save_forecast(self, data):
+        forecast_name = data[0][0]
+        forecast_run_time = data[0][2]
+
+        with self._get_connection() as con:
+            cur = con.cursor()
+
+            # eliminem forecast amb mateix data i nom per evitar duplicats en un sol dia
+            cur.execute("""
+                        DELETE
+                        FROM forecasts
+                        WHERE forecast_name = ?
+                          AND forecast_run_time = ?
+                        """, (forecast_name, forecast_run_time))
+
+            # inserim el nou forecast
+            cur.executemany("""
+                            INSERT INTO forecasts (forecast_name, sensor_forecasted, forecast_run_time, forecasted_time,
+                                                   predicted_value, real_value)
+                            VALUES (?, ?, ?, ?, ?, ?)
+                            """, data)
+
+            con.commit()
+            cur.close()
+
+    # endregion
+
+    # region GENERAL
     def vacuum(self):
         with self._get_connection() as con:
             con.execute("VACUUM")
 
-    def get_latest_data_from_sensor(self, sensor_id):
-        with self._get_connection() as con:
-            cursor = con.cursor()
-            cursor.execute(""" SELECT timestamp, value 
-                               FROM dades 
-                               WHERE sensor_id = ? 
-                               ORDER BY timestamp DESC
-                                LIMIT 1""", (sensor_id,))
-            aux = cursor.fetchone()
-            cursor.close()
-            return aux
+    def clean_database_hourly_average(self, sensor_id=None, all_sensors=True):
+        """
+        Neteja dades promediant per hora o agrupant pel valor més freqüent si són textos.
+        Si all_sensors=True, processa tots els sensors.
+        Si all_sensors=False, requereix un sensor_id específic.
+        """
 
+        mode = "TOTAL" if all_sensors else f"SENSOR: {sensor_id}"
+        logger.info(f"🧹 INICIANT NETEJA ({mode})")
+        with self._get_connection() as con:
+            cur = con.cursor()
+            if all_sensors:
+                sensor_ids = [row[0] for row in con.execute("SELECT DISTINCT sensor_id FROM dades").fetchall()]
+            else:
+                if not sensor_id:
+                    logger.warning("⚠️ S'ha demanat neteja individual però no s'ha passat sensor_id.")
+                    return
+                sensor_ids = [sensor_id]
+
+            if not sensor_ids:
+                logger.error("❌ No s'han trobat sensors per processar.")
+                return
+
+            limit_date = (datetime.now() - timedelta(days=21)).isoformat()
+
+            for sensor_id in sensor_ids:
+                logger.debug(f"      Processant sensor: {sensor_id}")
+                df = pd.read_sql_query(
+                    f"SELECT timestamp, value FROM dades WHERE sensor_id = ? AND timestamp >= ?", con,
+                    params=(sensor_id, limit_date)
+                )
+
+                if df.empty:
+                    continue
+
+                # 1. Convertim a datetime i UNIFIQUEM a "naive" (sense zona horària)
+                # Això evita que Pandas s'emboliqui amb els offsets +00:00 en agrupar
+                df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce').dt.tz_localize(None)
+
+                # 2. Ara sí, arrodonim a l'hora
+                df['hour'] = df['timestamp'].dt.floor('h')
+
+                # 3. Procés de dades (Numèric vs Text)
+                numeric_values = pd.to_numeric(df['value'], errors='coerce')
+                is_numeric = numeric_values.notna().any()
+
+                if is_numeric:
+                    df['value'] = numeric_values
+                    df_grouped = df.groupby('hour', as_index=False)['value'].mean()
+                else:
+                    # Per a text (com "Charging"), agafem la moda
+                    df_grouped = df.groupby('hour', as_index=False)['value'].agg(
+                        lambda x: x.mode().iloc[0] if not x.mode().empty else None
+                    )
+
+                # --- DEBUG: Comprova si realment hi ha més d'una fila per dia ---
+                logger.debug(f"Files resultants per {sensor_id}: {len(df_grouped)}")
+
+                try:
+                    # Netegem l'antic
+                    con.execute("DELETE FROM dades WHERE sensor_id = ? AND timestamp >= ?", (sensor_id, limit_date))
+
+                    # Preparem la inserció amb un format ISO net i sense microsegons (opcional)
+                    rows_to_insert = [
+                        (sensor_id, row['hour'].strftime('%Y-%m-%dT%H:%M:%S'),
+                         None if pd.isna(row['value']) else row['value'])
+                        for _, row in df_grouped.iterrows()
+                    ]
+
+                    con.executemany(
+                        "INSERT INTO dades (sensor_id, timestamp, value) VALUES (?, ?, ?)", rows_to_insert
+                    )
+                    con.commit()
+                except Exception as e:
+                    con.rollback()
+                    logger.error(f"❌ Error processant {sensor_id}: {e}")
+
+        logger.info("🧹 NETEJA COMPLETADA")
+        self.vacuum()
+
+    def get_lat_long(self):
+        """
+        Retorna la lat i long del home assistant
+        """
+        try:
+            response = get(self.base_url + "config", headers=self.headers)
+            config = pd.json_normalize(response.json())
+
+            if 'latitude' in config.columns and 'longitude' in config.columns:
+                latitude = config['latitude'][0]
+                longitude = config['longitude'][0]
+
+                return latitude, longitude
+            else:
+                logger.error("Could not found the data in the response file")
+                logger.info(f"Available columns: {config.columns.tolist()}")
+
+                return -1
+        except Exception as e:
+            return f"Error! : {str(e)}"
+
+
+    # endregion
+
+    # region DEVICES
     def get_devices_info(self):
         """
-        Obté tots els dispositius, juntament amb les seves entitats i atributs d'aquestes a partir d'un template.
+        ObtÃ© tots els dispositius, juntament amb les seves entitats i atributs d'aquestes a partir d'un template.
         """
         url = f"{self.base_url}template"
         template = """
@@ -596,7 +682,7 @@ class SqlDB():
             {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq', None) | list %}
             {% set ns = namespace(devices = []) %}
             
-            {# DISPOSITIUS NORMALS #}
+            {# DEVICES NORMALS #}
             {% for device in devices %}
                 {% set name = device_attr(device, 'name') or device %}
                 {% set ents = device_entities(device) or [] %}
@@ -651,24 +737,18 @@ class SqlDB():
             return result
         else:
             logger.error(f"❌ Error en la resposta: {response.status_code}")
-            logger.debug(f"📄 Cos resposta:\n     {response.text}")
+            logger.debug(f"▫️ Cos resposta:\n     {response.text}")
             return {}
 
-    def set_sensor_value_HA(self, sensor_mode, sensor_id, value):
-        if sensor_mode == 'select':
-            url = f"{self.base_url}services/select/select_option"
-            data = {'entity_id': sensor_id,
-                    'option': value}
-        elif sensor_mode == 'number':
-            url = f"{self.base_url}services/number/set_value"
-            data = {'entity_id': sensor_id, "value": value}
-        elif sensor_mode == 'button':
-            url = f"{self.base_url}services/button/press"
-            data = {'entity_id': sensor_id}
-        elif sensor_mode == 'switch':
-            url = f"{self.base_url}services/switch/turn_on"
-            data = {'entity_id': sensor_id}
+    def get_parent_device_from_sensor_id(self, sensor_id: str, devices_dict) -> str:
+        for device in devices_dict:
+            for entity in device['entities']:
+                if entity['entity_id'] == sensor_id:
+                    return device['device_name']
 
-        response = requests.post(url, headers=self.headers, json=data)
+        return "None"
 
-        logger.info(f"resposta {sensor_id}: {response.status_code} - {response.text}")
+
+    # endregion
+
+

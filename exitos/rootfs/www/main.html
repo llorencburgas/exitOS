@@ -246,54 +246,122 @@
         }
 
         saved_configs.forEach((config_name) => {
-            fetch('get_device_config_data/' + config_name)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'ok') {
+            if (config_name ==="sonnenbatterie 79259.json"){ // TODO: ELIMINAR, és només de debug
+                fetch('get_device_config_and_state/' + config_name).then(response => response.json()).then(data => {
+                    if(data.status === 'ok'){
                         const dev = data["device_config"];
 
                         const graph_container = document.createElement('div');
                         graph_container.className = "scheduler-card";
-                        graph_container.innerHTML = dev.device_name;
-                        graph_container.innerText = dev.device_name;
 
-                        const trace = {
-                            x: dev.timestamps,
+                        // 1. Traça de la Configuració (Eix Y esquerre - Watts)
+                        const traceConfig = {
+                            x: dev.flexi_timestamps, // Usem flexi per tenir dates reals i alinear amb el segon graph
                             y: dev.hourly_config,
+                            mode: "lines",
+                            name: "Configuració (W)",
+                            line: { color: 'green', width: 2, shape: 'hv' } // 'hv' fa que sembli un graó horari
+                        };
+
+                        // 2. Traça de l'Estat Actual (Eix Y dret - %)
+                        const traceState = {
+                            x: dev.sonnen_history.x,
+                            y: dev.sonnen_history.y,
                             mode: "lines+markers",
-                            name: "configuració",
-                            line: { color: 'green' }
+                            name: "Bateria Real (%)",
+                            line: { color: '#3498db', width: 3 },
+                            marker: { size: 6 },
+                            yaxis: 'y2' // Aquesta és la clau per al segon eix
                         };
 
                         const layout = {
-                            title: 'Configuració Horària',
+                            title: `Estat de ${dev.device_name}`,
                             xaxis: { title: 'Hora' },
-                            yaxis: { title: 'Config' },
+                            yaxis: {
+                                title: 'Potència (W)',
+                                titlefont: {color: 'green'},
+                                tickfont: {color: 'green'}
+                            },
+                            yaxis2: {
+                                title: 'Càrrega (%)',
+                                titlefont: {color: '#3498db'},
+                                tickfont: {color: '#3498db'},
+                                overlaying: 'y',
+                                side: 'right',
+                                range: [0, 105] // Fixem de 0 a 100% (una mica més per estètica)
+                            },
                             autosize: true,
-                            margin: { t: 40, r: 20, b: 50, l: 50 },
-                            height: 300,
-                            dragmode: 'pan',
-                            showlegend: false,
+                            margin: { t: 60, r: 50, b: 50, l: 50 },
+                            height: 350,
+                            legend: { orientation: 'h', y: -0.2 }
                         };
-
-                        const config = {
-                            responsive: true
-                        }
 
                         parent_div_config.appendChild(graph_container);
 
                         setTimeout(() => {
                             Plotly.newPlot(
                                 graph_container,
-                                [trace],
-                                PlotlyTheme.mergeLayout(layout),
+                                [traceConfig, traceState],
+                                layout, // PlotlyTheme.mergeLayout si el tens, si no 'layout' directament
                                 { responsive: true, displayModeBar: false }
                             );
                         }, 10);
+
+
+
                     }
-
-
                 });
+            }
+            else{
+                fetch('get_device_config_data/' + config_name)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'ok') {
+                            const dev = data["device_config"];
+
+                            const graph_container = document.createElement('div');
+                            graph_container.className = "scheduler-card";
+                            graph_container.innerHTML = dev.device_name;
+                            graph_container.innerText = dev.device_name;
+
+                            const trace = {
+                                x: dev.timestamps,
+                                y: dev.hourly_config,
+                                mode: "lines+markers",
+                                name: "configuració",
+                                line: { color: 'green' }
+                            };
+
+                            const layout = {
+                                title: 'Configuració Horària',
+                                xaxis: { title: 'Hora' },
+                                yaxis: { title: 'Config' },
+                                autosize: true,
+                                margin: { t: 40, r: 20, b: 50, l: 50 },
+                                height: 300,
+                                dragmode: 'pan',
+                                showlegend: false,
+                            };
+
+                            const config = {
+                                responsive: true
+                            }
+
+                            parent_div_config.appendChild(graph_container);
+
+                            setTimeout(() => {
+                                Plotly.newPlot(
+                                    graph_container,
+                                    [trace],
+                                    PlotlyTheme.mergeLayout(layout),
+                                    { responsive: true, displayModeBar: false }
+                                );
+                            }, 10);
+                        }
+
+
+                    });
+            }
         })
     }
 
