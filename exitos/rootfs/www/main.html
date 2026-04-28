@@ -253,6 +253,12 @@
 
                         const graph_container = document.createElement('div');
                         graph_container.className = "scheduler-card";
+                        graph_container.innerHTML = dev.device_name;
+
+                        // Calculem el valor màxim per centrar el zero a l'eix Y (Potència)
+                        // Busquem el valor absolut més gran de la configuració per fer un eix simètric
+                        const maxConfig = Math.max(...dev.hourly_config.map(Math.abs));
+                        const yRange = [-maxConfig - 100, maxConfig + 100]; // Afegim un petit marge
 
                         // 1. Traça de la Configuració (Eix Y esquerre - Watts)
                         const traceConfig = {
@@ -271,29 +277,45 @@
                             name: "Bateria Real (%)",
                             line: { color: '#3498db', width: 3 },
                             marker: { size: 6 },
-                            yaxis: 'y2' // Aquesta és la clau per al segon eix
+                            yaxis: 'y2'
                         };
 
                         const layout = {
                             title: `Estat de ${dev.device_name}`,
-                            xaxis: { title: 'Hora' },
+                            xaxis: {
+                                title: '', // Podem treure el títol 'Hora' per guanyar espai
+                                tickformat: '%Hh',
+                                tickmode: 'linear',
+                                dtick: 3600000 * 2, // Mostrem una etiqueta cada 2 hores perquè caben millor horitzontalment
+                                tickangle: 0,       // <--- FORCEM HORITZONTAL
+                                automargin: true,
+                                tickfont: { size: 10 } // Una lletra una mica més petita ajuda a que no es girin
+                            },
                             yaxis: {
                                 title: 'Potència (W)',
-                                titlefont: {color: 'green'},
-                                tickfont: {color: 'green'}
+                                titlefont: {color: 'green', size: 11},
+                                tickfont: {color: 'green'},
+                                range: [-2500, 2500], // Forçat simètric per centrar el 0
+                                zeroline: true,
+                                zerolinewidth: 2,
+                                zerolinecolor: 'rgba(0,0,0,0.5)'
                             },
                             yaxis2: {
                                 title: 'Càrrega (%)',
-                                titlefont: {color: '#3498db'},
+                                titlefont: {color: '#3498db', size: 11},
                                 tickfont: {color: '#3498db'},
                                 overlaying: 'y',
                                 side: 'right',
-                                range: [0, 105] // Fixem de 0 a 100% (una mica més per estètica)
+                                // EL TRUC: Per centrar el 0%, l'eix ha de ser simètric al de Watts
+                                range: [-105, 105],
+                                showgrid: false,
+                                zeroline: false // No cal una segona línia de zero
                             },
                             autosize: true,
-                            margin: { t: 60, r: 50, b: 50, l: 50 },
-                            height: 350,
-                            legend: { orientation: 'h', y: -0.2 }
+                            margin: { t: 40, r: 50, b: 40, l: 50 },
+                            height: 300,
+                            legend: { orientation: 'h', y: -0.2, x: 0.5, xanchor: 'center' },
+                            showlegend: true
                         };
 
                         parent_div_config.appendChild(graph_container);
@@ -302,7 +324,7 @@
                             Plotly.newPlot(
                                 graph_container,
                                 [traceConfig, traceState],
-                                layout, // PlotlyTheme.mergeLayout si el tens, si no 'layout' directament
+                                PlotlyTheme.mergeLayout(layout),
                                 { responsive: true, displayModeBar: false }
                             );
                         }, 10);
