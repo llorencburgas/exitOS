@@ -1669,8 +1669,9 @@ scheduler_thread.start()
 #region DEBUG REGION
 @app.route('/panik_function')
 def panik_function():
-    optimize(today=True)
-    daily_flex()
+    config_optimized_devices_HA()
+    # optimize(today=True)
+    # daily_flex()
 
 #endregion DEBUG REGION
 
