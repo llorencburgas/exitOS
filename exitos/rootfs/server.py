@@ -1634,6 +1634,7 @@ def config_optimized_devices_HA():
 
                 if device_config['controller_state']:
                     value, sensor_id, sensor_type = item.controla(config = optimization_db['devices_config'][item.name], current_hour = current_hour)
+                    logger.warning(f"Sensor_ID: {sensor_id}, Value: {value}, SensorType: {sensor_type}")
                     database.set_sensor_value_HA(sensor_type, sensor_id, value)
 
 
