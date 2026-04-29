@@ -125,7 +125,7 @@ class SqlDB():
     def get_all_sensors(self) -> Optional[pd.DataFrame]:
         """
         Obté una llista amb el ID i Friendly Name de tots els sensors
-        :return: [[ID, FriendlyName], [ID, FriendlyName], ...] // None si no troba l'API
+        :return: [[ID, FriendlyName], [ID, FriendlyName], ...] - **None** si no troba l'API
         """
         response = get(f"{self.base_url}states", headers=self.headers)
         if response.ok:
@@ -149,7 +149,7 @@ class SqlDB():
     def get_all_sensors_data(self):
         """
         Obté informació de tots els devices i entitats guardats a la base de dades.
-        :return: { **"device_name"**, **"entities"**: {  { "entity_id", "entity_name", "save", "type"}...}
+        :return: {"device_name": ,"entities": {{"entity_id","entity_name","save","type"},...}}
         """
         with self._get_connection() as con:
             cur = con.cursor()
@@ -185,29 +185,12 @@ class SqlDB():
 
         return result
 
-    def get_sensors_save(self, sensors: List[str]) -> List[Any]:
-        """
-
-        :param sensors:
-        :return:
-        """
-        results = []
-        with self._get_connection() as con:
-            for sensor_id in sensors:
-                res = self.query_select("sensors", "save_sensor", sensor_id, con)
-                results.append(res[0] if res else 0)
-
-        return results
-
-    def get_sensors_type(self, sensors: List[str]) -> List[Any]:
-        results = []
-        with self._get_connection() as con:
-            for sensor_id in sensors:
-                res = self.query_select("sensors", "sensor_type", sensor_id, con)
-                results.append(res[0] if res else 0)
-        return results
-
     def get_data_from_sensor(self, sensor_id: str) -> pd.DataFrame:
+        """
+        Obté tots els valors guardats del sensor indicat juntament amb el seu timestamp, ordenats per Timestamp.
+        :param sensor_id: ID del sensor del qual es volen obtenir les dades
+        :return: Pandas DataFrame [timestamp, value] - *Exemple de Valors*: [2025-11-24 03:00:00+00:00, 621.06893]
+        """
         query = """SELECT timestamp, value FROM dades WHERE sensor_id = ? """
         con = self._get_connection()
         df = pd.read_sql_query(query, con, params=(sensor_id,))
@@ -217,11 +200,11 @@ class SqlDB():
 
     def get_all_saved_sensors_data(self, sensors_saved: List[str], start_date: str, end_date: str) -> Dict[str, List[tuple]]:
         """
-
-        :param sensors_saved:
-        :param start_date:
-        :param end_date:
-        :return:
+        Obté totes les dades guardades dins un rang de dades per tots els sensors indicats.
+        :param sensors_saved: ID dels sensors dels quals es volen obtenir les dades
+        :param start_date: Data d'inici de les dades
+        :param end_date: Data final per a les dades
+        :return: Diccionari amb les dades per a cada sensor { ID_sensor_1: [(timestamp, value), (timestamp,value)], ID_sensor_2: ... } - *Exemple de Valors*: ('2026-04-22T12:00:00', 2727.2727272727275)
         """
 
         # Normalitzem el format de les dates per assegurar que coincideixen amb la "T" de la DB
@@ -252,12 +235,22 @@ class SqlDB():
         return sensors_data
 
     def get_all_saved_sensors_id(self, kw: bool = False) -> List[str]:
+        """
+        Obté el ID de tots els sensors marcats per a guardar.
+        :param kw: Si és true, retorna només aquells sensors que usen KW com a unitat de mesura. En cas que no s'indiqui és False, mostrarà tots els ID guardats
+        :return: ['ID_sensor1', 'ID_sensor2', ...]
+        """
 
         query = "SELECT sensor_id FROM sensors WHERE units IN ('W', 'kW')" if kw else "SELECT sensor_id FROM sensors WHERE save_sensor = 1"
         with self._get_connection() as con:
             return [row[0] for row in con.execute(query).fetchall()]
 
     def get_sensor_active(self, sensor: str) -> int:
+        """
+        Obté 0 o 1 segons si el sensor indicat es troba actiu o no (és a dir que està marcat per a guardar dades)
+        :param sensor: ID del sensor a obtenir
+        :return: 0 si no està actiu, 1 en cas contrari (actiu = guarda dades)
+        """
         with self._get_connection() as con:
             cur = con.cursor()
             cur.execute("SELECT save_sensor FROM sensors WHERE sensor_id = ?", (sensor,))
@@ -265,6 +258,11 @@ class SqlDB():
             return result[0] if result else 0
 
     def get_latest_data_from_sensor(self, sensor_id):
+        """
+        Obté l'última dada guardada, juntament amb el timestamp, del sensor indicat.
+        :param sensor_id: ID del sensor del qual es vol obtenir la dada.
+        :return: ('timestamp', 'value') - *Exemple de Valors*: ('2026-04-29T07:00:00', 411.07975460122697)
+        """
         with self._get_connection() as con:
             cursor = con.cursor()
             cursor.execute(""" SELECT timestamp, value 

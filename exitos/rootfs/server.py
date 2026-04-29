@@ -1,3 +1,4 @@
+#region IMPORTS
 import os
 import threading
 import traceback
@@ -9,6 +10,7 @@ import time
 import json
 import glob
 import random
+import tzlocal
 
 import plotly.graph_objs as go
 import pandas as pd
@@ -29,6 +31,7 @@ import blockchain as Blockchain
 import numpy as np
 import llm.LLMEngine as llm_engine
 
+#endregion
 
 # LOGGER COLORS
 logger = setup_logger()
@@ -1617,6 +1620,9 @@ def config_optimized_devices_HA():
             can_optimize = optimize(today=True)
             if can_optimize == "Empty": return
 
+        current_date = datetime.now(tzlocal.get_localzone())
+        logger.info(f"📆 [{current_date.strftime('%d-%b-%Y   %X')} ] Configurant dispositius H.A.")
+
         optimization_db = joblib.load(full_path)
 
         current_hour = datetime.now().hour
@@ -1634,7 +1640,7 @@ def config_optimized_devices_HA():
 
                 if device_config['controller_state']:
                     value, sensor_id, sensor_type = item.controla(config = optimization_db['devices_config'][item.name], current_hour = current_hour)
-                    logger.warning(f"Sensor_ID: {sensor_id}, Value: {value}, SensorType: {sensor_type}")
+                    # logger.debug(f"Sensor_ID: {sensor_id}, Value: {value}, SensorType: {sensor_type}")
                     database.set_sensor_value_HA(sensor_type, sensor_id, value)
 
 
@@ -1670,9 +1676,9 @@ scheduler_thread.start()
 #region DEBUG REGION
 @app.route('/panik_function')
 def panik_function():
-    config_optimized_devices_HA()
-    # optimize(today=True)
-    # daily_flex()
+    "sensor.solarnet_potencia_fotovoltaica"
+    aux = database.get_latest_data_from_sensor("sensor.solarnet_potencia_fotovoltaica")
+    logger.info(aux)
 
 #endregion DEBUG REGION
 
