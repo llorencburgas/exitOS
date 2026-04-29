@@ -230,37 +230,15 @@
         tdEntName.textContent = ent.friendly_name;
 
 
-        //SELECT TIPUS ENTITAT
-        const tdEntType = document.createElement('td');
-        const select = document.createElement('select');
-        select.className = 'entity-type-select';
-        ENTITY_TYPES.forEach(t => {
-            const opt = new Option(t, t);
-            if (t === ent.type) opt.selected = true;
-            select.appendChild(opt);
-        });
-
-        select.disabled = !entCheck.checked;
-        tdEntType.appendChild(select);
-
         //INTERACCIONS
         // Quan canvii checkbox d'entitat: habilita/deshabilita select i actualitza objecte local
         entCheck.addEventListener('change', () => {
-            select.disabled = !entCheck.checked;
             // si queda desmarcada i el dispositiu estava completament marcat, actualitzem checkbox del dispositiu
             devCheckbox.checked = GetAllEntityCheckboxes(entRow.parentElement).every(cb => cb.checked);
         });
 
-        // Quan canvii select, actualitzem l'objecte local
-        select.addEventListener('change', () => {
-            ent.type = select.value;
-
-        });
-
         entRow.appendChild(tdEntCheck);
         entRow.appendChild(tdEntName);
-        // entRow.appendChild(tdEntId);
-        entRow.appendChild(tdEntType);
 
         return entRow;
     }

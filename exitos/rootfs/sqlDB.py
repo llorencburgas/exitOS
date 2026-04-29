@@ -62,7 +62,7 @@ class SqlDB():
 
             #creant les taules
             cur.execute("CREATE TABLE IF NOT EXISTS dades(sensor_id TEXT, timestamp NUMERIC, value)")
-            cur.execute("CREATE TABLE IF NOT EXISTS sensors(sensor_id TEXT,friendly_name TEXT, units TEXT, parent_device TEXT, update_sensor BINARY, save_sensor BINARY, sensor_type TEXT)")
+            cur.execute("CREATE TABLE IF NOT EXISTS sensors(sensor_id TEXT,friendly_name TEXT, units TEXT, parent_device TEXT, update_sensor BINARY, save_sensor BINARY)")
             cur.execute("CREATE TABLE IF NOT EXISTS forecasts(forecast_name TEXT, sensor_forecasted TEXT, forecast_run_time NUMERIC, forecasted_time NUMERIC, predicted_value REAL, real_value REAL)")
 
             cur.execute("CREATE INDEX IF NOT EXISTS idx_dades_sensor_id_timestamp ON dades(sensor_id, timestamp)")
@@ -278,52 +278,40 @@ class SqlDB():
 
     # region SENSORS - Setters
 
-    def clean_sensors_db(self):
-        logger.debug("Iniciant neteja de la Base de Dades de Sensors")
-        all_sensors = self.get_all_sensors()
-        if all_sensors is None:
-            logger.warning("No s'ha pogut obtenir la llista de sensors.")
-            return
-
-        all_sensors_list = set(all_sensors['entity_id'].tolist())
-
-        with self._get_connection() as con:
-            cur = con.cursor()
-            cur.execute("select sensor_id from sensors")
-            sensors_in_db = {row[0] for row in cur.fetchall()}
-
-            deleted = 0
-            for sensor_id in sensors_in_db - all_sensors_list:
-                cur.execute("DELETE FROM sensors WHERE sensor_id = ?", (sensor_id,))
-                logger.debug(f"Â·Â·Â· Eliminant sensor {sensor_id} Â·Â·Â·")
-                deleted += 1
-            con.commit()
-
-        logger.debug(f"La base de dades creada correctament. {deleted} sensors eliminats.")
-        self.vacuum()
-
     def reset_all_sensors_save(self):
+        """
+        Reinicia el paràmetre *save_sensor* de tots els sensors, posant-lo a 0
+        :return: None
+        """
         with self._get_connection() as con:
             con.execute("UPDATE sensors SET save_sensor = 0")
 
     def update_sensor_active(self, sensor: str, active: bool):
+        """
+        Actualitza la variable *save_sensor* del sensor indicat
+        :param sensor: ID del sensor que es vol modificar
+        :param active: nou estat a guardar (Boolean)
+        :return: None
+        """
         with self._get_connection() as con:
             con.execute("UPDATE sensors SET save_sensor = ? WHERE sensor_id = ?", (int(active), sensor))
             con.commit()
 
-    def update_sensor_type(self, sensor: str, new_type: str):
-        with self._get_connection() as con:
-            con.execute("UPDATE sensors SET sensor_type = ? WHERE sensor_id = ?", (new_type, sensor))
-            con.commit()
-
     def remove_sensor_data(self, sensor_id: str):
+        """
+        Elimina totes les entrades d'un sensor de la taula *dades* de la base de dades
+        :param sensor_id: ID del sensor que es vol eliminar.
+        :return: None
+        """
         with self._get_connection() as con:
             con.execute("DELETE FROM dades WHERE sensor_id = ?", (sensor_id,))
             con.commit()
 
     def update_database(self, sensor_to_update):
         """
-        Actualitza la base de dades amb la API del Home Assistant.
+        Actualitza la taula *dades* de la base de dades, posant totes les noves dades dels sensors marcats ocm actius. En cas que s'indiqui un sensor només s'actualitzarà aquest.
+        :param sensor_to_update: "all" si es vol actualitzar tota la base de dades, sensor_id en cas que es vulgui actualitzar només un sensor concret
+        :return: None
         """
         all_sensors_debug = False
         #obtenim la llista de sensors de la API
@@ -361,9 +349,6 @@ class SqlDB():
                 if sensor_info is None:
                     cur = con.cursor()
                     columns = [col[1] for col in cur.execute("PRAGMA table_info(sensors)")]
-                    if 'friendly_name' not in columns:
-                        cur.execute("ALTER TABLE sensors ADD COLUMN friendly_name TEXT")
-                        logger.debug(f"Columna 'friendly_name' afegida a la base de dades")
 
                     values_to_insert = (
                         sensor_id,
@@ -381,16 +366,15 @@ class SqlDB():
                     cur.close()
                     con.commit()
                     logger.debug(f"     [ {current_date.strftime('%d-%b-%Y   %X')} ] Afegit un nou sensor a la base de dades: {sensor_id}")
-                else:
+                else: #TODO: Quan tots els usuaris ja no tinguin sensor_type dins sensors eliminar aquest ELSE
                     cur = con.cursor()
 
                     cur.execute("PRAGMA table_info(sensors)")
                     columns = [col[1] for col in cur.fetchall()]
 
-                    if 'friendly_name' not in columns:
-                        cur.execute("ALTER TABLE sensors ADD COLUMN friendly_name TEXT")
-                        logger.debug(f"Columna 'friendly_name' afegida a la base de dades SENSORS")
-                        cur.execute("UPDATE sensors SET friendly_name = ? WHERE sensor_id = ? ", (sensors_list.iloc[j]['attributes.friendly_name'], sensor_id))
+                    if 'sensor_type' in columns:
+                        cur.execute("ALTER TABLE sensors DROP COLUMN sensor_type")
+                        logger.debug(f"Columna 'sensor_type' eliminada de la base de dades SENSORS")
 
                     cur.close()
                     con.commit()
@@ -438,12 +422,12 @@ class SqlDB():
                             logger.error(f"          Request failed with status code: {response.status_code}")
                             sensor_data_historic = pd.DataFrame()
 
-                        #actualitzem el valor obtingut de l'histÃ²ric del sensor
+                        #actualitzem el valor obtingut de l'històric del sensor
                         cur = con.cursor()
                         for column in sensor_data_historic.columns:
                             value = sensor_data_historic[column][0]['state']
 
-                            #mirem si el valor Ã©s vÃ lid
+                            #mirem si el valor és vàlid
                             if value == 'unknown' or value == 'unavailable' or value == '':
                                 value = np.nan
                             if last_value != value:
@@ -461,12 +445,17 @@ class SqlDB():
         if all_sensors_debug:
             logger.info(f"🗃️ [ {current_date.strftime('%d-%b-%Y   %X')} ] TOTS ELS SENSORS HAN ESTAT ACTUALITZATS")
 
-
-
     # endregion
 
     # region SENSORS - Home Asistant
     def set_sensor_value_HA(self, sensor_mode, sensor_id, value):
+        """
+
+        :param sensor_mode:
+        :param sensor_id:
+        :param value:
+        :return:
+        """
         if sensor_mode == 'select':
             url = f"{self.base_url}services/select/select_option"
             data = {'entity_id': sensor_id,

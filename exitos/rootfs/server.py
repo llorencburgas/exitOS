@@ -700,7 +700,6 @@ def update_sensors():
 
     for device in data:
         database.update_sensor_active(sensor = device['entityId'], active = True)
-        database.update_sensor_type(sensor = device['entityId'], new_type = device['type'])
 
     return {"status": "ok", "msg": f"Sensors guardats"}
 
@@ -1462,27 +1461,30 @@ def daily_task():
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
         logger.error(f" ❌ [{hora_actual}] - ERROR al daily task : {e}")
 
-def monthly_task():
+def daily_database_clean():
     """
-    Funció que executa l'últim dia del més a la nit per tal de netejar la base de dades. \n
-    Elimina de la base de dades *sensors* tots aquells que tingui guardats però ja no estiguin marcats per a guardar.
+    Funció que s'executa cada nit per tal de netejar la base de dades. \n
+    Elimina de la base de dades *dades* tots aquells senosrs que tingui guardats però ja no estiguin marcats per a guardar.
     :return: None
     """
     try:
-        # Eliminació de dades sense cap activitat
-        today = datetime.today()
-        last_day = (today.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1) #últim dia del mes
-        if today == last_day:
-            sensors_id = database.get_all_sensors()
-            sensors_id = sensors_id['entity_id'].tolist()
+        hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
+        logger.info(f"📂 [{hora_actual}] - INICIANT PROCÉS DE NETEJA DE LA BASE DE DADES")
 
-            for sensor_id in sensors_id:
-                is_active = database.get_sensor_active(sensor_id)
-                if not is_active:
+        sensors_id = database.get_all_sensors()
+        sensors_id = sensors_id['entity_id'].tolist()
+
+        for sensor_id in sensors_id:
+            is_active = database.get_sensor_active(sensor_id)
+            if not is_active:
+                has_data = database.get_data_from_sensor(sensor_id)
+                if len(has_data) > 0:
+                    logger.debug(f"     ▫️ Eliminant dades del sensor {sensor_id}")
                     database.remove_sensor_data(sensor_id)
 
-            logger.debug(f"Running monthly task at {datetime.now().strftime('%d-%b-%Y   %X')}" )
-            
+
+        logger.info(f"📂 [{hora_actual}] - BASE DE DADES NETA")
+
     except Exception as e:
         hora_actual = datetime.now().strftime('%Y-%m-%d %H:00')
         logger.error(f" ❌ [{hora_actual}] - ERROR al monthly task : {e}")
@@ -1655,7 +1657,7 @@ def run_threaded(job_func):
     job_thread.start()
 
 schedule.every().day.at("23:30").do(run_threaded, daily_task)
-schedule.every().day.at("02:00").do(run_threaded, monthly_task)
+schedule.every().day.at("02:00").do(run_threaded, daily_database_clean)
 schedule.every().hour.at(":00").do(run_threaded, certificate_hourly_task)
 
 def run_scheduled_tasks():
@@ -1677,8 +1679,9 @@ scheduler_thread.start()
 @app.route('/panik_function')
 def panik_function():
     "sensor.solarnet_potencia_fotovoltaica"
-    aux = database.get_latest_data_from_sensor("sensor.solarnet_potencia_fotovoltaica")
-    logger.info(aux)
+    # aux = database.get_latest_data_from_sensor("sensor.solarnet_potencia_fotovoltaica")
+    # logger.info(aux)
+    daily_database_clean()
 
 #endregion DEBUG REGION
 
