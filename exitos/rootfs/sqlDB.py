@@ -600,9 +600,16 @@ class SqlDB():
                 if df.empty:
                     continue
 
-                # 1. Convertim a datetime i UNIFIQUEM a "naive" (sense zona horària)
-                # Això evita que Pandas s'emboliqui amb els offsets +00:00 en agrupar
-                df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce').dt.tz_localize(None)
+                # 1. Convertim a datetime
+                df['timestamp'] = pd.to_datetime(df['timestamp'], format='ISO8601', utc=True)
+                # li treiem la zona horària per poder operar
+                df['timestamp'] = df['timestamp'].dt.tz_localize(None)
+                # Si després de la conversió el dataframe s'ha quedat buit o hi ha massa NaT,
+                # ATUREM el procés abans de fer el DELETE de la base de dades.
+                if df['timestamp'].isna().all():
+                    logger.error(
+                        f"❌ ERROR: Totes les dates del sensor {sensor_id} han fallat al convertir-se. Avortant neteja per no perdre dades.")
+                    continue
 
                 # 2. Ara sí, arrodonim a l'hora
                 df['hour'] = df['timestamp'].dt.floor('h')
@@ -621,13 +628,13 @@ class SqlDB():
                     )
 
                 # --- DEBUG: Comprova si realment hi ha més d'una fila per dia ---
-                logger.debug(f"Files resultants per {sensor_id}: {len(df_grouped)}")
+                # logger.debug(f"Files resultants per {sensor_id}: {len(df_grouped)}")
 
                 try:
                     # Netegem l'antic
                     con.execute("DELETE FROM dades WHERE sensor_id = ? AND timestamp >= ?", (sensor_id, limit_date))
 
-                    # Preparem la inserció amb un format ISO net i sense microsegons (opcional)
+                    # Preparem la inserció amb un format ISO net i sense microsegons
                     rows_to_insert = [
                         (sensor_id, row['hour'].strftime('%Y-%m-%dT%H:%M:%S'),
                          None if pd.isna(row['value']) else row['value'])
