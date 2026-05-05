@@ -1678,10 +1678,7 @@ scheduler_thread.start()
 #region DEBUG REGION
 @app.route('/panik_function')
 def panik_function():
-    "sensor.solarnet_potencia_fotovoltaica"
-    # aux = database.get_latest_data_from_sensor("sensor.solarnet_potencia_fotovoltaica")
-    # logger.info(aux)
-    daily_database_clean()
+    config_optimized_devices_HA()
 
 #endregion DEBUG REGION
 
