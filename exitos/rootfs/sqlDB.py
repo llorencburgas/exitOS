@@ -356,11 +356,10 @@ class SqlDB():
                         sensors_list.iloc[j]["attributes.unit_of_measurement"],
                         True,
                         False,
-                        "None",
                         parent_device,
                     )
                     cur.execute(
-                        "INSERT INTO sensors (sensor_id,friendly_name, units, update_sensor, save_sensor, sensor_type, parent_device) VALUES (?,?,?,?,?,?,?)",
+                        "INSERT INTO sensors (sensor_id,friendly_name, units, update_sensor, save_sensor, parent_device) VALUES (?,?,?,?,?,?)",
                         values_to_insert
                     )
                     cur.close()
