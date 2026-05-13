@@ -3,7 +3,7 @@
 This repository contains a custom Home Assistant add-on, **ExitOS**, designed for managing smart senor networks. The add-on enables the configuration, simulation, and management of various energy assets, such as buildings, consumers, generators, and energy sources.
 Also enables the participation in the eXiT energy comunity.
 
-[Documentació eXiTOS](https://siragordillo.github.io/eXiT_OS_Documentation/WWW/)
+[Documentació eXiTOS](https://siragordillo.github.io/eXiT_OS_Documentation/)
 
 ## Add-on Documentation
 
