@@ -589,8 +589,7 @@ class SqlDB():
         :param all_sensors: Si és True, ignora sensor_id i processa tota la base de dades.
         """
 
-        mode = "TOTAL" if all_sensors else f"SENSOR: {sensor_id}"
-        logger.info(f"🧹 INICIANT NETEJA ({mode})")
+        if all_sensors: logger.info(f"🧹 INICIANT NETEJA TOTAL")
         with self._get_connection() as con:
             cur = con.cursor()
             if all_sensors:
@@ -608,7 +607,11 @@ class SqlDB():
             limit_date = (datetime.now() - timedelta(days=21)).isoformat()
 
             for sensor_id in sensor_ids:
-                logger.debug(f"      Processant sensor: {sensor_id}")
+                if all_sensors:
+                    logger.debug(f"      Processant neteja sensor: {sensor_id}")
+                else:
+                    current_date = datetime.now(tzlocal.get_localzone())
+                    logger.info(f"🧹 [{current_date.strftime('%d-%b-%Y   %X')}] - Neteja sensor {sensor_id}")
                 df = pd.read_sql_query(
                     f"SELECT timestamp, value FROM dades WHERE sensor_id = ? AND timestamp >= ?", con,
                     params=(sensor_id, limit_date)
@@ -644,9 +647,6 @@ class SqlDB():
                         lambda x: x.mode().iloc[0] if not x.mode().empty else None
                     )
 
-                # --- DEBUG: Comprova si realment hi ha més d'una fila per dia ---
-                # logger.debug(f"Files resultants per {sensor_id}: {len(df_grouped)}")
-
                 try:
                     # Netegem l'antic
                     con.execute("DELETE FROM dades WHERE sensor_id = ? AND timestamp >= ?", (sensor_id, limit_date))
@@ -666,7 +666,7 @@ class SqlDB():
                     con.rollback()
                     logger.error(f"❌ Error processant {sensor_id}: {e}")
 
-        logger.info("🧹 NETEJA COMPLETADA")
+        if all_sensors: logger.info("🧹 NETEJA FINALITZADA")
         self.vacuum()
 
     def get_lat_long(self):
