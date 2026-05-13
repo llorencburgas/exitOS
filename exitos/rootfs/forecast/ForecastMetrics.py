@@ -14,6 +14,16 @@ class ForecastMetrics:
     """
     
     def __init__(self, debug=True, lang='ca'):
+        """
+        Constructor de la classe ForecastMetrics per a la gestió de validacions i informes.
+
+        Inicialitza el sistema de seguiment de mètriques, configurant el mode de depuració,
+        el comptador de passos del pipeline i carregant les traduccions corresponents
+        per als missatges de validació en l'idioma seleccionat.
+
+        :param debug: Booleà per activar la traçabilitat detallada del procés.
+        :param lang: Codi d'idioma ('ca', 'es', 'en') per a les traduccions.
+        """
         self.debug = debug
         self.metrics_log = []
         self.step_counter = 0
@@ -22,7 +32,19 @@ class ForecastMetrics:
 
     def load_locale(self, lang):
         """
-        Carrega el fitxer d'idioma corresponent
+            Carrega el fitxer de traduccions per als missatges de validació del mòdul de mètriques.
+
+            Busca un fitxer JSON a la carpeta de recursos segons el codi d'idioma proporcionat.
+            Si el troba, extreu la secció específica de mètriques; en cas contrari, retorna un
+            diccionari buit i manté l'execució amb els valors per defecte.
+
+            :param lang: Codi de l'idioma (ex: 'ca', 'es', 'en') que determina el nom del fitxer.
+            :return: Diccionari amb les claus i traduccions de text per a la interfície o informes.
+            {
+                "step_1_title": str,
+                "validation_error": str,
+                "metric_label": str
+            }
         """
         try:
             # Assumim que la ruta és relativa a on s'executa el server
@@ -35,7 +57,15 @@ class ForecastMetrics:
 
     def get_text(self, key, *args):
         """
-        Recupera el text traduït segons la clau (dot notation)
+        Recupera una cadena de text traduïda a partir d'una clau jeràrquica i hi aplica format.
+
+        Utilitza la notació de punts per navegar pel diccionari de traduccions fins a trobar
+        el valor corresponent. Si es proporcionen arguments addicionals, s'injecten en els
+        marcadors de posició del text (tipus str.format).
+
+        :param key: Clau de traducció en format de punts (ex: 'errors.nan_found').
+        :param args: Valors variables per emplenar els buits del text traduït.
+        :return: El text formatat si existeix, o la mateixa clau si no es troba la traducció.
         """
         keys = key.split('.')
         value = self.translations
@@ -51,7 +81,16 @@ class ForecastMetrics:
         
     def log_step(self, step_name, metrics_dict, level="INFO", step_id=None):
         """
-        Registra les mètriques d'un pas específic
+        Registra i emmagatzema les mètriques i l'estat d'un pas concret del pipeline.
+
+        Incrementa el comptador de passos, genera un registre amb la marca de temps,
+        l'identificador de l'etapa i els indicadors de validesa, i finalment imprimeix
+        un resum visual per la consola segons el nivell de log especificat.
+
+        :param step_name: Nom descriptiu del pas executat.
+        :param metrics_dict: Diccionari amb els valors numèrics o booleans de control.
+        :param level: Nivell de severitat del registre ("INFO", "WARNING", "ERROR").
+        :param step_id: Identificador estable utilitzat per a la integració amb el frontend.
         """
         self.step_counter += 1
         
@@ -71,7 +110,16 @@ class ForecastMetrics:
         
     def _print_step_metrics(self, step_name, metrics, level="INFO"):
         """
-        Imprimeix mètriques de forma visual i llegible
+        Genera una sortida visual per consola amb el resum detallat de les mètriques d'un pas.
+
+        Dibuixa una capçalera estructurada amb el nom del pas i el seu número d'ordre,
+        formata els valors numèrics per a una lectura òptima (control de decimals i milers)
+        i etiqueta cada mètrica segons la seva categoria funcional. Finalment, mostra un
+        indicador d'estat (èxit o advertència) basat en la validesa del pas.
+
+        :param step_name: Títol o descripció de l'etapa del pipeline que s'està mostrant.
+        :param metrics: Diccionari de dades tècniques i indicadors de control.
+        :param level: Nivell de log utilitzat per a la impressió (per defecte "INFO").
         """
         separator = "=" * 80
         logger.info(f"\n{separator}")
@@ -109,7 +157,14 @@ class ForecastMetrics:
     
     def _get_metric_category(self, metric_name):
         """
-        Retorna la categoria apropiada segons la mètrica
+        Classifica una mètrica específica en una categoria funcional per facilitar-ne la lectura.
+
+        Compara el nom de la mètrica amb un mapa de paraules clau predefinit i retorna la
+        traducció de la categoria corresponent (com ara 'Files', 'Columnes', 'Mètriques d'error', etc.).
+        Si no troba cap coincidència, assigna una categoria genèrica.
+
+        :param metric_name: Nom tècnic de la mètrica que s'ha d'avaluar.
+        :return: El nom de la categoria traduït segons el fitxer de localització.
         """
         category_map = {
             'rows': self.get_text('category.rows'),
@@ -136,7 +191,18 @@ class ForecastMetrics:
     
     def validate_dataframe_preparation(self, sensor_df, meteo_df, extra_sensors, merged_df):
         """
-        PAS 0: Validació de la preparació dels DataFrames
+        Avalua la integritat i la qualitat de les dades després de la fase d'unificació (Pas 0).
+
+        Calcula estadístiques clau sobre el volum de dades (files i columnes), el percentatge de
+        valors nuls i la cobertura temporal en dies. Verifica que no s'hagi produït una pèrdua
+        excessiva de dades durant el remostreig horari i que la densitat de la informació sigui
+        suficient per a l'entrenament del model.
+
+        :param sensor_df: DataFrame original del sensor objectiu.
+        :param meteo_df: DataFrame amb les dades meteorològiques utilitzades.
+        :param extra_sensors: Diccionari o conjunt de sensors addicionals integrats.
+        :param merged_df: DataFrame resultant després de la fusió i el resample.
+        :return: Diccionari amb les mètriques de volum, cobertura i el flag de validesa.
         """
         metrics = {
             'sensor_rows': len(sensor_df),
@@ -169,7 +235,17 @@ class ForecastMetrics:
     
     def validate_windowing(self, original_df, windowed_df, look_back):
         """
-        PAS 1: Validació del windowing
+        Verifica la correcta transformació del dataset després d'aplicar la tècnica de finestra temporal (Pas 1).
+
+        Calcula el nombre de noves característiques (lags) generades i les compara amb el valor
+        teòric esperat segons la configuració de 'look_back'. També analitza la quantitat de valors
+        nuls (NaN) introduïts per l'efecte de desplaçament de la finestra, especialment a l'inici
+        del dataset, per assegurar que no es comprometi la densitat de dades útil.
+
+        :param original_df: DataFrame abans d'expandir les columnes temporals.
+        :param windowed_df: DataFrame resultant amb les noves columnes de retard (lags).
+        :param look_back: Diccionari de configuració que defineix els intervals de la finestra.
+        :return: Diccionari amb les mètriques de característiques creades, nuls introduïts i estat de validesa.
         """
         # Calcular features esperades
         expected_features = 0
@@ -211,7 +287,16 @@ class ForecastMetrics:
     
     def validate_temporal_features(self, df_with_temporal, extra_vars):
         """
-        PAS 2: Validació de variables temporals
+        Comprova la correcta generació i els rangs de les variables temporals i de calendari (Pas 2).
+
+        Valida que les noves columnes (Dia, Hora, Mes) s'hagin afegit correctament i que els seus
+        valors estiguin dins dels rangs lògics (0-6 per a dies, 0-23 per a hores, 1-12 per a mesos).
+        Així mateix, analitza la proporció de dies festius detectats per assegurar que la distribució
+        és coherent i no presenta anomalies en el calendari aplicat.
+
+        :param df_with_temporal: DataFrame que inclou les noves característiques exògenes.
+        :param extra_vars: Configuració que especifica quines variables i festius s'havien de crear.
+        :return: Diccionari amb el recompte de característiques afegides, els rangs detectats i l'estat de validesa.
         """
         metrics = {
             'features_added': 0,
@@ -260,7 +345,19 @@ class ForecastMetrics:
     
     def validate_colinearity_removal(self, df_before, df_after, removed_cols, y_col, threshold):
         """
-        PAS 3: Validació d'eliminació de colinearitats
+        Supervisa el procés de filtratge de variables redundants o altament correlacionades (Pas 3).
+
+        Calcula la matriu de correlació restant per assegurar que cap parell de variables superi
+        el llindar establert i verifica que la variable objectiu (target) no hagi estat eliminada
+        per error. També controla el percentatge de reducció del dataset per evitar una pèrdua
+        excessiva d'informació que pugui afectar la capacitat predictiva del model.
+
+        :param df_before: DataFrame previ a l'eliminació de col·linearitats.
+        :param df_after: DataFrame resultant amb les variables seleccionades.
+        :param removed_cols: Llista de noms de les columnes que han estat descartades.
+        :param y_col: Nom de la variable objectiu que s'ha de preservar.
+        :param threshold: Llindar de correlació (0 a 1) utilitzat per al filtratge.
+        :return: Diccionari amb les mètriques de reducció, correlació màxima restant i estat de validesa.
         """
         # Calcular correlació màxima restant
         corr_matrix = df_after.corr().abs()
@@ -295,7 +392,16 @@ class ForecastMetrics:
     
     def validate_nan_handling(self, df_before, df_after):
         """
-        PAS 4: Validació de gestió de NaN
+        Verifica l'eficàcia de la neteja de valors nuls i l'impacte en el volum del dataset (Pas 4).
+
+        Compara la quantitat de valors nuls abans i després de l'aplicació de mètodes d'interpolació
+        i imputació. Controla estrictament el percentatge de files eliminades durant aquest procés
+        per evitar una pèrdua d'informació crítica i assegura que el dataset final estigui
+        completament lliure de valors nuls abans d'entrar a la fase d'entrenament.
+
+        :param df_before: DataFrame que conté els valors nuls originals o introduïts pel windowing.
+        :param df_after: DataFrame net després de la interpolació i l'eliminació de files incompletes.
+        :return: Diccionari amb el recompte de valors nuls eliminats, files perdudes i estat de validesa.
         """
         nan_before = df_before.isnull().sum().sum()
         nan_after = df_after.isnull().sum().sum()
@@ -327,7 +433,18 @@ class ForecastMetrics:
     
     def validate_scaling(self, df_before, df_after, scaler_name):
         """
-        PAS 6: Validació de l'escalat
+        Avalua la correcta normalització de les característiques del dataset (Pas 6).
+
+        Calcula estadístiques descriptives (mitjana, desviació estàndard, mínim i màxim) sobre
+        les dades transformades per verificar que el mètode d'escalat s'ha aplicat correctament.
+        Per al mètode 'minmax', comprova que els valors estiguin continguts entre 0 i 1, mentre
+        que per a l'escalat 'standard' (StandardScaler), valida que la mitjana sigui propera
+        a 0 i la desviació estàndard propera a 1.
+
+        :param df_before: DataFrame o array abans de realitzar l'escalat.
+        :param df_after: DataFrame o array amb les dades ja transformades.
+        :param scaler_name: Nom del mètode utilitzat ('minmax', 'standard', 'robust' o None).
+        :return: Diccionari amb les estadístiques de l'escalat, el tipus de transformació i l'estat de validesa.
         """
         metrics = {
             'scaler_type': scaler_name,
@@ -364,7 +481,17 @@ class ForecastMetrics:
     
     def validate_feature_selection(self, X_before, X_after, method):
         """
-        PAS 7: Validació de selecció d'atributs
+        Analitza l'eficàcia del procés de selecció d'atributs i el seu impacte en el dataset (Pas 7).
+
+        Compara la quantitat de característiques abans i després de l'aplicació de l'algorisme de
+        selecció (com 'Tree' o 'ANOVA'). Verifica que no s'hagi buidat el dataset per complet,
+        que s'hagi mantingut un nombre mínim de variables per a la predicció i que la reducció
+        no sigui excessivament agressiva, la qual cosa podria indicar una pèrdua de senyal rellevant.
+
+        :param X_before: Matriu de dades d'entrada abans de la selecció.
+        :param X_after: Matriu de dades d'entrada amb només els atributs seleccionats.
+        :param method: Nom del mètode de selecció utilitzat.
+        :return: Diccionari amb el recompte de variables, el percentatge de reducció i l'estat de validesa.
         """
         features_before = X_before.shape[1]
         features_after = X_after.shape[1]
@@ -394,7 +521,22 @@ class ForecastMetrics:
     
     def validate_model_training(self, X, y, y_pred, algorithm, score, training_time, iterations=None):
         """
-        PAS 8: Validació de l'entrenament del model
+        Avalua el rendiment del model entrenat mitjançant el càlcul de mètriques d'error i bondat d'ajust (Pas 8).
+
+        Calcula indicadors clau com el MAE, RMSE i R², així com el MAPE i WAPE per mesurar l'error
+        percentual de forma robusta. També analitza el biaix (Bias) per detectar si el model
+        tendeix a sobreestimar o infraestimar sistemàticament els valors. Realitza validacions
+        crítiques sobre el coeficient de determinació i la magnitud de l'error per garantir
+        que el model sigui estadísticament significatiu.
+
+        :param X: Matriu de característiques del conjunt de test.
+        :param y: Valors reals (ground truth) del conjunt de test.
+        :param y_pred: Valors predits pel model per al mateix conjunt.
+        :param algorithm: Nom de l'algorisme utilitzat.
+        :param score: Puntuació obtinguda durant la fase d'entrenament/optimització.
+        :param training_time: Temps total invertit en l'entrenament en segons.
+        :param iterations: Nombre de configuracions provades (en cas d'AutoML).
+        :return: Diccionari amb el resum de mètriques d'error, temps d'execució i estat de validesa.
         """
         mae = mean_absolute_error(y, y_pred)
         rmse = np.sqrt(mean_squared_error(y, y_pred))
@@ -449,8 +591,17 @@ class ForecastMetrics:
 
     def validate_feature_target_correlation(self, df, y_col):
         """
-        Analitza la correlació de cada feature amb el target per detectar si 
-        hi ha senyal real abans d'entrenar.
+        Analitza el poder predictiu de les variables independents respecte a la variable objectiu.
+
+        Calcula el coeficient de correlació de Pearson per a cada columna del dataset en relació
+        amb el target. Identifica les 10 característiques amb més influència i verifica si existeix
+        un llindar mínim de senyal (0.1) per garantir que el model tingui una base estadística
+        sòlida sobre la qual aprendre. Si la correlació màxima és massa baixa, emet una advertència
+        sobre la probable falta de capacitat predictiva del futur model.
+
+        :param df: DataFrame que conté tant les característiques com la variable objectiu.
+        :param y_col: Nom de la columna que es vol predir (target).
+        :return: Diccionari amb la correlació màxima, les variables més rellevants i l'estat de validesa.
         """
         if df.empty or y_col not in df.columns:
             return {'valid': False}
@@ -478,8 +629,18 @@ class ForecastMetrics:
     
     def validate_forecast_output(self, forecast_df, original_df, future_steps):
         """
-        Validació de les prediccions futures
-        """
+        Verifica la coherència i la qualitat de les prediccions generades pel model.
+
+        Comprova que el nombre de passos predits coincideixi amb l'horitzó de previsió sol·licitat
+        i analitza la distribució estadística dels valors resultants en comparació amb les dades
+        originals. Detecta possibles valors atípics (outliers) que s'allunyin més de tres desviacions
+        estàndard de la mitjana històrica i assegura l'absència de valors nuls en la sortida final.
+
+        :param forecast_df: DataFrame que conté els valors predits pel model.
+        :param original_df: Sèrie o DataFrame amb les dades històriques de referència.
+        :param future_steps: Nombre de passos (horitzó temporal) que s'esperava predir.
+        :return: Diccionari amb estadístiques de la predicció, recompte d'outliers i estat de validesa.
+            """
         metrics = {
             'forecast_rows': len(forecast_df),
             'expected_rows': future_steps,
@@ -521,7 +682,14 @@ class ForecastMetrics:
     
     def get_summary(self):
         """
-        Retorna un resum de totes les mètriques
+        Genera un informe consolidat de totes les validacions realitzades durant l'execució.
+
+        Calcula estadístiques globals com el percentatge d'èxit del pipeline, el recompte total de
+        passos completats i el nombre d'advertències detectades. A més, imprimeix un resum
+        executiu per consola i retorna l'historial complet de mètriques emmagatzemades al log
+        per a la seva posterior anàlisi o visualització.
+
+        :return: Diccionari amb el resum estadístic de l'execució i el llistat detallat de cada pas.
         """
         total_steps = len(self.metrics_log)
         valid_steps = sum(1 for log in self.metrics_log if log['status'] == 'OK')
@@ -546,7 +714,13 @@ class ForecastMetrics:
     
     def export_metrics(self, filename="metrics_log.json"):
         """
-        Exporta les mètriques a un fitxer JSON
+        Persisteix l'historial complet de mètriques i validacions en un fitxer de dades extern.
+
+        Escriu el contingut de l'atribut 'metrics_log' en format JSON amb sagnat per facilitar-ne
+        la lectura humana. Un cop finalitzada l'escriptura, notifica la ubicació del fitxer
+        generat a través del logger.
+
+        :param filename: Nom o ruta del fitxer on s'emmagatzemaran les dades (per defecte "metrics_log.json").
         """
         with open(filename, 'w') as f:
             json.dump(self.metrics_log, f, indent=2)
@@ -555,7 +729,17 @@ class ForecastMetrics:
         
     def compare_with_baseline(self, y_true, y_pred_model, last_history_value=None):
         """
-        Compara el model amb baselines simples
+        Compara el rendiment del model entrenat respecte a models de referència (baselines) simplificats.
+
+        Calcula l'error (MAE) de dos mètodes base: la persistència (utilitzar l'últim valor conegut
+        com a predicció) i la mitjana mòbil. Determina el percentatge de millora del model
+        respecte a aquests mètodes i valida si el model és realment útil; si el model no
+        supera els baselines simples, es considera que no està aportant valor predictiu real.
+
+        :param y_true: Valors reals del conjunt de dades.
+        :param y_pred_model: Valors predits pel model d'aprenentatge automàtic.
+        :param last_history_value: Últim valor real conegut abans del set de test per al càlcul de persistència.
+        :return: Diccionari amb els MAE de cada mètode, els percentatges de millora i l'estat de validesa.
         """
         # Baseline 1: Persistència (últim valor conegut)
         y_pred_persistence = np.roll(y_true, 1)

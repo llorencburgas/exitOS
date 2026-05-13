@@ -10,6 +10,8 @@ from datetime import datetime, timedelta
 from logging_config import setup_logger
 
 
+#Docu: Documentar el fitxer sencer quan la Flexi estigui clara
+
 logger = setup_logger()
 
 #TODO: moure a un fitxer utilities (juntament amb la mateixa funció del server.py)

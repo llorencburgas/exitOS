@@ -44,14 +44,17 @@ class SonnenBattery(AbsEnergyStorage):
 
             # Control de límits (sense modificar el vector 'config' original)
             if nou_estat > self.max:
+                # logger.warning(f"Nou estat > self.max - - - > {nou_estat} > {self.max}")
                 cost_penalitzacio = (nou_estat - self.max) * 10  # Penalitzem l'excés
                 accio_real = (self.max - actual_capacity_kwh) / self.efficiency if accio_proposada > 0 else 0
                 actual_capacity_kwh = self.max
             elif nou_estat < self.min:
+                # logger.info(f"Nou estat < self.min - - - > {nou_estat} > {self.min}")
                 cost_penalitzacio = (self.min - nou_estat) * 10  # Penalitzem descarregar massa
                 accio_real = self.min - actual_capacity_kwh
                 actual_capacity_kwh = self.min
             else:
+                # logger.error(f"ELSE - - - > {nou_estat}")
                 actual_capacity_kwh = nou_estat
 
             kw_carrega.append(actual_capacity_kwh)

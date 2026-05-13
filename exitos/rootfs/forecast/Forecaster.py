@@ -21,7 +21,13 @@ logger = logging.getLogger("exitOS")
 class Forecaster:
     def __init__(self, debug=False):
         """
-        Constructor per defecte del Forecaster
+        Inicialitza una nova instància de la classe Forecaster i configura l'entorn de treball.
+
+        Estableix les rutes dels fitxers de configuració i el directori de magatzem dels models
+        en funció de si l'execució es realitza dins d'un entorn Hass.io o en local. També
+        inicialitza el diccionari de metadades de la base de dades i el mòdul de mètriques.
+
+        :param debug: Booleà per activar o desactivar els missatges de depuració.
         """
 
         self.debug = debug
@@ -75,7 +81,7 @@ class Forecaster:
         :param look_back_start: On comença la finestra ( 24 -> el dia anterior si és horari)
         :param look_back_end: On acaba el número d'observacions (48 -> el dia anterior si és horari)
         :param variable: Variable a transformar en variables del windowing.
-        :return: Dataset amb les cariables desplaçades en columnes noves
+        :return: Dataset amb les variables desplaçades en columnes noves
         :rtype: pd.DataFrame
         """
 
@@ -231,10 +237,20 @@ class Forecaster:
     @staticmethod
     def scalate_data(data, input_scaler=None):
         """
-        Escala les dades del dataset
-        :param data: Dataset a escalar
-        :param scaler: Mètode a usar per escalar
-        :return: [Dataset , scaler]
+        Aplica una normalització o estandardització a les columnes del dataset.
+
+        Utilitza diferents mètodes de la llibreria *scikit-learn* per transformar les dades
+        segons el tipus d'escalador seleccionat (MinMaxScaler, RobustScaler o StandardScaler),
+        mantenint l'índex i els noms de les columnes originals.
+
+        :param data: DataFrame original amb les dades numèriques a transformar.
+        :param input_scaler: String que defineix el mètode ('minmax', 'robust', 'standard' o None).
+        :return: Una llista que conté el DataFrame escalat i l'objecte scaler utilitzat.
+        :raises ValueError: Si el tipus d'escalador especificat no és reconegut. En cas contrari:
+        (
+            pd.DataFrame([[float, ...], ...]),
+            <sklearn.preprocessing.scaler_object> or None
+        )
         """
         dad = data.copy()
         scaler = None
@@ -262,14 +278,22 @@ class Forecaster:
     @staticmethod
     def get_attribs(X, y, method=None):
         """
-        Fa una selecció d'atributs
-        :param X: Array amb les dades
-        :param y: Array amb les dades
-        :param method:
-            - None: No fa res
-            - integer: selecciona el número de features que s'indiquin
-            - PCA: aplica un PCA per comprimir el dataset
-        :return:
+        Realitza una selecció o reducció de característiques (features) del dataset.
+
+        Segons el mètode escollit, pot mantenir totes les variables, seleccionar les més
+        importants mitjançant un arbre de decisió (ExtraTreesRegressor) o escollir les
+        'k' millors basant-se en proves estadístiques univariants.
+
+        :param X: Matriu de característiques d'entrada (features).
+        :param y: Vector de la variable objectiu (target).
+        :param method: Mètode de selecció (None, 'Tree' o un enter per a SelectKBest).
+        :return: Una llista que conté el model de selecció aplicat, la nova matriu X reduïda i la y original.
+        :raises ValueError: Si el mètode especificat no és vàlid.
+        [
+            <sklearn.feature_selection_object> or [],
+            np.array([[float, ...], ...]),
+            np.array([float, ...])
+        ]
         """
 
         if method is None:
@@ -294,13 +318,25 @@ class Forecaster:
 
     def Model(self, X, y, algorithm=None, params=None, max_time=None):
         """
-        Realitza un randomized search per trovar una bona configuració de l'algorisme indicat, o directament, es crea amb els paràmetres indicats.
-        :param X:
-        :param y:
-        :param algorithm:
-        :param params:
-        :param max_time:
-        :return:
+        Entrena o cerca la millor configuració d'un algorisme de predicció.
+
+        Si es proporcionen paràmetres, entrena el model directament. Si no, realitza una
+        cerca aleatòria (Randomized Search) sobre l'espai definit al fitxer de configuració,
+        avalua els models amb MAE (Mean Absolute Error) i selecciona el millor dins dels
+        límit de temps establerts.
+
+        :param X: Matriu de característiques d'entrada.
+        :param y: Vector de la variable objectiu.
+        :param algorithm: Nom o llista d'algorismes a utilitzar (si és None, es proven tots).
+        :param params: Diccionari de paràmetres concrets o None per activar la cerca automàtica.
+        :param max_time: Temps màxim d'execució en segons per a l'optimització de cada algorisme.
+        :return: Una llista que conté el model entrenat i la seva puntuació -> MAE o 'none'.
+        :raises ValueError: Si l'algorisme no està definit o el format dels paràmetres és invàlid.
+
+        [
+            <sklearn.model_object>,
+            float  # (Puntuació MAE o 'none')
+        ]
         """
 
         import json
@@ -422,11 +458,22 @@ class Forecaster:
     @staticmethod
     def prepare_dataframes(sensor, meteo, extra_sensors):
         """
-        Prepara els df juntant-los en un de sol.
-        Ara fa un resample horari promig (mean) en lloc de quedar-se amb el primer valor.
-        :param sensor: Sensor objectiu del model
-        :param meteo: Dades meteorològiques (pot ser None)
-        :param extra_sensors: Sensors extra que es volen usar pel model (pot ser empty)
+        Consolida les dades del sensor principal, meteorologia i sensors extra en un únic dataset.
+
+        Normalitza tots els conjunts de dades eliminant les zones horàries i aplicant un
+        remostreig (resample) horari basat en la mitjana. Finalment, fusiona les dades
+        mitjançant un 'outer join' per l'índex temporal.
+
+        :param sensor: DataFrame del sensor objectiu (target).
+        :param meteo: DataFrame amb dades meteorològiques o None.
+        :param extra_sensors: Diccionari de DataFrames amb sensors addicionals.
+        :return: DataFrame unificat amb el timestamp com a columna i valors agregats per hores.
+        {
+            "timestamp": [datetime, ...],
+            "value": [float, ...],
+            "temperature_2m": [float, ...],
+            "extra_sensor_col": [float, ...]
+        }
         """
         merged_data = pd.DataFrame()
 
@@ -494,23 +541,45 @@ class Forecaster:
                          max_time=None, filename='newModel', meteo_data: pd.DataFrame = None, extra_sensors_df=None,
                          look_back=None, lang='ca'):
         """
-        Funció per crear, guardar i configurar el model de forecasting.
+        Orquestra el cicle complet de creació, entrenament i validació d'un model de forecasting.
 
-        :param lon:
-        :param lat:
-        :param extra_sensors_df:
-        :param data: Dataframe amb datetime com a índex
-        :param sensors_id:
-        :param y: Nom de la columna amb la variable a predir
-        :param filename:
-        :param max_time:
-        :param escalat:
-        :param params:
-        :param algorithm:
-        :param meteo_data: Dades meteorològiques de la data
-        :param look_back: Configuració del windowing (per defecte {-1: [25, 48]})
+        Aquesta funció executa tot el pipeline de Machine Learning: descarrega dades meteorològiques històriques,
+        prepara i fusiona datasets, aplica tècniques de finestra temporal (windowing), gestiona col·linearitats
+        i valors nuls, escala les dades, selecciona les millors característiques i, finalment, entrena el model
+        dividint les dades en conjunts de train, validació i test (60/20/20). Finalment, desa el model i
+        les seves mètriques de rendiment.
 
-        """
+        :param data: DataFrame original amb les dades del sensor principal.
+        :param sensors_id: Identificador del sensor a predir.
+        :param y: Nom de la columna objectiu (target).
+        :param lat: Latitud per a dades meteorològiques.
+        :param lon: Longitud per a dades meteorològiques.
+        :param algorithm: Algorisme específic o None per a mode automàtic (AutoML).
+        :param params: Paràmetres de l'algorisme o None.
+        :param escalat: Mètode d'escalat ('minmax', 'robust', 'standard' o None).
+        :param max_time: Temps límit per a la cerca d'hiperparàmetres.
+        :param filename: Nom del fitxer on es desarà el model .pkl final.
+        :param meteo_data: DataFrame previ de meteo o None per descarregar automàticament.
+        :param extra_sensors_df: Diccionari amb dades de sensors addicionals.
+        :param look_back: Configuració de la finestra temporal (lags).
+        :param lang: Idioma per a les notificacions i informes de mètriques.
+        :return: None
+
+        Exemple d'estat final de self.db -> dades guardades:
+        {
+            "model": <sklearn.model_object>,
+            "scaler": <sklearn.scaler_object>,
+            "metrics": {
+                "mae": float,
+                "mse": float,
+                "r2": float,
+                "validation_score": float
+            },
+            "algorithm": str,
+            "look_back": {-1: [int, int]},
+            "sensors_id": str
+        }
+    """
         
         # Reiniciar mètriques per a aquest model
         self.metrics = ForecastMetrics(debug=self.debug, lang=lang)
@@ -720,7 +789,23 @@ class Forecaster:
 
     def forecast(self, data, y, model, future_steps=48):
         """
-        Realitza prediccions de forma RECURSIVA per permetre l'ús de lags recents (1..24h).
+        Genera prediccions futures de manera recursiva i calcula l'ajust sobre dades històriques.
+
+        Aquesta funció implementa un bucle recursiu on cada predicció s'utilitza com a entrada (lag)
+        per a la següent hora. Aplica tot el pipeline de transformació (windowing, atributs
+        temporals, eliminació de colinearitats, escalat i selecció) a cada iteració. A més,
+        calcula la predicció sobre el conjunt de test actual per permetre la comparació visual.
+
+        :param data: DataFrame amb les dades històriques recents (llavor per a la recursivitat).
+        :param y: Nom de la variable objectiu a predir.
+        :param model: Objecte del model entrenat per realitzar les inferències.
+        :param future_steps: Nombre de passos (hores) a predir cap al futur.
+        :return: Una tupla amb el DataFrame de prediccions, passades i futures, els valors reals de test i l'ID del sensor.
+        (
+            pd.DataFrame({"value": [float, ...]}, index=[datetime, ...]),
+            pd.Series([float, ...], index=[datetime, ...]),
+            str
+        )
         """
 
         # PAS 1 - Obtenir els valors del model
@@ -854,8 +939,13 @@ class Forecaster:
 
     def save_model(self, model_filename):
         """
-        Guarda el model en un arxiu .pkl i l'elimina de la base de daades interna del forecast (self.db)
-        :param model_filename: Nom que es vol donar al fitxer, si és nul serà "savedModel"
+        Serialitza l'estat actual del model i la seva configuració en un fitxer binari.
+
+        Crea el directori de destinació si no existeix, guarda el diccionari intern 'self.db'
+        (que conté el model, escaladors, mètriques i metadades) utilitzant joblib i,
+        finalment, buida la memòria temporal de l'objecte per alliberar recursos.
+
+        :param model_filename: Nom del fitxer (sense extensió) on es desarà el model.
         """
         full_path = os.path.join(self.models_filepath,'forecastings/', model_filename + ".pkl")
         os.makedirs(self.models_filepath + 'forecastings', exist_ok=True)
@@ -870,5 +960,14 @@ class Forecaster:
         self.db.clear()
 
     def load_model(self, model_filename):
+        """
+        Carrega un model prèviament entrenat i la seva configuració des d'un fitxer físic.
+
+        Restaura el diccionari intern 'self.db' amb tota la informació necessària per realitzar
+        prediccions: l'algorisme entrenat, els escaladors, els paràmetres de finestra temporal
+        i les metadades dels sensors associats.
+
+        :param model_filename: Nom del fitxer .pkl (incloent l'extensió) a carregar.
+        """
         self.db = joblib.load(self.models_filepath + 'forecastings/' + model_filename)
         logger.info(f"  💾 Model carregat del fitxer {model_filename}")

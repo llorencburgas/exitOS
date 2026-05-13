@@ -238,7 +238,7 @@ class SqlDB():
         """
         Obté el ID de tots els sensors marcats per a guardar.
         :param kw: Si és true, retorna només aquells sensors que usen KW com a unitat de mesura. En cas que no s'indiqui és False, mostrarà tots els ID guardats
-        :return: ['ID_sensor1', 'ID_sensor2', ...]
+        :return: ['ID_sensor1', 'ID_sensor2']
         """
 
         query = "SELECT sensor_id FROM sensors WHERE units IN ('W', 'kW')" if kw else "SELECT sensor_id FROM sensors WHERE save_sensor = 1"
@@ -449,11 +449,11 @@ class SqlDB():
     # region SENSORS - Home Asistant
     def set_sensor_value_HA(self, sensor_mode, sensor_id, value):
         """
-
-        :param sensor_mode:
-        :param sensor_id:
-        :param value:
-        :return:
+        Força l'estat indicat a value, al dispositiu **sensor_id** a través de l'API de Home Assistant.
+        :param sensor_mode: Tipus de sensor que es vol modificar (select, number, button, switch).
+        :param sensor_id: ID del sensor que es vol controlar.
+        :param value: Nou valor a aplicar al sensor.
+        :return: None
         """
         if sensor_mode == 'select':
             url = f"{self.base_url}services/select/select_option"
@@ -477,6 +477,10 @@ class SqlDB():
 
     # region FORECASTS
     def get_forecasts_name(self):
+        """
+        Obté el nom de tots els forecastings guardats a la base de dades.
+        :return: [ ('forecasting1', ), ('forecasting2', )]
+        """
         with self._get_connection() as con:
             cur = con.cursor()
             cur.execute("SELECT DISTINCT forecast_name FROM forecasts")
@@ -485,6 +489,12 @@ class SqlDB():
         return aux
 
     def get_data_from_forecast_from_date(self, forecast_id, date):
+        """
+        Obté les dades (temps de realització del forecast, temps predit, valor predit i valor real) del forecast indicat per a la data desitjada.
+        :param forecast_id: ID del forecast del qual es volen obtenir les dades.
+        :param date: Data de la qual es volen obtenir les dades ('%d-%m-%Y')
+        :return: Data Frame ['run_date', 'timestamp', 'value', 'real_value']
+        """
         with self._get_connection() as con:
             cur = con.cursor()
             cur.execute("""
@@ -499,6 +509,12 @@ class SqlDB():
         return data
 
     def get_data_from_forecast_from_date_and_sensorID(self, sensor_id, date):
+        """
+        Obté el forecast realitzat per a un sensor concret en la data indicada.
+        :param sensor_id: ID del sensor del qual es volen trobar forecastings
+        :param date: Data sobre la qual es vol trobar forecasting
+        :return: Data Frame ['run_date', 'timestmap', 'value', 'real_value']
+        """
         with self._get_connection() as con:
             cur = con.cursor()
             cur.execute("""
@@ -513,6 +529,10 @@ class SqlDB():
         return data
 
     def remove_forecast(self, forecast_id):
+        """
+        Elimina el forecasting amb ID indicat de la base de dades, eliminant totes les entrades amb aquell ID
+        :param forecast_id: ID del forecast que es vol eliminar.
+        """
         with self._get_connection() as con:
             cur = con.cursor()
             cur.execute("DELETE FROM forecasts WHERE forecast_name = ?",(forecast_id,))
@@ -520,6 +540,11 @@ class SqlDB():
             cur.close()
 
     def save_forecast(self, data):
+        """
+        Guarda el forecasting realitzat a la base de daes. En cas que existeixi un forecasting realitzat a la mateixa data el substitueix eliminant l'antic.
+        :param data: dades del forecating, han d'incloure (forecast_name, sensor_forecasted, forecast_run_time, forecasted_time,
+                                                            predicted_value, real_value)
+        """
         forecast_name = data[0][0]
         forecast_run_time = data[0][2]
 
@@ -548,14 +573,20 @@ class SqlDB():
 
     # region GENERAL
     def vacuum(self):
+        """
+        Allibera l'espai no utilitzat i reconstrueix el fitxer de la base de dades.\n
+        Aquest mètode executa la comanda VACUUM per defragmentar la base de dades, reduir-ne la mida al disc i optimitzar el rendiment de les consultes futures.
+        """
         with self._get_connection() as con:
             con.execute("VACUUM")
 
     def clean_database_hourly_average(self, sensor_id=None, all_sensors=True):
         """
-        Neteja dades promediant per hora o agrupant pel valor més freqüent si són textos.
-        Si all_sensors=True, processa tots els sensors.
-        Si all_sensors=False, requereix un sensor_id específic.
+        Agrupa i compacta les dades històriques (últims 21 dies) per hores.
+        Calcula la mitjana aritmètica per a valors numèrics o la moda per a valors de text, substituint els registres originals per un únic resum horari per optimitzar l'espai.
+
+        :param sensor_id: Identificador del sensor si es processa de forma individual.
+        :param all_sensors: Si és True, ignora sensor_id i processa tota la base de dades.
         """
 
         mode = "TOTAL" if all_sensors else f"SENSOR: {sensor_id}"
@@ -640,7 +671,12 @@ class SqlDB():
 
     def get_lat_long(self):
         """
-        Retorna la lat i long del home assistant
+        Obté les coordenades geogràfiques de la configuració de Home Assistant.
+
+        Realitza una petició a l'endpoint de configuració i n'extreu la latitud i la longitud.
+        En cas d'error o de no trobar les claus necessàries, registra la incidència.
+
+        :return: Una tupla "latitude, longitude" si té èxit, un enter -1 si no troba les columnes, o un string amb el missatge d'error en cas d'excepció.
         """
         try:
             response = get(self.base_url + "config", headers=self.headers)
@@ -665,7 +701,33 @@ class SqlDB():
     # region DEVICES
     def get_devices_info(self):
         """
-        ObtÃ© tots els dispositius, juntament amb les seves entitats i atributs d'aquestes a partir d'un template.
+        Recupera l'estructura completa de dispositius i entitats de Home Assistant.
+
+        Envia un template de Jinja2 a l'API per agrupar les entitats segons el seu
+        dispositiu associat, incloent-hi els atributs 'friendly_name' i gestionant
+        les entitats sense dispositiu assignat sota un grup especial anomenat '0rphans'.
+
+        :return: Una llista de diccionaris amb el nom del dispositiu i les seves entitats,
+                 o un diccionari buit en cas d'error en la petició. [
+                {
+                "device_name": "Sensor Temperatura",
+                "entities": [
+                  {
+                    "entity_id": "sensor.temp_living",
+                    "entity_name": "Temperatura Salo"
+                  }
+                ]
+                },
+                {
+                "device_name": "0rphans",
+                "entities": [
+                  {
+                    "entity_id": "sun.sun",
+                    "entity_name": "Sol"
+                  }
+                ]
+                }
+                ]
         """
         url = f"{self.base_url}template"
         template = """
@@ -734,6 +796,13 @@ class SqlDB():
             return {}
 
     def get_parent_device_from_sensor_id(self, sensor_id: str, devices_dict) -> str:
+        """
+        Cerca el nom del dispositiu pare al qual pertany una entitat concreta.
+
+        :param sensor_id: L'identificador de l'entitat a cercar.
+        :param devices_dict: El diccionari de dispositius obtingut amb 'get_devices_info'.
+        :return: El nom del dispositiu pare o "None" si no es troba la coincidència.
+        """
         for device in devices_dict:
             for entity in device['entities']:
                 if entity['entity_id'] == sensor_id:

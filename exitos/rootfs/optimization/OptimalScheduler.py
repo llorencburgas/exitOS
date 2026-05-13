@@ -1,4 +1,3 @@
-import copy
 import requests
 import os
 import glob
@@ -7,7 +6,6 @@ import logging
 
 import sqlDB as db
 import pandas as pd
-import numpy as np
 from datetime import datetime, timedelta
 from scipy.optimize import differential_evolution, Bounds
 
@@ -20,6 +18,22 @@ logger = logging.getLogger("exitOS")
 
 class OptimalScheduler:
     def __init__(self, database: db):
+        """
+        Controlador central per a l'optimització de recursos energètics en una xarxa local.
+
+        Aquesta classe s'encarrega de gestionar la programació òptima (scheduling) de consumidors,
+        generadors i sistemes d'emmagatzematge d'energia (bateries). Utilitza dades de previsió
+        de consum i generació, així com els preus de l'electricitat, per resoldre un problema
+        d'optimització que minimitzi el cost o maximitzi l'autoconsum en un horitzó temporal definit.
+
+        Atributs principals:
+            database: Connexió amb la base de dades o el sistema (e.g., Home Assistant).
+            horizon: Finestra temporal de planificació (per defecte 24 hores).
+            horizon_min: Resolució temporal de cada interval (pas de temps).
+            maxiter: Límit d'iteracions per a l'algorisme d'optimització (ajustat segons l'entorn).
+            energy_storages: Diccionari de bateries disponibles per a la gestió de càrrega/descàrrega.
+        :param database: Referencia a la classe SqlDB
+        """
 
         self.database = database
         self.latitude, self.longitude = database.get_lat_long()
@@ -30,7 +44,7 @@ class OptimalScheduler:
         self.varbound = None
         self.horizon = 24
         self.horizon_min = 1  # 1 = 60 minuts  | 2 = 30 minuts | 4 = 15 minuts
-        self.maxiter = 150
+        self.maxiter = 1500 if database.running_in_ha else 100
         self.timestamps = []
 
         self.global_consumer_id = ""
@@ -57,6 +71,22 @@ class OptimalScheduler:
 
 
     def start_optimization(self, consumer_id, generator_id, horizon, horizon_min, today):
+        """
+        Inicia i coordina el procés d'optimització energètica per a un període determinat.
+
+        Aquest mètode actua com a orquestrador principal: prepara les dades d'entrada, obté les
+        previsions de consum i generació per als sensors especificats, configura els límits de les
+        variables de decisió (varbounds) i recupera els preus de l'electricitat. Finalment, executa
+        l'algorisme d'optimització per trobar la configuració de dispositius que minimitzi el cost,
+        calculant el balanç energètic resultant.
+
+        :param consumer_id: Identificador del sensor de consum global.
+        :param generator_id: Identificador del sensor de generació (e.g., plaques solars).
+        :param horizon: Nombre d'hores de la finestra de planificació.
+        :param horizon_min: Resolució temporal (intervals per hora).
+        :param today: Data de referència per a l'optimització.
+        :return: Una tupla amb: (èxit del procés, configuració per dispositiu, costos, balanç total).
+        """
         try:
             self.horizon = horizon
             self.horizon_min = horizon_min
@@ -91,8 +121,15 @@ class OptimalScheduler:
 
     def prepare_data_for_optimization(self):
         """
+        Carrega i inicialitza els dispositius des de fitxers de configuració per preparar l'entorn d'optimització.
 
-        :return:
+        Escaneja el directori de configuracions desades, llegeix els fitxers JSON corresponents
+        i instancia cada dispositiu utilitzant una fàbrica (factory). Els objectes resultants
+        s'organitzen en diccionaris segons la seva categoria funcional (Generadors, Consumidors
+        o Sistemes d'Emmagatzematge) per ser utilitzats posteriorment en el càlcul del balanç energètic.
+
+        :return: True si s'han trobat i carregat configuracions amb èxit; False si no hi ha cap fitxer de configuració disponible.
+        :raises ValueError: Si un dispositiu pertany a una categoria no reconeguda.
         """
 
         configs_saved = [os.path.basename(f) for f in glob.glob(self.base_filepath + "optimizations/configs/*.json")]
@@ -123,12 +160,16 @@ class OptimalScheduler:
 
     def get_sensor_forecast_data(self,sensor_id, today):
         """
-        Obté l'últim forecast del sensor i prepara les dades per a l'optimització
+        Recupera la predicció de dades d'un sensor específic per a un dia determinat i l'alinea temporalment.
 
-        :param sensor_id: id del sensor a preparar
-        :param horizon: hores a simular
-        :param horizon_min: minuts per hora 1 = 60 minuts  | 2 = 30 minuts | 4 = 15 minuts
-        :return:
+        Aquest mètode obté les dades de forecast des de la base de dades, calcula el rang de temps
+        pertinent segons l'horitzó d'optimització (avui o demà) i reconstrueix una sèrie temporal
+        completa. En cas que falten dades per a hores específiques dins de la finestra temporal
+        definida, s'omplen amb zeros.
+
+        :param sensor_id: Identificador únic del sensor en el sistema.
+        :param today: Booleà que indica si es volen les dades del dia actual (True) o de l'endemà (False).
+        :return:Una tupla que conté: ([1.2, 0.5, 0.0, . . . ], ['2026-05-13 00:00', '2026-05-13 01:00', . . .])
         """
 
         if today:
@@ -159,8 +200,21 @@ class OptimalScheduler:
 
     def configure_varbounds(self):
         """
-        Configura varbounds
-        :return:
+        Estableix els límits inferiors i superiors (*constraints*) per a les variables del problema d'optimització.
+
+        Aquest mètode defineix l'espai de cerca per a l'algorisme mapejant cada dispositiu (consumidors,
+        generadors i bateries) a un rang d'índexs dins d'un vector global. Per a cada dispositiu, es
+        calculen els límits de potència mínima i màxima per a cada interval de temps de l'horitzó.
+        Aquests índexs (`vbound_start` i `vbound_end`) s'emmagatzemen en els objectes de dispositiu
+        per permetre la reconstrucció posterior de la solució.
+
+        :return: **scipy.optimize.Bounds** -> Objecte de restriccions que conté els vectors de límits
+                 inferiors i superiors per a totes les variables de decisió.
+            (
+                lb=[0.0, 0.0, ..., -3000.0, -3000.0],
+                ub=[1500.0, 1500.0, ..., 3000.0, 3000.0],
+                keep_feasible=True
+            )
         """
 
         lb = []
@@ -193,6 +247,21 @@ class OptimalScheduler:
         return bounds
 
     def __optimize(self):
+        """
+        Executa l'algorisme d'optimització d'Evolució Diferencial (DE) per trobar la millor configuració energètica.
+
+        Aquest mètode privat configura i llança un procés d'optimització estocàstica global basat en
+        poblacions. L'objectiu és minimitzar la funció de cost (`self.cost_DE`) dins dels límits
+        establerts (`self.varbound`), forçant la integritat de les variables per a una gestió
+        discreta (ON/OFF o potència entera). Utilitza una estratègia 'best1bin' amb inicialització
+        'halton' per assegurar una bona cobertura de l'espai de cerca.
+
+        :return: Una tupla que conté: \n
+            - np.ndarray: Vector de solució òptima amb els valors per a cada variable de decisió. \n
+            - float: El valor de la funció de cost per a la millor solució trobada.
+
+              ([1500, 0, 3000, 1, . . .], -12.45)
+        """
         logger.info(f"🦖 - Començant optimització  a les {datetime.now().strftime('%Y-%m-%d %H:00')}")
 
         result = differential_evolution(func = self.cost_DE,
@@ -207,7 +276,7 @@ class OptimalScheduler:
                                         init = 'halton',
                                         disp = True,
                                         updating = 'deferred',
-                                        callback = self.__update_DE_step,
+                                        # callback = self.__update_DE_step,
                                         workers = 1
                                         )
 
@@ -223,9 +292,21 @@ class OptimalScheduler:
         return result['x'].copy(), result['fun']
 
     def cost_DE(self, config):
+        """
+        Funció objectiu per a l'algorisme d'optimització.
+        Aquest mètode actua com a interfície entre l'algorisme de cerca global i el motor de càlcul
+        energètic. Rep una configuració candidata generada per l'optimitzador i retorna el cost
+        associat invocant el mètode intern de balanç total. És la funció que l'algorisme intentarà
+        minimitzar iteració rere iteració.
+
+        :param config: Vector de variables de decisió generat per l'algorisme d'optimització.
+        :return: El cost econòmic o penalització energètica de la configuració enviada.
+                 Exemple:  **4.25** --> cost positiu ||   **-1.12** -> benefici/estalvi.
+        """
         return self.__calc_total_balance(config)
 
     def __update_DE_step(self,bounds, convergence):
+        #TODO + Docu: Mirar si el mètode es pot eliminar
         logger.info(f"◽ New Step")
         logger.debug(f"      ▫️ Convergence {convergence}")
         logger.debug(f"      ▫️ Bounds {bounds}")
@@ -239,6 +320,22 @@ class OptimalScheduler:
             self.best_result_balance = self.current_result_balance
 
     def __calc_total_balance(self,config, total = True):
+        """
+        Calcula el balanç energètic net i el cost econòmic total d'una configuració específica.
+
+        Aquest mètode és el nucli del simulador energètic. Combina les previsions globals de consum i
+        generació amb el comportament dels dispositius individuals (consumidors actius, generadors
+        i bateries). Calcula el flux d'energia hora a hora i hi aplica els preus de mercat de
+        l'electricitat per determinar el cost operatiu total. Si el paràmetre `total` és cert,
+        actualitza l'estat actual de la millor solució trobada.
+
+        :param config: Vector de dades amb la configuració candidata per a tots els dispositius.
+        :param total: Booleà; si és True, retorna el cost total (float). Si és False, retorna el
+                      vector de balanç detallat (list).
+        :return: Depenent del paràmetre 'total':
+                 --> Si True: El cost econòmic total en unitats monetàries
+                 --> Si False: Llista del balanç net per interval
+        """
 
         total_balance = [0] * (self.horizon * self.horizon_min)
 
@@ -268,6 +365,22 @@ class OptimalScheduler:
         return total_price
 
     def __calc_total_balance_consumer(self, config):
+        """
+        Simula el comportament de tots els dispositius consumidors segons una configuració donada.
+
+        Itera sobre la col·lecció de consumidors (com electrodomèstics intel·ligents o càrregues
+        programables), extraient del vector global la part de la configuració que correspon a
+        cadascun mitjançant els seus índexs de vinculació (`vbound_start` i `vbound_end`).
+        Executa la simulació individual de cada dispositiu per obtenir-ne el perfil de consum
+        temporal i els costos operatius interns.
+
+        :param config: Vector global de variables de decisió de l'optimitzador.
+        :return:Una tupla que conté:
+            - llista de floats: Perfil de consum agregat per a tots els consumidors
+            - float: Suma dels costos operatius propis de tots els consumidors
+
+            ([float, float, . . .], float)
+        """
         total_consumption = [0] * (self.horizon * self.horizon_min)
         total_cost = 0
         for consumer in self.consumers.values():
@@ -282,9 +395,29 @@ class OptimalScheduler:
         return total_consumption, total_cost
 
     def __calc_total_balance_generator(self, config):
+        """
+        To Do
+        :param config:
+        :return:
+        """
+        #TODO + Docu: Documentar quan el tingui fet
         return [0] * (self.horizon * self.horizon_min), 0
 
     def __calc_total_balance_energy(self, config, total_balance):
+        """
+        Simula l'impacte dels sistemes d'emmagatzematge (bateries) sobre el balanç energètic net.
+
+        Aquest mètode integra l'activitat de les bateries en el balanç prèviament calculat entre
+        consumidors i generadors. Per a cada sistema d'emmagatzematge, extreu la seva part
+        corresponent del vector de configuració i executa la seva simulació (càrrega o descàrrega).
+        Els valors resultants s'afegeixen al balanç global, modificant la corba d'energia final
+        que s'haurà d'importar o exportar a la xarxa elèctrica.
+
+        :param config: Vector global de variables de decisió de l'optimitzador.
+        :param total_balance: Llista amb el balanç net actual (Consum - Generació) abans de bateries.
+        :return:Una tupla que conté el balanç energètic final després de l'efecte de les bateries i la suma dels costos operatius o degradació dels sistemes d'emmagatzematge.
+            ([float, float, . . .], float)
+        """
 
         total_energy_sources = list(total_balance)
         total_cost = 0
@@ -301,6 +434,18 @@ class OptimalScheduler:
         return total_energy_sources, total_cost
 
     def get_hourly_electric_prices(self,):
+        """
+        Descarrega i processa els preus del mercat elèctric marginal (OMIE) per a l'horitzó d'optimització.
+
+        Es connecta al portal d'OMIE per obtenir el fitxer de preus horaris del dia actual. El mètode
+        descarrega un fitxer CSV temporal, n'extreu els preus de la darrera columna i els adapta a la
+        resolució temporal definida pel sistema (`horizon_min`). Si l'horitzó d'optimització supera
+        les 24 hores, el mètode reinicia el cicle de preus per cobrir tot el període.
+
+        :return: Una llista amb el preu de l'energia per a cada interval de l'optimització.
+                 Retorna -1 en cas de fallada en la descàrrega.
+            [45.12, 45.12, 42.05, 42.05, 38.90, 38.90, . . .]
+        """
         today = datetime.today().strftime('%Y%m%d')
         url = f"https://www.omie.es/es/file-download?parents%5B0%5D=marginalpdbc&filename=marginalpdbc_{today}.1"
         response = requests.get(url)
@@ -332,6 +477,22 @@ class OptimalScheduler:
         return return_prices
 
     def get_hourly_config_for_device(self, config):
+        """
+        Descodifica el vector de solució de l'optimitzador en un format llegible per dispositiu.
+
+        Aquest mètode rep el vector numèric pla generat per l'algorisme d'Evolució Diferencial
+        i el fragmenta segons els índexs de vinculació (`vbound_start` i `vbound_end`) de cada
+        actuador. El resultat és un diccionari on cada clau és el nom del dispositiu i el valor
+        és la seva seqüència de consignes d'activació o potència per a tot l'horitzó.
+
+        :param config: Array de variables de decisió resultant de l'optimització.
+        :return: Diccionari amb la planificació detallada per a cada dispositiu.
+            {
+                'Rentadora': [0.0, 1.0, 1.0, 0.0, . . .],
+                'Bateria_Sonnen': [-1500, -1500, 2000, . . .],
+                'Escalfador': [1200, 1200, 0, 0, . . .]
+            }
+        """
 
         collections = [
             self.consumers.values(),

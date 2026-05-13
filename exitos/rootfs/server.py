@@ -455,7 +455,7 @@ def get_scheduler_data():
     Obté les dades de l'optimització del dia actual per tal de generar una gràfica amb Plotly
     on mostri el consum general previst per a cada hora segons l'optimització.
 
-    :return: figura Plotly codificada en json.dumps()
+    :return: figura Plotly codificada en json.dumps
     """
     try:
         today = datetime.today().strftime("%d_%m_%Y")
@@ -544,7 +544,7 @@ def get_global_flexi_data():
     """
     Obté les dades de la flexibilitat del dia actual per tal de generar una gràfica amb Plotly on mostri
     la flexibilitat global disponible per a cada hora.
-    :return: figura Plotly codificada en json.dumps()
+    :return: figura Plotly codificada en json.dumps
     """
     try:
         today = datetime.today().strftime("%d_%m_%Y")
@@ -635,8 +635,8 @@ def get_global_flexi_data():
 def get_device_config_and_state(file_name):
     """
     Mètode provisional amb únic proposit de debugar l'estat actual de la Sonnen vs el que hauria de fer segons l'optimització
-    :param file_name:
-    :return:
+    :param file_name: nom del fitxer de configuració de la Sonnen
+    :return: Configuració del dispositiu
     """
     device_config = get_device_config_data(file_name)
     sonnen_state_sensor_id = device_config['device_config']['extra_vars']['percentatge_actual']['sensor_id']
@@ -848,7 +848,7 @@ def get_model_metrics(model_name):
     """
     Obté les mètriques del model indicat.
     :param model_name: nom del model a obtenir
-    :return: Diccionari amb Status(ok/error), metrics (mètriques del model) i train_val_test_split
+    :return: Diccionari amb Status "ok/error", metrics "mètriques del model" i train_val_test_split
     """
     try:
         model_path = os.path.join(forecast.models_filepath,'forecastings/',f"{model_name}.pkl")
@@ -950,16 +950,8 @@ def get_forecast_data(model_name):
     """
     Obté les dades del forecasting indicat *model_name*
     :param model_name: nom del model de forecasting del qual obtenir les dades.
-    :return:
-    - Status
-    - Timestamps
-    - Predictions
-    - Valors reals
-    - Timestamps dels valors reals
-    - Predicció del dia anterior
-    - Timestamps de la predicció del dia anterior
-    - Timestamp inicial
-    - Timestamp final
+    :return:{Status, Timestamps, Predictions, Valors reals, Timestamps dels valors reals, Predicció del dia anterior,
+    Timestamps de la predicció del dia anterior, Timestamp inicial, Timestamp final }
     """
     try:
         today_date = datetime.today().strftime('%d-%m-%Y')
@@ -1083,7 +1075,7 @@ def delete_config():
 def get_res_certify_data():
     """
     Obté el document .pkl on es guarden els últim 10 missatges enviats al Blockchain.
-    :return: Diccionari amb status (OK / Error) i data que es troba dins el fitzer *res_certify.pkl*
+    :return: Diccionari amb status "OK / Error" i data que es troba dins el fitxer *res_certify.pkl*
     """
     try:
         full_path = os.path.join(forecast.models_filepath, "config", "res_certify.pkl")
@@ -1208,7 +1200,7 @@ def optimize(today = False):
 def get_config_file_names():
     """
     Obté els noms de tots els documents de configuració de dispositius guardats a *share/exitos/optimizations/configs/*
-    :return: Diccionari {Status: ok / error, "names": [noms dels documents]
+    :return: Diccionari {Status: ok / error, "names": [noms dels documents]}
     """
     # CONFIGURACIONS CREADES
     created_configs_path = forecast.models_filepath + "/optimizations/configs"
@@ -1227,7 +1219,8 @@ def save_optimization_config():
     Guarda la configuració entrada al formulari (optimization page -> New Device) com a arxiu .json a la carpeta */share/exitos/optimizations/configs/* \n
     El nom de l'arxiu és el nom del dispositiu introduit. \n
     En cas que ja existeixi una configuració amb el mateix nom elimina la config existent i guarda la nova.\n
-    :return: {status: ok / error, "msg": info de l'estat en format string}
+    :return: {"status": "ok / error", "msg": "info de l'estat en format string"}
+
     """
     data = request.json
     if not data:
@@ -1678,7 +1671,10 @@ scheduler_thread.start()
 #region DEBUG REGION
 @app.route('/panik_function')
 def panik_function():
-    config_optimized_devices_HA()
+    today_date = datetime.today().strftime('%d-%m-%Y')
+    aux = database.get_data_from_forecast_from_date_and_sensorID(sensor_id='sensor.smart_meter_63a_potencia_real', date=today_date)
+    logger.info(aux)
+    # config_optimized_devices_HA()
 
 #endregion DEBUG REGION
 

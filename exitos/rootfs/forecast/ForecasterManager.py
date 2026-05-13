@@ -14,7 +14,23 @@ current_dir = os.getcwd()
 
 def get_meteodata(latitude, longitude, archive_meteo:pd.DataFrame, days_foreward):
     """
-    Obté les dades meteorològiques de les dates dins el dataframe i afageix 2 dies per predicció
+    Consulta i combina la previsió meteorològica d'Open-Meteo amb l'històric existent.
+
+    Realitza una petició a l'API per obtenir múltiples variables horàries des d'avui
+    fins al nombre de dies especificat, i les concatena amb un DataFrame d'arxiu.
+
+    :param latitude: Latitud per a la consulta meteorològica.
+    :param longitude: Longitud per a la consulta meteorològica.
+    :param archive_meteo: DataFrame amb dades meteorològiques prèvies o None.
+    :param days_foreward: Nombre de dies de previsió a recuperar a partir d'avui.
+    :return: DataFrame fusionat amb les dades històriques i la nova previsió.
+        pd.DataFrame({
+            "timestamp": [datetime, ...],
+            "temperature_2m": [float, ...],
+            "relativehumidity_2m": [int, ...],
+            "cloudcover": [int, ...],
+            "windspeed_10m": [float, ...]
+        })
     """
 
     today = datetime.today().strftime("%Y-%m-%d")
@@ -45,7 +61,20 @@ def get_meteodata(latitude, longitude, archive_meteo:pd.DataFrame, days_foreward
 
 def predict_consumption_production(model_name, database):
     """
-    Prediu la consumició tenint en compte les hores actives dels assets
+    Genera una predicció de consum o producció energètica utilitzant un model entrenat.
+
+    Carrega la configuració del model, recupera les dades actualitzades dels sensors
+    pertinents i de l'API meteorològica (si s'escau), i executa el pronòstic per a
+    les properes 48 hores.
+
+    :param model_name: Nom del fitxer del model a carregar.
+    :param database: Instància de la base de dades per recuperar les dades recents.
+    :return: Una tupla que conté la predicció, els valors reals ,si n'hi ha, i l'ID del sensor.
+    (
+        pd.Series([float, ...], index=[datetime, ...]),
+        pd.Series([float, ...], index=[datetime, ...]),
+        str
+    )
     """
 
     forecaster = Forecast.Forecaster(debug=True)
@@ -95,14 +124,18 @@ def predict_consumption_production(model_name, database):
 
 def train_model(form_data, database, forecaster, lat, lon):
     """
-    Entrena un model de forecast a partir de les dades del formulari.
-    
-    :param form_data:  dict amb els camps del formulari (clau → valor en string)
-    :param database:   instància de SqlDB
-    :param forecaster: instància de Forecaster (per cridar create_model i obtenir models_filepath)
-    :param lat:        latitud per obtenir dades meteorològiques
-    :param lon:        longitud per obtenir dades meteorològiques
-    :return:           nom del model creat (sense extensió .pkl)
+    Configura, processa les dades i entrena un nou model de predicció.
+
+    Extrau els paràmetres del formulari, gestiona la finestra temporal (windowing),
+    recupera les dades històriques dels sensors (principal i addicionals) i de
+    l'API meteorològica, per finalment delegar la creació del model a l'objecte forecaster.
+
+    :param form_data: Diccionari amb les claus i valors del formulari de la interfície.
+    :param database: Instància de la base de dades per obtenir l'històric de sensors.
+    :param forecaster: Instància del motor de predicció per entrenar el model.
+    :param lat: Latitud per a la integració de dades meteorològiques.
+    :param lon: Longitud per a la integració de dades meteorològiques.
+    :return: El nom del model creat que s'ha utilitzat per desar el fitxer.
     """
     selected_model = form_data.get("model")
     extra_sensors_id = form_data.get("sensors_id") if form_data.get("sensors_id") else None
@@ -207,12 +240,16 @@ def train_model(form_data, database, forecaster, lat, lon):
 
 def forecast_model(selected_forecast, database, models_filepath, today=True):
     """
-    Genera les prediccions d'un model i les guarda a la base de dades.
+    Executa la predicció d'un model específic i emmagatzema els resultats a la base de dades.
 
-    :param selected_forecast: nom del fitxer .pkl del model
-    :param database:          instància de SqlDB
-    :param models_filepath:   ruta base on es troben els models (forecaster.models_filepath)
-    :param today:             si True usa la data d'avui, si False la de demà
+    Crida la funció de predicció per obtenir els valors estimats i reals, filtra les
+    dades per mantenir només els últims 14 dies (més la previsió futura) i desa el
+    conjunt resultant amb la marca de temps de l'execució.
+
+    :param selected_forecast: Nom del fitxer del model (.pkl) a utilitzar.
+    :param database: Instància de la base de dades on es guardaran els resultats.
+    :param models_filepath: Ruta on s'allotgen els fitxers dels models.
+    :param today: Booleà que defineix si la data objectiu és avui o demà.
     """
     forecast_df, real_values, sensor_id = predict_consumption_production(
         model_name=selected_forecast, database=database
@@ -252,11 +289,14 @@ def forecast_model(selected_forecast, database, models_filepath, today=True):
 
 def delete_model(model_name, database, models_filepath):
     """
-    Elimina un model de la base de dades i el fitxer .pkl del disc.
+    Elimina un model del sistema, tant de la base de dades com del disc físic.
 
-    :param model_name:      nom del fitxer .pkl (ex: 'bateria_soc.pkl')
-    :param database:        instància de SqlDB
-    :param models_filepath: ruta base on es troben els models
+    Esborra totes les dades de predicció associades al model a la base de dades i,
+    posteriorment, elimina el fitxer binari (.pkl) de la carpeta de magatzem.
+
+    :param model_name: Nom del fitxer del model a eliminar (incloent l'extensió).
+    :param database: Instància de la base de dades per executar la neteja de registres.
+    :param models_filepath: Ruta arrel on s'ubiquen els fitxers de predicció.
     """
     database.remove_forecast(model_name)
 
