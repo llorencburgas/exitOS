@@ -1671,10 +1671,10 @@ scheduler_thread.start()
 #region DEBUG REGION
 @app.route('/panik_function')
 def panik_function():
-    today_date = datetime.today().strftime('%d-%m-%Y')
-    aux = database.get_data_from_forecast_from_date_and_sensorID(sensor_id='sensor.smart_meter_63a_potencia_real', date=today_date)
-    logger.info(aux)
-    # config_optimized_devices_HA()
+    # today_date = datetime.today().strftime('%d-%m-%Y')
+    # aux = database.get_data_from_forecast_from_date_and_sensorID(sensor_id='sensor.smart_meter_63a_potencia_real', date=today_date)
+    # logger.info(aux)
+    config_optimized_devices_HA()
 
 #endregion DEBUG REGION
 
