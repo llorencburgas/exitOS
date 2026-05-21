@@ -73,6 +73,7 @@
         "search_placeholder": "Search and select sensors...",
         "show_graphs": "Show Graphs",
         "update_db": "Update Database",
+        "update_db_noclean": "Update Database Without Cleaning",
         "delete_db": "Delete Database",
         "modal_title": "SELF DESTRUCT",
         "modal_text": "You are about to delete the entire Database!!",

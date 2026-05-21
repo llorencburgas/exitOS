@@ -788,15 +788,16 @@ def graphs_view():
     except Exception as e:
         return json.dumps({"status": "error", "message": str(e)})
 
-@app.route('/force_update_database')
-def force_update_database():
+@app.route('/force_update_database/<use_clean>')
+def force_update_database(use_clean):
     """
     Actua com a connexió entre en frontend (HTML) i la base de dades,
      cridant al mètode per a actualitzar les dades dels sensors.
     :return: "ok"
     """
+
     database.update_database("all")
-    database.clean_database_hourly_average(all_sensors=True)
+    if use_clean == "true": database.clean_database_hourly_average(all_sensors=True)
     return "ok"
 
 #endregion PÀGINA DATABASE

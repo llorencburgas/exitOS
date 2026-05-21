@@ -73,6 +73,7 @@
         "search_placeholder": "Busca y selecciona sensores...",
         "show_graphs": "Mostrar Gráficas",
         "update_db": "Actualizar Base de Datos",
+        "update_db_noclean": "Actualizar Base de Datos Sin Limpieza",
         "delete_db": "Eliminar Base de Datos",
         "modal_title": "AUTODESTRUCCIÓN",
         "modal_text": "¡Estás a punto de eliminar toda la Base de Datos!",

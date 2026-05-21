@@ -52,11 +52,19 @@
                 <input type="hidden" name="sensors_id" id="sensors-input" value="">
 
             </form>
+
             <button class="btn" id="fetch-data" onclick="FetchGraph()"><i class="fa-solid fa-chart-line"></i> <span
                     data-i18n="database.show_graphs">Mostrar Gràfiques</span></button>
-            <button class="btn secondary" id="update-database" onclick="UpdateDatabase()"
+
+
+            <button class="btn secondary" id="update-database" onclick="UpdateDatabase(true)"><i class="fa-solid fa-arrows-rotate"></i> <span
+                    data-i18n="database.update_db">Actualitzar Base de Dades Sense Neteja</span></button>
+
+            <button class="btn secondary" id="update-database-noclean" onclick="UpdateDatabase(false)"
                 style="margin-bottom: 100px;"><i class="fa-solid fa-arrows-rotate"></i> <span
-                    data-i18n="database.update_db">Actualitzar Base de Dades</span></button>
+                    data-i18n="database.update_db_noclean">Actualitzar Base de Dades Sense Neteja</span></button>
+
+
             <button class="btn self-destruct" id="delete-database" onclick="OpenModal()" style="margin-bottom: 30px;"><i
                     class="fa-solid fa-ban"></i> <span data-i18n="database.delete_db">Eliminar Base de Dades</span>
             </button>
@@ -229,9 +237,9 @@
             });
     }
 
-    function UpdateDatabase() {
+    function UpdateDatabase(useClean) {
         LoadingSpinner.show();
-        fetch('force_update_database')
+        fetch('force_update_database/'+ useClean)
             .then(response => response.text())
             .then(data => LoadingSpinner.hide());
     }

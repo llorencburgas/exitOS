@@ -73,6 +73,7 @@
         "search_placeholder": "Cerca i selecciona sensors...",
         "show_graphs": "Mostrar Gràfiques",
         "update_db": "Actualitzar Base de Dades",
+        "update_db_noclean": "Actualitzar Base de Dades Sense Neteja",
         "delete_db": "Eliminar Base de Dades",
         "modal_title": "SELF DESTRUCT",
         "modal_text": "Estàs a punt d'eliminar tota la Base de Dades!!",
