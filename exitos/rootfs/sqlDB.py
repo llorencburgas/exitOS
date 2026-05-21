@@ -163,7 +163,6 @@ class SqlDB():
                 friendly_name = row[1] or ""
                 device_name = row[3] or "Unknown"
                 save = row[5]
-                sensor_type = row[6]
 
                 if device_name not in grouped:
                     grouped[device_name] = []
@@ -172,7 +171,6 @@ class SqlDB():
                     "entity_id": entity_id,
                     "entity_name": friendly_name,
                     "save": save,
-                    "type": sensor_type,
                 })
 
             result = [
