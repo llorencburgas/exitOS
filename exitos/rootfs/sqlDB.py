@@ -714,8 +714,13 @@ class SqlDB():
                     ts_str = ts_str.replace('Z', '+00:00')
 
                 dt = datetime.fromisoformat(ts_str)
-                dt_naive = dt.replace(tzinfo=None)
-                nou_ts = dt_naive.strftime("%Y-%m-%d %H:%M:%S")
+
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                else:
+                    dt.astimezone(timezone.utc)
+
+                nou_ts = dt.isoformat()
 
                 cursor.execute(
                     "UPDATE dades SET timestamp = ? WHERE rowid = ?", (nou_ts, rowid)
