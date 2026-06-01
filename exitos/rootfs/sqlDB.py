@@ -693,6 +693,41 @@ class SqlDB():
         except Exception as e:
             return f"Error! : {str(e)}"
 
+    def clean_timestamp_values(self):
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT rowid, timestamp FROM dades")
+        rows = cursor.fetchall()
+
+
+        logger.info("Processant i homeneïtzant dades...")
+
+        for rowid, ts in rows:
+            if ts is None:
+                continue
+
+            try:
+                ts_str = str(ts).strip()
+
+                if ts_str.endswith('Z'):
+                    ts_str = ts_str.replace('Z', '+00:00')
+
+                dt = datetime.fromisoformat(ts_str)
+                dt_naive = dt.replace(tzinfo=None)
+                nou_ts = dt_naive.strftime("%Y-%m-%d %H:%M:%S")
+
+                cursor.execute(
+                    "UPDATE dades SET timestamp = ? WHERE rowid = ?", (nou_ts, rowid)
+                )
+
+            except Exception as e:
+                print(f"No s'ha pogut processar la fila {rowid} amb valor '{ts}': {e}")
+
+        conn.commit()
+        conn.close()
+        logger.info("Taula actualitzada correctament!")
+
 
     # endregion
 
