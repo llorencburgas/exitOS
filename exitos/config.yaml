@@ -21,6 +21,9 @@ arch:
   - aarch64
   - amd64
 
+
+stage: experimental
+
 # icon for the menu panel integration
 panel_icon: mdi:atom
 
