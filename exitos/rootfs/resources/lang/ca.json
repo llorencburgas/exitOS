@@ -25,6 +25,7 @@
         "error_required_field": "Aquest camp és obligatori",
         "error_select_entity": "Seleccione una entitat per a aquesta variable",
         "delete_config_btn": "Eliminar Configuració",
+        "edit_config_btn": "Editar Configuració",
         "chart": {
             "title": "Configuració i Flexibilitat",
             "hour": "Hora",

@@ -25,6 +25,7 @@
         "error_required_field": "This field is required",
         "error_select_entity": "Select an entity for this variable",
         "delete_config_btn": "Delete Configuration",
+        "edit_config_btn": "Edit Configuration",
         "chart": {
             "title": "Configuration and Flexibility",
             "hour": "Hour",

@@ -25,6 +25,7 @@
         "error_required_field": "Este campo es obligatorio",
         "error_select_entity": "Seleccione una entidad para esta variable",
         "delete_config_btn": "Eliminar Configuración",
+        "edit_config_btn": "Editar Configuración",
         "chart": {
             "title": "Configuración y Flexibilidad",
             "hour": "Hora",

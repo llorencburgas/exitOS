@@ -56,7 +56,7 @@ class SqlDB():
         - FORECASTS: conté les dades i timestamps de les prediccions realitzades per a cada model
         """
 
-        logger.info("Iniciant creaciÃ³ de la Base de Dades")
+        logger.info("Iniciant creació de la Base de Dades")
         with sqlite3.connect(self.database_file, timeout=60.0) as con:
             cur = con.cursor()
 
@@ -87,7 +87,7 @@ class SqlDB():
         Elimina completament tota la base de dades
         :return: None
         """
-        with sqlite3.connect("dades.db", timeout=60.0) as con:
+        with sqlite3.connect(self.database_file, timeout=60.0) as con:
             cur = con.cursor()
             cur.execute("DROP TABLE IF EXISTS dades")
             cur.execute("DROP TABLE IF EXISTS sensors")

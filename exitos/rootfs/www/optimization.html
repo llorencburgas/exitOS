@@ -625,6 +625,17 @@
                         container.appendChild(delete_button);
                         //endregion
 
+                        //recion BOTÓ EDITAR
+                        const edit_button = document.createElement('button');
+                        edit_button.className = "btn secondary";
+                        edit_button.innerHTML = I18n.get('optimization.edit_config_btn');
+                        edit_button.onclick = async () => {
+                            NewDeviceConfig();
+                        };
+                        container.appendChild(edit_button);
+
+                        //endregion
+
                         //region GRÀFICA
                         const graph_container = document.createElement('div');
                         graph_container.className = "scheduler-card";
