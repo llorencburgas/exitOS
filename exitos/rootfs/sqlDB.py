@@ -329,8 +329,8 @@ class SqlDB():
         if all_sensors_debug:
             logger.info("🗃️ Iniciant l'actualització de la base de dades...")
 
-        local_tz = tzlocal.get_localzone()  # Gets system local timezone (e.g., 'Europe/Paris')
-        current_date = datetime.now(local_tz)
+        # local_tz = tzlocal.get_localzone()
+        current_date = datetime.now().replace(tzinfo=None)
         devices = self.get_devices_info()
 
         with self._get_connection() as con:
