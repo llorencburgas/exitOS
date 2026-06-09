@@ -262,7 +262,7 @@ class OptimalScheduler:
 
               ([1500, 0, 3000, 1, . . .], -12.45)
         """
-        logger.info(f"🦖 - Començant optimització  a les {datetime.now().strftime('%Y-%m-%d %H:00')}")
+        logger.info(f"🦖 - Començant optimització  a les {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
         result = differential_evolution(func = self.cost_DE,
                                         popsize = 150,
@@ -274,7 +274,7 @@ class OptimalScheduler:
                                         tol = 0.0001,
                                         strategy = 'best1bin',
                                         init = 'halton',
-                                        disp = True,
+                                        disp = False,
                                         updating = 'deferred',
                                         # callback = self.__update_DE_step,
                                         workers = 1
@@ -282,7 +282,7 @@ class OptimalScheduler:
 
 
         # if not self.database.running_in_ha:
-        logger.warning(" OPTIMIZE FINALITZAT")
+        logger.info(f"🦖 - Finalitzant optimització  a les {datetime.now().strftime('%Y-%m-%d %H:%M')}")
         logger.debug(f"     ▫️ Status: {result['message']}")
         logger.debug(f"     ▫️ Total evaluations: {result['nfev']}")
         logger.debug(f"     ▫️ Solution: {result['x']}")

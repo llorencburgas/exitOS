@@ -93,6 +93,7 @@
 <script>
     let device_types = {}; // Will be loaded dynamically based on language
     const device_entities = {{!device_entities}}
+    let current_device_editing = "";
 
     /**
      * Carrega les configuracions dels dispositius segons l'idioma seleccionat
@@ -170,7 +171,13 @@
     /**
      * Obre el formulari per a crear una nova configuració i l'omple dinàmicament.
      */
-    function NewDeviceConfig() {
+    function NewDeviceConfig(device = "") {
+
+        if (device === "") {
+            current_device_editing = "";
+            document.getElementById('vars-config-section').innerHTML = '';
+        }
+
         const modal = document.getElementById('new-optimization-modal');
         modal.classList.add("opening");
         modal.classList.remove('hidden');
@@ -182,38 +189,67 @@
             const opt = document.createElement('option');
             opt.value = type;
             opt.textContent = device_types[type].nom;
+
+            if(device !== ""){
+                if(type === current_device_editing.device_type){
+                    opt.selected = true;
+                }
+            }
+
             select.appendChild(opt);
         }
-        UpdateRestrictions();
-        LoadDevicesEntities();
+
+        UpdateRestrictions(device);
+        LoadDevicesEntities(device);
     }
 
     /**
      * Modifica les restriccions segons el tipus de device seleccionat al formulari
      */
-    function UpdateRestrictions() {
+    function UpdateRestrictions(device = "") {
         const type = document.getElementById('device-type').value;
         const restrictions = device_types[type].restriccions;
         const container = document.getElementById('restrictionsContainer');
         container.innerHTML = '';
 
         restrictions.forEach(restriction => {
+            let defaultValue = "";
+
             if (typeof restriction === 'object') {
+
+                if (device !== "") {
+                    if (current_device_editing.restrictions[restriction.id] && current_device_editing.restrictions[restriction.id].value !== undefined) {
+                        defaultValue = current_device_editing.restrictions[restriction.id].value;
+                    }
+                }
+
                 container.innerHTML += `
                 <label>${restriction.nom}: </label>
                 <input type="number"
-                        name="${restriction.nom}"
-                        id="${restriction.id}"
-                        min="${restriction.min ?? ''}"
-                        max="${restriction.max ?? ''}"
-                        step="${restriction.step ?? 'any'}" />
+                       name="${restriction.nom}"
+                       id="${restriction.id}"
+                       min="${restriction.min ?? ''}"
+                       max="${restriction.max ?? ''}"
+                       step="${restriction.step ?? 'any'}"
+                       value="${defaultValue}"
+                />
                 <br>
                 `;
-            }
-            else {
+            } else {
+
+                if (device !== "" &&
+                    current_device_editing &&
+                    current_device_editing.restrictions[restriction]) {
+                    defaultValue = current_device_editing.restrictions[restriction].value;
+                }
                 container.innerHTML += `
                     <label>~${restriction}:</label>
-                    <input type="number" name="${restriction}" step="any"/>
+                    <input type="number"
+                           name="${restriction}"
+                           id="${restriction}"
+                           step="any"
+                           value="${defaultValue}"
+                    />
                     <br>
                 `;
             }
@@ -267,10 +303,24 @@
 
         vars.forEach(variable => {
             CreateSelectOption(container, variable['id'], variable['nom'], dev, false)
-        })
+        });
         control_vars.forEach(variable => {
             CreateSelectOption(container, variable['id'], variable['nom'], dev, true)
-        })
+        });
+
+        if (current_device_editing !== "") {
+            const savedVars = {
+                ...current_device_editing.extra_vars,
+                ...current_device_editing.control_vars
+            };
+            for (const varId in savedVars) {
+
+                const select = document.querySelector(`select[id="${varId}"]`);
+                if (select) {
+                    select.value = savedVars[varId].sensor_id;
+                }
+            }
+        }
     }
 
     /**
@@ -446,12 +496,19 @@
     function CloseModal() {
         document.getElementById("new-optimization-modal").classList.add('hidden');
         document.getElementById("new-optimization-modal").classList.remove('opening');
+
+        // Neteja addicional de seguretat
+        document.getElementById('device-name').value = '';
+        document.getElementById('device-type').value = '';
+        document.getElementById('vars-config-section').innerHTML = '';
+        document.getElementById('restrictionsContainer').innerHTML = '';
+        current_device_editing = "";
     }
 
     /**
      * Omple el select amb els dispositius
      */
-    function LoadDevicesEntities() {
+    function LoadDevicesEntities(device = "") {
         const devices = {};
         device_entities.forEach(item => {
             const name = item.device_name;
@@ -468,7 +525,14 @@
             const opt = document.createElement('option');
             opt.value = dev;
             opt.textContent = dev;
+
+            if(device !== "" && dev === current_device_editing.device_name){
+                opt.selected = true;
+            }
             deviceSelect.appendChild(opt);
+        }
+        if (device !== "") {
+            UpdateAssociatedVariables();
         }
     }
 
@@ -625,12 +689,13 @@
                         container.appendChild(delete_button);
                         //endregion
 
-                        //recion BOTÓ EDITAR
+                        //region BOTÓ EDITAR
                         const edit_button = document.createElement('button');
                         edit_button.className = "btn secondary";
                         edit_button.innerHTML = I18n.get('optimization.edit_config_btn');
                         edit_button.onclick = async () => {
-                            NewDeviceConfig();
+                            current_device_editing = dev;
+                            NewDeviceConfig(config_name);
                         };
                         container.appendChild(edit_button);
 
