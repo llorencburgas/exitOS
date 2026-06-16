@@ -1178,6 +1178,7 @@ def optimize(today = False):
                 save_date = datetime.today().strftime("%d_%m_%Y")
             else:
                 save_date = (datetime.today() + timedelta(days=1)).strftime("%d_%m_%Y")
+
             full_path = os.path.join(forecast.models_filepath, "optimizations/"+save_date+".pkl")
             os.makedirs(forecast.models_filepath + 'optimizations', exist_ok=True)
             if os.path.exists(full_path):

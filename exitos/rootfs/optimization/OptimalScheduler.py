@@ -118,7 +118,6 @@ class OptimalScheduler:
             logger.error(f"❌ No s'ha pogut realitzar l'optimització: {e}")
             return False, None, None, None
 
-
     def prepare_data_for_optimization(self):
         """
         Carrega i inicialitza els dispositius des de fitxers de configuració per preparar l'entorn d'optimització.

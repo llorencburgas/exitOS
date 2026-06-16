@@ -724,14 +724,17 @@
                             y: dev.f_up,
                             mode: "lines+markers",
                             name: I18n.get('optimization.chart.flex_up'),
-                            line: { color: 'red', width: 2, dash: 'dot' }
+                            line: { color: 'red', width: 2, dash: 'dot' },
+                            hovertemplate: '%{y:.2f}<extra></extra>'
                         };
                         const fDownTrace = {
                             x: dev.timestamps,
                             y: dev.f_down,
                             mode: "lines+markers",
                             name: I18n.get('optimization.chart.flex_down'),
-                            line: { color: 'cyan', width: 2, dash: 'dot' }
+                            line: { color: 'cyan', width: 2, dash: 'dot' },
+                            // %{y:.4f} força a mostrar 4 decimals. <extra></extra> treu el nom de la traça repetit al costat.
+                            hovertemplate: '%{y:.4f}<extra></extra>'
                         };
 
                         const traces = [trace];

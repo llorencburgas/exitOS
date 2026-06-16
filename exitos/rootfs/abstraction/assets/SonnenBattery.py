@@ -118,7 +118,7 @@ class SonnenBattery(AbsEnergyStorage):
             if p > 0:
                 current_soc += p * eff
             else:
-                current_soc += p       #(no puc restar a valor negatiu, he de sumar)
+                current_soc += p
             
             if current_soc > self.max: current_soc = self.max
             if current_soc < self.min: current_soc = self.min
@@ -136,39 +136,45 @@ class SonnenBattery(AbsEnergyStorage):
         
         def get_soc_contribution(p):
             return p * eff if p > 0 else p
-        
+
         for t in range(min_len):
             original_power = Power_list[t]
-            
+
             # LÍMIT CAP AMUNT (augmentar consum / carregar més)
             max_allowed_delta_up = float('inf')
             for f_t in range(t, min_len):
                 allowed = self.max - SoC_list[f_t]
                 if allowed < max_allowed_delta_up:
                     max_allowed_delta_up = allowed
-                    
+
             target_soc_up = get_soc_contribution(original_power) + max_allowed_delta_up
             actual_new_power_up = target_soc_up / eff if target_soc_up > 0 else target_soc_up
-            
-            fup_t = min(Pc_max, actual_new_power_up) - original_power
-            if fup_t < 0: fup_t = 0
-            
+
+            # MODIFICAT: Obtenim el límit absolut (Sostre) en lloc del delta relatiu
+            absolute_fup_t = min(Pc_max, actual_new_power_up)
+            # Per seguretat (precisió flotant), el sostre mai pot ser menor que el pla actual
+            if absolute_fup_t < original_power:
+                absolute_fup_t = original_power
+
             # LÍMIT CAP A BAIX (reduir consum / descarregar)
             max_allowed_delta_down = float('-inf')
             for f_t in range(t, min_len):
                 allowed = self.min - SoC_list[f_t]
                 if allowed > max_allowed_delta_down:
                     max_allowed_delta_down = allowed
-                    
+
             target_soc_down = get_soc_contribution(original_power) + max_allowed_delta_down
             actual_new_power_down = target_soc_down / eff if target_soc_down > 0 else target_soc_down
-            
-            fdown_t = max(Pd_max, actual_new_power_down) - original_power
-            if fdown_t > 0: fdown_t = 0
-                                       
-            fup.append(fup_t)
-            fdown.append(fdown_t)
-            
+
+            # MODIFICAT: Obtenim el límit absolut (Terra) en lloc del delta relatiu
+            absolute_fdown_t = max(Pd_max, actual_new_power_down)
+            # Per seguretat, el terra mai pot ser superior al pla actual
+            if absolute_fdown_t > original_power:
+                absolute_fdown_t = original_power
+
+            fup.append(absolute_fup_t)
+            fdown.append(absolute_fdown_t)
+
         return fup, fdown, Power_list, timestamps[:min_len]
 
     def initialize_flex_tracker(self, baseline_plan):
