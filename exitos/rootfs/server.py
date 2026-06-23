@@ -1618,7 +1618,7 @@ def config_optimized_devices_HA():
             if can_optimize == "Empty": return
 
         current_date = datetime.now(tzlocal.get_localzone())
-        logger.info(f"📆 [{current_date.strftime('%d-%b-%Y   %X')} ] Configurant dispositius H.A.")
+        logger.info(f"\n📆 [{current_date.strftime('%d-%b-%Y   %X')} ] Configurant dispositius H.A.")
 
         optimization_db = joblib.load(full_path)
 
@@ -1653,7 +1653,7 @@ def run_threaded(job_func):
 
 schedule.every().day.at("23:30").do(run_threaded, daily_task)
 schedule.every().day.at("02:00").do(run_threaded, daily_database_clean)
-schedule.every().hour.at(":00").do(run_threaded, certificate_hourly_task)
+schedule.every(10).minutes.do(run_threaded, certificate_hourly_task)
 
 def run_scheduled_tasks():
     logger.debug("🗓️ SCHEDULER STARTED")
