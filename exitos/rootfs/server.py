@@ -1190,7 +1190,7 @@ def optimize(today = False):
 
             #Configurar Scheduler
             schedule.clear('device_config_tasks')
-            schedule.every().hour.at(":00").do(run_threaded, config_optimized_devices_HA).tag('device_config_tasks')
+            schedule.every(10).minutes.do(run_threaded, config_optimized_devices_HA).tag('device_config_tasks')
             logger.info("📅 Job programat per executar-se un cop cada hora (als minuts :00)")
 
 
@@ -1653,7 +1653,7 @@ def run_threaded(job_func):
 
 schedule.every().day.at("23:30").do(run_threaded, daily_task)
 schedule.every().day.at("02:00").do(run_threaded, daily_database_clean)
-schedule.every(10).minutes.do(run_threaded, certificate_hourly_task)
+schedule.every().hour(run_threaded, certificate_hourly_task)
 
 def run_scheduled_tasks():
     logger.debug("🗓️ SCHEDULER STARTED")
