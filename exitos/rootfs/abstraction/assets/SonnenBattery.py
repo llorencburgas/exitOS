@@ -20,14 +20,14 @@ class SonnenBattery(AbsEnergyStorage):
         self.control_discharge_sensor = config['control_vars']['descarregar']['sensor_id']
         self.control_mode_sensor = config['control_vars']['mode_operar']['sensor_id']
 
-        self.max_hours_at_max_power = self.max / self.max_power
+        self.max_hours_at_max_power = self.physical_max / self.max_power
 
     def simula(self, config, horizon, horizon_min):
         kw_carrega = []  # Estat de càrrega (SoC) en cada moment
         consumption_profile = []  # El que realment consumeix/aporta la bateria
         total_cost = 0
 
-        actual_capacity_kwh = self.max * self.actual_percentage
+        actual_capacity_kwh = self.physical_max * self.actual_percentage
         num_intervals = (horizon - 1) * horizon_min
 
         for i in range(num_intervals):
@@ -106,7 +106,7 @@ class SonnenBattery(AbsEnergyStorage):
         # Reconstrucció del SoC (kWh) basat en el pla
         # Assumim que l'estat inicial és l'actual
         SoC_list = []
-        current_soc = self.actual_percentage * self.max
+        current_soc = self.actual_percentage * self.physical_max
         
         # Eficiència
         eff = self.efficiency
@@ -181,7 +181,7 @@ class SonnenBattery(AbsEnergyStorage):
         self.flex_plan = list(baseline_plan)
         self.soc_plan = []
         
-        current_soc = self.actual_percentage * self.max
+        current_soc = self.actual_percentage * self.physical_max
         eff = self.efficiency
         
         for p in self.flex_plan:

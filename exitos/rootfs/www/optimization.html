@@ -223,18 +223,71 @@
                     }
                 }
 
-                container.innerHTML += `
-                <label>${restriction.nom}: </label>
-                <input type="number"
-                       name="${restriction.nom}"
-                       id="${restriction.id}"
-                       min="${restriction.min ?? ''}"
-                       max="${restriction.max ?? ''}"
-                       step="${restriction.step ?? 'any'}"
-                       value="${defaultValue}"
-                />
-                <br>
-                `;
+                const rType = restriction.type || restriction.tipus;
+
+                if (rType === 'range') {
+                    let defaultMin = restriction.min ?? 0;
+                    let defaultMax = restriction.max ?? 100;
+                    if (device !== "" && defaultValue) {
+                        if (Array.isArray(defaultValue)) {
+                            defaultMin = defaultValue[0];
+                            defaultMax = defaultValue[1];
+                        } else {
+                            const parts = String(defaultValue).split(',');
+                            if (parts.length === 2) {
+                                defaultMin = parseInt(parts[0]) || 0;
+                                defaultMax = parseInt(parts[1]) || 100;
+                            }
+                        }
+                    } else if (restriction.default) {
+                        defaultMin = restriction.default[0];
+                        defaultMax = restriction.default[1];
+                    }
+
+                    container.innerHTML += `
+                    <div class="range-slider-wrapper">
+                        <label>${restriction.nom}: <span id="label-val-${restriction.id}">${defaultMin}% - ${defaultMax}%</span></label>
+                        <div class="range-slider-track-container">
+                            <div class="range-slider-track" id="track-${restriction.id}"></div>
+                            <input type="range" class="range-slider-input"
+                                   id="${restriction.id}-min"
+                                   name="${restriction.nom}"
+                                   min="${restriction.min ?? 0}"
+                                   max="${restriction.max ?? 100}"
+                                   step="${restriction.step ?? 1}"
+                                   value="${defaultMin}"
+                                   oninput="onRangeSliderInput('${restriction.id}', event)"
+                            />
+                            <input type="range" class="range-slider-input"
+                                   id="${restriction.id}-max"
+                                   name="${restriction.nom}"
+                                   min="${restriction.min ?? 0}"
+                                   max="${restriction.max ?? 100}"
+                                   step="${restriction.step ?? 1}"
+                                   value="${defaultMax}"
+                                   oninput="onRangeSliderInput('${restriction.id}', event)"
+                            />
+                        </div>
+                    </div>
+                    <br>
+                    `;
+                    setTimeout(() => {
+                        onRangeSliderInput(restriction.id, null);
+                    }, 0);
+                } else {
+                    container.innerHTML += `
+                    <label>${restriction.nom}: </label>
+                    <input type="number"
+                           name="${restriction.nom}"
+                           id="${restriction.id}"
+                           min="${restriction.min ?? ''}"
+                           max="${restriction.max ?? ''}"
+                           step="${restriction.step ?? 'any'}"
+                           value="${defaultValue}"
+                    />
+                    <br>
+                    `;
+                }
             } else {
 
                 if (device !== "" &&
@@ -254,6 +307,43 @@
                 `;
             }
         });
+    }
+
+    /**
+     * Sincronitza i actualitza l'estat visual del slider amb dues boletes
+     */
+    function onRangeSliderInput(id, event) {
+        const minInput = document.getElementById(`${id}-min`);
+        const maxInput = document.getElementById(`${id}-max`);
+        const track = document.getElementById(`track-${id}`);
+        const labelVal = document.getElementById(`label-val-${id}`);
+        
+        if (!minInput || !maxInput) return;
+
+        let minVal = parseInt(minInput.value);
+        let maxVal = parseInt(maxInput.value);
+
+        if (minVal > maxVal) {
+            if (event && event.target === minInput) {
+                minInput.value = maxVal;
+                minVal = maxVal;
+            } else {
+                maxInput.value = minVal;
+                maxVal = minVal;
+            }
+        }
+
+        const minPercent = ((minVal - minInput.min) / (minInput.max - minInput.min)) * 100;
+        const maxPercent = ((maxVal - minInput.min) / (minInput.max - minInput.min)) * 100;
+
+        if (track) {
+            track.style.left = minPercent + '%';
+            track.style.width = (maxPercent - minPercent) + '%';
+        }
+
+        if (labelVal) {
+            labelVal.textContent = `${minVal}% - ${maxVal}%`;
+        }
     }
 
     /**
@@ -428,6 +518,7 @@
 
         //Validar restriccions
         restrictionInputs.forEach(inp => {
+            if (inp.classList.contains('range-slider-input')) return;
             if (inp.value.trim() === '') {
                 showErroratSubmit(inp, I18n.get('optimization.error_required_field'));
                 valid = false;
@@ -453,11 +544,26 @@
         const device_category = device_types[device_type].tipus;
 
         const restrictions = {};
+        const processedRanges = new Set();
         restrictionInputs.forEach(inp => {
-            restrictions[inp.id] = {
-                "name": inp.name,
-                "value": inp.value,
-            };
+            if (inp.classList.contains('range-slider-input')) {
+                const baseId = inp.id.substring(0, inp.id.lastIndexOf('-'));
+                if (processedRanges.has(baseId)) return;
+                processedRanges.add(baseId);
+
+                const minVal = parseInt(document.getElementById(`${baseId}-min`).value);
+                const maxVal = parseInt(document.getElementById(`${baseId}-max`).value);
+
+                restrictions[baseId] = {
+                    "name": inp.name || "Rang de càrrega permès (%)",
+                    "value": [minVal, maxVal],
+                };
+            } else {
+                restrictions[inp.id] = {
+                    "name": inp.name,
+                    "value": inp.value,
+                };
+            }
         });
 
 
@@ -641,8 +747,11 @@
                         for (const r in dev.restrictions) {
                             const restriction = document.createElement('li');
                             restriction.className = "device-config-li";
-                            restriction.innerHTML = `<b class="device-config-boldText">${dev.restrictions[r].name}: </b> ${dev.restrictions[r].value}`;
-                            // restriction.innerHTML = r + ": " + dev.restrictions[r];
+                            let displayValue = dev.restrictions[r].value;
+                            if (Array.isArray(displayValue)) {
+                                displayValue = `${displayValue[0]}% - ${displayValue[1]}%`;
+                            }
+                            restriction.innerHTML = `<b class="device-config-boldText">${dev.restrictions[r].name}: </b> ${displayValue}`;
                             restricctions.appendChild(restriction);
                         }
                         container.appendChild(restricctions);

@@ -136,7 +136,12 @@ def tool_get_optimization_configs(config_name=None, **kwargs):
             if restrictions:
                 result_lines.append("  Restriccions:")
                 for r_id, r_data in restrictions.items():
-                    result_lines.append(f"    - {r_data.get('name', r_id)}: {r_data.get('value', '')}")
+                    val = r_data.get('value', '')
+                    if isinstance(val, list):
+                        val_str = f"{val[0]}% - {val[1]}%"
+                    else:
+                        val_str = str(val)
+                    result_lines.append(f"    - {r_data.get('name', r_id)}: {val_str}")
 
             extra_vars = cfg.get("extra_vars", {})
             if extra_vars:
@@ -1653,7 +1658,7 @@ def run_threaded(job_func):
 
 schedule.every().day.at("23:30").do(run_threaded, daily_task)
 schedule.every().day.at("02:00").do(run_threaded, daily_database_clean)
-schedule.every().hour(run_threaded, certificate_hourly_task)
+schedule.every().hour.at(":00").do(run_threaded, certificate_hourly_task)
 
 def run_scheduled_tasks():
     logger.debug("🗓️ SCHEDULER STARTED")
