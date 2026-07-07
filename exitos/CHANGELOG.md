@@ -1,5 +1,8 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.1.31
+- Nova pàgina Flexibilitat que permet veure les configuracions dels dies anteriors
+
 ## 1.1.30
 - Permet editar les configuracions dels dispositius
 

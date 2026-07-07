@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ca">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Vista Diària d'Optimització</title>
+  <link rel="stylesheet" href="resources/mainStyle.css">
+  <script src="https://cdn.plot.ly/plotly-3.1.0.min.js" charset="utf-8"></script>
+
+  <!--  Date Range Picker Files  -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
+</head>
+
+<body>
+  <!--    NAVBAR     -->
+  % rebase('./www/base.html', title='Exitos')
+
+  <div class="container" style="padding:2rem; margin-bottom:15px;">
+
+    <h1>Optimització i flexibilitat per dia</h1>
+
+    <div class="flex-row">
+      <label for="dateInput">Selecciona una data:</label>
+      <input type="text" id="dateInput" name="dateInput" class="flexi-date-input" />
+      <button id="loadBtn" class="btn" type="button">Carrega gràfiques</button>
+    </div>
+
+    <div id="optChart" class="device-config-container">
+      <h3 class="device-config-title">Consum del dia</h3>
+      <div id="optChartCard" class="scheduler-card" style="width: 100%; max-width: 100%; box-sizing: border-box; margin-top: 20px; padding-right: 10px;"></div>
+    </div>
+
+    <div id="flexChart" class="device-config-container" style="margin-top: 30px;">
+      <h3 class="device-config-title">Flexibilitat del dia</h3>
+      <div id="flexChartCard" class="scheduler-card" style="width: 100%; max-width: 100%; box-sizing: border-box; margin-top: 20px; padding-right: 10px;"></div>
+    </div>
+
+    <div id="devices-charts" class="chart"></div>
+
+  </div>
+
+  <script>
+    const loadBtn = document.getElementById('loadBtn');
+    const dateInput = document.getElementById('dateInput');
+    const optCard = document.getElementById('optChartCard');
+    const flexCard = document.getElementById('flexChartCard');
+    const parent_devices_div = document.getElementById("devices-charts");
+    async function loadCharts() {
+      const selected = dateInput.value;
+      if (!selected) { alert('Selecciona una data.'); return; }
+      console.log(selected);
+
+      try {
+        const r = await fetch(`/get_scheduler_data?date=${selected}`);
+        const data = await r.json();
+        if (data === "ERROR") throw 'No data';
+        optCard.innerHTML = "";
+
+        const customLayout = {
+          ...data.layout,
+          title: undefined,
+          autosize: true,
+          paper_bgcolor: 'rgba(0,0,0,0)',
+          plot_bgcolor: 'rgba(0,0,0,0)',
+          margin: { l: 50, r: 20, t: 40, b: 60 },
+          xaxis: {
+            ...(data.layout?.xaxis || {}),
+            tickangle: -45,
+            gridcolor: '#444'
+          },
+          yaxis: {
+            ...(data.layout?.yaxis || {}),
+            gridcolor: '#444'
+          },
+          legend: { orientation: "h", y: -0.3 },
+          height: 350
+        };
+
+        Plotly.newPlot(
+          optCard,
+          data.data,
+          PlotlyTheme.mergeLayout(customLayout),
+          { responsive: true, displayModeBar: false }
+        );
+
+        // Si hem pogut carregar el scheduler, intentem carregar les dades de flexibilitat
+        try {
+          const rFlex = await fetch(`/get_flexi_data?date=${selected}`);
+          const dataFlex = await rFlex.json();
+          if (dataFlex === "ERROR") throw 'No data';
+          flexCard.innerHTML = "";
+
+          const customLayoutFlex = {
+            ...dataFlex.layout,
+            title: undefined,
+            autosize: true,
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            margin: { l: 50, r: 20, t: 40, b: 60 },
+            xaxis: {
+              ...(dataFlex.layout?.xaxis || {}),
+              tickangle: -45,
+              gridcolor: '#444'
+            },
+            yaxis: {
+              ...(dataFlex.layout?.yaxis || {}),
+              gridcolor: '#444'
+            },
+            legend: { orientation: "h", y: -0.3 },
+            height: 350
+          };
+
+          Plotly.newPlot(
+            flexCard,
+            dataFlex.data,
+            PlotlyTheme.mergeLayout(customLayoutFlex),
+            { responsive: true, displayModeBar: false }
+          );
+        } catch (err) {
+          console.error('Fetch error (flex):', err);
+          flexCard.innerHTML = '<p>No hi ha dades de flexibilitat per a aquesta data.</p>';
+        }
+
+        // I finalment, les configuracions guardades
+        await LoadConfigsSaved();
+
+      } catch (err) {
+        console.error('Fetch error (scheduler):', err);
+        optCard.innerHTML = '<p>No hi ha dades d\'optimització per a aquesta data.</p>';
+        flexCard.innerHTML = '<p>No hi ha dades de flexibilitat per a aquesta data.</p>';
+        
+        // Esborrem les gràfiques de dispositius si no hi ha dades
+        while (parent_devices_div.lastElementChild) {
+          parent_devices_div.removeChild(parent_devices_div.lastElementChild);
+        }
+      }
+    }
+
+    async function LoadConfigsSaved() {
+      let saved_configs = ""
+      const res = await fetch('get_config_file_names', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const result = await res.json();
+      if (result.status === 'ok') saved_configs = JSON.parse(JSON.stringify(result.names));
+
+
+      parent_devices_div.innerHTML = "";
+
+      saved_configs.forEach((config_name) => {
+        fetch('get_device_config_data/' + config_name)
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === 'ok') {
+              const dev = data["device_config"];
+
+              const container = document.createElement('div');
+              container.className = "device-config-container";
+
+              //region NOM DEL DISPOSITIU
+              const name = document.createElement('h3');
+              name.className = "device-config-title";
+              name.textContent = dev.device_name;
+              container.appendChild(name);
+              //endregion
+
+              //region GRÀFICA
+              const graph_container = document.createElement('div');
+              graph_container.className = "scheduler-card";
+
+              graph_container.style.width = "100%";
+              graph_container.style.maxWidth = "100%";
+              graph_container.style.boxSizing = "border-box";
+              graph_container.style.marginTop = "20px";
+              graph_container.style.paddingRight = "10px";
+
+              const trace = {
+                x: dev.timestamps,
+                y: dev.hourly_config,
+                mode: "lines+markers",
+                name: I18n.get('optimization.chart.opt_config'),
+                line: { color: 'green', width: 3 }
+              };
+
+              const fUpTrace = {
+                x: dev.timestamps,
+                y: dev.f_up,
+                mode: "lines+markers",
+                name: I18n.get('optimization.chart.flex_up'),
+                line: { color: 'red', width: 2, dash: 'dot' },
+                hovertemplate: '%{y:.2f}<extra></extra>'
+              };
+              const fDownTrace = {
+                x: dev.timestamps,
+                y: dev.f_down,
+                mode: "lines+markers",
+                name: I18n.get('optimization.chart.flex_down'),
+                line: { color: 'cyan', width: 2, dash: 'dot' },
+                // %{y:.4f} força a mostrar 4 decimals. <extra></extra> treu el nom de la traça repetit al costat.
+                hovertemplate: '%{y:.4f}<extra></extra>'
+              };
+
+              const traces = [trace];
+              if (dev.f_up && dev.f_up.length > 0) traces.push(fUpTrace);
+              if (dev.f_down && dev.f_down.length > 0) traces.push(fDownTrace);
+
+              const layout = {
+                title: I18n.get('optimization.chart.title'),
+                autosize: true,
+                // Posem els fons transparents perquè no es vegi el "div" que sobresurt
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                margin: { l: 50, r: 20, t: 40, b: 60 }, // Marges més ajustats
+                xaxis: {
+                  title: I18n.get('optimization.chart.hour'),
+                  tickangle: -45,
+                  gridcolor: '#444' // Color de graella suau per al mode fosc
+                },
+                yaxis: {
+                  title: I18n.get('optimization.chart.value'),
+                  gridcolor: '#444'
+                },
+                legend: { orientation: "h", y: -0.3 },
+                height: 350 // Una mica més baixet queda millor en targetes
+              };
+              const config = {
+                responsive: true
+              }
+              container.appendChild(graph_container);
+              parent_devices_div.appendChild(container);
+
+              setTimeout(() => {
+                Plotly.newPlot(
+                  graph_container,
+                  traces,
+                  PlotlyTheme.mergeLayout(layout),
+                  { responsive: true, displayModeBar: false }
+                );
+              }, 10);
+              //endregion
+
+            }
+
+          })
+      })
+
+    }
+
+    loadBtn.addEventListener('click', loadCharts);
+    document.addEventListener('DOMContentLoaded', () => { dateInput.value = new Date().toISOString().split('T')[0]; loadCharts(); });
+
+
+
+    $(function () {
+      $('input[name="dateInput"]').daterangepicker({
+        singleDatePicker: true,
+        showDropdowns: true,
+        minYear: 2000,
+        maxYear: moment().year(),
+        startDate: moment(),
+        locale: {
+          format: 'DD-MM-YYYY'
+        }
+      });
+    });
+  </script>
+</body>

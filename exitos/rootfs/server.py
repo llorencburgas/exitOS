@@ -450,6 +450,13 @@ def optimization_page():
                     current_date = current_date,
                     device_entities = devices_entities)
 
+@app.get('/flexibility')
+def flexibility_page():
+    """
+    Prepara el template per a la pàgina de flexibilitat.
+    """
+    return template('./www/flexibility.html')
+
 
 #endregion PAGE CREATIONS
 
@@ -463,10 +470,27 @@ def get_scheduler_data():
     :return: figura Plotly codificada en json.dumps
     """
     try:
-        today = datetime.today().strftime("%d_%m_%Y")
+        # Accept optional 'date' query param (format YYYY-MM-DD). If absent, use today.
+        date_str = request.query.get('date') if hasattr(request, 'query') else None
+
+        if (datetime.today().strftime("%Y-%m-%d") == date_str or
+            datetime.today().strftime("%d-%m-%Y") == date_str):
+            is_today = True
+        else:
+            is_today = False
+
+        if date_str:
+            try:
+                date_obj = datetime.strptime(date_str, '%d-%m-%Y')
+                today = date_obj.strftime('%d_%m_%Y')
+            except Exception:
+                today = datetime.today().strftime('%d_%m_%Y')
+        else:
+            today = datetime.today().strftime('%d_%m_%Y')
+
         full_path = os.path.join(forecast.models_filepath, "optimizations/"+today+".pkl")
-        if not os.path.exists(full_path):
-            optimize(today=True)
+        # if not os.path.exists(full_path):
+        #     optimize(today=True)
 
         if not os.path.exists(full_path): return json.dumps("ERROR")
 
@@ -478,9 +502,7 @@ def get_scheduler_data():
 
         graph_df = pd.DataFrame({
             "hora": pd.to_datetime(graph_timestamps),
-            "optimitzacio": graph_optimization,
-            # "consum": graph_consum,
-            # "generacio": graph_generation
+            "optimitzacio": graph_optimization
         })
         graph_df['hora_str'] = graph_df['hora'].dt.strftime('%H:%M')
 
@@ -499,43 +521,44 @@ def get_scheduler_data():
 
         now = datetime.now()
 
-        fig.update_layout(
-            height=400,
-            yaxis=dict(zeroline=False),
-            xaxis=dict(
-                tickmode='array',
-                tickvals=graph_timestamps,
-                ticktext=graph_df['hora_str'],
-                tickangle=-45,
-                tickfont=dict(size=13),
-                title="Hores"
-            ),
-            yaxis_title="Consum (W)",
-            shapes=[
-                dict(
-                    type="line",
-                    x0=now,
-                    x1=now,
-                    y0=0,
-                    y1=1,
-                    xref="x",
-                    yref="paper",
-                    line=dict(color="red", width=2, dash="dash")
-                )
-            ],
-            annotations=[
-                dict(
-                    x=now,
-                    y=1.2,
-                    xref="x",
-                    yref="paper",
-                    text="Actual",
-                    showarrow=False,
-                    font=dict(color="red", size=12),
-                    textangle=-45
-                )
-            ],
-        )
+        if is_today:
+            fig.update_layout(
+                height=400,
+                yaxis=dict(zeroline=False),
+                xaxis=dict(
+                    tickmode='array',
+                    tickvals=graph_timestamps,
+                    ticktext=graph_df['hora_str'],
+                    tickangle=-45,
+                    tickfont=dict(size=13),
+                    title="Hores"
+                ),
+                yaxis_title="Consum (W)",
+                shapes=[
+                    dict(
+                        type="line",
+                        x0=now,
+                        x1=now,
+                        y0=0,
+                        y1=1,
+                        xref="x",
+                        yref="paper",
+                        line=dict(color="red", width=2, dash="dash")
+                    )
+                ],
+                annotations=[
+                    dict(
+                        x=now,
+                        y=1.2,
+                        xref="x",
+                        yref="paper",
+                        text="Actual",
+                        showarrow=False,
+                        font=dict(color="red", size=12),
+                        textangle=-45
+                    )
+                ],
+            )
 
         fig_json = fig.to_plotly_json()
         response.content_type = "application/json"
@@ -552,10 +575,22 @@ def get_global_flexi_data():
     :return: figura Plotly codificada en json.dumps
     """
     try:
-        today = datetime.today().strftime("%d_%m_%Y")
+        # Accept optional 'date' query param (format YYYY-MM-DD). If absent, use today.
+        date_str = request.query.get('date') if hasattr(request, 'query') else None
+        is_today = True if date_str == datetime.today().strftime("%d-%m-%Y") else False
+
+        if date_str:
+            try:
+                date_obj = datetime.strptime(date_str, '%d-%m-%Y')
+                today = date_obj.strftime('%d_%m_%Y')
+            except Exception:
+                today = datetime.today().strftime('%d_%m_%Y')
+        else:
+            today = datetime.today().strftime('%d_%m_%Y')
+
         full_path = os.path.join(forecast.models_filepath, "optimizations/"+today+".pkl")
-        if not os.path.exists(full_path):
-            optimize(today=True)
+        # if not os.path.exists(full_path):
+        #     optimize(today=True)
         if not os.path.exists(full_path): return json.dumps("ERROR")
 
         optimization_db = joblib.load(full_path)
@@ -602,32 +637,32 @@ def get_global_flexi_data():
         ))
 
         now = datetime.now()
-
-        fig.update_layout(
-            height=400,
-            yaxis=dict(zeroline=False),
-            xaxis=dict(
-                tickmode='array',
-                tickvals=graph_timestamps,
-                ticktext=graph_df['hora_str'],
-                tickangle=-45,
-                tickfont=dict(size=13),
-                title="Hores"
-            ),
-            yaxis_title="Consum (W)",
-            shapes=[
-                dict(
-                    type="line",
-                    x0=now,
-                    x1=now,
-                    y0=0,
-                    y1=1,
-                    xref="x",
-                    yref="paper",
-                    line=dict(color="red", width=2, dash="dash")
-                )
-            ]
-        )
+        if is_today:
+            fig.update_layout(
+                height=400,
+                yaxis=dict(zeroline=False),
+                xaxis=dict(
+                    tickmode='array',
+                    tickvals=graph_timestamps,
+                    ticktext=graph_df['hora_str'],
+                    tickangle=-45,
+                    tickfont=dict(size=13),
+                    title="Hores"
+                ),
+                yaxis_title="Consum (W)",
+                shapes=[
+                    dict(
+                        type="line",
+                        x0=now,
+                        x1=now,
+                        y0=0,
+                        y1=1,
+                        xref="x",
+                        yref="paper",
+                        line=dict(color="red", width=2, dash="dash")
+                    )
+                ]
+            )
 
         fig_json = fig.to_plotly_json()
         response.content_type = "application/json"
@@ -1196,7 +1231,7 @@ def optimize(today = False):
             #Configurar Scheduler
             schedule.clear('device_config_tasks')
             schedule.every(10).minutes.do(run_threaded, config_optimized_devices_HA).tag('device_config_tasks')
-            logger.info("📅 Job programat per executar-se un cop cada hora (als minuts :00)")
+            logger.info("📅 Job programat per executar-se cada 10 minuts.")
 
 
 
@@ -1623,7 +1658,7 @@ def config_optimized_devices_HA():
             if can_optimize == "Empty": return
 
         current_date = datetime.now(tzlocal.get_localzone())
-        logger.info(f"\n📆 [{current_date.strftime('%d-%b-%Y   %X')} ] Configurant dispositius H.A.")
+        logger.info(f"📆 [{current_date.strftime('%d-%b-%Y   %X')} ] Configurant dispositius H.A.")
 
         optimization_db = joblib.load(full_path)
 
