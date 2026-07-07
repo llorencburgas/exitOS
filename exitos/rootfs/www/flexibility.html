@@ -55,7 +55,7 @@
       console.log(selected);
 
       try {
-        const r = await fetch(`/get_scheduler_data?date=${selected}`);
+        const r = await fetch(`get_scheduler_data?date=${selected}`);
         const data = await r.json();
         if (data === "ERROR") throw 'No data';
         optCard.innerHTML = "";
@@ -89,7 +89,7 @@
 
         // Si hem pogut carregar el scheduler, intentem carregar les dades de flexibilitat
         try {
-          const rFlex = await fetch(`/get_flexi_data?date=${selected}`);
+          const rFlex = await fetch(`get_flexi_data?date=${selected}`);
           const dataFlex = await rFlex.json();
           if (dataFlex === "ERROR") throw 'No data';
           flexCard.innerHTML = "";
