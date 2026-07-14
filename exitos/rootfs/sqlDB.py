@@ -314,14 +314,69 @@ class SqlDB():
         all_sensors_debug = False
         #obtenim la llista de sensors de la API
         if sensor_to_update == "all":
-            sensors_list = pd.json_normalize(
-                get(self.base_url + "states", headers=self.headers).json()
-            )
+            response = get(self.base_url + "states", headers=self.headers)
+            if response.status_code != 200:
+                logger.error(f"❌ Error en obtenir els sensors de Home Assistant (Codi de resposta: {response.status_code})")
+                return None
+            try:
+                sensors_json = response.json()
+                if not isinstance(sensors_json, list):
+                    logger.error("❌ La resposta de Home Assistant no és una llista de sensors vàlida")
+                    return None
+                sensors_list = pd.json_normalize(sensors_json)
+            except Exception as e:
+                logger.error(f"❌ Error al processar la resposta de Home Assistant: {e}")
+                return None
+
+            if len(sensors_list) == 0 or "entity_id" not in sensors_list.columns:
+                logger.error("❌ La llista de sensors obtinguda de Home Assistant està buida o és invàlida")
+                return None
+
             all_sensors_debug = True
+
+            # Lògica de neteja per a sensors eliminats a Home Assistant
+            try:
+                with self._get_connection() as con:
+                    cur = con.cursor()
+                    cur.execute("SELECT sensor_id FROM sensors")
+                    db_sensor_ids = {row[0] for row in cur.fetchall()}
+                    cur.close()
+
+                ha_sensor_ids = set(sensors_list["entity_id"])
+                sensors_to_delete = db_sensor_ids - ha_sensor_ids
+
+                # Mesura de seguretat: No netegem si la llista de H.A. és sospitosament petita en comparació amb el que tenim a la BD
+                # (per exemple, si H.A. ens retorna menys del 50% dels sensors que ja tenim registrats, tret que la BD estigui gairebé buida)
+                is_safe_to_delete = True
+                if len(db_sensor_ids) > 5 and len(ha_sensor_ids) < (len(db_sensor_ids) * 0.5):
+                    is_safe_to_delete = False
+                    logger.warning(
+                        f"⚠️ Procés de neteja omès per seguretat: Home Assistant només ha retornat {len(ha_sensor_ids)} sensors, "
+                        f"però en tenim {len(db_sensor_ids)} a la base de dades. Podria tractar-se d'una fallada temporal de la API."
+                    )
+
+                if sensors_to_delete and is_safe_to_delete:
+                    with self._get_connection() as con:
+                        cur = con.cursor()
+                        for s_id in sensors_to_delete:
+                            # Eliminem primer l'històric i després el sensor per mantenir la coherència
+                            cur.execute("DELETE FROM dades WHERE sensor_id = ?", (s_id,))
+                            cur.execute("DELETE FROM sensors WHERE sensor_id = ?", (s_id,))
+                            logger.warning(f"🗑️ Sensor eliminat de la BD perquè ja no existeix a Home Assistant: {s_id}")
+                        con.commit()
+                        cur.close()
+            except Exception as e:
+                logger.error(f"❌ Error durant el procés de neteja de sensors inactius: {e}")
         else:
-            sensors_list = pd.json_normalize(
-                get(self.base_url + "states/" + sensor_to_update, headers=self.headers).json()
-            )
+            response = get(self.base_url + "states/" + sensor_to_update, headers=self.headers)
+            if response.status_code != 200:
+                logger.error(f"❌ No existeix un sensor amb l'ID indicat o la API ha fallat (Codi: {response.status_code})")
+                return None
+            try:
+                sensors_list = pd.json_normalize(response.json())
+            except Exception as e:
+                logger.error(f"❌ Error al processar la resposta de Home Assistant per al sensor {sensor_to_update}: {e}")
+                return None
             if len(sensors_list) == 0:
                 logger.error("❌ No existeix un sensor amb l'ID indicat")
                 return None
