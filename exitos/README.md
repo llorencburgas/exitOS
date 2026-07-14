@@ -1,36 +1,37 @@
-# Optimal Scheduler - Home Assistant Add-on
+# exitOS - Home Assistant Add-on
 
-## Description
+**exitOS** is an intelligent scheduler and optimizer designed for smart grids, energy management, and cost optimization. It integrates directly with Home Assistant to monitor, manage, and optimize your domestic energy assets (such as battery storage, solar panels, and controllable loads) while facilitating integration with the **eXiT Energy Community**.
 
-With the Optimal Scheduler, you can:
-- Controlautomatically consumption and generation devices, including batteries, solar panels, and other energy sources which use exitHardware or exit compatible hardware.
+---
 
+## 🌟 Key Features
 
-## Key Features
+*   **Optimal Energy Scheduling:** Automate charging and discharging schedules of battery storage systems to minimize electricity bills.
+*   **Asset Configuration:** Set up and parameterize local energy consumers, generators, and storage systems easily.
+*   **Time Series Forecasting:** Build predictive models using local sensor data to forecast energy generation and consumption.
+*   **Agentic LLM Support:** Converse in natural language with your smart grid assets using local models (like Llama 3.1 via Ollama).
+*   **Integrated Web UI:** Access dashboards, forecasts, and schedules directly via Home Assistant Ingress.
 
-ToDo
+---
 
-## How to Use the Add-on
+## ⚙️ Configuration Parameters
 
-### Installation
+The add-on can be configured using the following options under the **Configuration** tab:
 
-1. Download and install the *Optimal Scheduler* add-on from the Supervisor section of Home Assistant.
+*   **ollama_url** *(Optional)*: The URL of your local Ollama server (e.g., `http://192.168.1.50:11434/`). Required if you want to use the natural language agent features.
+*   **ollama_model** *(Optional)*: The name of the model loaded in Ollama (e.g., `llama3.1:latest`).
 
-3. Make sure to specify the identifiers of the devices you want to control, as well as the paths to your simulation and class codes.
+---
 
-### Configuration Parameters
+## 📋 Requirements
 
-- **Port**: port of the web app 
+*   Home Assistant 2023.5 or higher.
+*   Energy sensors configured and active in your Home Assistant installation.
+*   (Optional) A running instance of Ollama for LLM features.
 
-### Usage Examples
+---
 
-ToDo
+## 👥 Support & Development
 
-### Requirements
-
-- Home Assistant 2023.5 or higher.
-- Compatible consumption or generation devices with Home Assistant.
-
-### Support
-
-If you have questions or need help, contact us. UdG eXiT group.
+Developed by the **eXiT Research Group** at the **Universitat de Girona (UdG)**.
+For source code and local development guidelines, please refer to the [GitHub Repository](https://github.com/llorencburgas/exitOS).
